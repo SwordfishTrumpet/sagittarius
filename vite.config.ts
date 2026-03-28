@@ -37,8 +37,6 @@ export default defineConfig(({ mode }) => {
               '@tanstack/react-query',
               'date-fns',
               'dompurify',
-              'clsx',
-              'tailwind-merge',
             ],
           },
         },
