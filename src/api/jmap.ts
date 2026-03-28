@@ -54,10 +54,12 @@ class JMAPClient {
     const toRelative = (url: string) => {
       try {
         const parsed = new URL(url);
-        // pathname URL-encodes {/} to %7B/%7D which breaks JMAP template
-        // placeholders like {accountId}, {blobId}, etc. Decode them back.
+        // pathname and search both URL-encode {/} to %7B/%7D which breaks
+        // JMAP template placeholders like {accountId}, {blobId}, {type}, etc.
+        // Decode them back in the full relative URL.
         const path = parsed.pathname.replace(/%7B/gi, '{').replace(/%7D/gi, '}');
-        return path + parsed.search + parsed.hash;
+        const search = parsed.search.replace(/%7B/gi, '{').replace(/%7D/gi, '}');
+        return path + search + parsed.hash;
       } catch {
         return url; // already relative or unparseable
       }

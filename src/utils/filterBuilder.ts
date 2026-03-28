@@ -60,19 +60,21 @@ export function buildJMAPFilter(
     jmapFilter.notHasKeyword = '$seen';
   }
 
-  // Flagged emails: hasKeyword $flagged
-  if (filter.isFlagged === true) {
-    jmapFilter.hasKeyword = '$flagged';
-  }
+  // Keyword-based boolean filters — RFC 8621 §4.4.1: hasKeyword is a single
+  // String, so when multiple keywords are active we must wrap them in allOf.
+  const keywordConditions: string[] = [];
+  if (filter.isFlagged === true) keywordConditions.push('$flagged');
+  if (filter.isDraft === true) keywordConditions.push('$draft');
+  if (filter.isAnswered === true) keywordConditions.push('$answered');
 
-  // Draft emails: hasKeyword $draft
-  if (filter.isDraft === true) {
-    jmapFilter.hasKeyword = '$draft';
-  }
-
-  // Answered emails: hasKeyword $answered
-  if (filter.isAnswered === true) {
-    jmapFilter.hasKeyword = '$answered';
+  if (keywordConditions.length === 1) {
+    jmapFilter.hasKeyword = keywordConditions[0];
+  } else if (keywordConditions.length > 1) {
+    // Multiple hasKeyword conditions require allOf wrapping per RFC 8620 §5.5
+    const existing = { ...jmapFilter };
+    const conditions = keywordConditions.map((kw) => ({ hasKeyword: kw }));
+    // Merge existing filter conditions with keyword conditions under allOf
+    return { allOf: [existing, ...conditions] };
   }
 
   return jmapFilter;
@@ -164,8 +166,12 @@ export const COMMON_FILTERS = {
     hasKeyword: '$draft',
   }),
 
-  sent: () => ({
-    hasKeyword: '$sent',
+  // NOTE: There is no standard "$sent" keyword in RFC 8621 §4.1.1.
+  // To filter sent emails, use inMailbox with the Sent mailbox ID instead.
+  // Kept as inMailboxWithRole for convenience — callers should resolve the
+  // role to a concrete mailbox ID before passing to Email/query.
+  sent: (sentMailboxId: string) => ({
+    inMailbox: sentMailboxId,
   }),
 
   answered: () => ({
