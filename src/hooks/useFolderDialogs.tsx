@@ -1,0 +1,131 @@
+import { useState } from 'react'
+import { Edit2, Trash } from 'lucide-react'
+import { toast } from 'sonner'
+import { useMailboxActions } from './useJMAP'
+import { ContextMenu, type ContextMenuItemConfig } from '../components/ContextMenu'
+import { CreateFolderDialog } from '../components/dialogs/CreateFolderDialog'
+import { RenameFolderDialog } from '../components/dialogs/RenameFolderDialog'
+import { DeleteFolderDialog } from '../components/dialogs/DeleteFolderDialog'
+
+interface UseFolderDialogsParams {
+  selectedMailboxId: string | null
+  setSelectedMailboxId: (id: string | null) => void
+}
+
+export function useFolderDialogs({ selectedMailboxId, setSelectedMailboxId }: UseFolderDialogsParams) {
+  const { createMailbox, renameMailbox, deleteMailbox } = useMailboxActions()
+
+  // Context menu state
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
+  const [contextMenuTarget, setContextMenuTarget] = useState<{ type: 'mailbox' | 'email'; id: string } | null>(null)
+
+  // Folder dialog state
+  const [createFolderOpen, setCreateFolderOpen] = useState(false)
+  const [renameFolderOpen, setRenameFolderOpen] = useState(false)
+  const [deleteFolderOpen, setDeleteFolderOpen] = useState(false)
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
+  const [selectedFolderName, setSelectedFolderName] = useState<string>('')
+
+  const handleMailboxContextMenu = (mailboxId: string, mailboxName: string, e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setSelectedFolderId(mailboxId)
+    setSelectedFolderName(mailboxName)
+    setContextMenuTarget({ type: 'mailbox', id: mailboxId })
+    setContextMenu({ x: e.clientX, y: e.clientY })
+  }
+
+  const handleCreateFolder = (folderName: string) => {
+    createMailbox.mutate({ name: folderName })
+    setCreateFolderOpen(false)
+    toast.success(`Folder "${folderName}" created`)
+  }
+
+  const handleRenameFolder = (newName: string) => {
+    if (selectedFolderId) {
+      renameMailbox.mutate({ mailboxId: selectedFolderId, newName })
+      setRenameFolderOpen(false)
+      toast.success(`Folder renamed to "${newName}"`)
+    }
+  }
+
+  const handleDeleteFolder = () => {
+    if (selectedFolderId) {
+      deleteMailbox.mutate({ mailboxId: selectedFolderId })
+      setDeleteFolderOpen(false)
+      if (selectedMailboxId === selectedFolderId) {
+        setSelectedMailboxId(null)
+      }
+      toast.success(`Folder deleted`)
+    }
+  }
+
+  const getMailboxContextMenu = (): ContextMenuItemConfig[] => {
+    return [
+      {
+        id: 'rename',
+        label: 'Rename',
+        icon: <Edit2 className="w-4 h-4" strokeWidth={1.5} />,
+        onSelect: () => {
+          setRenameFolderOpen(true)
+          setContextMenu(null)
+        },
+      },
+      {
+        id: 'delete',
+        label: 'Delete',
+        icon: <Trash className="w-4 h-4" strokeWidth={1.5} />,
+        variant: 'destructive',
+        onSelect: () => {
+          setDeleteFolderOpen(true)
+          setContextMenu(null)
+        },
+      },
+    ]
+  }
+
+  const FolderDialogsUI = () => (
+    <>
+      {contextMenu && contextMenuTarget && (
+        <ContextMenu
+          items={getMailboxContextMenu()}
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={() => setContextMenu(null)}
+        />
+      )}
+      <CreateFolderDialog
+        isOpen={createFolderOpen}
+        onClose={() => setCreateFolderOpen(false)}
+        onConfirm={handleCreateFolder}
+        isLoading={createMailbox.isPending}
+      />
+      <RenameFolderDialog
+        isOpen={renameFolderOpen}
+        folderName={selectedFolderName}
+        onClose={() => setRenameFolderOpen(false)}
+        onConfirm={handleRenameFolder}
+        isLoading={renameMailbox.isPending}
+      />
+      <DeleteFolderDialog
+        isOpen={deleteFolderOpen}
+        folderName={selectedFolderName}
+        onClose={() => setDeleteFolderOpen(false)}
+        onConfirm={handleDeleteFolder}
+        isLoading={deleteMailbox.isPending}
+      />
+    </>
+  )
+
+  return {
+    handleMailboxContextMenu,
+    openCreateFolder: () => setCreateFolderOpen(true),
+    selectedFolderId,
+    setSelectedFolderId,
+    selectedFolderName,
+    setSelectedFolderName,
+    renameMailbox,
+    deleteMailbox,
+    FolderDialogsUI,
+  }
+}

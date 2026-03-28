@@ -1,0 +1,37 @@
+/**
+ * SearchFilterPills Component
+ * Displays active search filters as removable pill/token elements
+ */
+
+import { X } from 'lucide-react';
+import { SearchPill } from '../types/search';
+
+interface SearchFilterPillsProps {
+  pills: SearchPill[];
+  onRemove: (pillId: string) => void;
+}
+
+export function SearchFilterPills({ pills, onRemove }: SearchFilterPillsProps) {
+  if (pills.length === 0) return null;
+
+  return (
+    <div className="flex flex-wrap gap-2 px-4 py-2 bg-[#F2F2F7]/50 border-b border-[#E5E5E5] animate-in fade-in duration-200">
+      {pills.map((pill) => (
+        <div
+          key={pill.id}
+          className="inline-flex items-center gap-2 bg-[#007AFF]/10 text-[#007AFF] px-3 py-1 rounded-full text-[12px] font-medium border border-[#007AFF]/20 hover:bg-[#007AFF]/15 transition-colors"
+        >
+          <span className="truncate max-w-[150px]">{pill.label}</span>
+          <button
+            onClick={() => onRemove(pill.id)}
+            className="hover:opacity-70 transition-opacity ml-1 -mr-1"
+            title={`Remove ${pill.label}`}
+            type="button"
+          >
+            <X className="w-3 h-3" strokeWidth={2.5} />
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
