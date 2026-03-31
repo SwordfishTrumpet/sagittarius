@@ -67,7 +67,7 @@ export function KeyboardShortcutsHelp({ isOpen, onClose }: KeyboardShortcutsHelp
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: 5 }}
             transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-            className="bg-white rounded-2xl shadow-[0_25px_60px_rgba(0,0,0,0.15)] border border-[#E5E5EA] max-w-[560px] w-full max-h-[80vh] overflow-y-auto p-8"
+            className="bg-white rounded-2xl shadow-[0_25px_60px_rgba(0,0,0,0.15)] border border-[#E5E5EA] max-w-[560px] w-full max-h-[80vh] overflow-y-auto p-5 sm:p-8 mx-4 sm:mx-0"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -81,8 +81,8 @@ export function KeyboardShortcutsHelp({ isOpen, onClose }: KeyboardShortcutsHelp
               </button>
             </div>
 
-            {/* Shortcut groups in 2-column grid */}
-            <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+            {/* Shortcut groups in responsive grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
               {SHORTCUT_GROUPS.map((group) => (
                 <div key={group.title}>
                   <h3 className="text-[11px] font-bold text-[#8E8E93] uppercase tracking-wider mb-3">

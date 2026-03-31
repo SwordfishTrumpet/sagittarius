@@ -152,6 +152,22 @@ Sagittarius leverages the following JMAP capabilities:
 
 ---
 
+## Mail Rendering Principles
+
+Sagittarius aims to render incoming mail as faithfully as possible **without giving up safety**.
+
+- **Sanitize, but do not cosmetically rewrite sender content** -- keep DOMPurify, but avoid trimming `<br>` tags, collapsing whitespace, or stripping sender `white-space` styles.
+- **Preserve sender formatting in an isolated document** -- render sanitized message bodies inside a sandboxed iframe so app-level CSS does not mutate the email layout.
+- **Treat plain text separately** -- escape plain text before wrapping it in `<pre>` so line breaks are preserved without interpreting text as HTML.
+- **Resolve CID images before sanitization** -- inline `cid:` references must be converted to JMAP blob download URLs before DOMPurify runs.
+- **Block remote resources by default** -- external images and CSS background URLs are privacy-sensitive and should remain blocked until the user opts in.
+- **Only send auth headers to trusted JMAP download URLs** -- CID blob fetching must validate the target URL before attaching credentials.
+- **Prefer tests around the rendering pipeline** -- the highest-value coverage is `resolveCidImages`, remote image approval, iframe rendering helpers, and plain-text escaping.
+
+These rules came out of debugging whitespace fidelity, remote image loading, and iframe sandboxing issues in the email reader.
+
+---
+
 ## Contributing
 
 Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) before submitting a pull request.

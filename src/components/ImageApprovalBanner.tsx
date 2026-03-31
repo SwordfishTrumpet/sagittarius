@@ -44,12 +44,14 @@ export function ImageApprovalBanner({
         
         <div className="flex items-center gap-2 flex-shrink-0">
           <button
+            type="button"
             onClick={onDismiss}
             className="px-3 py-1.5 text-[12px] font-medium text-[#8E8E93] hover:bg-black/5 rounded-lg transition-colors"
           >
             Dismiss
           </button>
           <button
+            type="button"
             onClick={onLoadImages}
             className="px-3 py-1.5 text-[12px] font-semibold text-white bg-[#007AFF] hover:bg-[#0051D5] rounded-lg transition-colors flex items-center gap-1.5 shadow-sm"
           >

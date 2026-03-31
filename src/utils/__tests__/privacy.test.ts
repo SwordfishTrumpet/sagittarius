@@ -9,6 +9,8 @@ import {
   blockExternalImages,
   unblockExternalImages,
   countExternalImages,
+  resolveCidImages,
+  isInlineAttachment,
 } from '../privacy';
 
 describe('Privacy Utility — External Image Blocking', () => {
@@ -75,6 +77,53 @@ describe('Privacy Utility — External Image Blocking', () => {
 
     it('should return 0 for no external images', () => {
       expect(countExternalImages('<p>no images</p>')).toBe(0);
+    });
+  });
+
+  describe('resolveCidImages', () => {
+    it('should replace cid image sources with JMAP blob URLs', () => {
+      const html = '<p>Hello</p><img src="cid:inline-1">';
+      const email = {
+        attachments: [{ cid: 'inline-1', blobId: 'blob-1', type: 'image/png', name: 'image.png' }],
+      };
+
+      const resolved = resolveCidImages(html, email, (blobId, type, name) => `https://mail.test/${blobId}/${type}/${name}`);
+
+      expect(resolved).toContain('src="https://mail.test/blob-1/image/png/image.png"');
+      expect(resolved).toContain('data-cid-src="inline-1"');
+    });
+
+    it('should resolve cid images from bodyStructure subparts', () => {
+      const html = '<img src="cid:body-inline">';
+      const email = {
+        bodyStructure: {
+          subParts: [
+            { cid: '<body-inline>', blobId: 'blob-2', type: 'image/jpeg', name: 'photo.jpg' },
+          ],
+        },
+      };
+
+      const resolved = resolveCidImages(html, email, (blobId) => `https://mail.test/${blobId}`);
+
+      expect(resolved).toContain('src="https://mail.test/blob-2"');
+      expect(resolved).toContain('data-cid-src="body-inline"');
+    });
+
+    it('should leave unknown cid references unchanged', () => {
+      const html = '<img src="cid:missing">';
+      const resolved = resolveCidImages(html, { attachments: [] }, () => 'https://mail.test/unused');
+      expect(resolved).toBe(html);
+    });
+  });
+
+  describe('isInlineAttachment', () => {
+    it('should detect CID image attachments as inline', () => {
+      expect(isInlineAttachment({ cid: 'inline-1', type: 'image/png' })).toBe(true);
+    });
+
+    it('should reject non-image or non-cid attachments', () => {
+      expect(isInlineAttachment({ cid: 'inline-1', type: 'application/pdf' })).toBe(false);
+      expect(isInlineAttachment({ type: 'image/png' })).toBe(false);
     });
   });
 });

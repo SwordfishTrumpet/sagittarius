@@ -172,15 +172,24 @@ export function useThreads(mailboxId?: string, searchTerm?: string, quickFilters
       // Combine all conditions with AND
       const allConditions = [...mailboxConditions, ...(searchFilter ? [searchFilter] : [])];
       const baseFilter = allConditions.length === 0
-        ? {}
+        ? null
         : allConditions.length === 1
           ? allConditions[0]
           : { allOf: allConditions };
 
       // Merge quick filters (AND) with the base filter
-      const filter = quickFilters && Object.keys(quickFilters).length > 0
-        ? { allOf: [baseFilter, ...(quickFilters.allOf || [quickFilters])] }
-        : baseFilter;
+      let filter: any;
+      if (quickFilters && Object.keys(quickFilters).length > 0) {
+        const quickConditions = quickFilters.allOf || [quickFilters];
+        if (baseFilter) {
+          filter = { allOf: [baseFilter, ...quickConditions] };
+        } else {
+          // No base filter (e.g. "All Mail" with no search) — use quick filters only
+          filter = quickConditions.length === 1 ? quickConditions[0] : { allOf: quickConditions };
+        }
+      } else {
+        filter = baseFilter || {};
+      }
 
       // 1. Get thread IDs matching criteria
       const queryResponse = await jmapClient.request([
@@ -812,3 +821,24 @@ export function useCompose() {
      onSuccess: () => invalidateEmailQueries(queryClient)
    });
  }
+
+/**
+ * Fetch a single email with full body content.
+ * Used for on-demand fetching (e.g., context menu reply when detail not cached).
+ */
+export async function fetchEmailWithBody(emailId: string): Promise<any | null> {
+  const accountId = jmapClient.getPrimaryAccount();
+  if (!accountId) return null;
+
+  const response = await jmapClient.request([
+    ['Email/get', {
+      accountId,
+      ids: [emailId],
+      properties: ['id', 'threadId', 'mailboxIds', 'from', 'to', 'cc', 'bcc', 'subject', 'bodyValues', 'textBody', 'htmlBody', 'receivedAt', 'keywords', 'hasAttachment', 'attachments', 'bodyStructure', 'blobId', 'header:Disposition-Notification-To:asText'],
+      fetchAllBodyValues: true,
+    }, '0'],
+  ]);
+
+  const list = response.methodResponses[0][1].list;
+  return list?.[0] || null;
+}

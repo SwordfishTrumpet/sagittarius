@@ -20,9 +20,10 @@ interface Recipient {
 interface ComposerProps {
   onClose: () => void;
   replyTo?: any;
+  isMobile?: boolean;
 }
 
-export function Composer({ onClose, replyTo }: ComposerProps) {
+export function Composer({ onClose, replyTo, isMobile = false }: ComposerProps) {
   const [isMinimized, setIsMinimized] = useState(false);
   const [to, setTo] = useState<string>(() => {
     if (!replyTo) return '';
@@ -204,6 +205,9 @@ export function Composer({ onClose, replyTo }: ComposerProps) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.15 }}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="composer-title"
       className="fixed inset-0 z-[200] flex items-center justify-center bg-black/30 backdrop-blur-[2px]"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
@@ -212,7 +216,11 @@ export function Composer({ onClose, replyTo }: ComposerProps) {
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.97, y: 5 }}
         transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-        className="bg-white rounded-xl shadow-[0_25px_60px_rgba(0,0,0,0.15),0_10px_20px_rgba(0,0,0,0.08)] border border-[#E5E5EA] flex flex-col overflow-hidden w-[640px] max-w-[calc(100vw-48px)] h-[70vh] max-h-[720px] min-h-[480px]"
+        className={`bg-white flex flex-col overflow-hidden ${
+          isMobile 
+            ? 'w-full h-full rounded-none' 
+            : 'rounded-xl shadow-[0_25px_60px_rgba(0,0,0,0.15),0_10px_20px_rgba(0,0,0,0.08)] border border-[#E5E5EA] w-[640px] max-w-[calc(100vw-48px)] h-[70vh] max-h-[720px] min-h-[480px]'
+        }`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -220,15 +228,16 @@ export function Composer({ onClose, replyTo }: ComposerProps) {
           {/* Close button */}
           <button
             onClick={onClose}
+            aria-label="Close composer"
             className="w-7 h-7 rounded-full bg-[#E5E5EA] hover:bg-[#D1D1D6] flex items-center justify-center transition-colors"
           >
             <X size={12} strokeWidth={2.5} className="text-[#636366]" />
           </button>
 
           {/* Title */}
-          <span className="flex-1 text-center text-[15px] font-semibold text-[#1C1C1E] truncate">
+          <h2 id="composer-title" className="flex-1 text-center text-[15px] font-semibold text-[#1C1C1E] truncate">
             {subject || 'New Message'}
-          </span>
+          </h2>
 
           {/* Right side: minimize + send */}
           <div className="flex items-center gap-1.5">
@@ -286,12 +295,13 @@ export function Composer({ onClose, replyTo }: ComposerProps) {
           </div>
         </header>
 
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div role="form" aria-label="Compose email" className="flex-1 flex flex-col overflow-hidden">
           {/* From identity selector */}
           {identities && identities.length > 1 && (
             <div className="px-5 py-2 border-b border-[#E5E5EA] flex items-center gap-2 shrink-0">
-              <span className="text-[#8E8E93] w-14 font-medium text-[13px]">From:</span>
+              <label htmlFor="composer-from" className="text-[#8E8E93] w-14 font-medium text-[13px]">From:</label>
               <select
+                id="composer-from"
                 value={selectedIdentity?.id || ''}
                 onChange={(e) => setSelectedIdentityId(e.target.value)}
                 className="flex-1 border-none focus:ring-0 focus:outline-none text-[14px] py-1 bg-transparent cursor-pointer appearance-none"
@@ -302,23 +312,30 @@ export function Composer({ onClose, replyTo }: ComposerProps) {
                   </option>
                 ))}
               </select>
-              <ChevronDown className="w-3.5 h-3.5 text-[#8E8E93] pointer-events-none" />
+              <ChevronDown aria-hidden="true" className="w-3.5 h-3.5 text-[#8E8E93] pointer-events-none" />
             </div>
           )}
 
           {/* To field */}
           <div className="px-5 py-2 border-b border-[#E5E5EA] flex items-center gap-2 shrink-0">
-            <span className="text-[#8E8E93] w-14 font-medium text-[13px]">To:</span>
+            <label htmlFor="composer-to" className="text-[#8E8E93] w-14 font-medium text-[13px]">
+              <span aria-hidden="true">To:</span>
+              <span className="sr-only">Recipients (required)</span>
+            </label>
             <input 
+              id="composer-to"
               value={to} 
               onChange={e => setTo(e.target.value)} 
               className="flex-1 border-none focus:ring-0 focus:outline-none text-[14px] py-1 bg-transparent" 
               placeholder="Recipients"
+              aria-required="true"
               autoFocus 
             />
             {!showCcBcc && (
               <button 
                 onClick={() => setShowCcBcc(true)}
+                aria-expanded="false"
+                aria-controls="cc-bcc-fields"
                 className="text-[#007AFF] text-[12px] font-semibold hover:underline transition-opacity"
               >
                 Cc/Bcc
@@ -327,44 +344,51 @@ export function Composer({ onClose, replyTo }: ComposerProps) {
           </div>
 
           {/* Cc/Bcc fields */}
-          {showCcBcc && (
-            <>
-              <div className="px-5 py-2 border-b border-[#E5E5EA] flex items-center gap-2 animate-in fade-in duration-200 shrink-0">
-                <span className="text-[#8E8E93] w-14 font-medium text-[13px]">Cc:</span>
-                <input 
-                  value={cc} 
-                  onChange={e => setCc(e.target.value)} 
-                  className="flex-1 border-none focus:ring-0 focus:outline-none text-[14px] py-1 bg-transparent" 
-                />
-              </div>
-              <div className="px-5 py-2 border-b border-[#E5E5EA] flex items-center gap-2 animate-in fade-in duration-200 shrink-0">
-                <span className="text-[#8E8E93] w-14 font-medium text-[13px]">Bcc:</span>
-                <input 
-                  value={bcc} 
-                  onChange={e => setBcc(e.target.value)} 
-                  className="flex-1 border-none focus:ring-0 focus:outline-none text-[14px] py-1 bg-transparent" 
-                />
-              </div>
-            </>
-          )}
+          <div id="cc-bcc-fields" role="group" aria-label="Cc and Bcc recipients">
+            {showCcBcc && (
+              <>
+                <div className="px-5 py-2 border-b border-[#E5E5EA] flex items-center gap-2 animate-in fade-in duration-200 shrink-0">
+                  <label htmlFor="composer-cc" className="text-[#8E8E93] w-14 font-medium text-[13px]">Cc:</label>
+                  <input 
+                    id="composer-cc"
+                    value={cc} 
+                    onChange={e => setCc(e.target.value)} 
+                    className="flex-1 border-none focus:ring-0 focus:outline-none text-[14px] py-1 bg-transparent" 
+                  />
+                </div>
+                <div className="px-5 py-2 border-b border-[#E5E5EA] flex items-center gap-2 animate-in fade-in duration-200 shrink-0">
+                  <label htmlFor="composer-bcc" className="text-[#8E8E93] w-14 font-medium text-[13px]">Bcc:</label>
+                  <input 
+                    id="composer-bcc"
+                    value={bcc} 
+                    onChange={e => setBcc(e.target.value)} 
+                    className="flex-1 border-none focus:ring-0 focus:outline-none text-[14px] py-1 bg-transparent" 
+                  />
+                </div>
+              </>
+            )}
+          </div>
 
           {/* Subject field */}
           <div className="px-5 py-2 border-b border-[#E5E5EA] flex items-center gap-2 shrink-0">
-            <span className="text-[#8E8E93] w-14 font-medium text-[13px]">Subject:</span>
+            <label htmlFor="composer-subject" className="text-[#8E8E93] w-14 font-medium text-[13px]">Subject:</label>
             <input 
+              id="composer-subject"
               value={subject} 
               onChange={e => setSubject(e.target.value)} 
               className="flex-1 border-none focus:ring-0 focus:outline-none text-[14px] py-1 font-semibold bg-transparent" 
+              aria-required="true"
             />
           </div>
 
           {/* Formatting toolbar — always visible */}
           {editor && (
-            <div className="px-5 py-1.5 border-b border-[#E5E5EA] flex items-center gap-1 shrink-0 bg-[#FAFAFA]">
+            <div role="toolbar" aria-label="Text formatting" className="px-5 py-1.5 border-b border-[#E5E5EA] flex items-center gap-1 shrink-0 bg-[#FAFAFA]">
               <input
                 ref={fileInputRef}
                 type="file"
                 multiple
+                aria-hidden="true"
                 className="hidden"
                 onChange={handleFileUpload}
                 disabled={isUploading}
@@ -373,42 +397,49 @@ export function Composer({ onClose, replyTo }: ComposerProps) {
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploading}
+                aria-label="Attach file"
                 className="p-1.5 hover:bg-black/5 rounded text-[#8E8E93] cursor-pointer transition-colors disabled:opacity-50"
               >
                 <Paperclip className={`w-3.5 h-3.5 ${isUploading ? 'animate-pulse' : ''}`} strokeWidth={1.5} />
               </button>
-              <div className="w-[1px] h-4 bg-[#E5E5EA] mx-1" />
+              <div aria-hidden="true" className="w-[1px] h-4 bg-[#E5E5EA] mx-1" />
               <ToolbarButton 
                 onClick={() => editor.chain().focus().toggleBold().run()} 
                 active={editor.isActive('bold')}
                 icon={<Bold className="w-3.5 h-3.5" />} 
+                label="Bold"
               />
               <ToolbarButton 
                 onClick={() => editor.chain().focus().toggleItalic().run()} 
                 active={editor.isActive('italic')}
                 icon={<Italic className="w-3.5 h-3.5" />} 
+                label="Italic"
               />
               <ToolbarButton 
                 onClick={() => editor.chain().focus().toggleUnderline().run()} 
                 active={editor.isActive('underline')}
                 icon={<Underline className="w-3.5 h-3.5" />} 
+                label="Underline"
               />
-              <div className="w-[1px] h-4 bg-[#E5E5EA] mx-1" />
+              <div aria-hidden="true" className="w-[1px] h-4 bg-[#E5E5EA] mx-1" />
               <ToolbarButton 
                 onClick={() => editor.chain().focus().toggleBulletList().run()} 
                 active={editor.isActive('bulletList')}
                 icon={<List className="w-3.5 h-3.5" />} 
+                label="Bullet list"
               />
               <ToolbarButton 
                 onClick={() => editor.chain().focus().toggleOrderedList().run()} 
                 active={editor.isActive('orderedList')}
                 icon={<ListOrdered className="w-3.5 h-3.5" />} 
+                label="Numbered list"
               />
-              <div className="w-[1px] h-4 bg-[#E5E5EA] mx-1" />
+              <div aria-hidden="true" className="w-[1px] h-4 bg-[#E5E5EA] mx-1" />
               <ToolbarButton 
                 onClick={setLink} 
                 active={editor.isActive('link')}
                 icon={<Link className="w-3.5 h-3.5" />} 
+                label="Insert link"
               />
             </div>
           )}
@@ -472,12 +503,15 @@ interface ToolbarButtonProps {
   onClick: () => void;
   active: boolean;
   icon: React.ReactNode;
+  label: string;
 }
 
-function ToolbarButton({ onClick, active, icon }: ToolbarButtonProps) {
+function ToolbarButton({ onClick, active, icon, label }: ToolbarButtonProps) {
   return (
     <button 
       onClick={onClick}
+      aria-label={label}
+      aria-pressed={active}
       className={`p-1.5 rounded transition-colors ${active ? 'text-[#007AFF] bg-[#007AFF]/10' : 'hover:bg-black/5 text-[#8E8E93]'}`}
     >
       {icon}

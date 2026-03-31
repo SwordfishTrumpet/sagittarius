@@ -43,22 +43,19 @@ body {
   background: #A8A8A8;
 }
 
-/* Quoted content in composer and reader */
-.ProseMirror blockquote,
-.email-content blockquote {
+/* Quoted content in composer */
+.ProseMirror blockquote {
   margin: 0;
   padding: 0 0 0 12px;
   border-left: 2px solid #007AFF;
   color: #3A3A3C;
 }
 
-.ProseMirror blockquote blockquote,
-.email-content blockquote blockquote {
+.ProseMirror blockquote blockquote {
   border-left-color: #8E8E93;
 }
 
-.ProseMirror blockquote blockquote blockquote,
-.email-content blockquote blockquote blockquote {
+.ProseMirror blockquote blockquote blockquote {
   border-left-color: #C7C7CC;
 }
 

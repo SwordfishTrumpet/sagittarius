@@ -14,14 +14,14 @@ const FILTERS = [
 
 export function FilterBar({ activeFilters, onToggleFilter }: FilterBarProps) {
   return (
-    <div className="flex gap-2 px-4 py-2 animate-in fade-in slide-in-from-top-1 duration-200">
+    <div className="flex gap-2 px-4 py-2 animate-in fade-in slide-in-from-top-1 duration-200 overflow-x-auto scrollbar-none">
       {FILTERS.map(({ key, label, icon: Icon }) => {
         const isActive = activeFilters.has(key);
         return (
           <button
             key={key}
             onClick={() => onToggleFilter(key)}
-            className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-[12px] font-semibold transition-all duration-150 ${
+            className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-[12px] font-semibold transition-all duration-150 shrink-0 ${
               isActive
                 ? 'bg-[#007AFF] text-white shadow-sm'
                 : 'bg-[#F2F2F7] text-[#8E8E93] hover:bg-[#E5E5EA]'

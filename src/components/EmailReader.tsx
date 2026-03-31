@@ -1,14 +1,15 @@
-import { useState, useEffect, useRef } from 'react'
+import { useMemo, useState } from 'react'
 import { Mail, Paperclip } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 import DOMPurify from 'dompurify'
-import { blockExternalImages, resolveCidImages, isInlineAttachment, type BlockedImageInfo } from '../utils/privacy'
+import { blockExternalImages, resolveCidImages, isInlineAttachment } from '../utils/privacy'
 import { jmapClient } from '../api/jmap'
 import { ImageApprovalBanner } from './ImageApprovalBanner'
 import { ReadReceiptBanner } from './ReadReceiptBanner'
 import { DeliveryStatus } from './DeliveryStatus'
 import { AttachmentItem } from './AttachmentItem'
+import { EmailBodyFrame } from './EmailBodyFrame'
 import { logger } from '../utils/logger'
 
 export interface EmailReaderProps {
@@ -34,30 +35,42 @@ export function EmailReader({
   sendMDN,
   updateKeywords,
 }: EmailReaderProps) {
-  // Remote image blocking state: Map of emailId -> { showRemoteImages, bannerDismissed, blockedImageInfo }
-  const [remoteImageState, setRemoteImageState] = useState<Record<string, { showRemoteImages: boolean; bannerDismissed?: boolean; blockedImageInfo?: BlockedImageInfo }>>({})
-  
-  // Ref for the email reader container — used to resolve CID inline images after render
-  const emailReaderRef = useRef<HTMLDivElement>(null);
+  const [remoteImageState, setRemoteImageState] = useState<Record<string, { showRemoteImages?: boolean; bannerDismissed?: boolean }>>({})
 
-  const sanitizedHtml = (email: any): string | null => {
+  const formatReceivedAt = (value: string | undefined): string => {
+    if (!value) return 'Unknown date'
+
+    try {
+      const date = new Date(value)
+      if (Number.isNaN(date.getTime())) return 'Unknown date'
+      return format(date, 'MMMM d, yyyy · h:mm a')
+    } catch {
+      return 'Unknown date'
+    }
+  }
+
+  const escapeHtml = (value: string): string => (
+    value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;')
+  );
+
+  const getProcessedHtml = (email: any): { blockedImageCount: number; displayHtml: string } | null => {
     if (!email) return null;
     try {
       const emailState = remoteImageState[email.id];
-      
-      // If images were previously blocked and user approved them,
-      // return the cached original (pre-blocked) sanitized HTML directly.
-      if (emailState?.showRemoteImages && emailState?.blockedImageInfo?.originalHtml) {
-        return emailState.blockedImageInfo.originalHtml;
-      }
 
       let html = '';
-      if (email.htmlBody && email.htmlBody.length > 0) {
+      const isHtmlEmail = email.htmlBody && email.htmlBody.length > 0;
+      if (isHtmlEmail) {
         const partId = email.htmlBody[0].partId;
         html = email.bodyValues?.[partId]?.value || '';
       } else if (email.textBody && email.textBody.length > 0) {
         const partId = email.textBody[0].partId;
-        html = `<pre style="font-family: inherit; white-space: pre-wrap;">${email.bodyValues?.[partId]?.value || ''}</pre>`;
+        html = `<pre style="white-space: pre-wrap; margin: 0;">${escapeHtml(email.bodyValues?.[partId]?.value || '')}</pre>`;
       }
 
       // Resolve CID inline images BEFORE DOMPurify (DOMPurify strips cid: protocol)
@@ -67,94 +80,52 @@ export function EmailReader({
 
       // Sanitize with DOMPurify — allow data-cid-src for post-render auth fetch
       let sanitized = DOMPurify.sanitize(html, {
-        ADD_TAGS: ['iframe'],
-        ADD_ATTR: ['target', 'data-blocked-src', 'data-cid-src']
+        ADD_ATTR: ['target', 'data-blocked-src', 'data-cid-src', 'data-blocked-style']
       });
 
-      // Block external images — email hasn't been approved yet
       const blockedInfo = blockExternalImages(sanitized);
-      
-      // Store the blocked image info for the banner (bounded cache — max 50)
-      if (blockedInfo.count > 0 && !emailState) {
-        setRemoteImageState(prev => {
-          if (prev[email.id]) return prev;
-          const next: Record<string, { showRemoteImages: boolean; bannerDismissed?: boolean; blockedImageInfo?: BlockedImageInfo }> = {
-            ...prev,
-            [email.id]: {
-              showRemoteImages: false,
-              blockedImageInfo: blockedInfo
-            }
-          };
-          const keys = Object.keys(next);
-          if (keys.length > 50) {
-            keys.slice(0, keys.length - 50).forEach(k => delete next[k]);
-          }
-          return next;
-        });
-      }
-      
-      return blockedInfo.count > 0 ? blockedInfo.modifiedHtml : sanitized;
+
+      return {
+        blockedImageCount: blockedInfo.count,
+        displayHtml: emailState?.showRemoteImages || blockedInfo.count === 0
+          ? sanitized
+          : blockedInfo.modifiedHtml,
+      };
     } catch (err) {
       logger.error('Failed to sanitize email HTML:', err);
-      return '<div style="padding:20px;color:#8E8E93;font-style:italic;">Unable to display this message.</div>';
+      return {
+        blockedImageCount: 0,
+        displayHtml: '<div style="padding:20px;color:#8E8E93;font-style:italic;">Unable to display this message.</div>',
+      };
     }
   };
 
   const handleLoadRemoteImages = (emailId: string) => {
-    setRemoteImageState(prev => ({
-      ...prev,
-      [emailId]: {
-        ...prev[emailId],
-        showRemoteImages: true
+    setRemoteImageState(prev => {
+      const next = {
+        ...prev,
+        [emailId]: {
+          ...prev[emailId],
+          showRemoteImages: true,
+          bannerDismissed: false,
+        }
+      };
+      const keys = Object.keys(next);
+      if (keys.length > 50) {
+        keys.slice(0, keys.length - 50).forEach(k => delete next[k]);
       }
-    }));
+      return next;
+    });
   };
 
-  // Post-render effect: fetch CID inline images with auth headers and replace src with blob: URLs.
-  useEffect(() => {
-    const container = emailReaderRef.current;
-    if (!container) return;
-
-    const authHeader = jmapClient.getAuthHeader();
-    if (!authHeader) return;
-
-    const cidImages = container.querySelectorAll<HTMLImageElement>('img[data-cid-src]');
-    if (cidImages.length === 0) return;
-
-    let cancelled = false;
-    const objectUrls: string[] = [];
-
-    cidImages.forEach(img => {
-      const downloadUrl = img.getAttribute('src');
-      if (!downloadUrl || downloadUrl.startsWith('blob:')) return;
-
-      img.style.opacity = '0.5';
-
-      fetch(downloadUrl, {
-        headers: { 'Authorization': authHeader },
-      })
-        .then(res => {
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          return res.blob();
-        })
-        .then(blob => {
-          if (cancelled) return;
-          const blobUrl = URL.createObjectURL(blob);
-          objectUrls.push(blobUrl);
-          img.src = blobUrl;
-          img.style.opacity = '';
-        })
-        .catch(() => {
-          if (cancelled) return;
-          img.style.opacity = '';
-        });
-    });
-
-    return () => {
-      cancelled = true;
-      objectUrls.forEach(url => URL.revokeObjectURL(url));
-    };
-  }, [threadEmails, selectedEmailId, remoteImageState]);
+  const processedEmails = useMemo(
+    () => (threadEmails ?? []).map((email: any) => ({
+      email,
+      emailImageState: remoteImageState[email.id],
+      processedHtml: getProcessedHtml(email),
+    })),
+    [threadEmails, remoteImageState],
+  )
 
   if (isEmailDetailError) {
     return (
@@ -189,11 +160,10 @@ export function EmailReader({
   }
 
   return (
-    <article ref={emailReaderRef} className="flex-1 overflow-y-auto bg-white select-text">
-      <div className="max-w-[850px] mx-auto w-full p-8 md:p-12 animate-in fade-in duration-300 space-y-12">
-        {threadEmails.map((email: any, index: number) => {
-          const emailImageState = remoteImageState[email.id];
-          const blockedImageCount = emailImageState?.blockedImageInfo?.count || 0;
+    <article className="flex-1 overflow-y-auto bg-white select-text">
+      <div className="max-w-[850px] mx-auto w-full p-8 md:p-12 animate-in fade-in duration-300">
+        {processedEmails.map(({ email, emailImageState, processedHtml }, index: number) => {
+          const blockedImageCount = processedHtml?.blockedImageCount || 0;
           const isImageBannerDismissed = emailImageState?.showRemoteImages || emailImageState?.bannerDismissed || false;
           
           return (
@@ -202,7 +172,7 @@ export function EmailReader({
                 <div className="flex items-start justify-between mb-6 gap-4">
                     <h1 className="text-[22px] font-bold text-[#1C1C1E] leading-snug tracking-tight">{email.subject || '(No Subject)'}</h1>
                     <time className="text-[13px] text-[#8E8E93] font-medium pt-1 shrink-0">
-                      {format(new Date(email.receivedAt), 'MMMM d, yyyy · h:mm a')}
+                      {formatReceivedAt(email.receivedAt)}
                     </time>
                 </div>
                 <div className="flex items-center gap-4">
@@ -269,11 +239,9 @@ export function EmailReader({
                 />
               )}
 
-              <div
-                key={`${email.id}-${emailImageState?.showRemoteImages ? 'img' : 'noimg'}`}
-                className="email-content text-[15px] leading-relaxed text-[#1C1C1E] font-sans select-text cursor-text"
-                dangerouslySetInnerHTML={{ __html: sanitizedHtml(email) || '' }}
-              />
+              <div className="email-content select-text cursor-text">
+                <EmailBodyFrame html={processedHtml?.displayHtml || ''} />
+              </div>
 
               {(() => {
                 const visibleAttachments = email.attachments?.filter((a: any) => !isInlineAttachment(a)) || [];
