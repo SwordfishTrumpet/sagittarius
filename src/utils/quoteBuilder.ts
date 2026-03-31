@@ -26,6 +26,10 @@ function formatAddressList(addrs?: { name?: string; email: string }[]): string {
   return addrs.map(formatAddress).join(', ');
 }
 
+function escapeHtml(value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 /**
  * Extract body HTML from an email object.
  * Prefers HTML body, falls back to plain text wrapped in <pre>.
@@ -39,8 +43,8 @@ function getEmailBodyHtml(email: EmailForQuote): string {
   if (email.textBody && email.textBody.length > 0) {
     const partId = email.textBody[0].partId;
     const text = email.bodyValues?.[partId]?.value || '';
-    const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    return `<pre style="font-family: inherit; white-space: pre-wrap;">${escaped}</pre>`;
+    const escaped = escapeHtml(text);
+    return `<pre style="font-family: inherit; white-space: pre-wrap; margin: 0;">${escaped}</pre>`;
   }
   return '';
 }
@@ -62,8 +66,7 @@ export function buildReplyQuote(email: EmailForQuote): string {
     : 'Unknown';
 
   return [
-    '<br/><br/>',
-    '<div id="quoted-content">',
+    '<div id="quoted-content" data-sagittarius-quote="1" style="margin-top: 16px;">',
     `  <div style="color: #8E8E93; font-size: 13px; margin-bottom: 8px;">`,
     `    On ${dateStr} at ${timeStr}, ${senderStr} wrote:`,
     `  </div>`,
@@ -88,7 +91,7 @@ export function buildForwardQuote(email: EmailForQuote): string {
   const headers: string[] = [
     `<b>From:</b> ${formatAddressList(email.from)}`,
     `<b>Date:</b> ${dateStr} at ${timeStr}`,
-    `<b>Subject:</b> ${email.subject || '(No Subject)'}`,
+    `<b>Subject:</b> ${escapeHtml(email.subject || '(No Subject)')}`,
     `<b>To:</b> ${formatAddressList(email.to)}`,
   ];
 
@@ -97,10 +100,9 @@ export function buildForwardQuote(email: EmailForQuote): string {
   }
 
   return [
-    '<br/><br/>',
-    '<div id="quoted-content">',
+    '<div id="quoted-content" data-sagittarius-quote="1" style="margin-top: 16px;">',
     `  <div style="color: #8E8E93; font-size: 13px; border-top: 1px solid #E5E5E5; padding-top: 12px; margin-bottom: 8px;">`,
-    `    <b>Begin forwarded message:</b><br/><br/>`,
+    `    <b>Begin forwarded message:</b><br/>`,
     `    ${headers.join('<br/>')}`,
     `  </div>`,
     `  <div>${body}</div>`,
