@@ -58,6 +58,24 @@ export function EmailReader({
       .replace(/'/g, '&#39;')
   );
 
+  const normalizeSagittariusQuoteSpacing = (html: string): string => {
+    if (/data-sagittarius-quote=["']1["']/i.test(html)) {
+      return html
+        .replace(/(<br\s*\/?>\s*){2,}(?=\s*<div[^>]*data-sagittarius-quote=["']1["'])/gi, '')
+        .replace(/(<b>Begin forwarded message:<\/b>)\s*(<br\s*\/?>\s*){2,}/gi, '$1<br/>')
+    }
+
+    return html
+      .replace(
+        /(<br\s*\/?>\s*){2,}(?=\s*<div id=["']quoted-content["']>\s*<div style=["']color: #8E8E93; font-size: 13px; margin-bottom: 8px;["'])/gi,
+        '',
+      )
+      .replace(
+        /(<div id=["']quoted-content["']>\s*<div style=["']color: #8E8E93; font-size: 13px; border-top: 1px solid #E5E5E5; padding-top: 12px; margin-bottom: 8px;["']>\s*<b>Begin forwarded message:<\/b>)\s*(<br\s*\/?>\s*){2,}/gi,
+        '$1<br/>',
+      )
+  }
+
   const getProcessedHtml = (email: any): { blockedImageCount: number; displayHtml: string } | null => {
     if (!email) return null;
     try {
@@ -70,7 +88,7 @@ export function EmailReader({
         html = email.bodyValues?.[partId]?.value || '';
       } else if (email.textBody && email.textBody.length > 0) {
         const partId = email.textBody[0].partId;
-        html = `<pre style="white-space: pre-wrap; margin: 0;">${escapeHtml(email.bodyValues?.[partId]?.value || '')}</pre>`;
+        html = `<pre style="font-family: inherit; white-space: pre-wrap; margin: 0;">${escapeHtml(email.bodyValues?.[partId]?.value || '')}</pre>`;
       }
 
       // Resolve CID inline images BEFORE DOMPurify (DOMPurify strips cid: protocol)
@@ -80,8 +98,10 @@ export function EmailReader({
 
       // Sanitize with DOMPurify — allow data-cid-src for post-render auth fetch
       let sanitized = DOMPurify.sanitize(html, {
-        ADD_ATTR: ['target', 'data-blocked-src', 'data-cid-src', 'data-blocked-style']
+        ADD_ATTR: ['target', 'data-blocked-src', 'data-cid-src', 'data-blocked-style', 'data-sagittarius-quote']
       });
+
+      sanitized = normalizeSagittariusQuoteSpacing(sanitized)
 
       const blockedInfo = blockExternalImages(sanitized);
 
@@ -130,7 +150,7 @@ export function EmailReader({
   if (isEmailDetailError) {
     return (
       <article className="flex-1 overflow-y-auto bg-white select-text">
-        <div className="flex flex-col items-center justify-center h-full text-center px-10">
+        <div className="flex flex-col items-center justify-center h-full text-center px-10" role="alert">
           <p className="text-lg font-medium text-[#FF3B30]">Failed to load message</p>
           <p className="text-sm text-[#8E8E93] mt-2">{emailDetailError?.message}</p>
         </div>
@@ -141,8 +161,9 @@ export function EmailReader({
   if (emailLoading) {
     return (
       <article className="flex-1 overflow-y-auto bg-white select-text">
-        <div className="flex items-center justify-center py-20 opacity-30 h-full">
+        <div className="flex items-center justify-center py-20 opacity-30 h-full" role="status" aria-live="polite">
           <div className="w-10 h-10 border-3 border-[#007AFF] border-t-transparent rounded-full animate-spin" />
+          <span className="sr-only">Loading email</span>
         </div>
       </article>
     );
@@ -167,8 +188,8 @@ export function EmailReader({
           const isImageBannerDismissed = emailImageState?.showRemoteImages || emailImageState?.bannerDismissed || false;
           
           return (
-            <div key={email.id} className={`${index > 0 ? 'pt-12 border-t border-[#F2F2F7]' : ''}`}>
-              <header className="mb-10 pb-6 border-b border-[#F2F2F7]">
+            <div key={email.id} className={`${index > 0 ? 'pt-8 border-t border-[#F2F2F7]' : ''}`}>
+              <header className="mb-6 pb-4 border-b border-[#F2F2F7]">
                 <div className="flex items-start justify-between mb-6 gap-4">
                     <h1 className="text-[22px] font-bold text-[#1C1C1E] leading-snug tracking-tight">{email.subject || '(No Subject)'}</h1>
                     <time className="text-[13px] text-[#8E8E93] font-medium pt-1 shrink-0">
@@ -176,7 +197,7 @@ export function EmailReader({
                     </time>
                 </div>
                 <div className="flex items-center gap-4">
-                    <div className="w-11 h-11 rounded-full bg-[#007AFF] shadow-sm flex items-center justify-center text-white font-bold text-[18px] shrink-0 uppercase">
+                    <div role="img" aria-label={`Avatar for ${email.from?.[0]?.name || email.from?.[0]?.email || 'unknown sender'}`} className="w-11 h-11 rounded-full bg-[#007AFF] shadow-sm flex items-center justify-center text-white font-bold text-[18px] shrink-0 uppercase">
                       {email.from?.[0]?.name?.charAt(0) || email.from?.[0]?.email?.charAt(0) || '?'}
                     </div>
                     <div className="overflow-hidden flex-1">

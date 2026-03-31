@@ -18,6 +18,15 @@ export function buildSrcDoc(html: string): string {
         padding: 0;
         background: transparent;
       }
+
+      body {
+        color: #1C1C1E;
+        font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+        font-size: 15px;
+        line-height: 1.625;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+      }
     </style>
   </head>
   <body>${html}</body>
