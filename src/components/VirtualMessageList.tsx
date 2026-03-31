@@ -1,7 +1,10 @@
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
-import { useMemo, useRef, useCallback, useEffect } from 'react';
+import { useMemo, useRef, useCallback, useEffect, useState } from 'react';
 import { Inbox } from 'lucide-react';
+import { SFReply, SFReplyAll, SFForward, SFFlag, SFArchive, SFTrash } from './SFIcon';
 import { MessageListItem } from './MessageListItem';
+import { SwipeableRow } from './SwipeableRow';
+import { ContextMenu, ContextMenuItemConfig } from './ContextMenu';
 import { AnimatePresence } from 'framer-motion';
 
 interface VirtualMessageListProps {
@@ -16,6 +19,14 @@ interface VirtualMessageListProps {
   formatMessageDate: (date: string) => string;
   removingEmailIds?: Set<string>;
   scrollToEmailId?: string | null;
+  isMobile?: boolean;
+  onSwipeArchive?: (emailId: string) => void;
+  onSwipeDelete?: (emailId: string) => void;
+  onReply?: (emailId: string) => void;
+  onReplyAll?: (emailId: string) => void;
+  onForward?: (emailId: string) => void;
+  onArchive?: (emailId: string) => void;
+  onDelete?: (emailId: string) => void;
 }
 
 export const VirtualMessageList = ({
@@ -30,8 +41,83 @@ export const VirtualMessageList = ({
   formatMessageDate,
   removingEmailIds = new Set(),
   scrollToEmailId,
+  isMobile = false,
+  onSwipeArchive,
+  onSwipeDelete,
+  onReply,
+  onReplyAll,
+  onForward,
+  onArchive,
+  onDelete,
 }: VirtualMessageListProps) => {
   const virtuosoRef = useRef<VirtuosoHandle>(null);
+
+  // Context menu state
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; emailId: string } | null>(null);
+
+  const closeContextMenu = useCallback(() => setContextMenu(null), []);
+
+  // Build context menu items for the targeted email
+  const contextMenuItems: ContextMenuItemConfig[] = useMemo(() => {
+    if (!contextMenu) return [];
+    const email = emails.find((e: any) => e.id === contextMenu.emailId);
+    const isFlagged = !!email?.keywords?.['$flagged'];
+    const iconClass = 'w-4 h-4';
+    const iconStroke = 1.5;
+
+    return [
+      {
+        id: 'reply',
+        label: 'Reply',
+        icon: <SFReply className={iconClass} strokeWidth={iconStroke} />,
+        onSelect: () => onReply?.(contextMenu.emailId),
+      },
+      {
+        id: 'reply-all',
+        label: 'Reply All',
+        icon: <SFReplyAll className={iconClass} strokeWidth={iconStroke} />,
+        onSelect: () => onReplyAll?.(contextMenu.emailId),
+      },
+      {
+        id: 'forward',
+        label: 'Forward',
+        icon: <SFForward className={iconClass} strokeWidth={iconStroke} />,
+        onSelect: () => onForward?.(contextMenu.emailId),
+      },
+      {
+        id: 'flag',
+        label: isFlagged ? 'Unflag' : 'Flag',
+        icon: <SFFlag className={`${iconClass} ${isFlagged ? 'text-[#FF9500]' : ''}`} strokeWidth={iconStroke} filled={isFlagged} />,
+        onSelect: () => onToggleFlag(contextMenu.emailId, isFlagged),
+        divider: true,
+      },
+      {
+        id: 'archive',
+        label: 'Archive',
+        icon: <SFArchive className={iconClass} strokeWidth={iconStroke} />,
+        onSelect: () => onArchive?.(contextMenu.emailId),
+        divider: true,
+      },
+      {
+        id: 'trash',
+        label: 'Trash',
+        icon: <SFTrash className={iconClass} strokeWidth={iconStroke} />,
+        variant: 'destructive' as const,
+        onSelect: () => onDelete?.(contextMenu.emailId),
+      },
+    ];
+  }, [contextMenu, emails, onReply, onReplyAll, onForward, onToggleFlag, onArchive, onDelete]);
+
+  // Handle context menu open from message item
+  const handleContextMenu = useCallback(
+    (emailId: string, e: React.MouseEvent<HTMLDivElement> | { clientX: number; clientY: number; preventDefault: () => void }) => {
+      e.preventDefault();
+      // Auto-select the email that was right-clicked / long-pressed
+      onToggleSelection(emailId, false, false);
+      setContextMenu({ x: e.clientX, y: e.clientY, emailId });
+    },
+    [onToggleSelection]
+  );
 
   // Auto-scroll to selected email on keyboard navigation
   useEffect(() => {
@@ -93,12 +179,28 @@ export const VirtualMessageList = ({
   }
 
   return (
+    <>
     <Virtuoso
       ref={virtuosoRef}
       data={emailsWithMeta}
       className="flex-1 bg-[#F9F9F9] overflow-hidden"
-       itemContent={(_, email) => (
-         <div key={email.id} className="relative">
+      role="listbox"
+      aria-label="Email list"
+      aria-setsize={emailsWithMeta.length}
+       itemContent={(index, email) => (
+         <div 
+           key={email.id} 
+           role="option"
+           aria-selected={selectedEmailId === email.id || selectedEmailIds.has(email.id)}
+           aria-setsize={emailsWithMeta.length}
+           aria-posinset={index + 1}
+           className="relative"
+         >
+           <SwipeableRow
+             enabled={isMobile}
+             onSwipeRight={onSwipeArchive ? () => onSwipeArchive(email.id) : undefined}
+             onSwipeLeft={onSwipeDelete ? () => onSwipeDelete(email.id) : undefined}
+           >
              <MessageListItem
               emailId={email.id}
               sender={email.from?.[0]?.name || email.from?.[0]?.email || 'Unknown'}
@@ -116,8 +218,10 @@ export const VirtualMessageList = ({
               isSent={email.isSent}
              onClick={(e) => handleItemClick(email, e)}
              onToggleFlag={(e) => handleToggleFlag(email, e)}
-             isRemoving={removingEmailIds.has(email.id)}
-           />
+             onContextMenu={(e) => handleContextMenu(email.id, e)}
+              isRemoving={removingEmailIds.has(email.id)}
+            />
+           </SwipeableRow>
          </div>
        )}
       overscan={10}
@@ -131,5 +235,16 @@ export const VirtualMessageList = ({
         // Optional: track range changes for analytics or prefetching
       }}
     />
+
+    {/* Context menu for right-click / long-press on message items */}
+    {contextMenu && (
+      <ContextMenu
+        items={contextMenuItems}
+        x={contextMenu.x}
+        y={contextMenu.y}
+        onClose={closeContextMenu}
+      />
+    )}
+    </>
   );
 };

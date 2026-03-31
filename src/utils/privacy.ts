@@ -52,44 +52,50 @@ function findExternalImages(html: string): string[] {
 export function blockExternalImages(html: string): BlockedImageInfo {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
-  const images = Array.from(doc.querySelectorAll('img'));
-  
   let blockedCount = 0;
-  
+
+  const getPlaceholder = (width: string, height: string) => (
+    `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='${width}' height='${height}'%3E%3Crect fill='%23F2F2F7' width='100%25' height='100%25' rx='8'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' font-size='11' fill='%238E8E93' font-family='system-ui'%3E🛡 Image blocked%3C/text%3E%3C/svg%3E`
+  );
+
+  const images = Array.from(doc.querySelectorAll('img'));
   images.forEach(img => {
     const src = img.getAttribute('src');
-    if (src && isExternalImage(src)) {
-      // Move src to data-blocked-src
-      img.setAttribute('data-blocked-src', src);
-      img.removeAttribute('src');
-      // Show a visible placeholder with shield icon
-      const width = img.getAttribute('width') || '120';
-      const height = img.getAttribute('height') || '80';
-      img.setAttribute('src', `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='${width}' height='${height}'%3E%3Crect fill='%23F2F2F7' width='100%25' height='100%25' rx='8'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' font-size='11' fill='%238E8E93' font-family='system-ui'%3E🛡 Image blocked%3C/text%3E%3C/svg%3E`);
-      img.setAttribute('style', `${img.getAttribute('style') || ''};border:1px dashed #C7C7CC;border-radius:8px;`);
-      blockedCount++;
+    if (!src || !isExternalImage(src)) return;
+
+    blockedCount += 1;
+
+    const width = img.getAttribute('width') || String(img.width || 120);
+    const height = img.getAttribute('height') || String(img.height || 80);
+    const style = img.getAttribute('style') || '';
+    const stylePrefix = style && !style.trim().endsWith(';') ? `${style};` : style;
+
+    img.setAttribute('data-blocked-src', src);
+    img.setAttribute('src', getPlaceholder(width, height));
+    img.setAttribute('style', `${stylePrefix}border:1px dashed #C7C7CC;border-radius:8px;`);
+  });
+
+  const styledElements = Array.from(doc.querySelectorAll<HTMLElement>('[style]'));
+  styledElements.forEach(el => {
+    const style = el.getAttribute('style') || '';
+    if (!/url\s*\(\s*['"]?(?:https?:)?\/\//i.test(style)) return;
+
+    const blocked = style.replace(
+      /url\s*\(\s*['"]?((?:https?:)?\/\/[^'")\s]+)['"]?\s*\)/gi,
+      'url(data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7)',
+    );
+
+    if (blocked !== style) {
+      blockedCount += 1
+      el.setAttribute('data-blocked-style', style);
+      el.setAttribute('style', blocked);
     }
   });
 
-  // Also block CSS background images in style attributes
-  const allElements = Array.from(doc.querySelectorAll('[style]'));
-  allElements.forEach(el => {
-    const style = el.getAttribute('style') || '';
-    if (/url\s*\(\s*['"]?https?:\/\//i.test(style)) {
-      const blocked = style.replace(/url\s*\(\s*['"]?(https?:\/\/[^'")\s]+)['"]?\s*\)/gi, 'url(data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7)');
-      el.setAttribute('data-blocked-style', style);
-      el.setAttribute('style', blocked);
-      blockedCount++;
-    }
-  });
-  
-  // Serialize back to HTML string
-  const modifiedHtml = doc.body.innerHTML;
-  
   return {
     count: blockedCount,
     originalHtml: html,
-    modifiedHtml,
+    modifiedHtml: doc.body.innerHTML,
   };
 }
 

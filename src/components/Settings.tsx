@@ -14,6 +14,7 @@ import {
 interface SettingsProps {
   isOpen: boolean;
   onClose: () => void;
+  isMobile?: boolean;
 }
 
 type Category = 'general' | 'vacation' | 'identities' | 'filters';
@@ -111,7 +112,7 @@ function GeneralSettings() {
   );
 }
 
-export function Settings({ isOpen, onClose }: SettingsProps) {
+export function Settings({ isOpen, onClose, isMobile = false }: SettingsProps) {
   const [selected, setSelected] = useState<Category>('general');
 
   const handleKey = useCallback(
@@ -132,19 +133,27 @@ export function Settings({ isOpen, onClose }: SettingsProps) {
   return (
     /* Overlay */
     <div
-      className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-start justify-center overflow-y-auto py-8"
+      className={`fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-start justify-center overflow-y-auto ${isMobile ? 'py-0' : 'py-8'}`}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       {/* Modal container */}
       <div
-        className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 flex overflow-hidden"
-        style={{ height: 'calc(100vh - 64px)', maxHeight: 680 }}
+        className={`relative bg-white shadow-2xl w-full flex overflow-hidden ${
+          isMobile 
+            ? 'flex-col h-full max-w-full rounded-none' 
+            : 'rounded-2xl max-w-4xl mx-4'
+        }`}
+        style={isMobile ? undefined : { height: 'calc(100vh - 64px)', maxHeight: 680 }}
       >
-        {/* Left sidebar */}
-        <nav className="w-[200px] shrink-0 bg-[#F2F2F7] border-r border-[#E5E5EA] flex flex-col py-4">
-          <div className="flex items-center justify-between px-4 pb-3">
+        {/* Category nav: horizontal tabs on mobile, left sidebar on desktop */}
+        <nav className={`shrink-0 bg-[#F2F2F7] flex ${
+          isMobile 
+            ? 'flex-col border-b border-[#E5E5EA] py-3' 
+            : 'flex-col w-[200px] border-r border-[#E5E5EA] py-4'
+        }`}>
+          <div className={`flex items-center justify-between ${isMobile ? 'px-4 pb-2' : 'px-4 pb-3'}`}>
             <p className="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wide">
               Settings
             </p>
@@ -156,25 +165,29 @@ export function Settings({ isOpen, onClose }: SettingsProps) {
               <X size={13} strokeWidth={2} className="text-[#636366]" />
             </button>
           </div>
-          {CATEGORIES.map(({ id, label, Icon }) => (
-            <button
-              key={id}
-              onClick={() => setSelected(id)}
-              className={`flex items-center gap-2.5 px-4 py-2.5 text-[14px] font-medium rounded-lg mx-2 transition-colors ${
-                selected === id
-                  ? 'bg-white text-[#007AFF] shadow-sm'
-                  : 'text-[#1C1C1E] hover:bg-white/60'
-              }`}
-            >
-              <Icon
-                width={16}
-                height={16}
-                strokeWidth={1.5}
-                className={selected === id ? 'text-[#007AFF]' : 'text-[#8E8E93]'}
-              />
-              {label}
-            </button>
-          ))}
+          <div className={isMobile ? 'flex gap-1 px-2 overflow-x-auto' : ''}>
+            {CATEGORIES.map(({ id, label, Icon }) => (
+              <button
+                key={id}
+                onClick={() => setSelected(id)}
+                className={`flex items-center gap-2.5 text-[14px] font-medium rounded-lg transition-colors ${
+                  isMobile ? 'px-3 py-2 shrink-0' : 'px-4 py-2.5 mx-2'
+                } ${
+                  selected === id
+                    ? 'bg-white text-[#007AFF] shadow-sm'
+                    : 'text-[#1C1C1E] hover:bg-white/60'
+                }`}
+              >
+                <Icon
+                  width={16}
+                  height={16}
+                  strokeWidth={1.5}
+                  className={selected === id ? 'text-[#007AFF]' : 'text-[#8E8E93]'}
+                />
+                {label}
+              </button>
+            ))}
+          </div>
         </nav>
 
         {/* Right content area */}

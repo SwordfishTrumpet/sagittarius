@@ -2,18 +2,22 @@ export interface ActionButtonProps {
   icon: React.ReactNode
   label: string
   disabled?: boolean
+  pressed?: boolean
   onClick?: () => void
 }
 
-export function ActionButton({ icon, label, disabled = false, onClick }: ActionButtonProps) {
+export function ActionButton({ icon, label, disabled = false, pressed, onClick }: ActionButtonProps) {
   return (
     <button 
       onClick={onClick}
-      className="flex flex-col items-center gap-1 text-[#007AFF] hover:opacity-70 disabled:opacity-20 disabled:grayscale transition-all" 
+      aria-label={label}
+      aria-pressed={pressed}
+      aria-disabled={disabled}
+      className="flex flex-col items-center gap-1 text-[#007AFF] hover:opacity-70 disabled:opacity-20 disabled:grayscale transition-all focus:outline-none focus:ring-2 focus:ring-[#007AFF]/50 rounded-md" 
       disabled={disabled}
     >
-      <span>{icon}</span>
-      <span className="text-[9px] font-bold uppercase tracking-wider">{label}</span>
+      <span aria-hidden="true">{icon}</span>
+      <span aria-hidden="true" className="text-[9px] font-bold uppercase tracking-wider">{label}</span>
     </button>
   )
 }

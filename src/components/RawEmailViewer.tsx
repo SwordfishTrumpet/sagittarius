@@ -35,7 +35,7 @@ function renderHeaders(headers: { name: string; value: string }[] | undefined) {
             key={i}
             className={i % 2 === 0 ? 'bg-white' : 'bg-[#F9F9FB]'}
           >
-            <td className="px-4 py-2 font-semibold text-[#1C1C1E] align-top whitespace-nowrap w-52 border-r border-[#E5E5EA]">
+            <td className="px-3 sm:px-4 py-2 font-semibold text-[#1C1C1E] align-top whitespace-nowrap w-28 sm:w-52 border-r border-[#E5E5EA]">
               {h.name}
             </td>
             <td className="px-4 py-2 text-[#3A3A3C] break-all font-mono">
@@ -158,14 +158,14 @@ export function RawEmailViewer({ blobId, onClose }: RawEmailViewerProps) {
   return (
     /* Overlay */
     <div
-      className="fixed inset-0 z-[70] bg-black/40 backdrop-blur-sm flex items-center justify-center p-6"
+      className="fixed inset-0 z-[70] bg-black/40 backdrop-blur-sm flex items-center justify-center p-0 sm:p-6"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       {/* Modal */}
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col overflow-hidden"
-        style={{ height: 'calc(100vh - 80px)', maxHeight: 780 }}
+      <div className="bg-white sm:rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col overflow-hidden h-full sm:h-auto"
+        style={{ maxHeight: typeof window !== 'undefined' && window.innerWidth < 640 ? '100%' : 'calc(100vh - 80px)' }}
       >
         {/* Title bar */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-[#E5E5EA] bg-[#F2F2F7]/60 shrink-0">
@@ -173,7 +173,7 @@ export function RawEmailViewer({ blobId, onClose }: RawEmailViewerProps) {
             <h2 className="text-[15px] font-semibold text-[#1C1C1E]">
               Raw Email
             </h2>
-            <p className="text-[11px] text-[#8E8E93] font-mono mt-0.5 truncate max-w-xs">
+            <p className="text-[11px] text-[#8E8E93] font-mono mt-0.5 truncate max-w-[60vw] sm:max-w-xs">
               {blobId}
             </p>
           </div>
@@ -187,7 +187,7 @@ export function RawEmailViewer({ blobId, onClose }: RawEmailViewerProps) {
         </div>
 
         {/* Tab bar */}
-        <div className="flex items-center gap-1 px-4 py-2 border-b border-[#E5E5EA] bg-white shrink-0">
+        <div className="flex items-center gap-1 px-4 py-2 border-b border-[#E5E5EA] bg-white shrink-0 overflow-x-auto">
           {TABS.map((tab) => (
             <button
               key={tab.id}

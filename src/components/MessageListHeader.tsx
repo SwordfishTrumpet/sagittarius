@@ -1,9 +1,10 @@
-import { Search, Filter, Square, ChevronRight, X } from 'lucide-react'
+import { Search, Filter, Square, ChevronRight, X, Menu } from 'lucide-react'
 import { FilterBar } from './FilterBar'
 
 export interface MessageListHeaderProps {
   title: string
   isSidebarCollapsed: boolean
+  isMobile?: boolean
   emails: any[] | undefined
   selectedEmailIds: Set<string>
   searchTerm: string
@@ -21,6 +22,7 @@ export interface MessageListHeaderProps {
 export function MessageListHeader({
   title,
   isSidebarCollapsed,
+  isMobile = false,
   emails,
   selectedEmailIds,
   searchTerm,
@@ -41,7 +43,15 @@ export function MessageListHeader({
     <header className="px-4 py-3 border-b border-[#E5E5E5] flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          {isSidebarCollapsed && (
+          {isMobile ? (
+            <button
+              onClick={onShowSidebar}
+              className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors -ml-1"
+              title="Menu"
+            >
+              <Menu className="w-5 h-5 text-[#007AFF]" strokeWidth={1.75} />
+            </button>
+          ) : isSidebarCollapsed ? (
             <button
               onClick={onShowSidebar}
               className="p-1 hover:bg-gray-100 rounded transition-colors"
@@ -49,8 +59,8 @@ export function MessageListHeader({
             >
               <ChevronRight className="w-5 h-5 text-[#8E8E93]" strokeWidth={1.5} />
             </button>
-          )}
-          {emails && emails.length > 0 && (
+          ) : null}
+          {!isMobile && emails && emails.length > 0 && (
             <button 
               onClick={() => allSelected ? onClearSelection() : onSelectAll()}
               className="p-1 hover:bg-gray-100 rounded transition-colors"
@@ -59,7 +69,7 @@ export function MessageListHeader({
               <Square className={`w-5 h-5 ${allSelected ? 'fill-[#007AFF] text-[#007AFF]' : 'text-[#8E8E93]'} stroke-[1.5]`} />
             </button>
           )}
-          <h2 className="text-[17px] font-bold truncate">
+          <h2 className={`font-bold truncate ${isMobile ? 'text-[18px]' : 'text-[17px]'}`}>
             {selectedEmailIds.size > 0 ? `${selectedEmailIds.size} selected` : title}
           </h2>
         </div>
