@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from 'react'
 import { toast } from 'sonner'
-import { useMailboxReorder } from './useJMAP'
+import { useMailboxReorder } from './jmap/useMailboxes'
 import { classifyMailboxes } from '../utils/mailboxClassifier'
 import { buildMailboxTree, type MailboxNode } from '../utils/mailboxTree'
 

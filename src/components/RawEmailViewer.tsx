@@ -1,6 +1,7 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { X, ChevronRight } from 'lucide-react';
 import { useEmailParse } from '../hooks/useEmailParse';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -120,6 +121,10 @@ function MimeNode({
 export function RawEmailViewer({ blobId, onClose }: RawEmailViewerProps) {
   const [activeTab, setActiveTab] = useState<Tab>('headers');
   const { data: email, isLoading, error } = useEmailParse(blobId);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  useFocusTrap(dialogRef, { initialFocusRef: closeButtonRef });
 
   // Escape key closes
   const handleKeyDown = useCallback(
@@ -140,6 +145,23 @@ export function RawEmailViewer({ blobId, onClose }: RawEmailViewerProps) {
     { id: 'html', label: 'HTML Source' },
     { id: 'structure', label: 'Structure' },
   ];
+
+  const handleTabKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+
+    event.preventDefault();
+
+    let nextIndex = index;
+    if (event.key === 'Home') nextIndex = 0;
+    else if (event.key === 'End') nextIndex = TABS.length - 1;
+    else if (event.key === 'ArrowRight') nextIndex = (index + 1) % TABS.length;
+    else if (event.key === 'ArrowLeft') nextIndex = (index - 1 + TABS.length) % TABS.length;
+
+    setActiveTab(TABS[nextIndex].id);
+    window.requestAnimationFrame(() => {
+      document.getElementById(`raw-email-tab-${TABS[nextIndex].id}`)?.focus();
+    });
+  };
 
   // Extract text body
   const textBody = (() => {
@@ -164,13 +186,13 @@ export function RawEmailViewer({ blobId, onClose }: RawEmailViewerProps) {
       }}
     >
       {/* Modal */}
-      <div className="bg-white sm:rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col overflow-hidden h-full sm:h-auto"
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="raw-email-title" tabIndex={-1} className="bg-white sm:rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col overflow-hidden h-full sm:h-auto"
         style={{ maxHeight: typeof window !== 'undefined' && window.innerWidth < 640 ? '100%' : 'calc(100vh - 80px)' }}
       >
         {/* Title bar */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-[#E5E5EA] bg-[#F2F2F7]/60 shrink-0">
           <div>
-            <h2 className="text-[15px] font-semibold text-[#1C1C1E]">
+            <h2 id="raw-email-title" className="text-[15px] font-semibold text-[#1C1C1E]">
               Raw Email
             </h2>
             <p className="text-[11px] text-[#8E8E93] font-mono mt-0.5 truncate max-w-[60vw] sm:max-w-xs">
@@ -178,6 +200,7 @@ export function RawEmailViewer({ blobId, onClose }: RawEmailViewerProps) {
             </p>
           </div>
           <button
+            ref={closeButtonRef}
             onClick={onClose}
             className="w-8 h-8 rounded-full bg-[#E5E5EA] hover:bg-[#D1D1D6] flex items-center justify-center transition-colors"
             aria-label="Close"
@@ -187,11 +210,17 @@ export function RawEmailViewer({ blobId, onClose }: RawEmailViewerProps) {
         </div>
 
         {/* Tab bar */}
-        <div className="flex items-center gap-1 px-4 py-2 border-b border-[#E5E5EA] bg-white shrink-0 overflow-x-auto">
-          {TABS.map((tab) => (
+        <div className="flex items-center gap-1 px-4 py-2 border-b border-[#E5E5EA] bg-white shrink-0 overflow-x-auto" role="tablist" aria-label="Raw email sections">
+          {TABS.map((tab, index) => (
             <button
               key={tab.id}
+              id={`raw-email-tab-${tab.id}`}
+              role="tab"
+              aria-selected={activeTab === tab.id}
+              aria-controls={`raw-email-panel-${tab.id}`}
+              tabIndex={activeTab === tab.id ? 0 : -1}
               onClick={() => setActiveTab(tab.id)}
+              onKeyDown={(event) => handleTabKeyDown(event, index)}
               className={`px-3.5 py-1.5 text-[13px] font-medium rounded-lg transition-colors ${
                 activeTab === tab.id
                   ? 'bg-[#007AFF] text-white shadow-sm'
@@ -204,15 +233,16 @@ export function RawEmailViewer({ blobId, onClose }: RawEmailViewerProps) {
         </div>
 
         {/* Content area */}
-        <div className="flex-1 overflow-y-auto bg-white">
+        <div className="flex-1 overflow-y-auto bg-white" id={`raw-email-panel-${activeTab}`} role="tabpanel" aria-labelledby={`raw-email-tab-${activeTab}`}>
           {isLoading && (
-            <div className="flex items-center justify-center h-full">
+            <div className="flex items-center justify-center h-full" role="status" aria-live="polite">
               <div className="w-6 h-6 border-2 border-[#007AFF] border-t-transparent rounded-full animate-spin" />
+              <span className="sr-only">Loading raw email</span>
             </div>
           )}
 
           {!isLoading && error && (
-            <div className="flex flex-col items-center justify-center h-full gap-2 text-center px-8">
+            <div className="flex flex-col items-center justify-center h-full gap-2 text-center px-8" role="alert">
               <p className="text-[15px] font-medium text-[#FF3B30]">
                 Failed to parse message
               </p>

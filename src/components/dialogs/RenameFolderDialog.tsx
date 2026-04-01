@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 interface RenameFolderDialogProps {
   isOpen: boolean;
@@ -17,6 +18,10 @@ export function RenameFolderDialog({
   isLoading = false,
 }: RenameFolderDialogProps) {
   const [newName, setNewName] = useState(folderName);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useFocusTrap(dialogRef, { isActive: isOpen, initialFocusRef: inputRef });
 
   // Sync input with the current folder name whenever the dialog opens
   useEffect(() => {
@@ -36,12 +41,13 @@ export function RenameFolderDialog({
 
   return (
     <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/30 backdrop-blur-sm">
-      <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-[#E5E5E5] max-w-md w-full mx-4">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="rename-folder-dialog-title" tabIndex={-1} className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-[#E5E5E5] max-w-md w-full mx-4">
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#E5E5E5]">
-          <h2 className="text-[17px] font-bold text-[#1C1C1E]">Rename Folder</h2>
+          <h2 id="rename-folder-dialog-title" className="text-[17px] font-bold text-[#1C1C1E]">Rename Folder</h2>
           <button
             onClick={onClose}
             className="p-1 text-[#8E8E93] hover:bg-black/5 rounded-full transition-colors"
+            aria-label="Close"
           >
             <X className="w-5 h-5" strokeWidth={2} />
           </button>
@@ -53,12 +59,13 @@ export function RenameFolderDialog({
               Folder Name
             </label>
             <input
+              ref={inputRef}
+              id="rename-folder-name"
               type="text"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder="Enter new folder name"
               className="w-full px-3 py-2 bg-[#F2F2F7] border border-[#E5E5E5] rounded-lg text-[13px] focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:bg-white transition-colors"
-              autoFocus
               disabled={isLoading}
             />
           </div>

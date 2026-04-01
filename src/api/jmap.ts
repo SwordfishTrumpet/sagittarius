@@ -10,6 +10,7 @@ export interface JMAPSession {
   downloadUrl: string;
   uploadUrl: string;
   eventSourceUrl: string;
+  webSocketUrl?: string;
   accounts: {
     [accountId: string]: {
       name: string;
@@ -28,6 +29,49 @@ export interface JMAPSession {
 export interface JMAPResponse {
   methodResponses: [string, any, string][];
   sessionState: string;
+}
+
+const configuredLoginDomain = import.meta.env.VITE_LOGIN_EMAIL_DOMAIN?.trim().replace(/^@+/, '');
+
+function getDomainLabel(domain: string): string | null {
+  const [label] = domain.split('.').map((part) => part.trim()).filter(Boolean);
+  return label || null;
+}
+
+function buildAuthVariants(rawUsername: string): string[] {
+  const username = rawUsername.trim();
+  const variants: string[] = [];
+  const seen = new Set<string>();
+  const add = (value?: string | null) => {
+    const variant = value?.trim();
+    if (!variant || seen.has(variant)) return;
+    seen.add(variant);
+    variants.push(variant);
+  };
+
+  const atIndex = username.indexOf('@');
+  const hasEmailDomain = atIndex > 0 && atIndex < username.length - 1;
+  const localPart = hasEmailDomain ? username.slice(0, atIndex) : username;
+  const emailDomain = hasEmailDomain ? username.slice(atIndex + 1) : null;
+  const aliasDomain = configuredLoginDomain && (!emailDomain || emailDomain === configuredLoginDomain)
+    ? configuredLoginDomain
+    : null;
+  const internalDomainLabel = aliasDomain ? getDomainLabel(aliasDomain) : null;
+
+  // Try the user input first, then common email/local-part aliases, then
+  // server-specific internal usernames derived from the mail domain.
+  add(username);
+  if (hasEmailDomain) {
+    add(localPart);
+  }
+  if (!hasEmailDomain && configuredLoginDomain) {
+    add(`${localPart}@${configuredLoginDomain}`);
+  }
+  if (internalDomainLabel) {
+    add(`${localPart}-${internalDomainLabel}`);
+  }
+
+  return variants;
 }
 
 class JMAPClient {
@@ -71,16 +115,12 @@ class JMAPClient {
       downloadUrl: toRelative(session.downloadUrl),
       uploadUrl: toRelative(session.uploadUrl),
       eventSourceUrl: toRelative(session.eventSourceUrl),
+      ...(session.webSocketUrl ? { webSocketUrl: toRelative(session.webSocketUrl) } : {}),
     };
   }
 
   async authenticate(username: string, password: string): Promise<JMAPSession> {
-    // Try the username as-is first, then fall back to alternate form.
-    // If "user@domain" was entered, retry with just "user" (and vice-versa).
-    const variants = [username];
-    if (username.includes('@')) {
-      variants.push(username.split('@')[0]);
-    }
+    const variants = buildAuthVariants(username);
 
     let lastError: Error | null = null;
 
@@ -98,7 +138,7 @@ class JMAPClient {
 
       if (!response.ok) {
         const errorText = await response.text();
-        logger.error(`[JMAP Auth Error] HTTP ${response.status} for "${variant}"`);
+        logger.error(`[JMAP Auth Error] HTTP ${response.status}`);
         logger.debug('[JMAP Auth Error] Response:', errorText);
         lastError = new Error('Authentication failed');
         continue; // try next variant
@@ -186,6 +226,23 @@ class JMAPClient {
 
   getEventSourceUrl(): string | null {
     return this.session?.eventSourceUrl || null;
+  }
+
+  getWebSocketUrl(): string | null {
+    const rawUrl = this.session?.webSocketUrl;
+    if (!rawUrl) return null;
+
+    if (/^wss?:\/\//i.test(rawUrl)) {
+      return rawUrl;
+    }
+
+    try {
+      const url = new URL(rawUrl, window.location.origin);
+      url.protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      return url.toString();
+    } catch {
+      return null;
+    }
   }
 
   getAuthHeader(): string | null {

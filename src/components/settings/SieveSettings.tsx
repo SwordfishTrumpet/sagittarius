@@ -200,6 +200,7 @@ export function SieveSettings() {
                   }
                   className="p-2 rounded-lg hover:bg-[#007AFF]/10 transition-colors"
                   title={script.isActive ? 'Deactivate' : 'Activate'}
+                  aria-label={script.isActive ? `Deactivate rule ${script.name}` : `Activate rule ${script.name}`}
                 >
                   {script.isActive ? (
                     <ToggleRight
@@ -219,6 +220,7 @@ export function SieveSettings() {
                   onClick={() => handleDelete(script.id, script.name)}
                   className="p-2 rounded-lg hover:bg-[#FF3B30]/10 text-[#FF3B30] transition-colors"
                   title="Delete rule"
+                  aria-label={`Delete rule ${script.name}`}
                 >
                   {deleteScript.isPending ? (
                     <RefreshCw className="w-4 h-4 animate-spin" strokeWidth={1.5} />

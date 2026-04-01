@@ -163,8 +163,9 @@ export const VirtualMessageList = ({
 
   if (isLoading && !isRefetching) {
     return (
-      <div className="flex items-center justify-center py-20 opacity-30 flex-1">
+      <div className="flex items-center justify-center py-20 opacity-30 flex-1" role="status" aria-live="polite">
         <div className="w-6 h-6 border-2 border-[#007AFF] border-t-transparent rounded-full animate-spin" />
+        <span className="sr-only">Loading messages</span>
       </div>
     );
   }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { Toaster, toast } from 'sonner'
 import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
@@ -7,11 +7,13 @@ import { Login } from './components/Login'
 import { Composer } from './components/Composer'
 import { VirtualMessageList } from './components/VirtualMessageList'
 import { jmapClient } from './api/jmap'
-import { useMailboxes, useEmailDetail, useEmailActions, useThreads, useIdentities } from './hooks/useJMAP'
+import { useMailboxes } from './hooks/jmap/useMailboxes'
+import { useEmailDetail, useThreads } from './hooks/jmap/useEmailQueries'
+import { useEmailActions } from './hooks/jmap/useEmailMutations'
+import { useIdentities } from './hooks/jmap/useIdentities'
 import { useEmailBulkActions } from './hooks/useEmailBulkActions'
 import { useFolderDialogs } from './hooks/useFolderDialogs'
 import { useCustomFolderTree } from './hooks/useCustomFolderTree'
-import { useEventSource } from './hooks/useEventSource'
 import { useQuota } from './hooks/useQuota'
 import { Settings } from './components/Settings'
 import { EmailImportZone } from './components/EmailImportZone'
@@ -24,9 +26,14 @@ import { ErrorBoundary } from './components/ErrorBoundary'
 import { Toolbar } from './components/Toolbar'
 import { EmailReader } from './components/EmailReader'
 import { Sidebar } from './components/Sidebar'
+import { ConnectionStatusBadge } from './components/ConnectionStatusBadge'
 import { MessageListHeader } from './components/MessageListHeader'
+import { LiveRegion } from './components/accessible/LiveRegion'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { formatMessageDate } from './utils/dateFormat'
+import { useNetworkStatus } from './hooks/useNetworkStatus'
+import { useOfflineSyncQueue } from './hooks/useOfflineSyncQueue'
+import { usePushConnection } from './hooks/usePushConnection'
 
 function App() {
   const [session, setSession] = useState(jmapClient.getStoredSession())
@@ -77,8 +84,9 @@ function App() {
   // Track last keyboard-navigated email for scroll-to
   const [scrollToEmailId, setScrollToEmailId] = useState<string | null>(null)
 
-  // User email for "To Me" filter
-  const userEmail = session?.username || primaryIdentity?.email || '';
+  // User email for "To Me" filter and sidebar display
+  const userEmail = primaryIdentity?.email || session?.username || '';
+  const userLabel = userEmail.includes('@') ? userEmail.split('@')[0] : (session?.username || '');
 
   // Build JMAP filter from active quick filters
   const quickJMAPFilter = useMemo(() => {
@@ -111,14 +119,22 @@ function App() {
     deleteMailbox,
     FolderDialogsUI,
   } = useFolderDialogs({ selectedMailboxId, setSelectedMailboxId })
-  
-  // New JMAP features
-  const { isConnected: esConnected, hasNewMail, clearNewMail } = useEventSource(!!session)
+
+  const {
+    pushEnabled,
+    pushConnected,
+    hasNewMail,
+    clearNewMail,
+  } = usePushConnection(!!session)
   const { data: quota } = useQuota()
   const sendMDN = useSendMDN()
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [rawViewerBlobId, setRawViewerBlobId] = useState<string | null>(null)
   const [moreMenuOpen, setMoreMenuOpen] = useState(false)
+  const [liveAnnouncement, setLiveAnnouncement] = useState('')
+  const delayedMoveTimersRef = useRef<Set<number>>(new Set())
+  const { isOffline } = useNetworkStatus()
+  const { pendingCount, isReplaying, replayQueue } = useOfflineSyncQueue()
 
   // DRY helper: reset all selection state (used on mailbox change, archive, delete)
   const resetSelection = useCallback(() => {
@@ -148,7 +164,8 @@ function App() {
   // DRY helper: move emails to a mailbox with animation + toast
   const moveEmailsToFolder = useCallback((emailIds: string[], mailboxId: string, folderName: string) => {
     emailIds.forEach(id => setRemovingEmailIds(prev => new Set(prev).add(id)));
-    setTimeout(() => {
+    const timerId = window.setTimeout(() => {
+      delayedMoveTimersRef.current.delete(timerId)
       if (emailIds.length === 1) {
         moveEmail.mutate({ emailId: emailIds[0], mailboxIds: { [mailboxId]: true } });
       } else {
@@ -157,6 +174,7 @@ function App() {
       toast.success(`Moved ${emailIds.length > 1 ? emailIds.length + ' messages' : '1 message'} to ${folderName}`);
       setRemovingEmailIds(prev => { const n = new Set(prev); emailIds.forEach(id => n.delete(id)); return n; });
     }, 300);
+    delayedMoveTimersRef.current.add(timerId)
   }, [moveEmail, moveEmailBulk]);
 
   // Quick filter toggle handler
@@ -265,6 +283,13 @@ function App() {
 
   // Close more menu on outside click
   useEffect(() => {
+    return () => {
+      delayedMoveTimersRef.current.forEach((timerId) => window.clearTimeout(timerId))
+      delayedMoveTimersRef.current.clear()
+    }
+  }, [])
+
+  useEffect(() => {
     if (!moreMenuOpen) return;
     const handleClickOutside = () => setMoreMenuOpen(false);
     document.addEventListener('click', handleClickOutside);
@@ -308,28 +333,125 @@ function App() {
     }
   }, [mailboxes, selectedMailboxId])
 
+  useEffect(() => {
+    if (!session) return
+
+    if (emailsLoading || emailsRefetching) {
+      setLiveAnnouncement('Loading messages...')
+      return
+    }
+
+    if (selectedMailboxId) {
+      const count = emails?.length ?? 0
+      setLiveAnnouncement(`${count} ${count === 1 ? 'message' : 'messages'} loaded`)
+    }
+  }, [emails, emailsLoading, emailsRefetching, selectedMailboxId, session])
+
+  useEffect(() => {
+    if (!selectedEmailId) return
+
+    if (emailLoading) {
+      setLiveAnnouncement('Loading email...')
+      return
+    }
+
+    if (selectedEmail) {
+      const sender = selectedEmail.from?.[0]?.name || selectedEmail.from?.[0]?.email || 'unknown sender'
+      setLiveAnnouncement(`Email from ${sender} loaded`)
+    }
+  }, [emailLoading, selectedEmail, selectedEmailId])
+
+  const handleResizeKeyDown = useCallback((pane: typeof sidebarResize, event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault()
+      pane.adjustWidth(-10)
+      return
+    }
+
+    if (event.key === 'ArrowRight') {
+      event.preventDefault()
+      pane.adjustWidth(10)
+      return
+    }
+
+    if (event.key === 'Home') {
+      event.preventDefault()
+      pane.setWidth(pane.minWidth)
+      return
+    }
+
+    if (event.key === 'End') {
+      event.preventDefault()
+      pane.setWidth(pane.maxWidth)
+    }
+  }, [])
+
   if (!session) {
     return <Login onLoginSuccess={() => setSession(jmapClient.getStoredSession())} />
   }
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="flex h-full w-full bg-[#F2F2F7] text-[13px]">
-        <Toaster position="bottom-center" toastOptions={{
-          style: {
-            background: 'rgba(255, 255, 255, 0.8)',
-            backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(0, 0, 0, 0.1)',
-            borderRadius: '12px',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
-            color: '#1C1C1E',
-            fontSize: '14px',
-            fontWeight: 500,
-          },
-        }} />
+      <div className="relative flex h-full w-full bg-[#F2F2F7] text-[13px]">
+        <LiveRegion message={liveAnnouncement} />
+        {(isOffline || pendingCount > 0) && (
+          <div
+            role="status"
+            aria-live="polite"
+            className={`pointer-events-auto absolute left-1/2 top-4 z-[350] -translate-x-1/2 flex items-center gap-3 rounded-full px-4 py-2 text-[12px] font-semibold text-white shadow-lg backdrop-blur ${
+              isOffline ? 'bg-[#FF9500]/95' : 'bg-[#007AFF]/95'
+            }`}
+          >
+            <span>{isOffline ? 'Offline — cached mail only' : isReplaying ? 'Syncing queued changes…' : 'Pending sync available'}</span>
+            {pendingCount > 0 && (
+              <span className="rounded-full bg-white/20 px-2 py-0.5 text-[11px]">
+                {pendingCount} pending
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                void replayQueue().then(({ syncedCount }) => {
+                  if (syncedCount > 0) {
+                    toast.success(`Synced ${syncedCount} queued change${syncedCount === 1 ? '' : 's'}`)
+                  }
+                })
+              }}
+              disabled={isOffline || isReplaying || pendingCount === 0}
+              className="rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold text-white transition-colors hover:bg-white/25 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isReplaying ? 'Syncing…' : 'Retry now'}
+            </button>
+          </div>
+        )}
+        <a
+          href="#main-content"
+          className="sr-only absolute left-4 top-4 z-[400] rounded-md bg-white px-3 py-2 text-[13px] font-medium text-[#007AFF] shadow-lg focus:not-sr-only focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
+        >
+          Skip to main content
+        </a>
+        <Toaster
+          position="bottom-center"
+          containerAriaLabel="Notifications"
+          closeButton
+          toastOptions={{
+            closeButtonAriaLabel: 'Dismiss notification',
+            style: {
+              background: 'rgba(255, 255, 255, 0.8)',
+              backdropFilter: 'blur(20px)',
+              border: '1px solid rgba(0, 0, 0, 0.1)',
+              borderRadius: '12px',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+              color: '#1C1C1E',
+              fontSize: '14px',
+              fontWeight: 500,
+            },
+          }}
+        />
         {/* Sidebar - iCloud Glassmorphic */}
         <Sidebar
           session={session}
+          userLabel={userLabel}
           mailboxes={mailboxes}
           mailboxesLoading={mailboxesLoading}
           refetchMailboxes={refetchMailboxes}
@@ -340,7 +462,8 @@ function App() {
           expandedSections={expandedSections}
           customFolderTree={customFolderTree}
           hasNewMail={hasNewMail}
-          esConnected={esConnected}
+          esConnected={pushConnected}
+          isOffline={isOffline}
           quota={quota}
           onToggleSidebarCollapsed={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
           onCompose={() => { setReplyToEmail(null); setIsComposerOpen(true); }}
@@ -368,11 +491,18 @@ function App() {
             onPointerDown={sidebarResize.handlePointerDown}
             isDragging={sidebarResize.isDragging}
             onDoubleClick={() => setIsSidebarCollapsed(true)}
+            onKeyDown={(event) => handleResizeKeyDown(sidebarResize, event)}
+            ariaLabel="Resize sidebar"
+            valueNow={sidebarResize.width}
+            valueMin={sidebarResize.minWidth}
+            valueMax={sidebarResize.maxWidth}
           />
         )}
 
         {/* Message List Pane */}
         <main
+          id="main-content"
+          aria-label="Message list"
           className={`flex flex-col bg-white border-r border-[#E5E5E5] h-full overflow-hidden shrink-0 select-none ${isAnyPaneResizing ? '' : 'transition-all duration-300'}`}
           style={{ width: messageListResize.width }}
         >
@@ -416,16 +546,30 @@ function App() {
         <ResizeHandle
           onPointerDown={messageListResize.handlePointerDown}
           isDragging={messageListResize.isDragging}
+          onKeyDown={(event) => handleResizeKeyDown(messageListResize, event)}
+          ariaLabel="Resize message list"
+          valueNow={messageListResize.width}
+          valueMin={messageListResize.minWidth}
+          valueMax={messageListResize.maxWidth}
         />
 
         {/* Reading Pane */}
         <ErrorBoundary>
-        <section className="flex-1 flex flex-col bg-white h-full overflow-hidden relative select-none">
+        <section aria-label="Email reading pane" className="flex-1 flex flex-col bg-white h-full overflow-hidden relative select-none">
           <Toolbar
             selectedEmailId={selectedEmailId}
             selectedEmail={selectedEmail}
             selectedEmailIds={selectedEmailIds}
             moreMenuOpen={moreMenuOpen}
+            statusBadge={
+              <ConnectionStatusBadge
+                isOffline={isOffline}
+                isPushEnabled={pushEnabled}
+                isPushConnected={pushConnected}
+                pendingCount={pendingCount}
+                isReplaying={isReplaying}
+              />
+            }
             onReply={handleReply}
             onReplyAll={handleReplyAll}
             onForward={handleForward}
@@ -492,5 +636,3 @@ function App() {
 }
 
 export default App
-
-

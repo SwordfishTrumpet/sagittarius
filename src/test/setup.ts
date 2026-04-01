@@ -5,6 +5,11 @@
  * required by the JMAP client and related modules.
  */
 import '@testing-library/jest-dom';
+import { afterEach } from 'vitest';
+
+afterEach(() => {
+  document.body.innerHTML = '';
+});
 
 // Provide a minimal sessionStorage stub when jsdom doesn't expose one
 if (typeof globalThis.sessionStorage === 'undefined') {

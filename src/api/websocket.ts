@@ -1,7 +1,7 @@
 import type { QueryClient } from '@tanstack/react-query';
 import type { JMAPResponse } from './jmap';
 import { stateManager } from './stateManager';
-import { logger } from '../utils/logger';
+import { logger, redactUrl } from '../utils/logger';
 
 type PendingRequest = {
   resolve: (v: JMAPResponse) => void;
@@ -159,7 +159,7 @@ class WebSocketManager {
   private _openConnection(): void {
     if (this._destroyed || !this.url) return;
 
-    logger.debug('[JMAP WebSocket] Connecting to', this.url);
+    logger.debug('[JMAP WebSocket] Connecting to', redactUrl(this.url));
 
     try {
       this.ws = new WebSocket(this.url, [JMAP_SUBPROTOCOL]);

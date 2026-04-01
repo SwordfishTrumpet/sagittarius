@@ -27,11 +27,11 @@ Sagittarius is a modern email client built entirely on the JMAP standard. It pro
 
 | Category | Details |
 |---|---|
-| **Mail Operations** | Read, compose, reply, reply-all, forward, draft auto-save, scheduled send |
+| **Mail Operations** | Read, compose, reply, reply-all, forward, scheduled send |
 | **Organization** | Folders (CRUD), subfolder hierarchy, drag-and-drop reparenting, flagging, batch selection |
 | **Search** | Real-time JMAP query, advanced filters (`from:`, `to:`, `has:attachment`), search snippets with highlighting |
 | **Threads** | Conversation grouping via `Thread/get`, per-message expand/collapse, reply to specific message |
-| **Composer** | Rich text (Tiptap), identity/alias selection, attachments, message quoting, MDN read receipts |
+| **Composer** | Rich text (Tiptap), identity/alias selection, attachments, message quoting, draft auto-save/recovery, MDN read receipts |
 | **Sync** | Incremental sync via `Email/changes`, EventSource push, WebSocket push, state persistence |
 | **Attachments** | Inline viewing, download, double-click open, drag-and-drop `.eml` import |
 | **Settings** | Vacation/OOO responder, identity management, Sieve filter editor (visual + raw script) |

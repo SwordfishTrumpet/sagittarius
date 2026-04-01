@@ -19,7 +19,7 @@ describe('login flow', () => {
 
     const { user, screen } = renderApp()
 
-    await user.type(screen.getByPlaceholderText('email@example.com'), 'user@example.com')
+    await user.type(screen.getByLabelText('Email or username'), 'user@example.com')
     await user.type(screen.getByPlaceholderText('Password'), 'password')
     await user.click(screen.getByRole('button', { name: 'Sign In' }))
 
@@ -43,7 +43,7 @@ describe('login flow', () => {
 
     const { user, screen } = renderApp()
 
-    await user.type(screen.getByPlaceholderText('email@example.com'), 'user@example.com')
+    await user.type(screen.getByLabelText('Email or username'), 'user@example.com')
     await user.type(screen.getByPlaceholderText('Password'), 'bad-password')
     await user.click(screen.getByRole('button', { name: 'Sign In' }))
 

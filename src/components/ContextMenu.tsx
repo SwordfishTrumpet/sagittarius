@@ -21,9 +21,50 @@ interface ContextMenuProps {
 
 export function ContextMenu({ items, x, y, onClose }: ContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
+  const itemRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const submenuItemRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
   const [submenuPos, setSubmenuPos] = useState({ top: 0, left: 0 });
   const [adjustedPos, setAdjustedPos] = useState({ x, y });
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const [activeSubmenuIndex, setActiveSubmenuIndex] = useState(-1);
+
+  const enabledItems = items.filter((item) => !item.disabled);
+
+  const focusMainItem = (index: number) => {
+    const target = itemRefs.current[index];
+    if (target) {
+      target.focus();
+      setActiveIndex(index);
+    }
+  };
+
+  const focusSubmenuItem = (index: number) => {
+    const target = submenuItemRefs.current[index];
+    if (target) {
+      target.focus();
+      setActiveSubmenuIndex(index);
+    }
+  };
+
+  const openSubmenu = (item: ContextMenuItemConfig, index: number, button?: HTMLButtonElement) => {
+    if (!item.submenu || item.submenu.length === 0) return;
+
+    const rect = (button || itemRefs.current[index])?.getBoundingClientRect();
+    if (!rect) return;
+
+    setSubmenuPos({
+      top: rect.top - (menuRef.current?.getBoundingClientRect().top || 0),
+      left: rect.right - (menuRef.current?.getBoundingClientRect().left || 0),
+    });
+    setActiveSubmenu(item.id);
+    setActiveSubmenuIndex(0);
+  };
+
+  const closeSubmenu = () => {
+    setActiveSubmenu(null);
+    setActiveSubmenuIndex(-1);
+  };
 
   useEffect(() => {
     // Adjust position to keep menu in viewport
@@ -49,6 +90,13 @@ export function ContextMenu({ items, x, y, onClose }: ContextMenuProps) {
     }
   }, [x, y]);
 
+  useEffect(() => {
+    const firstEnabledIndex = items.findIndex((item) => !item.disabled);
+    if (firstEnabledIndex >= 0) {
+      window.requestAnimationFrame(() => focusMainItem(firstEnabledIndex));
+    }
+  }, [items]);
+
   const handleItemClick = (item: ContextMenuItemConfig) => {
     if (!item.disabled && !item.submenu) {
       item.onSelect();
@@ -57,19 +105,19 @@ export function ContextMenu({ items, x, y, onClose }: ContextMenuProps) {
   };
 
   const handleMouseEnter = (item: ContextMenuItemConfig, e: React.MouseEvent<HTMLButtonElement>) => {
+    const index = items.findIndex((entry) => entry.id === item.id);
+    if (index >= 0) {
+      setActiveIndex(index);
+    }
     if (item.submenu && item.submenu.length > 0) {
-      const button = e.currentTarget;
-      const rect = button.getBoundingClientRect();
-      setSubmenuPos({
-        top: rect.top - (menuRef.current?.getBoundingClientRect().top || 0),
-        left: rect.right - (menuRef.current?.getBoundingClientRect().left || 0)
-      });
-      setActiveSubmenu(item.id);
+      openSubmenu(item, index, e.currentTarget);
+    } else {
+      closeSubmenu();
     }
   };
 
   const handleMouseLeave = () => {
-    setActiveSubmenu(null);
+    closeSubmenu();
   };
 
   // Handle click outside
@@ -83,6 +131,11 @@ export function ContextMenu({ items, x, y, onClose }: ContextMenuProps) {
     // Handle keyboard
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        if (activeSubmenu) {
+          closeSubmenu();
+          focusMainItem(activeIndex);
+          return;
+        }
         onClose();
       }
     };
@@ -94,7 +147,116 @@ export function ContextMenu({ items, x, y, onClose }: ContextMenuProps) {
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [onClose]);
+  }, [activeIndex, activeSubmenu, onClose]);
+
+  const handleMenuKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (enabledItems.length === 0) return;
+
+    const currentIndex = activeIndex >= 0 ? activeIndex : items.findIndex((item) => !item.disabled);
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      const next = items.findIndex((item, index) => index > currentIndex && !item.disabled);
+      focusMainItem(next >= 0 ? next : items.findIndex((item) => !item.disabled));
+      closeSubmenu();
+      return;
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      const previous = [...items].map((item, index) => ({ item, index })).reverse().find(({ item, index }) => index < currentIndex && !item.disabled)?.index;
+      const fallback = [...items].map((item, index) => ({ item, index })).reverse().find(({ item }) => !item.disabled)?.index ?? 0;
+      focusMainItem(previous ?? fallback);
+      closeSubmenu();
+      return;
+    }
+
+    if (event.key === 'Home') {
+      event.preventDefault();
+      focusMainItem(items.findIndex((item) => !item.disabled));
+      closeSubmenu();
+      return;
+    }
+
+    if (event.key === 'End') {
+      event.preventDefault();
+      const lastEnabled = [...items].map((item, index) => ({ item, index })).reverse().find(({ item }) => !item.disabled)?.index ?? 0;
+      focusMainItem(lastEnabled);
+      closeSubmenu();
+      return;
+    }
+
+    const currentItem = items[currentIndex];
+    if (!currentItem) return;
+
+    if (event.key === 'ArrowRight' && currentItem.submenu?.length) {
+      event.preventDefault();
+      openSubmenu(currentItem, currentIndex);
+      window.requestAnimationFrame(() => focusSubmenuItem(0));
+      return;
+    }
+
+    if ((event.key === 'Enter' || event.key === ' ') && !currentItem.disabled) {
+      event.preventDefault();
+      if (currentItem.submenu?.length) {
+        openSubmenu(currentItem, currentIndex);
+        window.requestAnimationFrame(() => focusSubmenuItem(0));
+      } else {
+        handleItemClick(currentItem);
+      }
+    }
+  };
+
+  const handleSubmenuKeyDown = (event: React.KeyboardEvent<HTMLDivElement>, submenu: ContextMenuItemConfig[]) => {
+    const enabledSubmenu = submenu.filter((item) => !item.disabled);
+    if (enabledSubmenu.length === 0) return;
+
+    const currentIndex = activeSubmenuIndex >= 0 ? activeSubmenuIndex : submenu.findIndex((item) => !item.disabled);
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      const next = submenu.findIndex((item, index) => index > currentIndex && !item.disabled);
+      focusSubmenuItem(next >= 0 ? next : submenu.findIndex((item) => !item.disabled));
+      return;
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      const previous = [...submenu].map((item, index) => ({ item, index })).reverse().find(({ item, index }) => index < currentIndex && !item.disabled)?.index;
+      const fallback = [...submenu].map((item, index) => ({ item, index })).reverse().find(({ item }) => !item.disabled)?.index ?? 0;
+      focusSubmenuItem(previous ?? fallback);
+      return;
+    }
+
+    if (event.key === 'Home') {
+      event.preventDefault();
+      focusSubmenuItem(submenu.findIndex((item) => !item.disabled));
+      return;
+    }
+
+    if (event.key === 'End') {
+      event.preventDefault();
+      const lastEnabled = [...submenu].map((item, index) => ({ item, index })).reverse().find(({ item }) => !item.disabled)?.index ?? 0;
+      focusSubmenuItem(lastEnabled);
+      return;
+    }
+
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      closeSubmenu();
+      focusMainItem(activeIndex);
+      return;
+    }
+
+    const currentItem = submenu[currentIndex];
+    if (!currentItem || currentItem.disabled) return;
+
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      currentItem.onSelect();
+      onClose();
+    }
+  };
 
   return (
     <div
@@ -105,17 +267,21 @@ export function ContextMenu({ items, x, y, onClose }: ContextMenuProps) {
         left: `${adjustedPos.x}px`,
       }}
     >
-      <div className="bg-white/95 backdrop-blur-xl border border-[#E5E5E5] rounded-lg shadow-lg overflow-hidden">
+      <div className="bg-white/95 backdrop-blur-xl border border-[#E5E5E5] rounded-lg shadow-lg overflow-hidden" role="menu" aria-label="Context menu" onKeyDown={handleMenuKeyDown}>
         {items.map((item, index) => (
           <div key={item.id}>
             {item.divider && index > 0 && (
-              <div className="h-[1px] bg-[#E5E5E5] my-1" />
+              <div className="h-[1px] bg-[#E5E5E5] my-1" role="separator" />
             )}
             <button
+              ref={(element) => { itemRefs.current[index] = element; }}
               onClick={() => handleItemClick(item)}
               onMouseEnter={(e) => handleMouseEnter(item, e)}
               onMouseLeave={handleMouseLeave}
               disabled={item.disabled}
+              role="menuitem"
+              aria-haspopup={item.submenu?.length ? 'menu' : undefined}
+              aria-expanded={item.submenu?.length ? activeSubmenu === item.id : undefined}
               className={`w-full flex items-center gap-3 px-4 py-2.5 text-[13px] font-medium transition-colors relative ${
                 item.variant === 'destructive'
                   ? 'text-[#FF3B30] hover:bg-[#FF3B30]/10 disabled:text-[#FF3B30]/40'
@@ -141,15 +307,21 @@ export function ContextMenu({ items, x, y, onClose }: ContextMenuProps) {
                   top: `${adjustedPos.y + submenuPos.top}px`,
                   left: `${adjustedPos.x + submenuPos.left + 4}px`,
                 }}
+                role="menu"
+                aria-label={`${item.label} submenu`}
+                onKeyDown={(event) => handleSubmenuKeyDown(event, item.submenu ?? [])}
               >
-                {item.submenu.map((subitem) => (
+                {item.submenu.map((subitem, submenuIndex) => (
                   <button
+                    ref={(element) => { submenuItemRefs.current[submenuIndex] = element; }}
                     key={subitem.id}
                     onClick={() => {
                       subitem.onSelect();
                       onClose();
                     }}
+                    onMouseEnter={() => setActiveSubmenuIndex(submenuIndex)}
                     disabled={subitem.disabled}
+                    role="menuitem"
                     className={`w-full flex items-center gap-3 px-4 py-2.5 text-[13px] font-medium transition-colors whitespace-nowrap ${
                       subitem.variant === 'destructive'
                         ? 'text-[#FF3B30] hover:bg-[#FF3B30]/10 disabled:text-[#FF3B30]/40'

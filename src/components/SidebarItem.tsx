@@ -58,7 +58,7 @@ export function SidebarItem({ icon, label, active = false, count, mailboxId, has
         <span className={`text-[14px] truncate leading-none ${active ? 'font-semibold' : 'font-medium'}`}>{label}</span>
       </div>
       {count !== undefined && count > 0 && (
-        <span aria-label={`${count} unread`} className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${active ? 'bg-white/20 text-white' : 'bg-[#E5E5EA] text-[#8E8E93]'}`}>{count}</span>
+        <span aria-label={`${count} unread`} className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${active ? 'bg-white/20 text-white' : 'bg-[#E5E5EA] text-[#636366]'}`}>{count}</span>
       )}
     </div>
   )

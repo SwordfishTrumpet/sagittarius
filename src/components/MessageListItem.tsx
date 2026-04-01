@@ -147,19 +147,19 @@ export function MessageListItem({
           {isMultiSelected && (
             <Square className="w-4 h-4 fill-[#007AFF] text-[#007AFF] flex-shrink-0" strokeWidth={2} />
           )}
-          {isSent && <Send className="w-3 h-3 text-[#8E8E93] shrink-0" strokeWidth={2} />}
+          {isSent && <Send className="w-3 h-3 text-[#6C6C70] shrink-0" strokeWidth={2} />}
           <span className={`text-[15px] truncate ${unread ? 'font-bold text-[#1C1C1E]' : 'font-semibold text-[#1C1C1E]'}`}>{sender}</span>
         </div>
         <div className="flex items-center gap-2">
           {hasAttachment && (
-            <Paperclip className="w-3.5 h-3.5 text-[#8E8E93] shrink-0" strokeWidth={1.75} />
+            <Paperclip className="w-3.5 h-3.5 text-[#6C6C70] shrink-0" strokeWidth={1.75} />
           )}
           {threadCount && threadCount > 1 && (
-            <span className="text-[11px] font-bold bg-[#8E8E93]/20 text-[#8E8E93] px-1.5 py-0.5 rounded-md min-w-[18px] text-center">
+            <span className="text-[11px] font-bold bg-[#8E8E93]/20 text-[#636366] px-1.5 py-0.5 rounded-md min-w-[18px] text-center">
               {threadCount}
             </span>
           )}
-          <span className={`text-[12px] shrink-0 font-medium ${unread ? 'text-[#007AFF]' : 'text-[#8E8E93]'}`}>{date}</span>
+          <span className={`text-[12px] shrink-0 font-medium ${unread ? 'text-[#007AFF]' : 'text-[#6C6C70]'}`}>{date}</span>
         </div>
       </div>
       <div className="flex items-start justify-between gap-2">
@@ -167,18 +167,18 @@ export function MessageListItem({
           <div className={`text-[13px] mb-1 truncate leading-tight ${unread ? 'font-bold text-[#1C1C1E]' : 'font-semibold text-[#1C1C1E] opacity-90'}`}>{subject}</div>
           {searchSnippet ? (
             <div 
-              className={`text-[13px] line-clamp-2 leading-snug tracking-tight ${selected || isMultiSelected ? 'text-[#3A3A3C]' : 'text-[#8E8E93]'} [&_mark]:bg-[#FFD60A]/40 [&_mark]:text-[#1C1C1E] [&_mark]:rounded-sm [&_mark]:px-0.5`}
+              className={`text-[13px] line-clamp-2 leading-snug tracking-tight ${selected || isMultiSelected ? 'text-[#3A3A3C]' : 'text-[#6C6C70]'} [&_mark]:bg-[#FFD60A]/40 [&_mark]:text-[#1C1C1E] [&_mark]:rounded-sm [&_mark]:px-0.5`}
               dangerouslySetInnerHTML={{ __html: searchSnippet }}
             />
           ) : (
-            <div className={`text-[13px] line-clamp-2 leading-snug tracking-tight ${selected || isMultiSelected ? 'text-[#3A3A3C]' : 'text-[#8E8E93]'}`}>{snippet}</div>
+            <div className={`text-[13px] line-clamp-2 leading-snug tracking-tight ${selected || isMultiSelected ? 'text-[#3A3A3C]' : 'text-[#6C6C70]'}`}>{snippet}</div>
           )}
         </div>
         <button
           onClick={onToggleFlag}
           aria-label={flagged ? 'Remove flag' : 'Add flag'}
           aria-pressed={flagged}
-          className={`shrink-0 mt-1 transition-all focus:outline-none focus:ring-2 focus:ring-[#FF9500]/50 rounded ${flagged ? 'text-[#FF9500] opacity-100' : 'text-[#8E8E93] opacity-0 group-hover:opacity-40 hover:opacity-100'}`}
+          className={`shrink-0 mt-1 transition-all focus:outline-none focus:ring-2 focus:ring-[#FF9500]/50 rounded ${flagged ? 'text-[#FF9500] opacity-100' : 'text-[#6C6C70] opacity-0 group-hover:opacity-40 hover:opacity-100'}`}
         >
           <Star className={`w-3.5 h-3.5 ${flagged ? 'fill-current' : ''}`} strokeWidth={2} />
         </button>

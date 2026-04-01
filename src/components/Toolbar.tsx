@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { MoreHorizontal, Code, Eye, ChevronLeft } from 'lucide-react'
 import { SFReply, SFReplyAll, SFForward, SFStar, SFArchive, SFTrash } from './SFIcon'
 import { ActionButton } from './ActionButton'
@@ -7,6 +8,7 @@ export interface ToolbarProps {
   selectedEmail: any
   selectedEmailIds: Set<string>
   moreMenuOpen: boolean
+  statusBadge?: ReactNode
   isMobile?: boolean
   onBack?: () => void
   onReply: () => void
@@ -25,6 +27,7 @@ export function Toolbar({
   selectedEmail,
   selectedEmailIds,
   moreMenuOpen,
+  statusBadge,
   isMobile = false,
   onBack,
   onReply,
@@ -86,10 +89,11 @@ export function Toolbar({
           );
         })()}
       </div>
-<div className="flex items-center relative">
-         <button 
-           onClick={onToggleMoreMenu}
-           aria-label="More options"
+<div className="flex items-center gap-2 relative">
+         {statusBadge}
+          <button 
+            onClick={onToggleMoreMenu}
+            aria-label="More options"
            aria-expanded={moreMenuOpen}
            aria-haspopup="menu"
            className="p-2 text-[#007AFF] hover:bg-[#F2F2F7] rounded-full transition-colors disabled:opacity-20" 

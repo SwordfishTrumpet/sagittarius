@@ -5,7 +5,123 @@ interface EmailBodyFrameProps {
   html: string
 }
 
+const structuralTags = new Set([
+  'ARTICLE',
+  'ASIDE',
+  'BLOCKQUOTE',
+  'DIV',
+  'FIGURE',
+  'FOOTER',
+  'FORM',
+  'H1',
+  'H2',
+  'H3',
+  'H4',
+  'H5',
+  'H6',
+  'HEADER',
+  'HR',
+  'LI',
+  'MAIN',
+  'NAV',
+  'OL',
+  'P',
+  'PRE',
+  'SECTION',
+  'TABLE',
+  'TBODY',
+  'TD',
+  'TFOOT',
+  'TH',
+  'THEAD',
+  'TR',
+  'UL',
+])
+
+export function stripDisplayArtifacts(root: ParentNode): void {
+  root.querySelectorAll?.('title, meta, link').forEach(node => node.remove())
+
+  const isWhitespaceText = (node: ChildNode | null): boolean => (
+    node?.nodeType === Node.TEXT_NODE && !node.textContent?.replace(/\u00a0/g, '').trim()
+  )
+
+  const isBreak = (node: ChildNode | null): node is HTMLBRElement => (
+    !!node && node.nodeType === Node.ELEMENT_NODE && (node as Element).tagName === 'BR'
+  )
+
+  const isStructuralNode = (node: ChildNode | null): boolean => (
+    !!node && node.nodeType === Node.ELEMENT_NODE && structuralTags.has((node as Element).tagName)
+  )
+
+  const getPreviousMeaningfulNode = (nodes: ChildNode[], startIndex: number): ChildNode | null => {
+    for (let index = startIndex; index >= 0; index -= 1) {
+      if (!isWhitespaceText(nodes[index])) return nodes[index]
+    }
+
+    return null
+  }
+
+  const getNextMeaningfulNode = (nodes: ChildNode[], startIndex: number): ChildNode | null => {
+    for (let index = startIndex; index < nodes.length; index += 1) {
+      if (!isWhitespaceText(nodes[index])) return nodes[index]
+    }
+
+    return null
+  }
+
+  const parents = [root, ...Array.from(root.querySelectorAll?.('*') || [])]
+  parents.forEach(parent => {
+    const childNodes = Array.from(parent.childNodes)
+
+    for (let index = 0; index < childNodes.length; index += 1) {
+      if (!isBreak(childNodes[index])) continue
+
+      const breakRun: HTMLBRElement[] = [childNodes[index] as HTMLBRElement]
+      let nextIndex = index + 1
+
+      while (nextIndex < childNodes.length) {
+        const candidate = childNodes[nextIndex]
+        if (isWhitespaceText(candidate)) {
+          nextIndex += 1
+          continue
+        }
+
+        if (!isBreak(candidate)) break
+        breakRun.push(candidate)
+        nextIndex += 1
+      }
+
+      const previousMeaningfulNode = getPreviousMeaningfulNode(childNodes, index - 1)
+      const nextMeaningfulNode = getNextMeaningfulNode(childNodes, nextIndex)
+      const shouldRemoveEntireRun = (
+        !previousMeaningfulNode
+        || !nextMeaningfulNode
+        || isStructuralNode(previousMeaningfulNode)
+        || isStructuralNode(nextMeaningfulNode)
+      )
+
+      if (shouldRemoveEntireRun) {
+        breakRun.forEach(node => node.remove())
+      } else {
+        breakRun.slice(2).forEach(node => node.remove())
+      }
+
+      index = nextIndex - 1
+    }
+  })
+}
+
+export function normalizeDisplayHtml(html: string): string {
+  if (!html) return html
+
+  const doc = new DOMParser().parseFromString(`<body>${html}</body>`, 'text/html')
+  stripDisplayArtifacts(doc.body)
+  return doc.body.innerHTML
+}
+
 export function buildSrcDoc(html: string): string {
+  const displayHtml = normalizeDisplayHtml(html)
+
   return `<!doctype html>
 <html>
   <head>
@@ -29,7 +145,7 @@ export function buildSrcDoc(html: string): string {
       }
     </style>
   </head>
-  <body>${html}</body>
+  <body>${displayHtml}</body>
 </html>`
 }
 
@@ -91,6 +207,10 @@ export function EmailBodyFrame({ html }: EmailBodyFrameProps) {
     const hydrateFrame = () => {
       const doc = iframe.contentDocument
       if (!doc) return
+
+      if (doc.body) {
+        stripDisplayArtifacts(doc.body)
+      }
 
       setHeight()
 

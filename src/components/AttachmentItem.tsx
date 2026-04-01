@@ -83,7 +83,7 @@ export function AttachmentItem({ attachment }: { attachment: any }) {
       </div>
       <div className="flex-1 min-w-0">
         <div className="font-semibold text-[13px] text-[#1C1C1E] truncate">{attachment.name}</div>
-        <div className="text-[11px] text-[#8E8E93] font-medium uppercase tracking-tight">
+        <div className="text-[11px] text-[#6C6C70] font-medium uppercase tracking-tight">
           {(attachment.size / 1024).toFixed(0)} KB · {attachment.type.split('/')[1]?.toUpperCase() || 'FILE'}
         </div>
       </div>
@@ -92,13 +92,15 @@ export function AttachmentItem({ attachment }: { attachment: any }) {
           onClick={handleDownload}
           className="p-2 text-[#007AFF] hover:bg-[#F2F2F7] rounded-full transition-colors"
           title="Download"
+          aria-label={`Download ${attachment.name}`}
         >
           <Download className="w-4 h-4" />
         </button>
         <button 
           onClick={(e) => { e.stopPropagation(); handleOpen(); }}
-          className="p-2 text-[#8E8E93] hover:bg-[#F2F2F7] rounded-full transition-colors"
+          className="p-2 text-[#6C6C70] hover:bg-[#F2F2F7] rounded-full transition-colors"
           title="Open in New Tab"
+          aria-label={`Open ${attachment.name} in new tab`}
         >
           <ExternalLink className="w-4 h-4" />
         </button>

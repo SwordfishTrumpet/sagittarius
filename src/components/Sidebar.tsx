@@ -9,6 +9,7 @@ import type { MailboxNode } from '../utils/mailboxTree'
 
 export interface SidebarProps {
   session: any
+  userLabel?: string
   mailboxes: any[] | undefined
   mailboxesLoading: boolean
   refetchMailboxes: () => void
@@ -20,6 +21,7 @@ export interface SidebarProps {
   customFolderTree: MailboxNode[]
   hasNewMail: boolean
   esConnected: boolean
+  isOffline: boolean
   quota: any
   onToggleSidebarCollapsed: () => void
   onCompose: () => void
@@ -56,6 +58,7 @@ function getMailboxIcon(mailbox: any) {
 
 export function Sidebar({
   session,
+  userLabel,
   mailboxes,
   mailboxesLoading,
   refetchMailboxes,
@@ -67,6 +70,7 @@ export function Sidebar({
   customFolderTree,
   hasNewMail,
   esConnected,
+  isOffline,
   quota,
   onToggleSidebarCollapsed,
   onCompose,
@@ -89,10 +93,14 @@ export function Sidebar({
 }: SidebarProps) {
   return (
     <aside
+      aria-label="Mailbox navigation"
+      aria-hidden={isSidebarCollapsed}
       className={`flex flex-col bg-white/70 backdrop-blur-xl border-r border-[#E5E5E5] h-full overflow-hidden shrink-0 select-none ${isAnyPaneResizing ? '' : 'transition-all duration-300'}`}
       style={{ width: isSidebarCollapsed ? 0 : sidebarWidth }}
     >
-      <div className="px-5 py-4 flex items-center justify-between">
+      {!isSidebarCollapsed && (
+      <>
+      <header className="px-5 py-4 flex items-center justify-between">
         <h1 className="text-xl font-bold tracking-tight flex items-center leading-none">
           sagittarius
         </h1>
@@ -101,19 +109,21 @@ export function Sidebar({
             onClick={onToggleSidebarCollapsed}
             className="p-1.5 hover:bg-black/5 rounded-md transition-colors"
             title={isSidebarCollapsed ? 'Show Sidebar' : 'Hide Sidebar'}
+            aria-label={isSidebarCollapsed ? 'Show sidebar' : 'Hide sidebar'}
           >
             <ChevronLeft className="w-5 h-5 text-[#8E8E93]" strokeWidth={1.5} />
           </button>
           <button 
             onClick={onCompose}
             className="p-1.5 hover:bg-black/5 rounded-md transition-colors"
+            aria-label="Compose message"
           >
             <Plus className="w-5 h-5 text-[#007AFF]" strokeWidth={2} />
           </button>
         </div>
-      </div>
+      </header>
 
-      <nav className="flex-1 overflow-y-auto px-3 space-y-3 py-2">
+      <nav aria-label="Mailboxes" className="flex-1 overflow-y-auto px-3 space-y-3 py-2">
         {mailboxesLoading ? (
           <div className="flex items-center justify-center py-10 opacity-30">
             <div className="w-5 h-5 border-2 border-[#007AFF] border-t-transparent rounded-full animate-spin" />
@@ -138,7 +148,7 @@ export function Sidebar({
                 isExpanded={expandedSections.mailboxes}
                 onToggleExpand={() => onToggleSectionExpanded('mailboxes')}
               >
-                <div className="space-y-0.5">
+                <div role="tree" aria-label="System mailboxes" className="space-y-0.5">
                   {classifyMailboxes(mailboxes).system.map((mailbox: any) => (
                     <SidebarItem 
                       key={mailbox.id}
@@ -217,7 +227,7 @@ export function Sidebar({
             {/* Smart Mailboxes Section */}
             <div className="pt-2 border-t border-[#E5E5E5]">
               <div className="pt-3 pb-2 px-3 text-[10px] font-bold text-[#8E8E93] uppercase tracking-wider opacity-60">Smart Mailboxes</div>
-              <div className="space-y-0.5">
+              <div role="tree" aria-label="Smart mailboxes" className="space-y-0.5">
                 <SidebarItem 
                   icon={<Mail className="w-[18px] h-[18px]" strokeWidth={1.5} />} 
                   label="All Mail" 
@@ -242,21 +252,28 @@ export function Sidebar({
          )}
          <div className="flex items-center justify-between">
            <div className="flex items-center gap-2">
-             <span className="truncate max-w-[100px] font-medium">{session.username}</span>
-             {esConnected ? (
-               <Wifi className="w-3 h-3 text-green-500" strokeWidth={2} />
-             ) : (
-               <WifiOff className="w-3 h-3 text-[#8E8E93]" strokeWidth={2} />
-             )}
-           </div>
+              <span className="truncate max-w-[100px] font-medium">{userLabel || session.username}</span>
+              {isOffline ? (
+                <>
+                  <WifiOff className="w-3 h-3 text-[#FF9500]" strokeWidth={2} />
+                  <span className="text-[#FF9500] font-medium">Offline cache</span>
+                </>
+              ) : esConnected ? (
+                <Wifi className="w-3 h-3 text-green-500" strokeWidth={2} />
+              ) : (
+                <WifiOff className="w-3 h-3 text-[#8E8E93]" strokeWidth={2} />
+              )}
+            </div>
            <div className="flex items-center gap-2">
-             <button onClick={onOpenSettings} className="p-1 hover:bg-black/5 rounded transition-colors" title="Settings">
-               <SettingsIcon className="w-3.5 h-3.5 text-[#8E8E93]" strokeWidth={1.5} />
-             </button>
+              <button onClick={onOpenSettings} className="p-1 hover:bg-black/5 rounded transition-colors" title="Settings" aria-label="Settings">
+                <SettingsIcon className="w-3.5 h-3.5 text-[#8E8E93]" strokeWidth={1.5} />
+              </button>
              <button onClick={() => jmapClient.logout()} className="text-[#007AFF] font-medium hover:underline">Sign Out</button>
            </div>
-         </div>
-       </div>
-    </aside>
+          </div>
+        </div>
+      </>
+      )}
+     </aside>
   )
 }
