@@ -1,13 +1,12 @@
+import * as React from 'react'
 import { waitFor, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
+import { useCompose } from '../../hooks/jmap/useCompose'
+import { useIdentities } from '../../hooks/jmap/useIdentities'
 import { makeEmailList, makeIdentityList, makeMailboxList, makeSession, makeSubmissionSuccess, wrapMethodResponse } from '../fixtures/jmap'
 import { getFetchCalls, jsonResponse, renderApp, respondWith, storeAuthenticatedSession } from './helpers'
 
-vi.mock('../../components/Composer', async () => {
-  const React = await import('react')
-  const { useCompose } = await import('../../hooks/jmap/useCompose')
-  const { useIdentities } = await import('../../hooks/jmap/useIdentities')
-
+vi.mock('../../components/Composer', () => {
   return {
     Composer: ({ onClose }: { onClose: () => void }) => {
       const [to, setTo] = React.useState('')
