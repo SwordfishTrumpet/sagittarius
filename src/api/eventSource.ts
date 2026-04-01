@@ -66,7 +66,7 @@ class EventSourceManager {
 
     const separator = url.includes('?') ? '&' : '?';
     // authToken is already base64-encoded (stripped from "Basic <b64>" header)
-    return `${url}${separator}access_token=${authToken}`;
+    return `${url}${separator}access_token=${encodeURIComponent(authToken)}`;
   }
 
   connect(url: string, authToken: string, queryClient: QueryClient): void {

@@ -153,6 +153,14 @@ vi.mock('../../hooks/useEventSource', () => ({
   }),
 }))
 
+vi.mock('../../hooks/useWebSocket', () => ({
+  useWebSocket: () => ({
+    isConnected: false,
+    hasNewMail: false,
+    clearNewMail: vi.fn(),
+  }),
+}))
+
 vi.mock('../../components/EmailBodyFrame', () => ({
   EmailBodyFrame: ({ html }: { html: string }) => <div data-testid="email-frame" dangerouslySetInnerHTML={{ __html: html }} />,
 }))

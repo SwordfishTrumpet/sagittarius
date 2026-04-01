@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { X, Sun, User, Filter, Settings as SettingsIcon, Volume2 } from 'lucide-react';
 import { VacationSettings } from './settings/VacationSettings';
 import { IdentitySettings } from './settings/IdentitySettings';
 import { SieveSettings } from './settings/SieveSettings';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 import {
   isNotificationSoundEnabled,
   getNotificationVolume,
@@ -53,11 +54,11 @@ function GeneralSettings() {
       <div className="bg-white rounded-2xl border border-[#E5E5EA] divide-y divide-[#E5E5EA]">
         <div className="px-4 py-3 flex items-center justify-between">
           <span className="text-[15px] text-[#1C1C1E]">App Version</span>
-          <span className="text-[13px] text-[#8E8E93]">Sagittarius 1.0</span>
+          <span className="text-[13px] text-[#6C6C70]">Sagittarius 1.0</span>
         </div>
         <div className="px-4 py-3 flex items-center justify-between">
           <span className="text-[15px] text-[#1C1C1E]">Protocol</span>
-          <span className="text-[13px] text-[#8E8E93]">JMAP (RFC 8620 / 8621)</span>
+          <span className="text-[13px] text-[#6C6C70]">JMAP (RFC 8620 / 8621)</span>
         </div>
       </div>
 
@@ -66,11 +67,14 @@ function GeneralSettings() {
         {/* Sound toggle */}
         <div className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <Volume2 className="w-4 h-4 text-[#8E8E93]" strokeWidth={1.5} />
+            <Volume2 className="w-4 h-4 text-[#6C6C70]" strokeWidth={1.5} />
             <span className="text-[15px] text-[#1C1C1E]">New mail sound</span>
           </div>
           <button
             onClick={handleToggleSound}
+            role="switch"
+            aria-checked={soundEnabled}
+            aria-label="New mail sound"
             className={`relative w-[51px] h-[31px] rounded-full transition-colors duration-200 ${
               soundEnabled ? 'bg-[#34C759]' : 'bg-[#E5E5EA]'
             }`}
@@ -86,8 +90,9 @@ function GeneralSettings() {
         {/* Volume slider */}
         {soundEnabled && (
           <div className="px-4 py-3 flex items-center gap-4">
-            <span className="text-[13px] text-[#8E8E93] shrink-0 w-14">Volume</span>
+            <label htmlFor="settings-volume" className="text-[13px] text-[#6C6C70] shrink-0 w-14">Volume</label>
             <input
+              id="settings-volume"
               type="range"
               min="0"
               max="1"
@@ -104,7 +109,7 @@ function GeneralSettings() {
                 [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:shadow-md [&::-moz-range-thumb]:border
                 [&::-moz-range-thumb]:border-[#E5E5EA]"
             />
-            <span className="text-[13px] text-[#8E8E93] w-10 text-right">{Math.round(volume * 100)}%</span>
+            <span className="text-[13px] text-[#6C6C70] w-10 text-right">{Math.round(volume * 100)}%</span>
           </div>
         )}
       </div>
@@ -114,6 +119,31 @@ function GeneralSettings() {
 
 export function Settings({ isOpen, onClose, isMobile = false }: SettingsProps) {
   const [selected, setSelected] = useState<Category>('general');
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  useFocusTrap(dialogRef, { isActive: isOpen });
+
+  const selectedIndex = CATEGORIES.findIndex(({ id }) => id === selected);
+
+  const handleTabKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
+    if (!['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
+      return;
+    }
+
+    event.preventDefault();
+
+    let nextIndex = index;
+    if (event.key === 'Home') nextIndex = 0;
+    else if (event.key === 'End') nextIndex = CATEGORIES.length - 1;
+    else if (event.key === 'ArrowDown' || event.key === 'ArrowRight') nextIndex = (index + 1) % CATEGORIES.length;
+    else if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') nextIndex = (index - 1 + CATEGORIES.length) % CATEGORIES.length;
+
+    setSelected(CATEGORIES[nextIndex].id);
+
+    window.requestAnimationFrame(() => {
+      document.getElementById(`settings-tab-${CATEGORIES[nextIndex].id}`)?.focus();
+    });
+  };
 
   const handleKey = useCallback(
     (e: KeyboardEvent) => {
@@ -140,6 +170,11 @@ export function Settings({ isOpen, onClose, isMobile = false }: SettingsProps) {
     >
       {/* Modal container */}
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="settings-dialog-title"
+        tabIndex={-1}
         className={`relative bg-white shadow-2xl w-full flex overflow-hidden ${
           isMobile 
             ? 'flex-col h-full max-w-full rounded-none' 
@@ -148,13 +183,13 @@ export function Settings({ isOpen, onClose, isMobile = false }: SettingsProps) {
         style={isMobile ? undefined : { height: 'calc(100vh - 64px)', maxHeight: 680 }}
       >
         {/* Category nav: horizontal tabs on mobile, left sidebar on desktop */}
-        <nav className={`shrink-0 bg-[#F2F2F7] flex ${
+        <nav aria-label="Settings categories" className={`shrink-0 bg-[#F2F2F7] flex ${
           isMobile 
             ? 'flex-col border-b border-[#E5E5EA] py-3' 
             : 'flex-col w-[200px] border-r border-[#E5E5EA] py-4'
         }`}>
           <div className={`flex items-center justify-between ${isMobile ? 'px-4 pb-2' : 'px-4 pb-3'}`}>
-            <p className="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wide">
+            <p id="settings-dialog-title" className="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wide">
               Settings
             </p>
             <button
@@ -165,11 +200,17 @@ export function Settings({ isOpen, onClose, isMobile = false }: SettingsProps) {
               <X size={13} strokeWidth={2} className="text-[#636366]" />
             </button>
           </div>
-          <div className={isMobile ? 'flex gap-1 px-2 overflow-x-auto' : ''}>
-            {CATEGORIES.map(({ id, label, Icon }) => (
+          <div role="tablist" aria-orientation={isMobile ? 'horizontal' : 'vertical'} className={isMobile ? 'flex gap-1 px-2 overflow-x-auto' : ''}>
+            {CATEGORIES.map(({ id, label, Icon }, index) => (
               <button
                 key={id}
+                id={`settings-tab-${id}`}
+                role="tab"
+                aria-selected={selected === id}
+                aria-controls={`settings-panel-${id}`}
+                tabIndex={selected === id ? 0 : -1}
                 onClick={() => setSelected(id)}
+                onKeyDown={(event) => handleTabKeyDown(event, index)}
                 className={`flex items-center gap-2.5 text-[14px] font-medium rounded-lg transition-colors ${
                   isMobile ? 'px-3 py-2 shrink-0' : 'px-4 py-2.5 mx-2'
                 } ${
@@ -191,7 +232,12 @@ export function Settings({ isOpen, onClose, isMobile = false }: SettingsProps) {
         </nav>
 
         {/* Right content area */}
-        <div className="flex-1 overflow-y-auto">
+        <div
+          id={`settings-panel-${CATEGORIES[selectedIndex].id}`}
+          role="tabpanel"
+          aria-labelledby={`settings-tab-${CATEGORIES[selectedIndex].id}`}
+          className="flex-1 overflow-y-auto"
+        >
           {selected === 'general' && <GeneralSettings />}
           {selected === 'vacation' && <VacationSettings />}
           {selected === 'identities' && <IdentitySettings />}

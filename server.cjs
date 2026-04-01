@@ -16,6 +16,29 @@ const PORT = process.env.PORT || 3000;
 const JMAP_SERVER = process.env.JMAP_SERVER || 'http://localhost:8080';
 const JMAP_HOST = process.env.JMAP_HOST || 'mail.wellintime.com';
 const DIST_DIR = path.join(__dirname, 'dist');
+const AUTH_TOKEN_RE = /^[A-Za-z0-9+/=]+$/;
+
+const logInfo = (...args) => {
+  console.log('[sagittarius]', ...args);
+};
+
+const logError = (...args) => {
+  console.error('[sagittarius]', ...args);
+};
+
+function attachBasicAuthFromAccessToken(proxyReq, url) {
+  if (!url || proxyReq.getHeader('authorization')) return;
+
+  try {
+    const parsedUrl = new URL(url, 'http://localhost');
+    const token = parsedUrl.searchParams.get('access_token');
+    if (token && AUTH_TOKEN_RE.test(token) && token.length <= 512) {
+      proxyReq.setHeader('Authorization', `Basic ${token}`);
+    }
+  } catch {
+    /* ignore parse errors */
+  }
+}
 
 // ── MIME types ──────────────────────────────────────────────────────
 const MIME_TYPES = {
@@ -61,15 +84,12 @@ proxy.on('proxyReq', (proxyReq, req) => {
   // EventSource cannot send custom headers.  The client passes
   // Base64 credentials via ?access_token=<b64>.  Convert that
   // into a proper Authorization header for the backend.
-  if (req.url && !proxyReq.getHeader('authorization')) {
-    try {
-      const url = new URL(req.url, 'http://localhost');
-      const token = url.searchParams.get('access_token');
-      if (token) {
-        proxyReq.setHeader('Authorization', `Basic ${token}`);
-      }
-    } catch { /* ignore parse errors */ }
-  }
+  attachBasicAuthFromAccessToken(proxyReq, req.url);
+});
+
+proxy.on('proxyReqWs', (proxyReq, req) => {
+  proxyReq.setHeader('Host', JMAP_HOST);
+  attachBasicAuthFromAccessToken(proxyReq, req.url);
 });
 
 proxy.on('proxyRes', (proxyRes) => {
@@ -81,7 +101,7 @@ proxy.on('proxyRes', (proxyRes) => {
 });
 
 proxy.on('error', (err, _req, res) => {
-  console.error(`[Proxy Error] ${err.message}`);
+  logError(`[proxy] ${err.message}`);
   if (res && typeof res.writeHead === 'function') {
     res.writeHead(502, { 'Content-Type': 'text/plain' });
     res.end('Bad Gateway');
@@ -159,6 +179,6 @@ server.on('upgrade', (req, socket, head) => {
 });
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Sagittarius running on http://0.0.0.0:${PORT}`);
-  console.log(`JMAP backend: ${JMAP_SERVER} (Host: ${JMAP_HOST})`);
+  logInfo(`running on http://0.0.0.0:${PORT}`);
+  logInfo(`JMAP backend: ${JMAP_SERVER} (Host: ${JMAP_HOST})`);
 });

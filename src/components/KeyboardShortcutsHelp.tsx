@@ -1,5 +1,7 @@
+import { useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface KeyboardShortcutsHelpProps {
   isOpen: boolean;
@@ -51,6 +53,10 @@ const SHORTCUT_GROUPS = [
 ];
 
 export function KeyboardShortcutsHelp({ isOpen, onClose }: KeyboardShortcutsHelpProps) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  useFocusTrap(dialogRef, { isActive: isOpen });
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -63,19 +69,25 @@ export function KeyboardShortcutsHelp({ isOpen, onClose }: KeyboardShortcutsHelp
           onClick={onClose}
         >
           <motion.div
+            ref={dialogRef}
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: 5 }}
             transition={{ type: 'spring', damping: 25, stiffness: 350 }}
             className="bg-white rounded-2xl shadow-[0_25px_60px_rgba(0,0,0,0.15)] border border-[#E5E5EA] max-w-[560px] w-full max-h-[80vh] overflow-y-auto p-5 sm:p-8 mx-4 sm:mx-0"
             onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="keyboard-shortcuts-title"
+            tabIndex={-1}
           >
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-[20px] font-bold text-[#1C1C1E]">Keyboard Shortcuts</h2>
+              <h2 id="keyboard-shortcuts-title" className="text-[20px] font-bold text-[#1C1C1E]">Keyboard Shortcuts</h2>
               <button
                 onClick={onClose}
                 className="w-7 h-7 rounded-full bg-[#E5E5EA] hover:bg-[#D1D1D6] flex items-center justify-center transition-colors"
+                aria-label="Close keyboard shortcuts"
               >
                 <X size={12} strokeWidth={2.5} className="text-[#636366]" />
               </button>

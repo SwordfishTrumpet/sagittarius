@@ -3,7 +3,7 @@
  * Enhanced search input with icons, suggestions, and advanced filter button
  */
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { Search, Filter, History, X } from 'lucide-react';
 
 interface SearchBarProps {
@@ -27,13 +27,14 @@ export function SearchBar({
   const inputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <div className="relative">
+    <div role="search" className="relative">
       {/* Search Icon */}
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#8E8E93] pointer-events-none" />
 
       {/* Input Field */}
       <input
         ref={inputRef}
+        role="searchbox"
         type="text"
         placeholder={placeholder}
         value={value}
@@ -41,6 +42,7 @@ export function SearchBar({
         onFocus={() => setIsFocused(true)}
         onBlur={() => setTimeout(() => setIsFocused(false), 200)}
         disabled={disabled}
+        aria-label="Search emails"
         className="w-full bg-[#8E8E93]/10 border-none rounded-lg py-1.5 pl-9 pr-24 text-[14px] focus:ring-2 focus:ring-[#007AFF]/30 placeholder-[#8E8E93] transition-all hover:bg-[#8E8E93]/15 disabled:opacity-50 disabled:cursor-not-allowed"
       />
 
@@ -52,6 +54,7 @@ export function SearchBar({
           disabled={disabled}
           className="p-1 hover:bg-black/5 rounded-md transition-colors disabled:opacity-50"
           title="Search History"
+          aria-label="Search history"
           type="button"
         >
           <History className="w-3.5 h-3.5 text-[#8E8E93]" strokeWidth={1.5} />
@@ -63,6 +66,7 @@ export function SearchBar({
           disabled={disabled}
           className="p-1 hover:bg-black/5 rounded-md transition-colors disabled:opacity-50"
           title="Advanced Search"
+          aria-label="Advanced search"
           type="button"
         >
           <Filter className="w-3.5 h-3.5 text-[#007AFF]" strokeWidth={1.5} />
@@ -75,6 +79,7 @@ export function SearchBar({
             disabled={disabled}
             className="p-0.5 hover:bg-black/5 rounded-full transition-colors disabled:opacity-50"
             title="Clear search"
+            aria-label="Clear search"
             type="button"
           >
             <X className="w-3 h-3 text-[#8E8E93]" strokeWidth={2} />
@@ -84,7 +89,7 @@ export function SearchBar({
 
       {/* Hint for keyboard shortcut (optional) */}
       {!value && !isFocused && (
-        <span className="absolute right-24 top-1/2 -translate-y-1/2 text-[11px] text-[#8E8E93]/50 pointer-events-none hidden sm:inline">
+        <span className="absolute right-24 top-1/2 -translate-y-1/2 text-[11px] text-[#6C6C70]/70 pointer-events-none hidden sm:inline">
           Cmd K
         </span>
       )}

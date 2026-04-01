@@ -21,6 +21,8 @@ export function FilterBar({ activeFilters, onToggleFilter }: FilterBarProps) {
           <button
             key={key}
             onClick={() => onToggleFilter(key)}
+            aria-pressed={isActive}
+            aria-label={`Filter ${label}`}
             className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-[12px] font-semibold transition-all duration-150 shrink-0 ${
               isActive
                 ? 'bg-[#007AFF] text-white shadow-sm'

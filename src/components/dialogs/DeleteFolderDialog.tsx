@@ -1,4 +1,6 @@
+import { useRef } from 'react';
 import { AlertTriangle, X } from 'lucide-react';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 interface DeleteFolderDialogProps {
   isOpen: boolean;
@@ -15,16 +17,21 @@ export function DeleteFolderDialog({
   onConfirm,
   isLoading = false,
 }: DeleteFolderDialogProps) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  useFocusTrap(dialogRef, { isActive: isOpen });
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/30 backdrop-blur-sm">
-      <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-[#E5E5E5] max-w-md w-full mx-4">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="delete-folder-dialog-title" tabIndex={-1} className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-[#E5E5E5] max-w-md w-full mx-4">
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#E5E5E5]">
-          <h2 className="text-[17px] font-bold text-[#1C1C1E]">Delete Folder</h2>
+          <h2 id="delete-folder-dialog-title" className="text-[17px] font-bold text-[#1C1C1E]">Delete Folder</h2>
           <button
             onClick={onClose}
             className="p-1 text-[#8E8E93] hover:bg-black/5 rounded-full transition-colors"
+            aria-label="Close"
           >
             <X className="w-5 h-5" strokeWidth={2} />
           </button>

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Edit2, Trash } from 'lucide-react'
 import { toast } from 'sonner'
-import { useMailboxActions } from './useJMAP'
+import { useMailboxActions } from './jmap/useMailboxes'
 import { ContextMenu, type ContextMenuItemConfig } from '../components/ContextMenu'
 import { CreateFolderDialog } from '../components/dialogs/CreateFolderDialog'
 import { RenameFolderDialog } from '../components/dialogs/RenameFolderDialog'

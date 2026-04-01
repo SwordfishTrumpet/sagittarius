@@ -220,21 +220,45 @@ export function RecursiveSidebarItem({
   const showDropInside = isOver && canDrop && dropPosition === 'inside';
 
   return (
-    <div ref={(el) => { drop(el); drag(el); itemRef.current = el; }} className={`relative ${isDraggingMailbox ? 'opacity-40' : ''}`}>
+    <div ref={(el) => { drop(el); drag(el); itemRef.current = el; }} role="presentation" className={`relative ${isDraggingMailbox ? 'opacity-40' : ''}`}>
       {/* Drop indicator: before (reorder line at top) */}
       {showDropBefore && (
         <div className="absolute top-0 left-3 right-3 h-[2px] bg-[#007AFF] rounded-full z-10 shadow-[0_0_4px_rgba(0,122,255,0.4)]" />
       )}
       {/* Main folder item */}
       <div
+        role="treeitem"
+        aria-selected={active}
+        aria-level={node.depth + 1}
+        aria-expanded={hasChildren ? node.isExpanded : undefined}
+        aria-current={active ? 'page' : undefined}
+        tabIndex={0}
         onClick={handleClick}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleClick();
+            return;
+          }
+
+          if (hasChildren && e.key === 'ArrowRight' && !node.isExpanded) {
+            e.preventDefault();
+            onToggleExpand(node.id);
+            return;
+          }
+
+          if (hasChildren && e.key === 'ArrowLeft' && node.isExpanded) {
+            e.preventDefault();
+            onToggleExpand(node.id);
+          }
+        }}
         onContextMenu={isCustomFolder && onContextMenuProp ? (e) => {
           e.preventDefault();
           e.stopPropagation();
           onContextMenuProp(node.id, node.name, e);
         } : undefined}
         style={{ paddingLeft: `${indentPx}px` }}
-        className={`flex items-center justify-between transition-all relative group cursor-default rounded-lg
+        className={`flex items-center justify-between transition-all relative group cursor-default rounded-lg focus:outline-none focus:ring-2 focus:ring-[#007AFF]/50
           ${
             active && !showDropInside
               ? 'bg-[#007AFF] text-white shadow-md'
@@ -328,8 +352,8 @@ export function RecursiveSidebarItem({
       )}
 
       {/* Children (expanded) */}
-      {hasChildren && node.isExpanded && (
-        <div className="mt-0.5 space-y-0.5">
+        {hasChildren && node.isExpanded && (
+         <div role="group" className="mt-0.5 space-y-0.5">
           {node.children.map((child) => (
             <RecursiveSidebarItem
               key={child.id}
@@ -426,7 +450,7 @@ export function MailboxTree({
   onContextMenu,
 }: MailboxTreeProps) {
   return (
-    <div className="space-y-0.5">
+    <div role="tree" aria-label="Folders" className="space-y-0.5">
       {nodes.map((node) => (
         <RecursiveSidebarItem
           key={node.id}

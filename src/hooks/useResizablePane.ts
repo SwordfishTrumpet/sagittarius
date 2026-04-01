@@ -10,7 +10,10 @@ interface UseResizablePaneOptions {
 interface UseResizablePaneReturn {
   width: number
   isDragging: boolean
+  minWidth: number
+  maxWidth: number
   setWidth: (w: number) => void
+  adjustWidth: (delta: number) => void
   handlePointerDown: (e: React.PointerEvent) => void
 }
 
@@ -20,7 +23,7 @@ export function useResizablePane({
   minWidth,
   maxWidth,
 }: UseResizablePaneOptions): UseResizablePaneReturn {
-  const [width, setWidth] = useState<number>(() => {
+  const [width, setWidthState] = useState<number>(() => {
     try {
       const stored = localStorage.getItem(storageKey)
       if (stored) {
@@ -53,6 +56,20 @@ export function useResizablePane({
     }
   }, [storageKey])
 
+  const clampWidth = useCallback((value: number) => {
+    return Math.min(maxWidth, Math.max(minWidth, value))
+  }, [maxWidth, minWidth])
+
+  const setWidth = useCallback((value: number) => {
+    const clamped = clampWidth(value)
+    setWidthState(clamped)
+    persistWidth(clamped)
+  }, [clampWidth, persistWidth])
+
+  const adjustWidth = useCallback((delta: number) => {
+    setWidth(width + delta)
+  }, [setWidth, width])
+
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     e.preventDefault()
     const target = e.currentTarget as HTMLElement
@@ -72,7 +89,7 @@ export function useResizablePane({
 
       cancelAnimationFrame(dragState.current.rafId)
       dragState.current.rafId = requestAnimationFrame(() => {
-        setWidth(clamped)
+         setWidthState(clamped)
       })
     }
 
@@ -82,8 +99,7 @@ export function useResizablePane({
       document.body.classList.remove('is-resizing')
 
       // Persist final width
-      setWidth(dragState.current.latestWidth)
-      persistWidth(dragState.current.latestWidth)
+       setWidth(dragState.current.latestWidth)
 
       target.removeEventListener('pointermove', onPointerMove)
       target.removeEventListener('pointerup', onPointerUp)
@@ -93,7 +109,7 @@ export function useResizablePane({
     target.addEventListener('pointermove', onPointerMove)
     target.addEventListener('pointerup', onPointerUp)
     target.addEventListener('pointercancel', onPointerUp)
-  }, [width, minWidth, maxWidth, persistWidth])
+  }, [width, minWidth, maxWidth, persistWidth, setWidth])
 
   // Safety cleanup: remove body class if component unmounts during drag
   useEffect(() => {
@@ -103,5 +119,5 @@ export function useResizablePane({
     }
   }, [])
 
-  return { width, isDragging, setWidth, handlePointerDown }
+  return { width, isDragging, minWidth, maxWidth, setWidth, adjustWidth, handlePointerDown }
 }

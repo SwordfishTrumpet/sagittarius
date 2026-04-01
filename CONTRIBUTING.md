@@ -21,9 +21,9 @@ Thank you for your interest in contributing to Sagittarius. This document provid
    ```bash
    npm run build
    ```
-4. Run the linter:
+4. Run the TypeScript checker:
    ```bash
-   npm run lint
+   npm run typecheck
    ```
 5. Commit your changes with a clear message (see below)
 6. Push to your fork and open a pull request

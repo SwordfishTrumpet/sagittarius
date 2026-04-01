@@ -1,5 +1,5 @@
 import { toast } from 'sonner'
-import { useEmailActions } from './useJMAP'
+import { useEmailActions } from './jmap/useEmailMutations'
 
 interface UseEmailBulkActionsParams {
   emails: any[] | undefined
@@ -17,6 +17,37 @@ export function useEmailBulkActions({
   resetSelection,
 }: UseEmailBulkActionsParams) {
   const { moveEmail, moveEmailBulk } = useEmailActions()
+
+  const restoreMailboxSelection = (
+    emailIds: string[],
+    originalMailboxIds: Map<string, Record<string, boolean>>,
+  ) => {
+    const groupedRestores = new Map<string, { emailIds: string[]; mailboxIds: Record<string, boolean> }>()
+
+    emailIds.forEach((id) => {
+      const mailboxIds = originalMailboxIds.get(id)
+      if (!mailboxIds) return
+
+      const signature = JSON.stringify(Object.entries(mailboxIds).sort(([left], [right]) => left.localeCompare(right)))
+      const existingGroup = groupedRestores.get(signature)
+
+      if (existingGroup) {
+        existingGroup.emailIds.push(id)
+        return
+      }
+
+      groupedRestores.set(signature, { emailIds: [id], mailboxIds })
+    })
+
+    groupedRestores.forEach(({ emailIds: groupedEmailIds, mailboxIds }) => {
+      if (groupedEmailIds.length === 1) {
+        moveEmail.mutate({ emailId: groupedEmailIds[0], mailboxIds })
+        return
+      }
+
+      moveEmailBulk.mutate({ emailIds: groupedEmailIds, mailboxIds })
+    })
+  }
 
   const handleArchive = () => {
     const idsToArchive = selectedEmailIds.size > 0 ? Array.from(selectedEmailIds) : (selectedEmailId ? [selectedEmailId] : [])
@@ -43,14 +74,7 @@ export function useEmailBulkActions({
       toast.success(`${idsToArchive.length} message${idsToArchive.length > 1 ? 's' : ''} archived`, {
         action: {
           label: 'Undo',
-          onClick: () => {
-            idsToArchive.forEach(id => {
-              const original = originalMailboxIds.get(id)
-              if (original) {
-                moveEmail.mutate({ emailId: id, mailboxIds: original })
-              }
-            })
-          }
+          onClick: () => restoreMailboxSelection(idsToArchive, originalMailboxIds)
         }
       })
     }
@@ -81,14 +105,7 @@ export function useEmailBulkActions({
       toast.success(`${idsToDelete.length} message${idsToDelete.length > 1 ? 's' : ''} moved to Trash`, {
         action: {
           label: 'Undo',
-          onClick: () => {
-            idsToDelete.forEach(id => {
-              const original = originalMailboxIds.get(id)
-              if (original) {
-                moveEmail.mutate({ emailId: id, mailboxIds: original })
-              }
-            })
-          }
+          onClick: () => restoreMailboxSelection(idsToDelete, originalMailboxIds)
         }
       })
     }

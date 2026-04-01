@@ -41,37 +41,41 @@ export function Login({ onLoginSuccess }: { onLoginSuccess: () => void }) {
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-[#8E8E93] px-1 uppercase tracking-wider">Username</label>
+            <label htmlFor="login-username" className="text-xs font-semibold text-[#8E8E93] px-1 uppercase tracking-wider">Email or username</label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8E8E93]" />
               <input 
+                id="login-username"
                 type="text" 
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="w-full bg-[#E5E5E5]/40 border-none rounded-xl py-3 pl-10 pr-4 text-[15px] focus:ring-2 focus:ring-[#007AFF]/20 transition-all placeholder-[#8E8E93]"
-                placeholder="email@example.com"
+                placeholder="name or email"
                 required
+                aria-describedby={error ? 'login-error' : undefined}
               />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-[#8E8E93] px-1 uppercase tracking-wider">Password</label>
+            <label htmlFor="login-password" className="text-xs font-semibold text-[#8E8E93] px-1 uppercase tracking-wider">Password</label>
             <div className="relative">
               <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8E8E93]" />
               <input 
+                id="login-password"
                 type="password" 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full bg-[#E5E5E5]/40 border-none rounded-xl py-3 pl-10 pr-4 text-[15px] focus:ring-2 focus:ring-[#007AFF]/20 transition-all placeholder-[#8E8E93]"
                 placeholder="Password"
                 required
+                aria-describedby={error ? 'login-error' : undefined}
               />
             </div>
           </div>
 
           {error && (
-            <div className="bg-red-50 text-red-500 text-xs py-2 px-3 rounded-lg border border-red-100 animate-in fade-in slide-in-from-top-1">
+            <div id="login-error" role="alert" className="bg-red-50 text-red-500 text-xs py-2 px-3 rounded-lg border border-red-100 animate-in fade-in slide-in-from-top-1">
               {error}
             </div>
           )}

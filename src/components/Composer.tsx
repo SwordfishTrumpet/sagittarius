@@ -1,6 +1,7 @@
-import { useState, useCallback, useRef, useMemo } from 'react';
+import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import { X, Maximize2, Minimize2, Trash2, Send, Paperclip, Bold, Italic, Underline, List, ListOrdered, Link, ChevronDown, Clock } from 'lucide-react';
-import { useCompose, useIdentities } from '../hooks/useJMAP';
+import { useCompose } from '../hooks/jmap/useCompose';
+import { useIdentities } from '../hooks/jmap/useIdentities';
 import { toast } from 'sonner';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -11,6 +12,10 @@ import { jmapClient } from '../api/jmap';
 import { ScheduleSendPicker } from './ScheduleSendPicker';
 import { motion } from 'framer-motion';
 import { buildReplyQuote, buildForwardQuote } from '../utils/quoteBuilder';
+import { upsertIdentitySignature } from '../utils/signatureBuilder';
+import { useFocusTrap } from '../hooks/useFocusTrap';
+import { clearComposerDraft, getComposerDraftKey, loadComposerDraft, saveComposerDraft, type ComposerDraft } from '../utils/draftStorage';
+import { isDeferredMutationResult } from '../utils/offlineSyncQueue';
 
 interface Recipient {
   name?: string;
@@ -24,8 +29,15 @@ interface ComposerProps {
 }
 
 export function Composer({ onClose, replyTo, isMobile = false }: ComposerProps) {
+  const accountId = jmapClient.getPrimaryAccount?.() ?? null;
+  const draftKey = useMemo(
+    () => getComposerDraftKey(accountId, replyTo),
+    [accountId, replyTo?.id, replyTo?._forward, replyTo?._replyAll],
+  );
+  const restoredDraft = useMemo(() => loadComposerDraft(draftKey), [draftKey]);
   const [isMinimized, setIsMinimized] = useState(false);
   const [to, setTo] = useState<string>(() => {
+    if (restoredDraft) return restoredDraft.to;
     if (!replyTo) return '';
     if (replyTo._forward) return ''; // Forward: empty To
     if (replyTo._replyAll) {
@@ -39,32 +51,46 @@ export function Composer({ onClose, replyTo, isMobile = false }: ComposerProps) 
     }
     return replyTo.from?.[0]?.email || '';
   });
-  const [cc, setCc] = useState<string>('');
-  const [bcc, setBcc] = useState<string>('');
+  const [cc, setCc] = useState<string>(() => restoredDraft ? restoredDraft.cc : '');
+  const [bcc, setBcc] = useState<string>(() => restoredDraft ? restoredDraft.bcc : '');
   const [subject, setSubject] = useState<string>(() => {
+    if (restoredDraft) return restoredDraft.subject;
     if (!replyTo) return '';
     if (replyTo._forward) return `Fwd: ${replyTo.subject || ''}`;
     return `Re: ${replyTo.subject || ''}`;
   });
-  const [showCcBcc, setShowCcBcc] = useState(false);
-  const [attachments, setAttachments] = useState<any[]>([]);
+  const [showCcBcc, setShowCcBcc] = useState<boolean>(() => restoredDraft ? (restoredDraft.showCcBcc || Boolean(restoredDraft.cc || restoredDraft.bcc)) : false);
+  const [attachments, setAttachments] = useState<any[]>(() => restoredDraft ? restoredDraft.attachments : []);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: identities } = useIdentities();
-  const [selectedIdentityId, setSelectedIdentityId] = useState<string | null>(null);
+  const [selectedIdentityId, setSelectedIdentityId] = useState<string | null>(() => restoredDraft ? restoredDraft.selectedIdentityId : null);
   const selectedIdentity = identities?.find((i: any) => i.id === selectedIdentityId) || identities?.[0];
   const composeMutation = useCompose();
   const [showSchedulePicker, setShowSchedulePicker] = useState(false);
-  const [sendAt, setSendAt] = useState<string | null>(null);
-  const [isQuoteCollapsed, setIsQuoteCollapsed] = useState(false);
+  const [sendAt, setSendAt] = useState<string | null>(() => restoredDraft ? restoredDraft.sendAt : null);
+  const [isQuoteCollapsed, setIsQuoteCollapsed] = useState<boolean>(() => restoredDraft ? restoredDraft.isQuoteCollapsed : false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const shouldPersistDraftRef = useRef(true);
+  const latestDraftRef = useRef<ComposerDraft | null>(null);
+  const saveDraftTimeoutRef = useRef<number | null>(null);
+
+  useFocusTrap(dialogRef, { isActive: !isMinimized });
 
   // Build initial content for the editor from reply/forward
-  const initialContent = useMemo(() => {
+  const initialReplyContent = useMemo(() => {
     if (!replyTo) return '';
     if (replyTo._forward) return buildForwardQuote(replyTo);
     return buildReplyQuote(replyTo);
   }, [replyTo]);
+
+  const initialContent = useMemo(() => {
+    if (restoredDraft) return restoredDraft.body;
+    return upsertIdentitySignature(initialReplyContent, selectedIdentity);
+  }, [initialReplyContent, restoredDraft, selectedIdentity]);
+
+  const [bodyHtml, setBodyHtml] = useState<string>(() => restoredDraft ? restoredDraft.body : initialContent);
 
   // Get max delayed send from capabilities
   const maxDelayedSend = (() => {
@@ -86,8 +112,12 @@ export function Composer({ onClose, replyTo, isMobile = false }: ComposerProps) 
       }),
     ],
     content: initialContent,
+    onUpdate: ({ editor }) => {
+      setBodyHtml(editor.getHTML());
+    },
     onCreate: ({ editor }) => {
-      if (initialContent) {
+      setBodyHtml(editor.getHTML());
+      if (initialReplyContent) {
         // Position cursor at start (above quoted text) for replies
         setTimeout(() => editor.commands.focus('start'), 50);
       }
@@ -98,6 +128,81 @@ export function Composer({ onClose, replyTo, isMobile = false }: ComposerProps) 
       },
     },
   });
+
+  useEffect(() => {
+    if (!selectedIdentityId && identities && identities.length > 0) {
+      setSelectedIdentityId(identities[0].id)
+    }
+  }, [identities, selectedIdentityId])
+
+  const hasHydratedInitialSignatureRef = useRef(false)
+
+  useEffect(() => {
+    if (!editor || !selectedIdentity) return
+
+    if (!hasHydratedInitialSignatureRef.current) {
+      hasHydratedInitialSignatureRef.current = true
+      if (restoredDraft) {
+        return
+      }
+    }
+
+    const currentHtml = editor.getHTML()
+    const nextHtml = upsertIdentitySignature(currentHtml, selectedIdentity)
+    if (nextHtml === currentHtml) return
+
+    setBodyHtml(nextHtml)
+
+    if (typeof editor.commands.setContent === 'function') {
+      editor.commands.setContent(nextHtml, false)
+      return
+    }
+
+    const testEditor = editor as unknown as { __setHTML?: (value: string) => void }
+    if (typeof testEditor.__setHTML === 'function') {
+      testEditor.__setHTML(nextHtml)
+    }
+  }, [editor, restoredDraft, selectedIdentity])
+
+  useEffect(() => {
+    if (!draftKey || !shouldPersistDraftRef.current) return;
+
+    const draft: ComposerDraft = {
+      to,
+      cc,
+      bcc,
+      subject,
+      body: bodyHtml,
+      attachments,
+      selectedIdentityId,
+      showCcBcc,
+      sendAt,
+      isQuoteCollapsed,
+    };
+
+    latestDraftRef.current = draft;
+    if (saveDraftTimeoutRef.current !== null) {
+      window.clearTimeout(saveDraftTimeoutRef.current);
+    }
+    saveDraftTimeoutRef.current = window.setTimeout(() => {
+      if (!shouldPersistDraftRef.current) return;
+      saveComposerDraft(draftKey, draft);
+    }, 700);
+
+    return () => {
+      if (saveDraftTimeoutRef.current !== null) {
+        window.clearTimeout(saveDraftTimeoutRef.current);
+        saveDraftTimeoutRef.current = null;
+      }
+    };
+  }, [draftKey, to, cc, bcc, subject, bodyHtml, attachments, selectedIdentityId, showCcBcc, sendAt, isQuoteCollapsed]);
+
+  useEffect(() => {
+    return () => {
+      if (!draftKey || !shouldPersistDraftRef.current || !latestDraftRef.current) return;
+      saveComposerDraft(draftKey, latestDraftRef.current);
+    };
+  }, [draftKey]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -153,7 +258,25 @@ export function Composer({ onClose, replyTo, isMobile = false }: ComposerProps) 
       fromEmail: selectedIdentity?.email || '',
       ...(scheduleAt ? { sendAt: scheduleAt } : {}),
     }, {
-      onSuccess: () => {
+      onSuccess: (result) => {
+        if (isDeferredMutationResult(result)) {
+          shouldPersistDraftRef.current = false;
+          if (saveDraftTimeoutRef.current !== null) {
+            window.clearTimeout(saveDraftTimeoutRef.current);
+            saveDraftTimeoutRef.current = null;
+          }
+          clearComposerDraft(draftKey);
+          toast.success('Message queued for sync when you are back online');
+          onClose();
+          return;
+        }
+
+        shouldPersistDraftRef.current = false;
+        if (saveDraftTimeoutRef.current !== null) {
+          window.clearTimeout(saveDraftTimeoutRef.current);
+          saveDraftTimeoutRef.current = null;
+        }
+        clearComposerDraft(draftKey);
         toast.success(scheduleAt ? 'Message scheduled' : 'Message sent');
         onClose();
       },
@@ -162,6 +285,16 @@ export function Composer({ onClose, replyTo, isMobile = false }: ComposerProps) 
       }
     });
   };
+
+  const handleDiscardDraft = useCallback(() => {
+    shouldPersistDraftRef.current = false;
+    if (saveDraftTimeoutRef.current !== null) {
+      window.clearTimeout(saveDraftTimeoutRef.current);
+      saveDraftTimeoutRef.current = null;
+    }
+    clearComposerDraft(draftKey);
+    onClose();
+  }, [draftKey, onClose]);
 
   const setLink = useCallback(() => {
     if (!editor) return;
@@ -185,13 +318,22 @@ export function Composer({ onClose, replyTo, isMobile = false }: ComposerProps) 
         transition={{ type: 'spring', damping: 20, stiffness: 300 }}
         className="fixed bottom-0 right-6 w-[280px] bg-white border border-[#E5E5EA] rounded-t-xl shadow-[0_-4px_20px_rgba(0,0,0,0.08)] flex items-center justify-between px-4 py-2.5 cursor-pointer z-[200]"
         onClick={() => setIsMinimized(false)}
+        role="button"
+        tabIndex={0}
+        aria-label={`Expand composer: ${subject || 'New Message'}`}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            setIsMinimized(false);
+          }
+        }}
       >
         <span className="font-semibold text-[13px] text-[#1C1C1E] truncate">{subject || 'New Message'}</span>
         <div className="flex gap-2 items-center">
-          <button className="p-0.5 hover:bg-black/5 rounded text-[#8E8E93] transition-colors">
+          <button aria-label="Expand composer" onClick={(e) => { e.stopPropagation(); setIsMinimized(false); }} className="p-0.5 hover:bg-black/5 rounded text-[#6C6C70] transition-colors">
             <Maximize2 className="w-3.5 h-3.5" strokeWidth={1.5} />
           </button>
-          <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="p-0.5 hover:bg-black/5 rounded text-[#8E8E93] transition-colors">
+          <button aria-label="Close composer" onClick={(e) => { e.stopPropagation(); onClose(); }} className="p-0.5 hover:bg-black/5 rounded text-[#6C6C70] transition-colors">
             <X className="w-3.5 h-3.5" strokeWidth={1.5} />
           </button>
         </div>
@@ -212,6 +354,7 @@ export function Composer({ onClose, replyTo, isMobile = false }: ComposerProps) 
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <motion.div
+        ref={dialogRef}
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.97, y: 5 }}
@@ -243,7 +386,8 @@ export function Composer({ onClose, replyTo, isMobile = false }: ComposerProps) 
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => setIsMinimized(true)}
-              className="p-1.5 hover:bg-black/5 rounded-md text-[#8E8E93] transition-colors"
+              aria-label="Minimize composer"
+              className="p-1.5 hover:bg-black/5 rounded-md text-[#6C6C70] transition-colors"
             >
               <Minimize2 className="w-4 h-4" strokeWidth={1.5} />
             </button>
@@ -274,6 +418,9 @@ export function Composer({ onClose, replyTo, isMobile = false }: ComposerProps) 
                 <button
                   onClick={() => setShowSchedulePicker(!showSchedulePicker)}
                   disabled={composeMutation.isPending || !to || !selectedIdentity}
+                  aria-label={showSchedulePicker ? 'Hide schedule send options' : 'Show schedule send options'}
+                  aria-expanded={showSchedulePicker}
+                  aria-haspopup="dialog"
                   className="p-1.5 bg-[#007AFF] text-white rounded-full hover:bg-[#0062CC] transition-colors disabled:opacity-40"
                 >
                   <Clock className="w-3.5 h-3.5" strokeWidth={2} />
@@ -299,7 +446,7 @@ export function Composer({ onClose, replyTo, isMobile = false }: ComposerProps) 
           {/* From identity selector */}
           {identities && identities.length > 1 && (
             <div className="px-5 py-2 border-b border-[#E5E5EA] flex items-center gap-2 shrink-0">
-              <label htmlFor="composer-from" className="text-[#8E8E93] w-14 font-medium text-[13px]">From:</label>
+                <label htmlFor="composer-from" className="text-[#6C6C70] w-14 font-medium text-[13px]">From:</label>
               <select
                 id="composer-from"
                 value={selectedIdentity?.id || ''}
@@ -318,7 +465,7 @@ export function Composer({ onClose, replyTo, isMobile = false }: ComposerProps) 
 
           {/* To field */}
           <div className="px-5 py-2 border-b border-[#E5E5EA] flex items-center gap-2 shrink-0">
-            <label htmlFor="composer-to" className="text-[#8E8E93] w-14 font-medium text-[13px]">
+            <label htmlFor="composer-to" className="text-[#6C6C70] w-14 font-medium text-[13px]">
               <span aria-hidden="true">To:</span>
               <span className="sr-only">Recipients (required)</span>
             </label>
@@ -348,7 +495,7 @@ export function Composer({ onClose, replyTo, isMobile = false }: ComposerProps) 
             {showCcBcc && (
               <>
                 <div className="px-5 py-2 border-b border-[#E5E5EA] flex items-center gap-2 animate-in fade-in duration-200 shrink-0">
-                  <label htmlFor="composer-cc" className="text-[#8E8E93] w-14 font-medium text-[13px]">Cc:</label>
+                  <label htmlFor="composer-cc" className="text-[#6C6C70] w-14 font-medium text-[13px]">Cc:</label>
                   <input 
                     id="composer-cc"
                     value={cc} 
@@ -357,7 +504,7 @@ export function Composer({ onClose, replyTo, isMobile = false }: ComposerProps) 
                   />
                 </div>
                 <div className="px-5 py-2 border-b border-[#E5E5EA] flex items-center gap-2 animate-in fade-in duration-200 shrink-0">
-                  <label htmlFor="composer-bcc" className="text-[#8E8E93] w-14 font-medium text-[13px]">Bcc:</label>
+                  <label htmlFor="composer-bcc" className="text-[#6C6C70] w-14 font-medium text-[13px]">Bcc:</label>
                   <input 
                     id="composer-bcc"
                     value={bcc} 
@@ -371,7 +518,7 @@ export function Composer({ onClose, replyTo, isMobile = false }: ComposerProps) 
 
           {/* Subject field */}
           <div className="px-5 py-2 border-b border-[#E5E5EA] flex items-center gap-2 shrink-0">
-            <label htmlFor="composer-subject" className="text-[#8E8E93] w-14 font-medium text-[13px]">Subject:</label>
+            <label htmlFor="composer-subject" className="text-[#6C6C70] w-14 font-medium text-[13px]">Subject:</label>
             <input 
               id="composer-subject"
               value={subject} 
@@ -451,8 +598,8 @@ export function Composer({ onClose, replyTo, isMobile = false }: ComposerProps) 
                 <div key={a.blobId} className="flex items-center gap-1.5 px-2.5 py-1 bg-[#007AFF]/[0.08] border border-[#007AFF]/[0.15] rounded-full text-[12px] font-medium text-[#007AFF] animate-in zoom-in-95 duration-200">
                   <Paperclip className="w-3 h-3" strokeWidth={1.5} />
                   <span className="max-w-[120px] truncate">{a.name}</span>
-                  <span className="text-[#007AFF]/60 text-[11px]">{(a.size / 1024).toFixed(0)}K</span>
-                  <button onClick={() => removeAttachment(a.blobId)} className="p-0.5 hover:bg-[#007AFF]/[0.15] rounded-full transition-colors">
+                  <span className="text-[#005FCC] text-[11px]">{(a.size / 1024).toFixed(0)}K</span>
+                  <button aria-label={`Remove attachment ${a.name}`} onClick={() => removeAttachment(a.blobId)} className="p-0.5 hover:bg-[#007AFF]/[0.15] rounded-full transition-colors">
                     <X className="w-3 h-3" />
                   </button>
                 </div>
@@ -466,7 +613,7 @@ export function Composer({ onClose, replyTo, isMobile = false }: ComposerProps) 
           </div>
 
           {/* Quoted text toggle */}
-          {replyTo && initialContent && (
+          {replyTo && initialReplyContent && (
             <div className="px-5 border-t border-[#E5E5EA] shrink-0">
               <button
                 onClick={() => {
@@ -486,7 +633,7 @@ export function Composer({ onClose, replyTo, isMobile = false }: ComposerProps) 
 
         {/* Footer */}
         <footer className="px-5 py-2.5 border-t border-[#E5E5EA] flex items-center justify-between bg-white shrink-0">
-          <button onClick={onClose} className="p-1.5 hover:bg-[#FF3B30]/10 rounded-lg text-[#8E8E93] hover:text-[#FF3B30] transition-colors" title="Discard draft">
+          <button onClick={handleDiscardDraft} aria-label="Discard draft" className="p-1.5 hover:bg-[#FF3B30]/10 rounded-lg text-[#6C6C70] hover:text-[#FF3B30] transition-colors" title="Discard draft">
             <Trash2 className="w-4 h-4" strokeWidth={1.5} />
           </button>
           <span className="text-[11px] text-[#C7C7CC] font-medium">
@@ -512,7 +659,7 @@ function ToolbarButton({ onClick, active, icon, label }: ToolbarButtonProps) {
       onClick={onClick}
       aria-label={label}
       aria-pressed={active}
-      className={`p-1.5 rounded transition-colors ${active ? 'text-[#007AFF] bg-[#007AFF]/10' : 'hover:bg-black/5 text-[#8E8E93]'}`}
+      className={`p-1.5 rounded transition-colors ${active ? 'text-[#007AFF] bg-[#007AFF]/10' : 'hover:bg-black/5 text-[#6C6C70]'}`}
     >
       {icon}
     </button>

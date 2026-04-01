@@ -30,6 +30,8 @@ export function makeSession(overrides: Partial<JMAPSession> = {}): JMAPSession {
       'urn:ietf:params:jmap:submission': {
         maxDelayedSend: 0,
       },
+      'urn:ietf:params:jmap:vacationresponse': {},
+      'urn:ietf:params:jmap:sieve': {},
     },
     accounts: {
       'account-001': {
@@ -41,6 +43,8 @@ export function makeSession(overrides: Partial<JMAPSession> = {}): JMAPSession {
           'urn:ietf:params:jmap:submission': {
             maxDelayedSend: 0,
           },
+          'urn:ietf:params:jmap:vacationresponse': {},
+          'urn:ietf:params:jmap:sieve': {},
         },
       },
     },

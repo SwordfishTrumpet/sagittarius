@@ -26,6 +26,8 @@ export function SidebarSection({
   children,
   actionButton,
 }: SidebarSectionProps) {
+  const contentId = `${title.toLowerCase().replace(/\s+/g, '-')}-section-panel`;
+
   return (
     <div className="space-y-1">
       {/* Section Header */}
@@ -33,6 +35,8 @@ export function SidebarSection({
         {/* Chevron + Title */}
         <button
           onClick={onToggleExpand}
+          aria-expanded={isExpanded}
+          aria-controls={contentId}
           className="flex items-center gap-1.5 flex-1 hover:opacity-70 transition-opacity"
         >
           <span className="text-[#8E8E93] hover:text-[#1C1C1E] transition-colors">
@@ -53,6 +57,7 @@ export function SidebarSection({
             onClick={actionButton.onClick}
             className="p-1 text-[#007AFF] hover:bg-black/[0.05] rounded transition-colors opacity-0 group-hover:opacity-100"
             title={actionButton.label}
+            aria-label={actionButton.label}
           >
             {actionButton.icon}
           </button>
@@ -60,11 +65,15 @@ export function SidebarSection({
       </div>
 
       {/* Section Content */}
-      {isExpanded && (
-        <div className="space-y-0.5 animate-in fade-in duration-200">
+      <div
+        id={contentId}
+        role="group"
+        hidden={!isExpanded}
+        aria-hidden={!isExpanded}
+        className={isExpanded ? 'space-y-0.5 animate-in fade-in duration-200' : 'hidden'}
+      >
           {children}
-        </div>
-      )}
+      </div>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { waitFor } from '@testing-library/react'
+import { waitFor, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { makeEmailDetail, makeEmailList, makeIdentityList, makeMailboxList, makeSession, makeThreadList, wrapMethodResponse } from '../fixtures/jmap'
 import { getJmapRequestBodies, jsonResponse, renderApp, respondWith, storeAuthenticatedSession } from './helpers'
@@ -85,11 +85,12 @@ describe('read email flow', () => {
 
     const { user, screen } = renderApp()
 
-    expect(await screen.findByText('Quarterly update')).toBeInTheDocument()
-    expect(screen.getByText('Planning notes')).toBeInTheDocument()
-    expect(screen.getByText('FYI')).toBeInTheDocument()
+    const quarterlyMessage = await screen.findByRole('option', { name: /Quarterly update/ })
+    expect(quarterlyMessage).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: /Planning notes/ })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: /FYI/ })).toBeInTheDocument()
 
-    await user.click(screen.getByText('Quarterly update'))
+    await user.click(within(quarterlyMessage).getByText('Quarterly update'))
 
     expect(await screen.findByText('Hello from Alice.')).toBeInTheDocument()
     expect(await screen.findByText('Thanks, looks good.')).toBeInTheDocument()

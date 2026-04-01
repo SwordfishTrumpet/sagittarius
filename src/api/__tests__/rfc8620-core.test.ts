@@ -86,6 +86,7 @@ describe('RFC 8620 — JMAP Core Protocol', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllEnvs();
   });
 
   // =========================================================================
@@ -209,6 +210,31 @@ describe('RFC 8620 — JMAP Core Protocol', () => {
       const decoded = atob(secondCallAuth.replace('Basic ', ''));
       expect(decoded).toBe('user:password');
       expect(result.apiUrl).toBeDefined();
+    });
+
+    it('should try configured email and internal username aliases for bare usernames', async () => {
+      vi.stubEnv('VITE_LOGIN_EMAIL_DOMAIN', 'wellintime.com');
+
+      const session = makeSession({ username: 'remcov@wellintime.com' });
+      fetchMock
+        .mockResolvedValueOnce({ ok: false, status: 401, text: async () => 'Unauthorized' })
+        .mockResolvedValueOnce({ ok: false, status: 401, text: async () => 'Unauthorized' })
+        .mockResolvedValueOnce({ ok: true, json: async () => session, text: async () => JSON.stringify(session) });
+
+      const { jmapClient } = await import('../jmap');
+      const result = await jmapClient.authenticate(' remcov ', 'password');
+
+      expect(fetchMock).toHaveBeenCalledTimes(3);
+
+      const authHeaders = fetchMock.mock.calls.map(([, init]) => init.headers['Authorization']);
+      const decodedHeaders = authHeaders.map((header) => atob(header.replace('Basic ', '')));
+
+      expect(decodedHeaders).toEqual([
+        'remcov:password',
+        'remcov@wellintime.com:password',
+        'remcov-wellintime:password',
+      ]);
+      expect(result.username).toBe('remcov@wellintime.com');
     });
 
     it('should identify primary account for a capability', async () => {

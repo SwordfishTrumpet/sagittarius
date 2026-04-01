@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Edit2, Trash2, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
-import { useIdentities } from '../../hooks/useJMAP';
+import { useIdentities } from '../../hooks/jmap/useIdentities';
 import { useIdentityActions, type IdentityData } from '../../hooks/useIdentityActions';
 
 interface IdentityFormState {

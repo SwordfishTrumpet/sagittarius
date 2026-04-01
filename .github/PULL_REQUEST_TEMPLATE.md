@@ -28,5 +28,5 @@ If this PR includes UI changes, add before/after screenshots.
 - [ ] My code follows the project's code style
 - [ ] I have tested my changes locally
 - [ ] The build passes (`npm run build`)
-- [ ] The linter passes (`npm run lint`)
+- [ ] Type checking passes (`npm run typecheck`)
 - [ ] I have updated documentation if needed

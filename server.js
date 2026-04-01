@@ -19,8 +19,31 @@ import path from 'path';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = parseInt(process.env.PORT || '8081', 10);
 const JMAP_SERVER = process.env.JMAP_SERVER || 'http://localhost:8080';
+const AUTH_TOKEN_RE = /^[A-Za-z0-9+/=]+$/;
 
 const app = express();
+
+const logInfo = (...args) => {
+  console.log('[sagittarius]', ...args);
+};
+
+const logError = (...args) => {
+  console.error('[sagittarius]', ...args);
+};
+
+function attachBasicAuthFromAccessToken(proxyReq, url) {
+  if (!url || proxyReq.getHeader('authorization')) return;
+
+  try {
+    const parsedUrl = new URL(url, 'http://localhost');
+    const token = parsedUrl.searchParams.get('access_token');
+    if (token && AUTH_TOKEN_RE.test(token) && token.length <= 512) {
+      proxyReq.setHeader('Authorization', `Basic ${token}`);
+    }
+  } catch {
+    /* ignore parse errors */
+  }
+}
 
 // ── Hardening ───────────────────────────────────────────────────────
 app.disable('x-powered-by');
@@ -79,15 +102,11 @@ app.use(
         // EventSource (SSE) can't send custom headers, so the client
         // passes Base64 credentials as ?access_token=<b64>.  Convert
         // that into a proper Authorization header for the JMAP backend.
-        if (req.url && !proxyReq.getHeader('authorization')) {
-          try {
-            const url = new URL(req.url, 'http://localhost');
-            const token = url.searchParams.get('access_token');
-            if (token && /^[A-Za-z0-9+/=]+$/.test(token) && token.length <= 512) {
-              proxyReq.setHeader('Authorization', `Basic ${token}`);
-            }
-          } catch { /* ignore parse errors */ }
-        }
+        attachBasicAuthFromAccessToken(proxyReq, req.url);
+      },
+
+      proxyReqWs: (proxyReq, req) => {
+        attachBasicAuthFromAccessToken(proxyReq, req.url);
       },
 
       proxyRes: (proxyRes) => {
@@ -99,7 +118,7 @@ app.use(
       },
 
       error: (err, _req, res) => {
-        console.error(`[proxy] ${err.message}`);
+        logError(`[proxy] ${err.message}`);
         if (res.writeHead) {
           res.writeHead(502, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'JMAP backend unavailable' }));
@@ -144,19 +163,19 @@ app.get('/{*splat}', (_req, res) => {
 const PROXY_PORT = parseInt(process.env.PROXY_PORT || '3000', 10);
 
 const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`[sagittarius] listening on 0.0.0.0:${PORT}`);
-  console.log(`[sagittarius] JMAP backend: ${JMAP_SERVER}`);
-  console.log(`[sagittarius] serving: ${distDir}`);
+  logInfo(`listening on 0.0.0.0:${PORT}`);
+  logInfo(`JMAP backend: ${JMAP_SERVER}`);
+  logInfo(`serving: ${distDir}`);
 });
 
 const proxyServer = app.listen(PROXY_PORT, '0.0.0.0', () => {
-  console.log(`[sagittarius] listening on 0.0.0.0:${PROXY_PORT} (reverse proxy upstream)`);
+  logInfo(`listening on 0.0.0.0:${PROXY_PORT} (reverse proxy upstream)`);
 });
 
 // Graceful shutdown
 for (const sig of ['SIGTERM', 'SIGINT']) {
   process.on(sig, () => {
-    console.log(`[sagittarius] received ${sig}, shutting down...`);
+    logInfo(`received ${sig}, shutting down...`);
     let closed = 0;
     const done = () => { if (++closed >= 2) process.exit(0); };
     server.close(done);

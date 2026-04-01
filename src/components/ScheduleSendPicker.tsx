@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Calendar, Clock, ChevronRight, X } from 'lucide-react';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface ScheduleSendPickerProps {
   onSchedule: (date: Date) => void;
@@ -69,6 +70,9 @@ export function ScheduleSendPicker({ onSchedule, onCancel, maxDelaySeconds }: Sc
   const [customValue, setCustomValue] = useState('');
   const [error, setError] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
+  const customInputRef = useRef<HTMLInputElement>(null);
+
+  useFocusTrap(containerRef, { initialFocusRef: customInputRef });
 
   // Close on outside click
   useEffect(() => {
@@ -124,6 +128,8 @@ export function ScheduleSendPicker({ onSchedule, onCancel, maxDelaySeconds }: Sc
       className="bg-white rounded-xl shadow-2xl border border-[#E5E5EA] w-[300px] overflow-hidden"
       role="dialog"
       aria-label="Schedule send"
+      aria-modal="true"
+      tabIndex={-1}
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-[#F2F2F7]">
@@ -134,6 +140,7 @@ export function ScheduleSendPicker({ onSchedule, onCancel, maxDelaySeconds }: Sc
         <button
           onClick={onCancel}
           className="w-6 h-6 rounded-full bg-[#E5E5EA] hover:bg-[#D1D1D6] flex items-center justify-center transition-colors"
+          aria-label="Close schedule picker"
         >
           <X size={11} strokeWidth={2} className="text-[#636366]" />
         </button>
@@ -171,6 +178,7 @@ export function ScheduleSendPicker({ onSchedule, onCancel, maxDelaySeconds }: Sc
           Custom Date &amp; Time
         </label>
         <input
+          ref={customInputRef}
           type="datetime-local"
           value={customValue}
           min={toLocalDatetimeValue(minDate)}
@@ -180,7 +188,7 @@ export function ScheduleSendPicker({ onSchedule, onCancel, maxDelaySeconds }: Sc
         />
 
         {error && (
-          <p className="text-[12px] text-[#FF3B30]">{error}</p>
+          <p role="alert" className="text-[12px] text-[#FF3B30]">{error}</p>
         )}
 
         <button
