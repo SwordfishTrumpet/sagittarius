@@ -11,7 +11,7 @@ import LinkExtension from '@tiptap/extension-link';
 import { jmapClient } from '../api/jmap';
 import { ScheduleSendPicker } from './ScheduleSendPicker';
 import { motion } from 'framer-motion';
-import { buildReplyQuote, buildForwardQuote } from '../utils/quoteBuilder';
+import { buildReplyQuote, buildForwardQuote, getEmailBodyHtml } from '../utils/quoteBuilder';
 import { upsertIdentitySignature } from '../utils/signatureBuilder';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import { clearComposerDraft, getComposerDraftKey, loadComposerDraft, saveComposerDraft, type ComposerDraft } from '../utils/draftStorage';
@@ -25,18 +25,23 @@ interface Recipient {
 interface ComposerProps {
   onClose: () => void;
   replyTo?: any;
+  draftEmail?: any;
   isMobile?: boolean;
 }
 
-export function Composer({ onClose, replyTo, isMobile = false }: ComposerProps) {
+export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: ComposerProps) {
   const accountId = jmapClient.getPrimaryAccount?.() ?? null;
+  const draftContext = draftEmail ? { id: draftEmail.id, _draft: true } : replyTo;
   const draftKey = useMemo(
-    () => getComposerDraftKey(accountId, replyTo),
-    [accountId, replyTo?.id, replyTo?._forward, replyTo?._replyAll],
+    () => getComposerDraftKey(accountId, draftContext),
+    [accountId, draftContext],
   );
   const restoredDraft = useMemo(() => loadComposerDraft(draftKey), [draftKey]);
   const [isMinimized, setIsMinimized] = useState(false);
+  const initialDraftBody = useMemo(() => draftEmail ? getEmailBodyHtml(draftEmail) : '', [draftEmail]);
+  const formatRecipients = useCallback((recipients?: Recipient[]) => recipients?.map((recipient) => recipient.email).filter(Boolean).join(', ') || '', []);
   const [to, setTo] = useState<string>(() => {
+    if (draftEmail) return formatRecipients(draftEmail.to);
     if (restoredDraft) return restoredDraft.to;
     if (!replyTo) return '';
     if (replyTo._forward) return ''; // Forward: empty To
@@ -51,16 +56,17 @@ export function Composer({ onClose, replyTo, isMobile = false }: ComposerProps) 
     }
     return replyTo.from?.[0]?.email || '';
   });
-  const [cc, setCc] = useState<string>(() => restoredDraft ? restoredDraft.cc : '');
-  const [bcc, setBcc] = useState<string>(() => restoredDraft ? restoredDraft.bcc : '');
+  const [cc, setCc] = useState<string>(() => draftEmail ? formatRecipients(draftEmail.cc) : (restoredDraft ? restoredDraft.cc : ''));
+  const [bcc, setBcc] = useState<string>(() => draftEmail ? formatRecipients(draftEmail.bcc) : (restoredDraft ? restoredDraft.bcc : ''));
   const [subject, setSubject] = useState<string>(() => {
+    if (draftEmail) return draftEmail.subject || '';
     if (restoredDraft) return restoredDraft.subject;
     if (!replyTo) return '';
     if (replyTo._forward) return `Fwd: ${replyTo.subject || ''}`;
     return `Re: ${replyTo.subject || ''}`;
   });
-  const [showCcBcc, setShowCcBcc] = useState<boolean>(() => restoredDraft ? (restoredDraft.showCcBcc || Boolean(restoredDraft.cc || restoredDraft.bcc)) : false);
-  const [attachments, setAttachments] = useState<any[]>(() => restoredDraft ? restoredDraft.attachments : []);
+  const [showCcBcc, setShowCcBcc] = useState<boolean>(() => draftEmail ? Boolean(draftEmail.cc?.length || draftEmail.bcc?.length) : (restoredDraft ? (restoredDraft.showCcBcc || Boolean(restoredDraft.cc || restoredDraft.bcc)) : false));
+  const [attachments, setAttachments] = useState<any[]>(() => draftEmail ? (draftEmail.attachments || []) : (restoredDraft ? restoredDraft.attachments : []));
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -86,11 +92,12 @@ export function Composer({ onClose, replyTo, isMobile = false }: ComposerProps) 
   }, [replyTo]);
 
   const initialContent = useMemo(() => {
+    if (draftEmail) return initialDraftBody;
     if (restoredDraft) return restoredDraft.body;
     return upsertIdentitySignature(initialReplyContent, selectedIdentity);
-  }, [initialReplyContent, restoredDraft, selectedIdentity]);
+  }, [draftEmail, initialDraftBody, initialReplyContent, restoredDraft, selectedIdentity]);
 
-  const [bodyHtml, setBodyHtml] = useState<string>(() => restoredDraft ? restoredDraft.body : initialContent);
+  const [bodyHtml, setBodyHtml] = useState<string>(() => draftEmail ? initialDraftBody : (restoredDraft ? restoredDraft.body : initialContent));
 
   // Get max delayed send from capabilities
   const maxDelayedSend = (() => {
@@ -131,9 +138,17 @@ export function Composer({ onClose, replyTo, isMobile = false }: ComposerProps) 
 
   useEffect(() => {
     if (!selectedIdentityId && identities && identities.length > 0) {
+      const draftFromEmail = draftEmail?.from?.[0]?.email;
+      if (draftFromEmail) {
+        const matchingIdentity = identities.find((identity: any) => identity.email === draftFromEmail);
+        if (matchingIdentity) {
+          setSelectedIdentityId(matchingIdentity.id)
+          return
+        }
+      }
       setSelectedIdentityId(identities[0].id)
     }
-  }, [identities, selectedIdentityId])
+  }, [draftEmail, identities, selectedIdentityId])
 
   const hasHydratedInitialSignatureRef = useRef(false)
 
@@ -142,7 +157,7 @@ export function Composer({ onClose, replyTo, isMobile = false }: ComposerProps) 
 
     if (!hasHydratedInitialSignatureRef.current) {
       hasHydratedInitialSignatureRef.current = true
-      if (restoredDraft) {
+      if (restoredDraft || draftEmail) {
         return
       }
     }
@@ -162,7 +177,7 @@ export function Composer({ onClose, replyTo, isMobile = false }: ComposerProps) 
     if (typeof testEditor.__setHTML === 'function') {
       testEditor.__setHTML(nextHtml)
     }
-  }, [editor, restoredDraft, selectedIdentity])
+  }, [draftEmail, editor, restoredDraft, selectedIdentity])
 
   useEffect(() => {
     if (!draftKey || !shouldPersistDraftRef.current) return;
@@ -186,7 +201,9 @@ export function Composer({ onClose, replyTo, isMobile = false }: ComposerProps) 
     }
     saveDraftTimeoutRef.current = window.setTimeout(() => {
       if (!shouldPersistDraftRef.current) return;
-      saveComposerDraft(draftKey, draft);
+      const latest = latestDraftRef.current;
+      if (!latest) return;
+      saveComposerDraft(draftKey, latest);
     }, 700);
 
     return () => {
@@ -257,6 +274,7 @@ export function Composer({ onClose, replyTo, isMobile = false }: ComposerProps) 
       identityId: selectedIdentity?.id || '',
       fromEmail: selectedIdentity?.email || '',
       ...(scheduleAt ? { sendAt: scheduleAt } : {}),
+      ...(draftEmail?.id ? { draftId: draftEmail.id } : {}),
     }, {
       onSuccess: (result) => {
         if (isDeferredMutationResult(result)) {
