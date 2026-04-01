@@ -16,6 +16,7 @@ import { upsertIdentitySignature } from '../utils/signatureBuilder';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import { clearComposerDraft, getComposerDraftKey, loadComposerDraft, saveComposerDraft, type ComposerDraft } from '../utils/draftStorage';
 import { isDeferredMutationResult } from '../utils/offlineSyncQueue';
+import { useSaveDraft } from '../hooks/jmap/useSaveDraft';
 
 interface Recipient {
   name?: string;
@@ -74,6 +75,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
   const [selectedIdentityId, setSelectedIdentityId] = useState<string | null>(() => restoredDraft ? restoredDraft.selectedIdentityId : null);
   const selectedIdentity = identities?.find((i: any) => i.id === selectedIdentityId) || identities?.[0];
   const composeMutation = useCompose();
+  const saveDraftMutation = useSaveDraft();
   const [showSchedulePicker, setShowSchedulePicker] = useState(false);
   const [sendAt, setSendAt] = useState<string | null>(() => restoredDraft ? restoredDraft.sendAt : null);
   const [isQuoteCollapsed, setIsQuoteCollapsed] = useState<boolean>(() => restoredDraft ? restoredDraft.isQuoteCollapsed : false);
@@ -314,6 +316,57 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
     onClose();
   }, [draftKey, onClose]);
 
+  // Helper to check if draft has meaningful content
+  const hasDraftContent = useCallback(() => {
+    const hasRecipients = to.trim() || cc.trim() || bcc.trim();
+    const hasSubject = subject.trim();
+    const hasBody = bodyHtml.trim() && bodyHtml !== '<p></p>';
+    return Boolean(hasRecipients || hasSubject || hasBody);
+  }, [to, cc, bcc, subject, bodyHtml]);
+
+  // Save draft to server and close (used when X button or backdrop is clicked)
+  const handleCloseWithSave = useCallback(async () => {
+    // If discarding was requested or no content, just close
+    if (!shouldPersistDraftRef.current || !hasDraftContent()) {
+      clearComposerDraft(draftKey);
+      onClose();
+      return;
+    }
+
+    // Stop localStorage persistence
+    shouldPersistDraftRef.current = false;
+    if (saveDraftTimeoutRef.current !== null) {
+      window.clearTimeout(saveDraftTimeoutRef.current);
+      saveDraftTimeoutRef.current = null;
+    }
+
+    const parseRecipients = (str: string): Recipient[] => {
+      return str.split(',').map(s => s.trim()).filter(s => s.includes('@')).map(s => ({ email: s }));
+    };
+
+    try {
+      await saveDraftMutation.mutateAsync({
+        to: parseRecipients(to),
+        cc: cc ? parseRecipients(cc) : undefined,
+        bcc: bcc ? parseRecipients(bcc) : undefined,
+        subject,
+        body: bodyHtml,
+        attachments: attachments.length > 0 ? attachments : undefined,
+        fromEmail: selectedIdentity?.email || '',
+        draftId: draftEmail?.id,
+      });
+      clearComposerDraft(draftKey);
+      toast.success('Draft saved');
+    } catch (err: any) {
+      // If server save fails, still clear localStorage and close
+      // The user can still recover from server drafts folder if needed
+      clearComposerDraft(draftKey);
+      toast.error(`Failed to save draft: ${err.message}`);
+    } finally {
+      onClose();
+    }
+  }, [draftKey, onClose, hasDraftContent, saveDraftMutation, to, cc, bcc, subject, bodyHtml, attachments, selectedIdentity, draftEmail]);
+
   const setLink = useCallback(() => {
     if (!editor) return;
     const previousUrl = editor.getAttributes('link').href;
@@ -351,7 +404,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
           <button aria-label="Expand composer" onClick={(e) => { e.stopPropagation(); setIsMinimized(false); }} className="p-0.5 hover:bg-black/5 rounded text-[#6C6C70] transition-colors">
             <Maximize2 className="w-3.5 h-3.5" strokeWidth={1.5} />
           </button>
-          <button aria-label="Close composer" onClick={(e) => { e.stopPropagation(); onClose(); }} className="p-0.5 hover:bg-black/5 rounded text-[#6C6C70] transition-colors">
+          <button aria-label="Close and save draft" onClick={(e) => { e.stopPropagation(); handleCloseWithSave(); }} className="p-0.5 hover:bg-black/5 rounded text-[#6C6C70] transition-colors">
             <X className="w-3.5 h-3.5" strokeWidth={1.5} />
           </button>
         </div>
@@ -369,7 +422,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
       aria-modal="true"
       aria-labelledby="composer-title"
       className="fixed inset-0 z-[200] flex items-center justify-center bg-black/30 backdrop-blur-[2px]"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onClick={(e) => { if (e.target === e.currentTarget) handleCloseWithSave(); }}
     >
       <motion.div
         ref={dialogRef}
@@ -388,8 +441,8 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
         <header className="px-4 py-3 border-b border-[#E5E5EA] flex items-center gap-2 bg-white rounded-t-xl shrink-0">
           {/* Close button */}
           <button
-            onClick={onClose}
-            aria-label="Close composer"
+            onClick={handleCloseWithSave}
+            aria-label="Close and save draft"
             className="w-7 h-7 rounded-full bg-[#E5E5EA] hover:bg-[#D1D1D6] flex items-center justify-center transition-colors"
           >
             <X size={12} strokeWidth={2.5} className="text-[#636366]" />
