@@ -8,6 +8,7 @@ import { getComposerDraftKey } from '../../utils/draftStorage'
 let lastEditorOptions: any = null
 let mockIdentities = [{ id: 'identity-1', email: 'user@example.com', name: 'User Example', textSignature: '' }]
 let editorHtml = '<p>Editor body</p>'
+const composeMutate = vi.fn((_: any, options?: any) => options?.onSuccess?.())
 
 const mockEditor = {
   commands: {
@@ -40,10 +41,14 @@ const mockEditor = {
 }
 
 vi.mock('../../hooks/jmap/useCompose', () => {
-  const mutate = vi.fn((_: any, options?: any) => options?.onSuccess?.())
-
   return {
-    useCompose: () => ({ mutate, isPending: false }),
+    useCompose: () => ({ mutate: composeMutate, isPending: false }),
+  }
+})
+
+vi.mock('../../hooks/jmap/useSaveDraft', () => {
+  return {
+    useSaveDraft: () => ({ mutateAsync: vi.fn(), isPending: false }),
   }
 })
 
@@ -122,6 +127,7 @@ beforeEach(() => {
   mockEditor.commands.focus.mockClear()
   mockEditor.commands.setContent.mockClear()
   mockEditor.__setHTML.mockClear()
+  composeMutate.mockClear()
 })
 
 describe('Composer draft recovery', () => {
@@ -208,6 +214,65 @@ describe('Composer draft recovery', () => {
 
     expect(lastEditorOptions.content).toContain('data-sagittarius-signature="1"')
     expect(lastEditorOptions.content).toContain('User Example')
+  })
+
+  it('loads an existing server draft into the composer', () => {
+    render(
+      <Composer
+        onClose={() => {}}
+        draftEmail={{
+          id: 'draft-123',
+          from: [{ email: 'user@example.com' }],
+          to: [{ email: 'friend@example.com' }],
+          cc: [{ email: 'copy@example.com' }],
+          bcc: [{ email: 'blind@example.com' }],
+          subject: 'Existing draft',
+          attachments: [{ blobId: 'blob-1', name: 'agenda.pdf', type: 'application/pdf', size: 1024 }],
+          bodyValues: {
+            'body-1': { value: '<p>Saved on server</p>', isTruncated: false },
+          },
+          htmlBody: [{ partId: 'body-1', type: 'text/html' }],
+        }}
+      />,
+    )
+
+    expect(lastEditorOptions.content).toBe('<p>Saved on server</p>')
+    expect(screen.getByDisplayValue('friend@example.com')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('copy@example.com')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('blind@example.com')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Existing draft')).toBeInTheDocument()
+    expect(screen.getByText('agenda.pdf')).toBeInTheDocument()
+  })
+
+  it('sends reopened drafts using the original draft id', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <Composer
+        onClose={() => {}}
+        draftEmail={{
+          id: 'draft-123',
+          from: [{ email: 'user@example.com' }],
+          to: [{ email: 'friend@example.com' }],
+          subject: 'Existing draft',
+          bodyValues: {
+            'body-1': { value: '<p>Saved on server</p>', isTruncated: false },
+          },
+          htmlBody: [{ partId: 'body-1', type: 'text/html' }],
+        }}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Send' }))
+
+    expect(composeMutate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        draftId: 'draft-123',
+        subject: 'Existing draft',
+        to: [{ email: 'friend@example.com' }],
+      }),
+      expect.any(Object),
+    )
   })
 
   it('replaces the signature when the selected identity changes', async () => {
