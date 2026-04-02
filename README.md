@@ -1,8 +1,8 @@
 # Sagittarius
 
-A beautiful, high-performance JMAP web client inspired by iCloud Mail.
+A high-performance, server-agnostic JMAP web client with a modern interface inspired by iCloud Mail.
 
-**Server-agnostic. Standards-compliant. Privacy-first.**
+**Standards-compliant. Privacy-first. Built for power users.**
 
 [![JMAP RFC 8620/8621](https://img.shields.io/badge/JMAP-RFC%208620%20%2F%208621-4A90D9?style=flat-square)](https://jmap.io/)
 [![TypeScript Strict](https://img.shields.io/badge/TypeScript-Strict-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -11,150 +11,147 @@ A beautiful, high-performance JMAP web client inspired by iCloud Mail.
 
 ---
 
-## ✨ What Makes Sagittarius Special?
+## Why Sagittarius?
 
-Most webmail clients are either locked to a specific backend or stuck in 2005 design patterns. Sagittarius breaks both molds:
+Sagittarius is a frontend-only JMAP client designed to work with any RFC 8620/8621-compliant mail server. Unlike proprietary webmail interfaces that lock you into a specific backend, Sagittarius gives you full control over your mail infrastructure while providing a polished, responsive user experience.
 
-### 🌐 Universal JMAP Support
-Works with **any** RFC 8620/8621-compliant server:
-- [Stalwart](https://stalw.art/) — Modern Rust-based mail server
-- [Cyrus](https://www.cyrusimap.org/) — Battle-tested at scale
-- [Apache James](https://james.apache.org/) — Enterprise Java solution
-- Or roll your own — if it speaks JMAP, Sagittarius understands it
+### Compatible JMAP Servers
 
-### 🎨 Native-Grade Design
-- **Glassmorphic three-pane layout** — Sidebar, message list, reading pane with draggable borders
-- **Smooth animations** — Every interaction feels polished
-- **iCloud-inspired aesthetic** — Familiar yet modern
-- **Full keyboard navigation** — Power users rejoice
+- [Stalwart](https://stalw.art/) - Modern Rust-based mail server
+- [Cyrus](https://www.cyrusimap.org/) - Battle-tested at enterprise scale
+- [Apache James](https://james.apache.org/) - Enterprise Java solution
+- Any server implementing RFC 8620/8621
 
-### ⚡ Performance Obsessed
-- **Virtual scrolling** — Handle 10,000+ emails without breaking a sweat
-- **Aggressive caching** — TanStack Query keeps data fresh and fast
-- **Incremental sync** — Only fetch what changed, not entire mailboxes
-- **Real-time push** — WebSocket + EventSource for instant updates
+### Design
 
-### 🔒 Privacy by Design
-- **Remote images blocked** — Until you explicitly approve them
-- **Sandboxed rendering** — Email CSS can't touch the app
-- **Credential redaction** — Auth headers never leak into logs
-- **No tracking, no analytics** — Your data stays yours
+- **Three-pane layout** with glassmorphic sidebar, message list, and reading pane
+- **Draggable pane borders** for customizable workspace
+- **Keyboard-first navigation** for efficient workflows
+- **Smooth animations** via Framer Motion
+
+### Performance
+
+- **Virtual scrolling** handles 10,000+ emails without degradation
+- **Aggressive caching** via TanStack Query with background refresh
+- **Incremental sync** fetches only changed data, not entire mailboxes
+- **Real-time push** via WebSocket (RFC 8887) and EventSource
+
+### Privacy
+
+- **Remote images blocked by default** until explicitly approved per-sender
+- **Sandboxed HTML rendering** prevents CSS injection attacks
+- **Credential redaction** ensures auth headers never appear in logs
+- **No telemetry or analytics** - your data stays local
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
-- Node.js >= 18
-- npm >= 9
-- A JMAP server (or use the included proxy)
 
-### Install & Run
+- Node.js 18+
+- npm 9+
+- A JMAP-compliant mail server
+
+### Installation
 
 ```bash
-# Clone the repository
 git clone https://github.com/SwordfishTrumpet/sagittarius.git
 cd sagittarius
 
-# Install dependencies
 npm install
 
-# Configure your JMAP server
 cp .env.example .env
-# Edit .env and set VITE_JMAP_SERVER=https://your-jmap-server.example.com
+# Set VITE_JMAP_SERVER=https://your-jmap-server.example.com
 
-# Development
 npm run dev
-
-# Production build
-npm run build
 ```
 
-Open **http://localhost:8081** and log in with your JMAP credentials.
+Open `http://localhost:8081` and authenticate with your JMAP credentials.
 
 ---
 
-## 📋 Deployment Options
+## Deployment
 
-### Option 1: Built-in Production Server (Easiest)
+### Option 1: Built-in Production Server
 
-Sagittarius includes a production-ready Node.js server that handles both static files and JMAP proxying:
+Sagittarius includes a production-ready Node.js server that serves static files and proxies JMAP requests:
 
 ```bash
-# Build the app
 npm run build
 
-# Start production server
 JMAP_SERVER=https://mail.example.com PORT=8081 node server.js
 ```
 
-**Features:**
-- Serves optimized static files with compression
-- Proxies `/jmap` requests with auth injection
-- Handles `Range` headers for attachment downloads
+Features:
+- Compressed static file serving
+- JMAP proxy with auth injection
+- Range header support for attachment downloads
 - Graceful shutdown on SIGTERM
 
-### Option 2: Static Hosting + Separate Proxy
+### Option 2: Static Hosting with Reverse Proxy
 
-Build static files and host anywhere (Nginx, Apache, CDN):
+Build static files and deploy to any web server:
 
 ```bash
 npm run build
-# Upload dist/ to your static host
+# Deploy dist/ to Nginx, Apache, or CDN
 ```
 
-Configure your web server to proxy `/jmap` to your JMAP backend. See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for Nginx/Apache configs.
+Configure your web server to proxy `/jmap` to your JMAP backend. See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for server configurations.
 
 ### Option 3: Docker
 
 ```bash
-# Build image
 docker build -t sagittarius .
 
-# Run with JMAP server
 docker run -p 8081:8081 -e JMAP_SERVER=https://mail.example.com sagittarius
 ```
 
 ---
 
-## 🎯 Feature Highlights
+## Features
 
 ### Email Management
+
 | Feature | Description |
 |---------|-------------|
-| **Threaded Conversations** | Messages grouped with per-message expand/collapse |
-| **Rich Text Composer** | Tiptap-powered with formatting, attachments, identity selection |
-| **Scheduled Send** | Queue emails for future delivery |
-| **Draft Auto-Save** | Never lose a message — automatic server persistence |
-| **Reply/Forward** | Smart recipient prefilling with quoted content |
+| Threaded Conversations | Messages grouped with per-message expand/collapse |
+| Rich Text Composer | Tiptap-powered editor with formatting, attachments, identity selection |
+| Scheduled Send | Queue emails for future delivery |
+| Draft Auto-Save | Automatic server persistence prevents data loss |
+| Reply/Forward | Smart recipient prefilling with quoted content |
 
 ### Organization
-| Feature | Description |
-|---------|-------------|
-| **Folder Nesting** | Drag-and-drop folder organization |
-| **Batch Operations** | Multi-select with Shift/Cmd+Click |
-| **Advanced Search** | `from:`, `to:`, `has:attachment` with highlighted snippets |
-| **Quick Filters** | One-click Unread, Flagged, To Me, Attachments |
 
-### Security & Privacy
 | Feature | Description |
 |---------|-------------|
-| **Image Blocking** | External images require approval |
-| **HTML Sanitization** | DOMPurify cleans every message |
-| **Sandboxed Iframes** | Email isolation prevents CSS leakage |
-| **Read Receipts** | MDN support per RFC 8098 |
+| Folder Nesting | Drag-and-drop folder hierarchy management |
+| Batch Operations | Multi-select with Shift/Cmd+Click |
+| Advanced Search | `from:`, `to:`, `has:attachment` syntax with highlighted snippets |
+| Quick Filters | One-click filtering for Unread, Flagged, To Me, Attachments |
+
+### Security
+
+| Feature | Description |
+|---------|-------------|
+| Image Blocking | External images require explicit approval |
+| HTML Sanitization | DOMPurify processes all message content |
+| Sandboxed Iframes | Email isolation prevents style leakage |
+| Read Receipts | MDN support per RFC 8098 |
 
 ### Server Integration
+
 | Feature | Description |
 |---------|-------------|
-| **Vacation Responder** | Auto-reply with date ranges |
-| **Sieve Filters** | Visual rule editor + raw script mode |
-| **Quota Display** | Storage usage in sidebar |
-| **Identity Management** | Multiple sending addresses |
+| Vacation Responder | Auto-reply configuration with date ranges |
+| Sieve Filters | Visual rule editor and raw script mode |
+| Quota Display | Storage usage indicator in sidebar |
+| Identity Management | Multiple sending addresses per account |
 
 ---
 
-## ⌨️ Keyboard Shortcuts
+## Keyboard Shortcuts
 
 | Key | Action |
 |-----|--------|
@@ -173,17 +170,19 @@ docker run -p 8081:8081 -e JMAP_SERVER=https://mail.example.com sagittarius
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ### Tech Stack
-- **React 18** (Vite) — Modern framework with Fast HMR
-- **TypeScript** (Strict) — Type safety throughout
-- **Tailwind CSS** — Utility-first styling
-- **TanStack Query** — Server state management
-- **Tiptap** — Rich text editor
-- **react-virtuoso** — Virtual scrolling
+
+- **React 18** (Vite) - Fast HMR and optimized builds
+- **TypeScript** (Strict mode) - Full type safety
+- **Tailwind CSS** - Utility-first styling
+- **TanStack Query** - Server state management and caching
+- **Tiptap** - Rich text editing
+- **react-virtuoso** - Virtual scrolling
 
 ### Project Structure
+
 ```
 src/
   api/           # JMAP client, WebSocket/EventSource push
@@ -194,38 +193,34 @@ src/
 ```
 
 ### JMAP Capabilities
-Sagittarius uses standard JMAP capabilities:
-- `urn:ietf:params:jmap:core` — Session, requests
-- `urn:ietf:params:jmap:mail` — Email, Mailbox, Thread
-- `urn:ietf:params:jmap:submission` — Send, delivery status
-- `urn:ietf:params:jmap:vacationresponse` — Out-of-office
-- `urn:ietf:params:jmap:quota` — Storage limits
-- `urn:ietf:params:jmap:sieve` — Server-side filters (optional)
+
+Sagittarius implements standard JMAP capabilities:
+
+- `urn:ietf:params:jmap:core` - Session management, request handling
+- `urn:ietf:params:jmap:mail` - Email, Mailbox, Thread operations
+- `urn:ietf:params:jmap:submission` - Send, delivery status tracking
+- `urn:ietf:params:jmap:vacationresponse` - Out-of-office configuration
+- `urn:ietf:params:jmap:quota` - Storage limit monitoring
+- `urn:ietf:params:jmap:sieve` - Server-side filters (optional)
 
 ---
 
-## 📚 Documentation
+## Documentation
 
-- [Deployment Guide](docs/DEPLOYMENT.md) — Production deployment options
-- [Development Setup](docs/DEVELOPMENT.md) — Contributing, architecture
-- [JMAP Server Setup](docs/JMAP_SERVER.md) — Configuring your mail server
-- [Security](SECURITY.md) — Vulnerability reporting
-- [Contributing](CONTRIBUTING.md) — PR guidelines
-
----
-
-## 🤝 Contributing
-
-Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+- [Deployment Guide](docs/DEPLOYMENT.md) - Production deployment configurations
+- [Development Setup](docs/DEVELOPMENT.md) - Contributing and architecture overview
+- [JMAP Server Setup](docs/JMAP_SERVER.md) - Mail server configuration
+- [Security](SECURITY.md) - Vulnerability reporting process
+- [Contributing](CONTRIBUTING.md) - Pull request guidelines
 
 ---
 
-## 📝 License
+## Contributing
 
-MIT License — use it, fork it, make it yours.
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on submitting issues and pull requests.
 
 ---
 
-<p align="center">
-  <sub>Built with ☕, curiosity, and an unhealthy obsession with email protocols.</sub>
-</p>
+## License
+
+MIT License - see [LICENSE](LICENSE) for details.
