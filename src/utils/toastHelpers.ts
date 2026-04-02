@@ -28,6 +28,11 @@ export const ToastErrors = {
     move: 'Failed to move email',
     delete: 'Failed to delete email',
     import: 'Failed to import email',
+    reopen: 'Failed to reopen draft',
+  },
+  attachment: {
+    upload: 'Failed to upload attachment',
+    empty: 'Cannot upload file: file is empty (0 bytes)',
   },
   settings: {
     save: 'Failed to save settings',
@@ -37,6 +42,9 @@ export const ToastErrors = {
     default: 'Something went wrong. Please try again.',
     timeout: 'Request timed out. Please try again.',
     offline: 'You appear to be offline. Changes will sync when reconnected.',
+  },
+  mdn: {
+    send: 'Failed to send receipt',
   },
 } as const;
 

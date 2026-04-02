@@ -152,6 +152,8 @@ export interface Email {
   isSent?: boolean;
   snippet?: string;
   searchSnippet?: string;
+  /** Thread count when email represents a thread */
+  threadCount?: number;
 }
 
 export interface Thread {
@@ -192,13 +194,18 @@ export interface DeliveryStatus {
 
 export interface Quota {
   id: string;
+  resourceType?: string;
   used: number;
-  total: number;
-  scope: 'account' | 'domain' | 'global';
+  /** RFC 9425 uses hardLimit for storage quotas */
+  hardLimit?: number;
+  /** Alias for total storage (hardLimit) */
+  total?: number;
+  scope?: 'account' | 'domain' | 'global' | string;
   name?: string;
   warnLimit?: number;
   softLimit?: number;
   description?: string;
+  types?: string[];
 }
 
 // ============ Search Types ============
@@ -322,6 +329,44 @@ export interface MDNSendResponse {
   accountId: string;
   sent?: Record<string, { emailId: string }>;
   notSent?: Record<string, JMAPSetError>;
+}
+
+/**
+ * VacationResponse object
+ */
+export interface VacationResponse {
+  id: string;
+  isEnabled: boolean;
+  fromDate?: string | null;
+  toDate?: string | null;
+  subject?: string | null;
+  textBody?: string | null;
+  htmlBody?: string | null;
+}
+
+/**
+ * Reply/Forward context for composer
+ */
+export interface ReplyContext {
+  id: string;
+  subject?: string;
+  from?: EmailAddress[] | null;
+  to?: EmailAddress[] | null;
+  cc?: EmailAddress[] | null;
+  textBody?: string;
+  htmlBody?: string;
+  blobId?: string;
+  threadId?: string;
+  _replyAll?: boolean;
+  _forward?: boolean;
+}
+
+/**
+ * UseMutation result wrapper (simplified for typing)
+ */
+export interface MutationFn<TData, TVariables> {
+  mutateAsync: (variables: TVariables) => Promise<TData>;
+  isPending: boolean;
 }
 
 /**

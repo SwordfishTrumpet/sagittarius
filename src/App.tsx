@@ -272,9 +272,9 @@ function App() {
       if (direction === 'next') navigateToNext()
       else navigateToPrevious()
     },
-    onReply: () => handleReply(selectedEmail),
-    onReplyAll: () => handleReplyAll(selectedEmail),
-    onForward: () => handleForward(selectedEmail),
+    onReply: () => { if (selectedEmail) handleReply(selectedEmail) },
+    onReplyAll: () => { if (selectedEmail) handleReplyAll(selectedEmail) },
+    onForward: () => { if (selectedEmail) handleForward(selectedEmail) },
     onToggleFlag: handleToggleFlag,
     onArchive: handleArchive,
     onDelete: handleDelete,
@@ -424,7 +424,7 @@ function App() {
           hasNewMail={hasNewMail}
           esConnected={pushConnected}
           isOffline={isOffline}
-          quota={quota}
+          quota={quota ?? null}
           isMobile={isMobile}
           mobileVisible={isMobile ? mobileView === 'mailboxes' : true}
           onToggleSidebarCollapsed={toggleSidebarCollapsed}
@@ -536,9 +536,9 @@ function App() {
               }
               isMobile={isMobile}
               onBack={navigateToEmailList}
-              onReply={() => handleReply(selectedEmailDetail)}
-              onReplyAll={() => handleReplyAll(selectedEmailDetail)}
-              onForward={() => handleForward(selectedEmailDetail)}
+              onReply={() => { if (selectedEmailDetail) handleReply(selectedEmailDetail) }}
+              onReplyAll={() => { if (selectedEmailDetail) handleReplyAll(selectedEmailDetail) }}
+              onForward={() => { if (selectedEmailDetail) handleForward(selectedEmailDetail) }}
               onToggleFlag={handleToggleSelectedFlag}
               onArchive={handleArchive}
               onDelete={handleDelete}
@@ -547,7 +547,7 @@ function App() {
               onCloseMoreMenu={() => setMoreMenuOpen(false)}
             />
             <EmailReader
-              threadEmails={threadEmails}
+              threadEmails={threadEmails as Parameters<typeof EmailReader>[0]['threadEmails']}
               emailLoading={emailLoading}
               isEmailDetailError={isEmailDetailError}
               emailDetailError={emailDetailError as Error | null}
@@ -564,8 +564,8 @@ function App() {
             {isComposerOpen && (
               <Composer
                 onClose={closeComposer}
-                replyTo={replyToEmail}
-                draftEmail={draftEmail}
+                replyTo={replyToEmail ?? undefined}
+                draftEmail={draftEmail ?? undefined}
               />
             )}
           </AnimatePresence>

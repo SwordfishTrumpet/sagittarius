@@ -17,7 +17,11 @@ import { useFocusTrap } from '../hooks/useFocusTrap';
 import { clearComposerDraft, getComposerDraftKey, loadComposerDraft, saveComposerDraft, type ComposerDraft } from '../utils/draftStorage';
 import { isDeferredMutationResult } from '../utils/offlineSyncQueue';
 import { useSaveDraft } from '../hooks/jmap/useSaveDraft';
+import { toastOperationError } from '../utils/toastHelpers';
+import type { Email, Identity, EmailAddress, Attachment } from '../types/jmap';
+import type { ReplyContext } from '../hooks/useComposerState';
 
+/** Local recipient format used in composer */
 interface Recipient {
   name?: string;
   email: string;
@@ -25,8 +29,8 @@ interface Recipient {
 
 interface ComposerProps {
   onClose: () => void;
-  replyTo?: any;
-  draftEmail?: any;
+  replyTo?: ReplyContext;
+  draftEmail?: Email;
   isMobile?: boolean;
 }
 
@@ -40,7 +44,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
   const restoredDraft = useMemo(() => loadComposerDraft(draftKey), [draftKey]);
   const [isMinimized, setIsMinimized] = useState(false);
   const initialDraftBody = useMemo(() => draftEmail ? getEmailBodyHtml(draftEmail) : '', [draftEmail]);
-  const formatRecipients = useCallback((recipients?: Recipient[]) => recipients?.map((recipient) => recipient.email).filter(Boolean).join(', ') || '', []);
+  const formatRecipients = useCallback((recipients?: Recipient[] | EmailAddress[] | null) => recipients?.map((recipient) => recipient.email).filter(Boolean).join(', ') || '', []);
   const [to, setTo] = useState<string>(() => {
     if (draftEmail) return formatRecipients(draftEmail.to);
     if (restoredDraft) return restoredDraft.to;
@@ -52,7 +56,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
         ...(replyTo.from || []),
         ...(replyTo.to || []),
         ...(replyTo.cc || []),
-      ].map((r: any) => r.email).filter(Boolean);
+      ].map((r) => r.email).filter(Boolean);
       return [...new Set(all)].join(', ');
     }
     return replyTo.from?.[0]?.email || '';
@@ -67,13 +71,13 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
     return `Re: ${replyTo.subject || ''}`;
   });
   const [showCcBcc, setShowCcBcc] = useState<boolean>(() => draftEmail ? Boolean(draftEmail.cc?.length || draftEmail.bcc?.length) : (restoredDraft ? (restoredDraft.showCcBcc || Boolean(restoredDraft.cc || restoredDraft.bcc)) : false));
-  const [attachments, setAttachments] = useState<any[]>(() => draftEmail ? (draftEmail.attachments || []) : (restoredDraft ? restoredDraft.attachments : []));
+  const [attachments, setAttachments] = useState<Attachment[]>(() => draftEmail ? (draftEmail.attachments as Attachment[] || []) : (restoredDraft ? restoredDraft.attachments : []));
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: identities } = useIdentities();
   const [selectedIdentityId, setSelectedIdentityId] = useState<string | null>(() => restoredDraft ? restoredDraft.selectedIdentityId : null);
-  const selectedIdentity = identities?.find((i: any) => i.id === selectedIdentityId) || identities?.[0];
+  const selectedIdentity = identities?.find((i) => i.id === selectedIdentityId) || identities?.[0];
   const composeMutation = useCompose();
   const saveDraftMutation = useSaveDraft();
   const [showSchedulePicker, setShowSchedulePicker] = useState(false);
@@ -99,12 +103,29 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
     };
   }, []);
 
+  /** Convert ReplyContext to EmailForQuote for quote building */
+  const toEmailForQuote = useCallback((ctx: ReplyContext | undefined): Parameters<typeof buildReplyQuote>[0] | null => {
+    if (!ctx) return null;
+    return {
+      from: ctx.from,
+      to: ctx.to,
+      cc: ctx.cc,
+      subject: ctx.subject,
+      receivedAt: ctx.receivedAt,
+      htmlBody: ctx.bodyParts?.htmlBody,
+      textBody: ctx.bodyParts?.textBody,
+      bodyValues: ctx.bodyParts?.bodyValues,
+    };
+  }, []);
+
   // Build initial content for the editor from reply/forward
   const initialReplyContent = useMemo(() => {
     if (!replyTo) return '';
-    if (replyTo._forward) return buildForwardQuote(replyTo);
-    return buildReplyQuote(replyTo);
-  }, [replyTo]);
+    const emailForQuote = toEmailForQuote(replyTo);
+    if (!emailForQuote) return '';
+    if (replyTo._forward) return buildForwardQuote(emailForQuote);
+    return buildReplyQuote(emailForQuote);
+  }, [replyTo, toEmailForQuote]);
 
   const initialContent = useMemo(() => {
     if (draftEmail) return initialDraftBody;
@@ -246,7 +267,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
         const file = files[i];
         // Validate file size - reject zero-byte files as some mail servers reject them
         if (file.size === 0) {
-          toast.error(`Cannot upload "${file.name}": file is empty (0 bytes)`);
+          toastOperationError('attachment.empty', file.name);
           continue;
         }
         const res = await jmapClient.uploadBlob(file);
@@ -259,7 +280,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
       }
       toast.success('Files attached');
     } catch (err) {
-      toast.error('Failed to upload attachment');
+      toastOperationError('attachment.upload');
     } finally {
       setIsUploading(false);
     }
@@ -318,8 +339,8 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
         toast.success(scheduleAt ? 'Message scheduled' : 'Message sent');
         onClose();
       },
-      onError: (err: any) => {
-        toast.error(`Failed to send: ${err.message}`);
+      onError: (err: Error) => {
+        toastOperationError('email.send', err);
       }
     });
   };
@@ -375,11 +396,12 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
       });
       clearComposerDraft(draftKey);
       toast.success('Draft saved');
-    } catch (err: any) {
+    } catch (err: unknown) {
       // If server save fails, still clear localStorage and close
       // The user can still recover from server drafts folder if needed
       clearComposerDraft(draftKey);
-      toast.error(`Failed to save draft: ${err.message}`);
+      const error = err instanceof Error ? err : new Error('Unknown error');
+      toastOperationError('email.saveDraft', error);
     } finally {
       onClose();
     }
@@ -632,7 +654,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
 
           {/* Formatting toolbar — always visible */}
           {editor && (
-            <div role="toolbar" aria-label="Text formatting" className="px-5 py-1.5 border-b border-[#E5E5EA] flex items-center gap-1 shrink-0 bg-[#FAFAFA]">
+            <div role="toolbar" aria-orientation="horizontal" aria-label="Text formatting" className="px-5 py-1.5 border-b border-[#E5E5EA] flex items-center gap-1 shrink-0 bg-[#FAFAFA]">
               <input
                 ref={fileInputRef}
                 type="file"

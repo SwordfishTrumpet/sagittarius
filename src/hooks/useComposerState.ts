@@ -3,17 +3,28 @@ import { toast } from 'sonner'
 import { fetchEmailWithBody } from './jmap/useEmailQueries'
 import { clearComposerDraft, getComposerDraftKey } from '../utils/draftStorage'
 import { jmapClient } from '../api/jmap'
+import { toastOperationError } from '../utils/toastHelpers'
+import type { Email, EmailAddress } from '../types/jmap'
 
 export interface ReplyContext {
   id: string
   subject: string
-  from: Array<{ name?: string; email?: string }>
-  to: Array<{ name?: string; email?: string }>
-  cc?: Array<{ name?: string; email?: string }>
+  from: Array<{ name?: string; email: string }>
+  to: Array<{ name?: string; email: string }>
+  cc?: Array<{ name?: string; email: string }>
+  /** HTML body content (string, not EmailBodyPart) */
   textBody?: string
+  /** Plain text body content (string) */
   htmlBody?: string
   blobId?: string
   threadId?: string
+  receivedAt?: string
+  /** For quote building - body parts and values */
+  bodyParts?: {
+    htmlBody?: { partId?: string; type?: string }[]
+    textBody?: { partId?: string; type?: string }[]
+    bodyValues?: Record<string, { value: string }>
+  }
   _replyAll?: boolean
   _forward?: boolean
 }
@@ -21,12 +32,12 @@ export interface ReplyContext {
 interface UseComposerStateReturn {
   isComposerOpen: boolean
   replyToEmail: ReplyContext | null
-  draftEmail: any | null
+  draftEmail: Email | null
   openComposer: () => void
   closeComposer: () => void
-  handleReply: (selectedEmail: any) => void
-  handleReplyAll: (selectedEmail: any) => void
-  handleForward: (selectedEmail: any) => void
+  handleReply: (selectedEmail: Email) => void
+  handleReplyAll: (selectedEmail: Email) => void
+  handleForward: (selectedEmail: Email) => void
   handleOpenDraft: (emailId: string) => Promise<void>
 }
 
@@ -37,7 +48,7 @@ interface UseComposerStateReturn {
 export function useComposerState(): UseComposerStateReturn {
   const [isComposerOpen, setIsComposerOpen] = useState(false)
   const [replyToEmail, setReplyToEmail] = useState<ReplyContext | null>(null)
-  const [draftEmail, setDraftEmail] = useState<any | null>(null)
+  const [draftEmail, setDraftEmail] = useState<Email | null>(null)
 
   const openComposer = useCallback(() => {
     // Clear any lingering localStorage draft for new messages
@@ -56,23 +67,76 @@ export function useComposerState(): UseComposerStateReturn {
     setDraftEmail(null)
   }, [])
 
-  const handleReply = useCallback((selectedEmail: any) => {
+  const handleReply = useCallback((selectedEmail: Email) => {
     if (!selectedEmail) return
-    setReplyToEmail(selectedEmail)
+    const context: ReplyContext = {
+      id: selectedEmail.id,
+      subject: selectedEmail.subject || '',
+      from: (selectedEmail.from || []).map((a: EmailAddress) => ({ name: a.name || undefined, email: a.email })),
+      to: (selectedEmail.to || []).map((a: EmailAddress) => ({ name: a.name || undefined, email: a.email })),
+      cc: selectedEmail.cc?.map((a: EmailAddress) => ({ name: a.name || undefined, email: a.email })),
+      blobId: selectedEmail.blobId,
+      threadId: selectedEmail.threadId,
+      receivedAt: selectedEmail.receivedAt,
+      bodyParts: {
+        htmlBody: selectedEmail.htmlBody?.map(p => ({ partId: p.partId, type: p.type })) || undefined,
+        textBody: selectedEmail.textBody?.map(p => ({ partId: p.partId, type: p.type })) || undefined,
+        bodyValues: selectedEmail.bodyValues ? 
+          Object.fromEntries(Object.entries(selectedEmail.bodyValues).map(([k, v]) => [k, { value: v.value }])) : 
+          undefined,
+      },
+    }
+    setReplyToEmail(context)
     setDraftEmail(null)
     setIsComposerOpen(true)
   }, [])
 
-  const handleReplyAll = useCallback((selectedEmail: any) => {
+  const handleReplyAll = useCallback((selectedEmail: Email) => {
     if (!selectedEmail) return
-    setReplyToEmail({ ...selectedEmail, _replyAll: true })
+    const context: ReplyContext = {
+      id: selectedEmail.id,
+      subject: selectedEmail.subject || '',
+      from: (selectedEmail.from || []).map((a: EmailAddress) => ({ name: a.name || undefined, email: a.email })),
+      to: (selectedEmail.to || []).map((a: EmailAddress) => ({ name: a.name || undefined, email: a.email })),
+      cc: selectedEmail.cc?.map((a: EmailAddress) => ({ name: a.name || undefined, email: a.email })),
+      blobId: selectedEmail.blobId,
+      threadId: selectedEmail.threadId,
+      receivedAt: selectedEmail.receivedAt,
+      bodyParts: {
+        htmlBody: selectedEmail.htmlBody?.map(p => ({ partId: p.partId, type: p.type })) || undefined,
+        textBody: selectedEmail.textBody?.map(p => ({ partId: p.partId, type: p.type })) || undefined,
+        bodyValues: selectedEmail.bodyValues ? 
+          Object.fromEntries(Object.entries(selectedEmail.bodyValues).map(([k, v]) => [k, { value: v.value }])) : 
+          undefined,
+      },
+      _replyAll: true,
+    }
+    setReplyToEmail(context)
     setDraftEmail(null)
     setIsComposerOpen(true)
   }, [])
 
-  const handleForward = useCallback((selectedEmail: any) => {
+  const handleForward = useCallback((selectedEmail: Email) => {
     if (!selectedEmail) return
-    setReplyToEmail({ ...selectedEmail, _forward: true })
+    const context: ReplyContext = {
+      id: selectedEmail.id,
+      subject: selectedEmail.subject || '',
+      from: (selectedEmail.from || []).map((a: EmailAddress) => ({ name: a.name || undefined, email: a.email })),
+      to: (selectedEmail.to || []).map((a: EmailAddress) => ({ name: a.name || undefined, email: a.email })),
+      cc: selectedEmail.cc?.map((a: EmailAddress) => ({ name: a.name || undefined, email: a.email })),
+      blobId: selectedEmail.blobId,
+      threadId: selectedEmail.threadId,
+      receivedAt: selectedEmail.receivedAt,
+      bodyParts: {
+        htmlBody: selectedEmail.htmlBody?.map(p => ({ partId: p.partId, type: p.type })) || undefined,
+        textBody: selectedEmail.textBody?.map(p => ({ partId: p.partId, type: p.type })) || undefined,
+        bodyValues: selectedEmail.bodyValues ? 
+          Object.fromEntries(Object.entries(selectedEmail.bodyValues).map(([k, v]) => [k, { value: v.value }])) : 
+          undefined,
+      },
+      _forward: true,
+    }
+    setReplyToEmail(context)
     setDraftEmail(null)
     setIsComposerOpen(true)
   }, [])
@@ -81,15 +145,16 @@ export function useComposerState(): UseComposerStateReturn {
     try {
       const fullDraft = await fetchEmailWithBody(emailId)
       if (!fullDraft) {
-        toast.error('Failed to reopen draft')
+        toastOperationError('email.reopen')
         return
       }
 
       setReplyToEmail(null)
-      setDraftEmail(fullDraft)
+      setDraftEmail(fullDraft as Email)
       setIsComposerOpen(true)
-    } catch (error: any) {
-      toast.error(`Failed to reopen draft: ${error?.message || 'Unknown error'}`)
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      toastOperationError('email.reopen', errorMessage)
     }
   }, [])
 

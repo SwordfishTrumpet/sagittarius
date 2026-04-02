@@ -6,22 +6,22 @@
 import { format } from 'date-fns';
 import DOMPurify from 'dompurify';
 
-interface EmailForQuote {
-  from?: { name?: string; email: string }[];
-  to?: { name?: string; email: string }[];
-  cc?: { name?: string; email: string }[];
+export interface EmailForQuote {
+  from?: { name?: string | null; email: string }[] | null;
+  to?: { name?: string | null; email: string }[] | null;
+  cc?: { name?: string | null; email: string }[] | null;
   subject?: string;
-  receivedAt: string;
-  htmlBody?: { partId: string }[];
-  textBody?: { partId: string }[];
-  bodyValues?: Record<string, { value: string }>;
+  receivedAt?: string;
+  htmlBody?: { partId?: string; type?: string }[] | null;
+  textBody?: { partId?: string; type?: string }[] | null;
+  bodyValues?: Record<string, { value: string }> | null;
 }
 
-function formatAddress(addr: { name?: string; email: string }): string {
+function formatAddress(addr: { name?: string | null; email: string }): string {
   return addr.name ? `${addr.name} &lt;${addr.email}&gt;` : addr.email;
 }
 
-function formatAddressList(addrs?: { name?: string; email: string }[]): string {
+function formatAddressList(addrs?: { name?: string | null; email: string }[] | null): string {
   if (!addrs || addrs.length === 0) return '';
   return addrs.map(formatAddress).join(', ');
 }
@@ -37,12 +37,12 @@ function escapeHtml(value: string): string {
 export function getEmailBodyHtml(email: EmailForQuote): string {
   if (email.htmlBody && email.htmlBody.length > 0) {
     const partId = email.htmlBody[0].partId;
-    const html = email.bodyValues?.[partId]?.value || '';
+    const html = (partId && email.bodyValues?.[partId]?.value) || '';
     return DOMPurify.sanitize(html);
   }
   if (email.textBody && email.textBody.length > 0) {
     const partId = email.textBody[0].partId;
-    const text = email.bodyValues?.[partId]?.value || '';
+    const text = (partId && email.bodyValues?.[partId]?.value) || '';
     const escaped = escapeHtml(text);
     return `<pre style="font-family: inherit; white-space: pre-wrap; margin: 0;">${escaped}</pre>`;
   }
@@ -57,9 +57,9 @@ export function buildReplyQuote(email: EmailForQuote): string {
   const body = getEmailBodyHtml(email);
   if (!body) return '';
 
-  const date = new Date(email.receivedAt);
+  const date = email.receivedAt ? new Date(email.receivedAt) : null;
   // Handle invalid dates gracefully
-  const isValidDate = !isNaN(date.getTime());
+  const isValidDate = date && !isNaN(date.getTime());
   const dateStr = isValidDate ? format(date, 'MMM d, yyyy') : 'Unknown date';
   const timeStr = isValidDate ? format(date, 'h:mm a') : '';
   const sender = email.from?.[0];
@@ -86,9 +86,9 @@ export function buildReplyQuote(email: EmailForQuote): string {
 export function buildForwardQuote(email: EmailForQuote): string {
   const body = getEmailBodyHtml(email);
 
-  const date = new Date(email.receivedAt);
+  const date = email.receivedAt ? new Date(email.receivedAt) : null;
   // Handle invalid dates gracefully
-  const isValidDate = !isNaN(date.getTime());
+  const isValidDate = date && !isNaN(date.getTime());
   const dateStr = isValidDate ? format(date, 'MMMM d, yyyy') : 'Unknown date';
   const timeStr = isValidDate ? format(date, 'h:mm a') : '';
   const dateTimeStr = isValidDate ? `${dateStr} at ${timeStr}` : dateStr;

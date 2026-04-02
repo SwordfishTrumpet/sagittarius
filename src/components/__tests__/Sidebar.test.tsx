@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { Sidebar } from '../Sidebar'
+import type { Mailbox } from '../../types/jmap'
 
 vi.mock('react-dnd', () => ({
   useDrop: (factory: () => any) => {
@@ -15,11 +16,37 @@ vi.mock('react-dnd', () => ({
   },
 }))
 
+/** Helper to create a properly typed test mailbox */
+function createTestMailbox(overrides: Partial<Mailbox> & { id: string; name: string }): Mailbox {
+  return {
+    parentId: null,
+    role: null,
+    sortOrder: 0,
+    totalEmails: 0,
+    unreadEmails: 0,
+    totalThreads: 0,
+    unreadThreads: 0,
+    isSubscribed: true,
+    myRights: {
+      mayReadItems: true,
+      mayAddItems: true,
+      mayRemoveItems: true,
+      maySetSeen: true,
+      maySetKeywords: true,
+      mayCreateChild: true,
+      mayRename: true,
+      mayDelete: true,
+      maySubmit: true,
+    },
+    ...overrides,
+  }
+}
+
 const baseProps = {
-  session: { username: 'user@example.com' },
+  session: null,
   userLabel: 'user',
   mailboxes: [
-    { id: 'inbox', name: 'Inbox', role: 'inbox', unreadEmails: 1 },
+    createTestMailbox({ id: 'inbox', name: 'Inbox', role: 'inbox', unreadEmails: 1 }),
   ],
   mailboxesLoading: false,
   refetchMailboxes: vi.fn(),

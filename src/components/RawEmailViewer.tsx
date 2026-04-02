@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { X, ChevronRight } from 'lucide-react';
 import { useEmailParse } from '../hooks/useEmailParse';
 import { useFocusTrap } from '../hooks/useFocusTrap';
+import type { EmailBodyPart } from '../types/jmap';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -12,6 +13,11 @@ type Tab = 'headers' | 'text' | 'html' | 'structure';
 interface RawEmailViewerProps {
   blobId: string;
   onClose: () => void;
+}
+
+/** Extended body part with parsed structure properties */
+interface ParsedBodyPart extends EmailBodyPart {
+  subParts?: ParsedBodyPart[];
 }
 
 // ---------------------------------------------------------------------------
@@ -54,20 +60,37 @@ function MimeNode({
   part,
   depth = 0,
 }: {
-  part: any;
+  part: ParsedBodyPart;
   depth?: number;
 }) {
   const [open, setOpen] = useState(true);
   const hasChildren =
     part.subParts && Array.isArray(part.subParts) && part.subParts.length > 0;
 
+  const handleToggle = () => {
+    if (hasChildren) {
+      setOpen((v) => !v);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (hasChildren && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault();
+      setOpen((v) => !v);
+    }
+  };
+
   return (
     <div style={{ paddingLeft: depth * 16 }} className="font-mono text-[12px]">
       <div
+        role={hasChildren ? 'button' : undefined}
+        tabIndex={hasChildren ? 0 : undefined}
+        aria-expanded={hasChildren ? open : undefined}
+        onClick={hasChildren ? handleToggle : undefined}
+        onKeyDown={hasChildren ? handleKeyDown : undefined}
         className={`flex items-start gap-1 py-1 px-2 rounded ${
-          hasChildren ? 'cursor-pointer hover:bg-[#F2F2F7]' : ''
+          hasChildren ? 'cursor-pointer hover:bg-[#F2F2F7] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/50' : ''
         }`}
-        onClick={hasChildren ? () => setOpen((v) => !v) : undefined}
       >
         {hasChildren && (
           <ChevronRight
@@ -105,7 +128,7 @@ function MimeNode({
 
       {hasChildren && open && (
         <div>
-          {part.subParts.map((child: any, i: number) => (
+          {part.subParts?.map((child, i) => (
             <MimeNode key={i} part={child} depth={depth + 1} />
           ))}
         </div>
