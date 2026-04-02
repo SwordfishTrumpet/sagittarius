@@ -12,9 +12,9 @@ export interface AttachmentInput {
 
 export interface EmailBodyResult {
   bodyValues: Record<string, { value: string; isTruncated: false }>
-  textBody: Array<{ partId: string; type: string }> | null
-  htmlBody: Array<{ partId: string; type: string }> | null
-  bodyStructure: {
+  textBody?: Array<{ partId: string; type: string }> | null
+  htmlBody?: Array<{ partId: string; type: string }> | null
+  bodyStructure?: {
     type: 'multipart/mixed'
     subParts: Array<
       | { partId: string; type: string }
@@ -56,9 +56,6 @@ export function buildEmailBody(
         isTruncated: false,
       },
     },
-    textBody: null,
-    htmlBody: null,
-    bodyStructure: null,
   }
 
   if (attachments?.length) {
@@ -74,8 +71,9 @@ export function buildEmailBody(
         })),
       ],
     }
+    // Only explicitly null body arrays when updating an existing draft
+    // For new drafts, we don't include these properties at all
     if (draftId) {
-      // Explicitly null both body arrays when updating with attachments
       result.textBody = null
       result.htmlBody = null
     }
@@ -87,6 +85,7 @@ export function buildEmailBody(
       result.textBody = [{ partId: 'body-1', type: bodyPartType }]
     }
     
+    // Only explicitly null the opposite body type and bodyStructure when updating
     if (draftId) {
       result.bodyStructure = null
       // Null the opposite body type
