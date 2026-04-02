@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { jmapClient } from '../api/jmap';
+import { extractGetResponse } from '../types/jmap';
 
 export interface JMAPQuota {
   id: string;
@@ -26,7 +27,8 @@ export function useQuota() {
         ['urn:ietf:params:jmap:quotas'],
       );
 
-      const list: JMAPQuota[] = response.methodResponses[0][1].list || [];
+      const result = extractGetResponse<JMAPQuota>(response.methodResponses);
+      const list: JMAPQuota[] = result?.list ?? [];
 
       // Prefer octets (storage) quota; fall back to first available
       return list.find((q) => q.resourceType === 'octets') ?? list[0] ?? null;

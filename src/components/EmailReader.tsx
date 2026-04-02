@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Mail, Paperclip } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
@@ -76,7 +76,7 @@ export function EmailReader({
       )
   }
 
-  const getProcessedHtml = (email: any): { blockedImageCount: number; displayHtml: string } | null => {
+  const getProcessedHtml = useCallback((email: any): { blockedImageCount: number; displayHtml: string } | null => {
     if (!email) return null;
     try {
       const emailState = remoteImageState[email.id];
@@ -89,6 +89,11 @@ export function EmailReader({
       } else if (email.textBody && email.textBody.length > 0) {
         const partId = email.textBody[0].partId;
         html = `<pre style="font-family: inherit; white-space: pre-wrap; margin: 0;">${escapeHtml(email.bodyValues?.[partId]?.value || '')}</pre>`;
+      }
+
+      // Handle empty body content as "no content"
+      if (!html || html.trim().length === 0 || html === '<pre style="font-family: inherit; white-space: pre-wrap; margin: 0;"></pre>') {
+        html = '<div style="padding:20px;color:#8E8E93;font-style:italic;">(No content)</div>';
       }
 
       // Resolve CID inline images BEFORE DOMPurify (DOMPurify strips cid: protocol)
@@ -118,7 +123,7 @@ export function EmailReader({
         displayHtml: '<div style="padding:20px;color:#8E8E93;font-style:italic;">Unable to display this message.</div>',
       };
     }
-  };
+  }, [remoteImageState]);
 
   const handleLoadRemoteImages = (emailId: string) => {
     setRemoteImageState(prev => {
@@ -144,7 +149,7 @@ export function EmailReader({
       emailImageState: remoteImageState[email.id],
       processedHtml: getProcessedHtml(email),
     })),
-    [threadEmails, remoteImageState],
+    [threadEmails, remoteImageState, getProcessedHtml],
   )
 
   if (isEmailDetailError) {

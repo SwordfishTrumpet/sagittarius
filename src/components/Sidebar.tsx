@@ -1,4 +1,5 @@
 import { Mail, Send, FileText, Archive, Trash2, ShieldAlert, Inbox, Star, Plus, ChevronLeft, Settings as SettingsIcon, Wifi, WifiOff } from 'lucide-react'
+import { useMemo } from 'react'
 import { SidebarItem } from './SidebarItem'
 import { SidebarSection } from './SidebarSection'
 import { MailboxTree } from './RecursiveSidebarItem'
@@ -16,13 +17,15 @@ export interface SidebarProps {
   selectedMailboxId: string | null
   isSidebarCollapsed: boolean
   isAnyPaneResizing: boolean
-  sidebarWidth: number
+  sidebarWidth: number | string
   expandedSections: { mailboxes: boolean; folders: boolean }
   customFolderTree: MailboxNode[]
   hasNewMail: boolean
   esConnected: boolean
   isOffline: boolean
   quota: any
+  isMobile?: boolean
+  mobileVisible?: boolean
   onToggleSidebarCollapsed: () => void
   onCompose: () => void
   onSelectMailbox: (mailboxId: string) => void
@@ -43,17 +46,21 @@ export interface SidebarProps {
   setSelectedFolderName: (name: string) => void
 }
 
+// Pre-created icon components to avoid creating new JSX on each call
+const MAILBOX_ICONS: Record<string, React.ReactNode> = {
+  inbox: <Inbox className="w-[18px] h-[18px]" strokeWidth={1.5} />,
+  sent: <Send className="w-[18px] h-[18px]" strokeWidth={1.5} />,
+  drafts: <FileText className="w-[18px] h-[18px]" strokeWidth={1.5} />,
+  trash: <Trash2 className="w-[18px] h-[18px]" strokeWidth={1.5} />,
+  archive: <Archive className="w-[18px] h-[18px]" strokeWidth={1.5} />,
+  junk: <ShieldAlert className="w-[18px] h-[18px]" strokeWidth={1.5} />,
+  spam: <ShieldAlert className="w-[18px] h-[18px]" strokeWidth={1.5} />,
+  default: <Mail className="w-[18px] h-[18px]" strokeWidth={1.5} />,
+}
+
 function getMailboxIcon(mailbox: any) {
   const role = mailbox._effectiveRole || mailbox.role;
-  switch (role) {
-    case 'inbox': return <Inbox className="w-[18px] h-[18px]" strokeWidth={1.5} />
-    case 'sent': return <Send className="w-[18px] h-[18px]" strokeWidth={1.5} />
-    case 'drafts': return <FileText className="w-[18px] h-[18px]" strokeWidth={1.5} />
-    case 'trash': return <Trash2 className="w-[18px] h-[18px]" strokeWidth={1.5} />
-    case 'archive': return <Archive className="w-[18px] h-[18px]" strokeWidth={1.5} />
-    case 'junk': case 'spam': return <ShieldAlert className="w-[18px] h-[18px]" strokeWidth={1.5} />
-    default: return <Mail className="w-[18px] h-[18px]" strokeWidth={1.5} />
-  }
+  return MAILBOX_ICONS[role] || MAILBOX_ICONS.default;
 }
 
 export function Sidebar({
@@ -72,6 +79,8 @@ export function Sidebar({
   esConnected,
   isOffline,
   quota,
+  isMobile = false,
+  mobileVisible = true,
   onToggleSidebarCollapsed,
   onCompose,
   onSelectMailbox,
@@ -91,12 +100,21 @@ export function Sidebar({
   setSelectedFolderId,
   setSelectedFolderName,
 }: SidebarProps) {
+  // Memoize mailbox classification to avoid recalculating on every render
+  const { systemMailboxes, customMailboxes } = useMemo(() => {
+    const classified = classifyMailboxes(mailboxes || []);
+    return {
+      systemMailboxes: classified.system,
+      customMailboxes: classified.custom,
+    };
+  }, [mailboxes]);
+
   return (
     <aside
       aria-label="Mailbox navigation"
-      aria-hidden={isSidebarCollapsed}
-      className={`flex flex-col bg-white/70 backdrop-blur-xl border-r border-[#E5E5E5] h-full overflow-hidden shrink-0 select-none ${isAnyPaneResizing ? '' : 'transition-all duration-300'}`}
-      style={{ width: isSidebarCollapsed ? 0 : sidebarWidth }}
+      aria-hidden={isSidebarCollapsed && !isMobile}
+      className={`flex flex-col bg-white/70 backdrop-blur-xl border-r border-[#E5E5E5] h-full overflow-hidden shrink-0 select-none ${isAnyPaneResizing ? '' : 'transition-all duration-300'} ${isMobile ? (mobileVisible ? 'fixed inset-0 z-[200] w-full' : 'hidden') : ''}`}
+      style={{ width: isMobile ? '100%' : (isSidebarCollapsed ? 0 : sidebarWidth) }}
     >
       {!isSidebarCollapsed && (
       <>
@@ -142,14 +160,14 @@ export function Sidebar({
         ) : (
           <>
             {/* MAILBOXES Section */}
-            {classifyMailboxes(mailboxes).system.length > 0 && (
+            {systemMailboxes.length > 0 && (
               <SidebarSection
                 title="Mailboxes"
                 isExpanded={expandedSections.mailboxes}
                 onToggleExpand={() => onToggleSectionExpanded('mailboxes')}
               >
                 <div role="tree" aria-label="System mailboxes" className="space-y-0.5">
-                  {classifyMailboxes(mailboxes).system.map((mailbox: any) => (
+                  {systemMailboxes.map((mailbox: any) => (
                     <SidebarItem 
                       key={mailbox.id}
                       mailboxId={mailbox.id}
@@ -171,7 +189,7 @@ export function Sidebar({
             )}
 
             {/* FOLDERS Section */}
-            {classifyMailboxes(mailboxes).custom.length > 0 && (
+            {customMailboxes.length > 0 && (
               <SidebarSection
                 title="Folders"
                 isExpanded={expandedSections.folders}
@@ -214,7 +232,7 @@ export function Sidebar({
             )}
 
             {/* Create "Folders" section button if no custom folders exist */}
-            {classifyMailboxes(mailboxes).custom.length === 0 && classifyMailboxes(mailboxes).system.length > 0 && (
+            {customMailboxes.length === 0 && systemMailboxes.length > 0 && (
               <button
                 onClick={onCreateFolder}
                 className="flex items-center justify-center gap-2 px-3 py-2 text-[13px] font-medium text-[#007AFF] hover:bg-[#007AFF]/10 rounded-lg transition-colors mt-2"

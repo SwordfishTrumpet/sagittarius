@@ -6,6 +6,8 @@ import { MessageListItem } from './MessageListItem';
 import { SwipeableRow } from './SwipeableRow';
 import { ContextMenu, ContextMenuItemConfig } from './ContextMenu';
 import { AnimatePresence } from 'framer-motion';
+import { PullToRefresh } from './PullToRefresh';
+import { ErrorBoundary } from './ErrorBoundary';
 
 interface VirtualMessageListProps {
   emails: any[];
@@ -27,9 +29,14 @@ interface VirtualMessageListProps {
   onForward?: (emailId: string) => void;
   onArchive?: (emailId: string) => void;
   onDelete?: (emailId: string) => void;
+  onOpenDraft?: (emailId: string) => void;
+  onRefresh?: () => Promise<any>;
 }
 
-export const VirtualMessageList = ({
+// Stable empty Set for default removingEmailIds
+const EMPTY_SET = new Set<string>();
+
+export function VirtualMessageList({
   emails,
   isLoading,
   isRefetching,
@@ -39,7 +46,7 @@ export const VirtualMessageList = ({
   onToggleSelection,
   onToggleFlag,
   formatMessageDate,
-  removingEmailIds = new Set(),
+  removingEmailIds: externalRemovingIds,
   scrollToEmailId,
   isMobile = false,
   onSwipeArchive,
@@ -49,8 +56,12 @@ export const VirtualMessageList = ({
   onForward,
   onArchive,
   onDelete,
-}: VirtualMessageListProps) => {
+  onOpenDraft,
+  onRefresh,
+}: VirtualMessageListProps) {
   const virtuosoRef = useRef<VirtuosoHandle>(null);
+  // Use stable empty Set reference to avoid creating new Set on each render
+  const removingEmailIds = externalRemovingIds || EMPTY_SET;
 
   // Context menu state
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; emailId: string } | null>(null);
@@ -119,16 +130,6 @@ export const VirtualMessageList = ({
     [onToggleSelection]
   );
 
-  // Auto-scroll to selected email on keyboard navigation
-  useEffect(() => {
-    if (scrollToEmailId && virtuosoRef.current && emailsWithMeta.length > 0) {
-      const index = emailsWithMeta.findIndex(e => e.id === scrollToEmailId);
-      if (index >= 0) {
-        virtuosoRef.current.scrollToIndex({ index, align: 'center', behavior: 'smooth' });
-      }
-    }
-  }, [scrollToEmailId]);
-
   // Get the sent mailbox to determine if message is sent
   const sentBoxId = useMemo(() => {
     return mailboxes?.find((m: any) => m.role === 'sent' || (!m.role && ['sent', 'sent items', 'sent mail'].includes((m.name || '').toLowerCase())))?.id;
@@ -142,6 +143,16 @@ export const VirtualMessageList = ({
     }));
   }, [emails, sentBoxId]);
 
+  // Auto-scroll to selected email on keyboard navigation
+  useEffect(() => {
+    if (scrollToEmailId && virtuosoRef.current && emailsWithMeta.length > 0) {
+      const index = emailsWithMeta.findIndex(e => e.id === scrollToEmailId);
+      if (index >= 0) {
+        virtuosoRef.current.scrollToIndex({ index, align: 'center', behavior: 'smooth' });
+      }
+    }
+  }, [scrollToEmailId, emailsWithMeta]);
+
   // Handle item click with selection logic
   const handleItemClick = useCallback(
     (email: any, e: React.MouseEvent<HTMLDivElement>) => {
@@ -150,6 +161,16 @@ export const VirtualMessageList = ({
       onToggleSelection(email.id, ctrlKey, shiftKey);
     },
     [onToggleSelection]
+  );
+
+  // Handle double-click to open drafts
+  const handleItemDoubleClick = useCallback(
+    (email: any) => {
+      if (email.keywords?.['$draft']) {
+        onOpenDraft?.(email.id);
+      }
+    },
+    [onOpenDraft]
   );
 
   // Handle flag toggle with event propagation stop
@@ -180,62 +201,65 @@ export const VirtualMessageList = ({
   }
 
   return (
-    <>
-    <Virtuoso
-      ref={virtuosoRef}
-      data={emailsWithMeta}
-      className="flex-1 bg-[#F9F9F9] overflow-hidden"
-      role="listbox"
-      aria-label="Email list"
-      aria-setsize={emailsWithMeta.length}
-       itemContent={(index, email) => (
-         <div 
-           key={email.id} 
-           role="option"
-           aria-selected={selectedEmailId === email.id || selectedEmailIds.has(email.id)}
-           aria-setsize={emailsWithMeta.length}
-           aria-posinset={index + 1}
-           className="relative"
-         >
-           <SwipeableRow
-             enabled={isMobile}
-             onSwipeRight={onSwipeArchive ? () => onSwipeArchive(email.id) : undefined}
-             onSwipeLeft={onSwipeDelete ? () => onSwipeDelete(email.id) : undefined}
-           >
-             <MessageListItem
-              emailId={email.id}
-              sender={email.from?.[0]?.name || email.from?.[0]?.email || 'Unknown'}
-              subject={email.subject || '(No Subject)'}
-              snippet={email.preview}
-              searchSnippet={email.searchSnippet}
-              date={formatMessageDate(email.receivedAt)}
-             unread={!email.keywords || !email.keywords['$seen']}
-             selected={selectedEmailId === email.id}
-             isMultiSelected={selectedEmailIds.has(email.id)}
-             selectedEmailIds={selectedEmailIds}
-              threadCount={email.threadCount}
-              flagged={!!email.keywords?.['$flagged']}
-              hasAttachment={!!email.hasAttachment}
-              isSent={email.isSent}
-             onClick={(e) => handleItemClick(email, e)}
-             onToggleFlag={(e) => handleToggleFlag(email, e)}
-             onContextMenu={(e) => handleContextMenu(email.id, e)}
-              isRemoving={removingEmailIds.has(email.id)}
-            />
-           </SwipeableRow>
-         </div>
-       )}
-      overscan={10}
-      increaseViewportBy={{ top: 0, bottom: 300 }}
-      defaultItemHeight={100}
-      style={{ height: '100%' }}
-      // Smooth scrolling options
-      computeItemKey={(_, email) => email.id}
-      // Disable virtuoso's automatic scroll behavior to maintain selection
-      rangeChanged={() => {
-        // Optional: track range changes for analytics or prefetching
-      }}
-    />
+    <ErrorBoundary>
+    <PullToRefresh onRefresh={onRefresh || (async () => {})} enabled={isMobile && !!onRefresh}>
+      <Virtuoso
+        ref={virtuosoRef}
+        data={emailsWithMeta}
+        className="flex-1 bg-[#F9F9F9] overflow-hidden"
+        role="listbox"
+        aria-label="Email list"
+        aria-setsize={emailsWithMeta.length}
+        itemContent={(index, email) => (
+          <div 
+            key={email.id} 
+            role="option"
+            aria-selected={selectedEmailId === email.id || selectedEmailIds.has(email.id)}
+            aria-setsize={emailsWithMeta.length}
+            aria-posinset={index + 1}
+            className="relative"
+          >
+            <SwipeableRow
+              enabled={isMobile}
+              onSwipeRight={onSwipeArchive ? () => onSwipeArchive(email.id) : undefined}
+              onSwipeLeft={onSwipeDelete ? () => onSwipeDelete(email.id) : undefined}
+            >
+              <MessageListItem
+                emailId={email.id}
+                sender={email.from?.[0]?.name || email.from?.[0]?.email || 'Unknown'}
+                subject={email.subject || '(No Subject)'}
+                snippet={email.preview}
+                searchSnippet={email.searchSnippet}
+                date={formatMessageDate(email.receivedAt)}
+                unread={!email.keywords || !email.keywords['$seen']}
+                selected={selectedEmailId === email.id}
+                isMultiSelected={selectedEmailIds.has(email.id)}
+                selectedEmailIds={selectedEmailIds}
+                threadCount={email.threadCount}
+                flagged={!!email.keywords?.['$flagged']}
+                hasAttachment={!!email.hasAttachment}
+                isSent={email.isSent}
+                onClick={(e) => handleItemClick(email, e)}
+                onDoubleClick={() => handleItemDoubleClick(email)}
+                onToggleFlag={(e) => handleToggleFlag(email, e)}
+                onContextMenu={(e) => handleContextMenu(email.id, e)}
+                isRemoving={removingEmailIds.has(email.id)}
+              />
+            </SwipeableRow>
+          </div>
+        )}
+        overscan={10}
+        increaseViewportBy={{ top: 0, bottom: 300 }}
+        defaultItemHeight={100}
+        style={{ height: '100%' }}
+        // Smooth scrolling options
+        computeItemKey={(_, email) => email.id}
+        // Disable virtuoso's automatic scroll behavior to maintain selection
+        rangeChanged={() => {
+          // Optional: track range changes for analytics or prefetching
+        }}
+      />
+    </PullToRefresh>
 
     {/* Context menu for right-click / long-press on message items */}
     {contextMenu && (
@@ -246,6 +270,6 @@ export const VirtualMessageList = ({
         onClose={closeContextMenu}
       />
     )}
-    </>
+    </ErrorBoundary>
   );
-};
+}

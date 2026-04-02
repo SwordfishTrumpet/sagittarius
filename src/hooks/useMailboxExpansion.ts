@@ -3,44 +3,46 @@
  * Persists expanded/collapsed folder states and provides utility functions
  */
 
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useState, useEffect, useRef } from 'react';
 import { MailboxNode, toggleMailboxExpanded, expandMailboxPath } from '../utils/mailboxTree';
 
 const EXPANSION_STATE_KEY = 'sagittarius_mailbox_expansion';
 
 export function useMailboxExpansion(mailboxTree: MailboxNode[]) {
   const [treeState, setTreeState] = useState<MailboxNode[]>(mailboxTree);
+  const persistenceAppliedRef = useRef(false);
 
-  // Load persisted expansion state on mount
+  // Load persisted expansion state on mount, and update when mailboxTree changes
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(EXPANSION_STATE_KEY);
-      if (saved) {
-        const expandedIds = new Set<string>(JSON.parse(saved));
-        const updatedTree = applyExpansionState(mailboxTree, expandedIds);
-        setTreeState(updatedTree);
-      } else {
-        setTreeState(mailboxTree);
+    // If persistence hasn't been applied yet, try to load from localStorage
+    if (!persistenceAppliedRef.current) {
+      try {
+        const saved = localStorage.getItem(EXPANSION_STATE_KEY);
+        if (saved) {
+          const expandedIds = new Set<string>(JSON.parse(saved));
+          const updatedTree = applyExpansionState(mailboxTree, expandedIds);
+          setTreeState(updatedTree);
+          persistenceAppliedRef.current = true;
+          return;
+        }
+      } catch {
+        // Silently fail if localStorage is unavailable or corrupt
       }
-    } catch {
-      // Silently fail if localStorage is unavailable or corrupt
-      setTreeState(mailboxTree);
+      persistenceAppliedRef.current = true;
     }
-  }, []);
-
-  // Update tree state when mailbox tree changes
-  useEffect(() => {
-    setTreeState(mailboxTree);
+    
+    // Apply expansion state from current treeState to new mailboxTree structure
+    // This preserves user's expansion choices while updating the underlying tree
+    const currentExpandedIds = collectExpandedIds(treeState);
+    const mergedTree = applyExpansionState(mailboxTree, currentExpandedIds);
+    setTreeState(mergedTree);
   }, [mailboxTree]);
 
   const toggleExpanded = useCallback(
     (mailboxId: string) => {
       const updated = toggleMailboxExpanded(treeState, mailboxId);
       setTreeState(updated);
-
-      // Persist new state
-      const expandedIds = collectExpandedIds(updated);
-      localStorage.setItem(EXPANSION_STATE_KEY, JSON.stringify(Array.from(expandedIds)));
+      persistExpansionState(updated);
     },
     [treeState]
   );
@@ -49,10 +51,7 @@ export function useMailboxExpansion(mailboxTree: MailboxNode[]) {
     (mailboxId: string) => {
       const updated = expandMailboxPath(treeState, mailboxId);
       setTreeState(updated);
-
-      // Persist new state
-      const expandedIds = collectExpandedIds(updated);
-      localStorage.setItem(EXPANSION_STATE_KEY, JSON.stringify(Array.from(expandedIds)));
+      persistExpansionState(updated);
     },
     [treeState]
   );
@@ -60,17 +59,13 @@ export function useMailboxExpansion(mailboxTree: MailboxNode[]) {
   const expandAll = useCallback(() => {
     const updated = recursivelyExpand(treeState, true);
     setTreeState(updated);
-
-    const expandedIds = collectExpandedIds(updated);
-    localStorage.setItem(EXPANSION_STATE_KEY, JSON.stringify(Array.from(expandedIds)));
+    persistExpansionState(updated);
   }, [treeState]);
 
   const collapseAll = useCallback(() => {
     const updated = recursivelyExpand(treeState, false);
     setTreeState(updated);
-
-    const expandedIds = collectExpandedIds(updated);
-    localStorage.setItem(EXPANSION_STATE_KEY, JSON.stringify(Array.from(expandedIds)));
+    persistExpansionState(updated);
   }, [treeState]);
 
   return {
@@ -101,6 +96,18 @@ function collectExpandedIds(nodes: MailboxNode[]): Set<string> {
 
   traverse(nodes);
   return ids;
+}
+
+/**
+ * Persist expansion state to localStorage
+ */
+function persistExpansionState(nodes: MailboxNode[]) {
+  try {
+    const expandedIds = collectExpandedIds(nodes);
+    localStorage.setItem(EXPANSION_STATE_KEY, JSON.stringify(Array.from(expandedIds)));
+  } catch {
+    // Silently fail if localStorage is unavailable
+  }
 }
 
 /**

@@ -3,43 +3,40 @@ import { jmapClient } from '../../api/jmap'
 import { fetchWithOfflineCache } from '../../utils/offlineCache'
 import { logger } from '../../utils/logger'
 import { suppressNewMailNotification } from './queryCacheUtils'
+import type { Email, Thread, SearchSnippet } from '../../types/jmap'
 
-export function useEmails(mailboxId?: string, searchTerm?: string) {
-  const accountId = jmapClient.getPrimaryAccount()
+// Type helpers for JMAP responses
+interface EmailQueryResult {
+  ids: string[];
+}
 
-  return useQuery({
-    queryKey: ['emails', accountId, mailboxId, searchTerm],
-    queryFn: async () => fetchWithOfflineCache(['emails', accountId, mailboxId, searchTerm], async () => {
-      if (!mailboxId && !searchTerm) return []
+interface EmailGetResult {
+  list: Email[];
+}
 
-      const filter: any = {}
-      if (mailboxId) filter.inMailbox = mailboxId
-      if (searchTerm) filter.text = searchTerm
+interface ThreadGetResult {
+  list: Thread[];
+}
 
-      const queryResponse = await jmapClient.request([
-        ['Email/query', {
-          accountId,
-          filter,
-          sort: [{ property: 'receivedAt', isAscending: false }],
-          limit: 50,
-        }, '0'],
-      ])
+interface SearchSnippetResult {
+  list: SearchSnippet[];
+}
 
-      const ids = queryResponse.methodResponses[0][1].ids
-      if (!ids.length) return []
+// Helper to safely cast JMAP response data
+function asEmailQuery(data: unknown): EmailQueryResult {
+  return data as EmailQueryResult;
+}
 
-      const getResponse = await jmapClient.request([
-        ['Email/get', {
-          accountId,
-          ids,
-          properties: ['id', 'threadId', 'mailboxIds', 'from', 'subject', 'preview', 'receivedAt', 'keywords', 'hasAttachment'],
-        }, '1'],
-      ])
+function asEmailGet(data: unknown): EmailGetResult {
+  return data as EmailGetResult;
+}
 
-      return getResponse.methodResponses[0][1].list
-    }),
-    enabled: !!accountId && !!mailboxId,
-  })
+function asThreadGet(data: unknown): ThreadGetResult {
+  return data as ThreadGetResult;
+}
+
+function asSearchSnippetGet(data: unknown): SearchSnippetResult {
+  return data as SearchSnippetResult;
 }
 
 export function useThreads(mailboxId?: string, searchTerm?: string, quickFilters?: Record<string, any>) {
@@ -99,7 +96,8 @@ export function useThreads(mailboxId?: string, searchTerm?: string, quickFilters
         }, '0'],
       ])
 
-      const ids = queryResponse.methodResponses[0][1].ids
+      const queryResult = asEmailQuery(queryResponse.methodResponses[0][1])
+      const ids = queryResult.ids
       if (!ids || ids.length === 0) return []
 
       const getEmailsResponse = await jmapClient.request([
@@ -110,10 +108,11 @@ export function useThreads(mailboxId?: string, searchTerm?: string, quickFilters
         }, '1'],
       ])
 
-      const latestEmails = getEmailsResponse.methodResponses[0][1].list
+      const emailResult = asEmailGet(getEmailsResponse.methodResponses[0][1])
+      const latestEmails = emailResult.list
       if (!latestEmails || latestEmails.length === 0) return []
 
-      const threadIds = Array.from(new Set(latestEmails.map((email: any) => email.threadId)))
+      const threadIds = Array.from(new Set(latestEmails.map((email) => email.threadId)))
       const threadsResponse = await jmapClient.request([
         ['Thread/get', {
           accountId,
@@ -121,17 +120,18 @@ export function useThreads(mailboxId?: string, searchTerm?: string, quickFilters
         }, '2'],
       ])
 
-      const threads = threadsResponse.methodResponses[0][1].list
+      const threadResult = asThreadGet(threadsResponse.methodResponses[0][1])
+      const threads = threadResult.list
       if (!threads) return latestEmails
 
-      const emailsWithThreadCount = latestEmails.map((email: any) => ({
+      const emailsWithThreadCount = latestEmails.map((email) => ({
         ...email,
-        threadCount: threads.find((thread: any) => thread.id === email.threadId)?.emailIds?.length || 1,
+        threadCount: threads.find((thread) => thread.id === email.threadId)?.emailIds?.length || 1,
       }))
 
       if (searchTerm && ids.length > 0) {
         try {
-          const snippetFilter: any = {}
+          const snippetFilter: Record<string, unknown> = {}
           if (mailboxId && mailboxId !== 'all' && mailboxId !== 'flagged') {
             snippetFilter.inMailbox = mailboxId
           }
@@ -148,11 +148,12 @@ export function useThreads(mailboxId?: string, searchTerm?: string, quickFilters
             }, '3'],
           ])
 
-          const snippets = snippetResponse.methodResponses[0][1]?.list
+          const snippetResult = asSearchSnippetGet(snippetResponse.methodResponses[0][1])
+          const snippets = snippetResult.list
           if (snippets && snippets.length > 0) {
-            const snippetMap = new Map(snippets.map((snippet: any) => [snippet.emailId, snippet]))
-            return emailsWithThreadCount.map((email: any) => {
-              const snippet = snippetMap.get(email.id) as any
+            const snippetMap = new Map(snippets.map((snippet) => [snippet.emailId, snippet]))
+            return emailsWithThreadCount.map((email) => {
+              const snippet = snippetMap.get(email.id)
               return snippet ? { ...email, searchSnippet: snippet.preview || snippet.subject } : email
             })
           }
@@ -167,7 +168,9 @@ export function useThreads(mailboxId?: string, searchTerm?: string, quickFilters
   })
 }
 
-async function fetchEmailDetail(accountId: string, emailId: string, threadId?: string, queryClient?: any) {
+import type { QueryClient } from '@tanstack/react-query'
+
+async function fetchEmailDetail(accountId: string, emailId: string, threadId?: string, queryClient?: QueryClient): Promise<Email[]> {
   return fetchWithOfflineCache(['emailDetail', accountId, emailId, threadId ?? null], async () => {
     const idsToFetch = [emailId]
 
@@ -178,7 +181,8 @@ async function fetchEmailDetail(accountId: string, emailId: string, threadId?: s
           ids: [threadId],
         }, '0'],
       ])
-      const threadEmailIds = threadResponse.methodResponses[0][1].list[0]?.emailIds
+      const threadResult = asThreadGet(threadResponse.methodResponses[0][1])
+      const threadEmailIds = threadResult.list[0]?.emailIds
       if (threadEmailIds) {
         idsToFetch.push(...threadEmailIds.filter((id: string) => id !== emailId))
       }
@@ -193,14 +197,15 @@ async function fetchEmailDetail(accountId: string, emailId: string, threadId?: s
       }, '1'],
     ])
 
-    const list = response.methodResponses[0][1].list
+    const emailResult = asEmailGet(response.methodResponses[0][1])
+    const list = emailResult.list
     if (!list) return []
 
-    const emails = list.sort((a: any, b: any) =>
+    const emails = list.sort((a, b) =>
       new Date(a.receivedAt).getTime() - new Date(b.receivedAt).getTime(),
     )
 
-    const selectedEmail = emails.find((email: any) => email.id === emailId)
+    const selectedEmail = emails.find((email) => email.id === emailId)
     if (selectedEmail && (!selectedEmail.keywords || !selectedEmail.keywords['$seen'])) {
       suppressNewMailNotification()
       jmapClient.request([
@@ -217,6 +222,9 @@ async function fetchEmailDetail(accountId: string, emailId: string, threadId?: s
           queryClient.invalidateQueries({ queryKey: ['threads'] })
           queryClient.invalidateQueries({ queryKey: ['mailboxes'] })
         }
+      }).catch((err) => {
+        // Log but don't throw - marking as read is non-critical
+        logger.warn('Failed to mark email as read:', err)
       })
     }
 
@@ -235,7 +243,7 @@ export function useEmailDetail(emailId?: string, threadId?: string) {
   })
 }
 
-export async function fetchEmailWithBody(emailId: string): Promise<any | null> {
+export async function fetchEmailWithBody(emailId: string): Promise<Email | null> {
   const accountId = jmapClient.getPrimaryAccount()
   if (!accountId) return null
   return fetchWithOfflineCache(['emailWithBody', accountId, emailId], async () => {
@@ -248,7 +256,7 @@ export async function fetchEmailWithBody(emailId: string): Promise<any | null> {
       }, '0'],
     ])
 
-    const list = response.methodResponses[0][1].list
-    return list?.[0] || null
+    const emailResult = asEmailGet(response.methodResponses[0][1])
+    return emailResult.list?.[0] || null
   })
 }

@@ -34,7 +34,7 @@ function escapeHtml(value: string): string {
  * Extract body HTML from an email object.
  * Prefers HTML body, falls back to plain text wrapped in <pre>.
  */
-function getEmailBodyHtml(email: EmailForQuote): string {
+export function getEmailBodyHtml(email: EmailForQuote): string {
   if (email.htmlBody && email.htmlBody.length > 0) {
     const partId = email.htmlBody[0].partId;
     const html = email.bodyValues?.[partId]?.value || '';
@@ -58,8 +58,10 @@ export function buildReplyQuote(email: EmailForQuote): string {
   if (!body) return '';
 
   const date = new Date(email.receivedAt);
-  const dateStr = format(date, 'MMM d, yyyy');
-  const timeStr = format(date, 'h:mm a');
+  // Handle invalid dates gracefully
+  const isValidDate = !isNaN(date.getTime());
+  const dateStr = isValidDate ? format(date, 'MMM d, yyyy') : 'Unknown date';
+  const timeStr = isValidDate ? format(date, 'h:mm a') : '';
   const sender = email.from?.[0];
   const senderStr = sender
     ? (sender.name ? `${sender.name} &lt;${sender.email}&gt;` : sender.email)
@@ -85,12 +87,15 @@ export function buildForwardQuote(email: EmailForQuote): string {
   const body = getEmailBodyHtml(email);
 
   const date = new Date(email.receivedAt);
-  const dateStr = format(date, 'MMMM d, yyyy');
-  const timeStr = format(date, 'h:mm a');
+  // Handle invalid dates gracefully
+  const isValidDate = !isNaN(date.getTime());
+  const dateStr = isValidDate ? format(date, 'MMMM d, yyyy') : 'Unknown date';
+  const timeStr = isValidDate ? format(date, 'h:mm a') : '';
+  const dateTimeStr = isValidDate ? `${dateStr} at ${timeStr}` : dateStr;
 
   const headers: string[] = [
     `<b>From:</b> ${formatAddressList(email.from)}`,
-    `<b>Date:</b> ${dateStr} at ${timeStr}`,
+    `<b>Date:</b> ${dateTimeStr}`,
     `<b>Subject:</b> ${escapeHtml(email.subject || '(No Subject)')}`,
     `<b>To:</b> ${formatAddressList(email.to)}`,
   ];

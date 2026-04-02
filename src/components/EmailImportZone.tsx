@@ -88,9 +88,10 @@ export function EmailImportZone({ mailboxId }: EmailImportZoneProps) {
             blobId,
             mailboxIds: { [mailboxId]: true },
           });
-        } catch (err: any) {
+        } catch (err) {
           toast.dismiss(`upload-${file.name}`);
-          toast.error(`Failed to import ${file.name}: ${err?.message ?? 'Unknown error'}`);
+          const message = err instanceof Error ? err.message : 'Unknown error';
+          toast.error(`Failed to import ${file.name}: ${message}`);
         }
       }
     },

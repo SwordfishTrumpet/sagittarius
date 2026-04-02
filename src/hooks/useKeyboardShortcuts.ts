@@ -1,10 +1,11 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
+import type { Email } from '../types/jmap'
 
 interface KeyboardShortcutsConfig {
-  emails: any[] | undefined
+  emails: Email[] | undefined
   selectedMailboxId: string | null
   selectedEmailId: string | null
-  selectedEmail: any
+  selectedEmail: Email | undefined
   selectedEmailIds: Set<string>
   rawViewerBlobId: string | null
   isSettingsOpen: boolean
@@ -61,6 +62,62 @@ export function useKeyboardShortcuts(config: KeyboardShortcutsConfig) {
     onShowShortcutsHelp,
   } = config;
 
+  // Use refs to store callbacks and avoid re-registering keyboard listeners on every render
+  const callbacksRef = useRef({
+    onSelectAll,
+    onClearSelection,
+    onToggleSidebar,
+    onCompose,
+    onCloseShortcutsHelp,
+    onCloseRawViewer,
+    onCloseSettings,
+    onCloseComposer,
+    onCloseMoreMenu,
+    onNavigateEmail,
+    onReply,
+    onReplyAll,
+    onForward,
+    onToggleFlag,
+    onArchive,
+    onDelete,
+    onShowShortcutsHelp,
+  });
+
+  // Update refs whenever callbacks change
+  useEffect(() => {
+    callbacksRef.current = {
+      onSelectAll,
+      onClearSelection,
+      onToggleSidebar,
+      onCompose,
+      onCloseShortcutsHelp,
+      onCloseRawViewer,
+      onCloseSettings,
+      onCloseComposer,
+      onCloseMoreMenu,
+      onNavigateEmail,
+      onReply,
+      onReplyAll,
+      onForward,
+      onToggleFlag,
+      onArchive,
+      onDelete,
+      onShowShortcutsHelp,
+    };
+  }, [
+    onSelectAll, onClearSelection, onToggleSidebar, onCompose,
+    onCloseShortcutsHelp, onCloseRawViewer, onCloseSettings, onCloseComposer,
+    onCloseMoreMenu, onNavigateEmail, onReply, onReplyAll, onForward,
+    onToggleFlag, onArchive, onDelete, onShowShortcutsHelp,
+  ]);
+
+  // Use a ref for selectedEmailIds to avoid stale closure issues
+  // (dependency array including .size alone misses content changes with same size)
+  const selectedEmailIdsRef = useRef(selectedEmailIds);
+  useEffect(() => {
+    selectedEmailIdsRef.current = selectedEmailIds;
+  }, [selectedEmailIds]);
+
   useEffect(() => {
     const isInputFocused = () => {
       const el = document.activeElement;
@@ -72,30 +129,34 @@ export function useKeyboardShortcuts(config: KeyboardShortcutsConfig) {
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      const cbs = callbacksRef.current;
+      // Use ref for selectedEmailIds to avoid stale closure issues
+      const currentSelectedIds = selectedEmailIdsRef.current;
+      
       // CMD/CTRL + A to select all
       if ((e.ctrlKey || e.metaKey) && e.key === 'a' && emails && selectedMailboxId) {
         e.preventDefault();
-        onSelectAll();
+        cbs.onSelectAll();
       }
       // CMD/CTRL + B to toggle sidebar
       if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
         e.preventDefault();
-        onToggleSidebar();
+        cbs.onToggleSidebar();
       }
       // CMD/CTRL + Shift + N: new compose
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && (e.key === 'N' || e.key === 'n')) {
         e.preventDefault();
-        onCompose();
+        cbs.onCompose();
         return;
       }
       // ESC: close modals first, then clear selection
       if (e.key === 'Escape') {
-        if (showShortcutsHelp) { onCloseShortcutsHelp(); return; }
-        if (rawViewerBlobId) { onCloseRawViewer(); return; }
-        if (isSettingsOpen) { onCloseSettings(); return; }
-        if (isComposerOpen) { onCloseComposer(); return; }
-        if (moreMenuOpen) { onCloseMoreMenu(); return; }
-        if (selectedEmailIds.size > 0) onClearSelection();
+        if (showShortcutsHelp) { cbs.onCloseShortcutsHelp(); return; }
+        if (rawViewerBlobId) { cbs.onCloseRawViewer(); return; }
+        if (isSettingsOpen) { cbs.onCloseSettings(); return; }
+        if (isComposerOpen) { cbs.onCloseComposer(); return; }
+        if (moreMenuOpen) { cbs.onCloseMoreMenu(); return; }
+        if (currentSelectedIds.size > 0) cbs.onClearSelection();
         return;
       }
 
@@ -104,48 +165,48 @@ export function useKeyboardShortcuts(config: KeyboardShortcutsConfig) {
         switch (e.key) {
           case 'j':
           case 'ArrowDown':
-            onNavigateEmail('next');
+            cbs.onNavigateEmail('next');
             e.preventDefault();
             break;
           case 'k':
           case 'ArrowUp':
-            onNavigateEmail('prev');
+            cbs.onNavigateEmail('prev');
             e.preventDefault();
             break;
           case 'r':
             if (e.shiftKey) {
-              onReplyAll();
+              cbs.onReplyAll();
             } else {
-              onReply();
+              cbs.onReply();
             }
             e.preventDefault();
             break;
           case 'f':
-            onForward();
+            cbs.onForward();
             e.preventDefault();
             break;
           case 's':
             if (selectedEmailId && selectedEmail) {
-              onToggleFlag(selectedEmailId, !!selectedEmail.keywords?.['$flagged']);
+              cbs.onToggleFlag(selectedEmailId, !!selectedEmail.keywords?.['$flagged']);
             }
             e.preventDefault();
             break;
           case 'a':
           case 'e':
             if (!e.metaKey && !e.ctrlKey) {
-              onArchive();
+              cbs.onArchive();
               e.preventDefault();
             }
             break;
           case 'd':
           case '#':
             if (!e.metaKey && !e.ctrlKey) {
-              onDelete();
+              cbs.onDelete();
               e.preventDefault();
             }
             break;
           case '?':
-            onShowShortcutsHelp();
+            cbs.onShowShortcutsHelp();
             e.preventDefault();
             break;
           case '/':
@@ -159,11 +220,10 @@ export function useKeyboardShortcuts(config: KeyboardShortcutsConfig) {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [
-    emails, selectedMailboxId, selectedEmailIds.size, rawViewerBlobId,
+    // Only state values that affect listener behavior - NOT callbacks (stored in ref)
+    // selectedEmailIds is now accessed via ref to avoid stale closure issues
+    emails, selectedMailboxId, rawViewerBlobId,
     isSettingsOpen, isComposerOpen, moreMenuOpen, showShortcutsHelp,
-    selectedEmailId, selectedEmail, onNavigateEmail, onReply, onReplyAll, onForward,
-    onSelectAll, onClearSelection, onToggleSidebar, onCompose,
-    onCloseShortcutsHelp, onCloseRawViewer, onCloseSettings, onCloseComposer,
-    onCloseMoreMenu, onToggleFlag, onArchive, onDelete, onShowShortcutsHelp,
+    selectedEmailId, selectedEmail,
   ]);
 }

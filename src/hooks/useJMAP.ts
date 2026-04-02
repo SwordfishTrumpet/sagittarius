@@ -1,5 +1,5 @@
 export { useMailboxes, useMailboxActions, useMailboxReorder } from './jmap/useMailboxes'
-export { useEmails, useThreads, useEmailDetail, fetchEmailWithBody } from './jmap/useEmailQueries'
+export { useThreads, useEmailDetail, fetchEmailWithBody } from './jmap/useEmailQueries'
 export { useEmailActions } from './jmap/useEmailMutations'
 export { useCompose } from './jmap/useCompose'
 export { useIdentities } from './jmap/useIdentities'

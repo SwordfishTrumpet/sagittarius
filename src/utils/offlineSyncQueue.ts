@@ -184,7 +184,8 @@ export async function replayDeferredMutations() {
       }
       await persistMutation(updated)
       errors.push({ id: record.id, error: message })
-      break
+      // Continue processing remaining mutations instead of breaking
+      // This allows independent mutations to succeed even if one fails
     }
   }
 

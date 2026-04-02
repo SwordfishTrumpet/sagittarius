@@ -10,6 +10,8 @@ body {
   @apply bg-[#F2F2F7] text-[#1C1C1E] overflow-hidden;
   height: 100vh;
   width: 100vw;
+  /* Safe area insets for mobile devices */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
 #root {

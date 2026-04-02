@@ -1,7 +1,13 @@
 import { useMutation } from '@tanstack/react-query';
 import { jmapClient } from '../api/jmap';
+import type { MDNSendResponse, JMAPSetError } from '../types/jmap';
 
 const MDN_CAP = 'urn:ietf:params:jmap:mdn';
+
+// Type helper for MDN response
+function asMDNResponse(data: unknown): MDNSendResponse {
+  return data as MDNSendResponse;
+}
 
 export interface SendMDNParams {
   emailId: string;
@@ -54,16 +60,18 @@ export function useSendMDN() {
 
       const methodRes = response.methodResponses[0];
       if (!methodRes || methodRes[0] === 'error') {
-        throw new Error(methodRes?.[1]?.description || 'Failed to send read receipt');
+        const errorResult = methodRes?.[1] as { description?: string } | undefined;
+        throw new Error(errorResult?.description || 'Failed to send read receipt');
       }
 
-      const notSent = methodRes[1]?.notSent;
+      const mdnResult = asMDNResponse(methodRes[1]);
+      const notSent = mdnResult.notSent;
       if (notSent && Object.keys(notSent).length > 0) {
-        const firstError = Object.values(notSent)[0] as any;
+        const firstError = Object.values(notSent)[0] as JMAPSetError;
         throw new Error(firstError?.description || firstError?.type || 'Failed to send read receipt');
       }
 
-      return methodRes[1];
+      return mdnResult;
     },
   });
 }

@@ -26,6 +26,7 @@ function normalizeReplyContext(replyTo?: any): string {
   if (!replyTo) return 'new';
 
   const suffix = replyTo.id || replyTo.threadId || 'message';
+  if (replyTo._draft) return `draft:${suffix}`;
   if (replyTo._forward) return `forward:${suffix}`;
   if (replyTo._replyAll) return `reply-all:${suffix}`;
   return `reply:${suffix}`;
@@ -61,9 +62,13 @@ export function loadComposerDraft(key: string): ComposerDraft | null {
       attachments: Array.isArray(parsed.attachments)
         ? parsed.attachments.filter(isAttachmentDraft)
         : [],
-      selectedIdentityId: typeof parsed.selectedIdentityId === 'string' ? parsed.selectedIdentityId : null,
+      // Treat empty string as null for selectedIdentityId
+      selectedIdentityId: typeof parsed.selectedIdentityId === 'string' && parsed.selectedIdentityId !== ''
+        ? parsed.selectedIdentityId
+        : null,
       showCcBcc: Boolean(parsed.showCcBcc),
-      sendAt: typeof parsed.sendAt === 'string' ? parsed.sendAt : null,
+      // Treat empty string as null for sendAt
+      sendAt: typeof parsed.sendAt === 'string' && parsed.sendAt !== '' ? parsed.sendAt : null,
       isQuoteCollapsed: Boolean(parsed.isQuoteCollapsed),
     };
   } catch {

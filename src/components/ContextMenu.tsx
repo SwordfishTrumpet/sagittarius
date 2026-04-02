@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { ChevronRight } from 'lucide-react';
 
 export interface ContextMenuItemConfig {
@@ -31,20 +31,20 @@ export function ContextMenu({ items, x, y, onClose }: ContextMenuProps) {
 
   const enabledItems = items.filter((item) => !item.disabled);
 
-  const focusMainItem = (index: number) => {
+  const focusMainItem = useCallback((index: number) => {
     const target = itemRefs.current[index];
     if (target) {
       target.focus();
-      setActiveIndex(index);
     }
-  };
+    setActiveIndex(index);
+  }, []);
 
   const focusSubmenuItem = (index: number) => {
     const target = submenuItemRefs.current[index];
     if (target) {
       target.focus();
-      setActiveSubmenuIndex(index);
     }
+    setActiveSubmenuIndex(index);
   };
 
   const openSubmenu = (item: ContextMenuItemConfig, index: number, button?: HTMLButtonElement) => {
@@ -95,7 +95,7 @@ export function ContextMenu({ items, x, y, onClose }: ContextMenuProps) {
     if (firstEnabledIndex >= 0) {
       window.requestAnimationFrame(() => focusMainItem(firstEnabledIndex));
     }
-  }, [items]);
+  }, [items, focusMainItem]);
 
   const handleItemClick = (item: ContextMenuItemConfig) => {
     if (!item.disabled && !item.submenu) {

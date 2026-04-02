@@ -3,6 +3,7 @@ import { jmapClient } from '../../api/jmap'
 import { fetchWithOfflineCache } from '../../utils/offlineCache'
 import { logger } from '../../utils/logger'
 import { isDeferredMutationResult, runDeferredAwareMutation } from '../../utils/offlineSyncQueue'
+import type { Mailbox } from '../../types/jmap'
 import {
   invalidateMailboxQueries,
   jmapMethodCall,
@@ -43,13 +44,13 @@ export function useMailboxes() {
           return []
         }
 
-        const list = methodRes[1].list
+        const list = (methodRes[1] as { list?: Mailbox[] }).list
         if (!list) {
           logger.error('No list in Mailbox/get response:', methodRes[1])
           return []
         }
 
-        return list.sort((a: any, b: any) => (a.sortOrder || 0) - (b.sortOrder || 0))
+        return list.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
       } catch (err) {
         logger.error('Failed to fetch mailboxes:', err)
         throw err
@@ -66,7 +67,7 @@ export function useMailboxActions() {
 
   const createMailbox = useMutation({
     mutationFn: async ({ name, parentId }: { name: string, parentId?: string }) => {
-      const createObj: any = {
+      const createObj: { name: string; isSubscribed: boolean; parentId?: string } = {
         name,
         isSubscribed: true,
       }
@@ -123,18 +124,18 @@ export function useMailboxActions() {
     onMutate: async ({ mailboxId, newName }) => {
       await queryClient.cancelQueries({ queryKey: ['mailboxes'] })
 
-      const previousMailboxes = queryClient.getQueryData(['mailboxes', accountId])
+      const previousMailboxes = queryClient.getQueryData<Mailbox[]>(['mailboxes', accountId])
 
-      queryClient.setQueryData(['mailboxes', accountId], (old: any) => {
+      queryClient.setQueryData(['mailboxes', accountId], (old: Mailbox[] | undefined) => {
         if (!old) return old
-        return old.map((mb: any) =>
+        return old.map((mb) =>
           mb.id === mailboxId ? { ...mb, name: newName } : mb,
         )
       })
 
       return { previousMailboxes }
     },
-    onError: (_err, _data, context: any) => rollbackMailboxes(queryClient, accountId, context?.previousMailboxes),
+    onError: (_err, _data, context: { previousMailboxes?: Mailbox[] } | undefined) => rollbackMailboxes(queryClient, accountId, context?.previousMailboxes),
     onSuccess: (result) => {
       if (isDeferredMutationResult(result)) return
       invalidateMailboxQueries(queryClient)
@@ -163,16 +164,16 @@ export function useMailboxActions() {
     onMutate: async ({ mailboxId }) => {
       await queryClient.cancelQueries({ queryKey: ['mailboxes'] })
 
-      const previousMailboxes = queryClient.getQueryData(['mailboxes', accountId])
+      const previousMailboxes = queryClient.getQueryData<Mailbox[]>(['mailboxes', accountId])
 
-      queryClient.setQueryData(['mailboxes', accountId], (old: any) => {
+      queryClient.setQueryData(['mailboxes', accountId], (old: Mailbox[] | undefined) => {
         if (!old) return old
-        return old.filter((mb: any) => mb.id !== mailboxId)
+        return old.filter((mb) => mb.id !== mailboxId)
       })
 
       return { previousMailboxes }
     },
-    onError: (_err, _data, context: any) => rollbackMailboxes(queryClient, accountId, context?.previousMailboxes),
+    onError: (_err, _data, context: { previousMailboxes?: Mailbox[] } | undefined) => rollbackMailboxes(queryClient, accountId, context?.previousMailboxes),
     onSuccess: (result) => {
       if (isDeferredMutationResult(result)) return
       invalidateMailboxQueries(queryClient)
@@ -211,19 +212,19 @@ export function useMailboxReorder() {
     },
     onMutate: async (updates) => {
       await queryClient.cancelQueries({ queryKey: ['mailboxes'] })
-      const previous = queryClient.getQueryData(['mailboxes', accountId])
+      const previous = queryClient.getQueryData<Mailbox[]>(['mailboxes', accountId])
 
-      queryClient.setQueryData(['mailboxes', accountId], (old: any) => {
+      queryClient.setQueryData(['mailboxes', accountId], (old: Mailbox[] | undefined) => {
         if (!old) return old
         const orderMap = new Map(updates.map(u => [u.mailboxId, u.sortOrder]))
-        return old.map((mb: any) =>
+        return old.map((mb) =>
           orderMap.has(mb.id) ? { ...mb, sortOrder: orderMap.get(mb.id) } : mb,
         )
       })
 
       return { previous }
     },
-    onError: (_err, _data, context: any) => rollbackMailboxes(queryClient, accountId, context?.previous),
+    onError: (_err, _data, context: { previous?: Mailbox[] } | undefined) => rollbackMailboxes(queryClient, accountId, context?.previous),
     onSuccess: (result) => {
       if (isDeferredMutationResult(result)) return
       invalidateMailboxQueries(queryClient)
@@ -253,18 +254,18 @@ export function useMailboxReorder() {
     },
     onMutate: async ({ mailboxId, newParentId }) => {
       await queryClient.cancelQueries({ queryKey: ['mailboxes'] })
-      const previous = queryClient.getQueryData(['mailboxes', accountId])
+      const previous = queryClient.getQueryData<Mailbox[]>(['mailboxes', accountId])
 
-      queryClient.setQueryData(['mailboxes', accountId], (old: any) => {
+      queryClient.setQueryData(['mailboxes', accountId], (old: Mailbox[] | undefined) => {
         if (!old) return old
-        return old.map((mb: any) =>
+        return old.map((mb) =>
           mb.id === mailboxId ? { ...mb, parentId: newParentId } : mb,
         )
       })
 
       return { previous }
     },
-    onError: (_err, _data, context: any) => rollbackMailboxes(queryClient, accountId, context?.previous),
+    onError: (_err, _data, context: { previous?: Mailbox[] } | undefined) => rollbackMailboxes(queryClient, accountId, context?.previous),
     onSuccess: (result) => {
       if (isDeferredMutationResult(result)) return
       invalidateMailboxQueries(queryClient)

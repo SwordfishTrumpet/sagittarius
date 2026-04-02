@@ -14,9 +14,14 @@ class StateManager {
     try {
       const raw = sessionStorage.getItem(STORAGE_KEY);
       if (raw) {
-        const parsed: Record<string, string> = JSON.parse(raw);
-        for (const [type, state] of Object.entries(parsed)) {
-          this.states.set(type, state);
+        const parsed = JSON.parse(raw);
+        // Validate that parsed result is a proper object (not array, null, or primitive)
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          for (const [type, state] of Object.entries(parsed as Record<string, string>)) {
+            if (typeof state === 'string') {
+              this.states.set(type, state);
+            }
+          }
         }
       }
     } catch {

@@ -1,7 +1,8 @@
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useEffect, useMemo, memo } from 'react';
 import { Square, Send, Star, Paperclip } from 'lucide-react';
 import { useDrag } from 'react-dnd';
 import { motion } from 'framer-motion';
+import DOMPurify from 'dompurify';
 
 interface MessageListItemProps {
   sender: string;
@@ -19,12 +20,13 @@ interface MessageListItemProps {
   isSent?: boolean;
   selectedEmailIds?: Set<string>;
   onClick: (e: React.MouseEvent<HTMLDivElement>) => void;
+  onDoubleClick?: () => void;
   onToggleFlag: (e: React.MouseEvent<HTMLButtonElement>) => void;
   onContextMenu?: (e: React.MouseEvent<HTMLDivElement> | { clientX: number; clientY: number; preventDefault: () => void }) => void;
   isRemoving?: boolean;
 }
 
-export function MessageListItem({
+function MessageListItemComponent({
   sender,
   subject,
   snippet,
@@ -40,6 +42,7 @@ export function MessageListItem({
   isSent = false,
   selectedEmailIds,
   onClick,
+  onDoubleClick,
   onToggleFlag,
   onContextMenu,
   isRemoving = false,
@@ -48,6 +51,15 @@ export function MessageListItem({
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressTriggered = useRef(false);
   const touchStartPos = useRef({ x: 0, y: 0 });
+
+  // Cleanup long-press timer on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (longPressTimer.current) {
+        clearTimeout(longPressTimer.current);
+      }
+    };
+  }, []);
 
   const handleTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
     longPressTriggered.current = false;
@@ -99,6 +111,13 @@ export function MessageListItem({
       onContextMenu(e);
     }
   }, [onContextMenu]);
+
+  // Sanitize searchSnippet to prevent XSS - only allow <mark> tags for highlighting
+  const sanitizedSearchSnippet = useMemo(() => {
+    if (!searchSnippet) return null;
+    return DOMPurify.sanitize(searchSnippet, { ALLOWED_TAGS: ['mark'] });
+  }, [searchSnippet]);
+
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'EMAIL',
     item: () => {
@@ -117,6 +136,7 @@ export function MessageListItem({
     <motion.div
       ref={drag}
       onClick={handleClick}
+      onDoubleClick={onDoubleClick}
       onContextMenu={handleContextMenu}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
@@ -165,10 +185,10 @@ export function MessageListItem({
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <div className={`text-[13px] mb-1 truncate leading-tight ${unread ? 'font-bold text-[#1C1C1E]' : 'font-semibold text-[#1C1C1E] opacity-90'}`}>{subject}</div>
-          {searchSnippet ? (
+          {sanitizedSearchSnippet ? (
             <div 
               className={`text-[13px] line-clamp-2 leading-snug tracking-tight ${selected || isMultiSelected ? 'text-[#3A3A3C]' : 'text-[#6C6C70]'} [&_mark]:bg-[#FFD60A]/40 [&_mark]:text-[#1C1C1E] [&_mark]:rounded-sm [&_mark]:px-0.5`}
-              dangerouslySetInnerHTML={{ __html: searchSnippet }}
+              dangerouslySetInnerHTML={{ __html: sanitizedSearchSnippet }}
             />
           ) : (
             <div className={`text-[13px] line-clamp-2 leading-snug tracking-tight ${selected || isMultiSelected ? 'text-[#3A3A3C]' : 'text-[#6C6C70]'}`}>{snippet}</div>
@@ -178,11 +198,13 @@ export function MessageListItem({
           onClick={onToggleFlag}
           aria-label={flagged ? 'Remove flag' : 'Add flag'}
           aria-pressed={flagged}
-          className={`shrink-0 mt-1 transition-all focus:outline-none focus:ring-2 focus:ring-[#FF9500]/50 rounded ${flagged ? 'text-[#FF9500] opacity-100' : 'text-[#6C6C70] opacity-0 group-hover:opacity-40 hover:opacity-100'}`}
+          className={`shrink-0 mt-1 transition-all focus:outline-none focus:ring-2 focus:ring-[#FF9500]/50 rounded ${flagged ? 'text-[#FF9500] opacity-100' : 'text-[#6C6C70] opacity-40 hover:opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-40'}`}
         >
-          <Star className={`w-3.5 h-3.5 ${flagged ? 'fill-current' : ''}`} strokeWidth={2} />
-        </button>
-      </div>
-    </motion.div>
-  );
-}
+           <Star className={`w-3.5 h-3.5 ${flagged ? 'fill-current' : ''}`} strokeWidth={2} />
+         </button>
+       </div>
+     </motion.div>
+   );
+ }
+
+ export const MessageListItem = memo(MessageListItemComponent);

@@ -4,17 +4,24 @@ import { useEmailBulkActions } from '../useEmailBulkActions'
 
 const {
   toastSuccess,
+  toastInfo,
   moveEmailMutate,
   moveEmailBulkMutate,
+  destroyEmailMutate,
+  destroyEmailBulkMutate,
 } = vi.hoisted(() => ({
   toastSuccess: vi.fn(),
+  toastInfo: vi.fn(),
   moveEmailMutate: vi.fn(),
   moveEmailBulkMutate: vi.fn(),
+  destroyEmailMutate: vi.fn(),
+  destroyEmailBulkMutate: vi.fn(),
 }))
 
 vi.mock('sonner', () => ({
   toast: {
     success: toastSuccess,
+    info: toastInfo,
   },
 }))
 
@@ -22,14 +29,19 @@ vi.mock('../jmap/useEmailMutations', () => ({
   useEmailActions: () => ({
     moveEmail: { mutate: moveEmailMutate },
     moveEmailBulk: { mutate: moveEmailBulkMutate },
+    destroyEmail: { mutate: destroyEmailMutate },
+    destroyEmailBulk: { mutate: destroyEmailBulkMutate },
   }),
 }))
 
 describe('useEmailBulkActions', () => {
   beforeEach(() => {
     toastSuccess.mockReset()
+    toastInfo.mockReset()
     moveEmailMutate.mockReset()
     moveEmailBulkMutate.mockReset()
+    destroyEmailMutate.mockReset()
+    destroyEmailBulkMutate.mockReset()
   })
 
   it('uses moveEmailBulk for archive undo when mailbox restore matches', () => {
@@ -42,6 +54,7 @@ describe('useEmailBulkActions', () => {
       mailboxes: [{ id: 'mailbox-archive', role: 'archive', name: 'Archive' }],
       selectedEmailId: null,
       selectedEmailIds: new Set(['email-1', 'email-2']),
+      selectedMailboxId: 'mailbox-inbox',
       resetSelection,
     }))
 
@@ -67,7 +80,7 @@ describe('useEmailBulkActions', () => {
     expect(moveEmailMutate).not.toHaveBeenCalled()
   })
 
-  it('uses moveEmailBulk for delete undo when mailbox restore matches', () => {
+  it('uses moveEmailBulk for delete when NOT in trash (move to trash)', () => {
     const { result } = renderHook(() => useEmailBulkActions({
       emails: [
         { id: 'email-1', mailboxIds: { 'mailbox-inbox': true } },
@@ -76,6 +89,7 @@ describe('useEmailBulkActions', () => {
       mailboxes: [{ id: 'mailbox-trash', role: 'trash', name: 'Trash' }],
       selectedEmailId: null,
       selectedEmailIds: new Set(['email-1', 'email-2']),
+      selectedMailboxId: 'mailbox-inbox', // NOT in trash
       resetSelection: vi.fn(),
     }))
 
@@ -97,5 +111,67 @@ describe('useEmailBulkActions', () => {
       mailboxIds: { 'mailbox-inbox': true },
     })
     expect(moveEmailMutate).not.toHaveBeenCalled()
+    expect(destroyEmailBulkMutate).not.toHaveBeenCalled()
+  })
+
+  it('uses destroyEmailBulk for permanent delete when IN trash', () => {
+    const resetSelection = vi.fn()
+    const { result } = renderHook(() => useEmailBulkActions({
+      emails: [
+        { id: 'email-1', mailboxIds: { 'mailbox-trash': true } },
+        { id: 'email-2', mailboxIds: { 'mailbox-trash': true } },
+      ],
+      mailboxes: [{ id: 'mailbox-trash', role: 'trash', name: 'Trash' }],
+      selectedEmailId: null,
+      selectedEmailIds: new Set(['email-1', 'email-2']),
+      selectedMailboxId: 'mailbox-trash', // IN trash
+      resetSelection,
+    }))
+
+    act(() => {
+      result.current.handleDelete()
+    })
+
+    expect(destroyEmailBulkMutate).toHaveBeenCalledWith({
+      emailIds: ['email-1', 'email-2'],
+    })
+    expect(moveEmailBulkMutate).not.toHaveBeenCalled()
+    expect(resetSelection).toHaveBeenCalledTimes(1)
+
+    // Verify toast shows "permanently deleted" message
+    expect(toastSuccess).toHaveBeenCalledWith(
+      '2 messages permanently deleted',
+      expect.any(Object)
+    )
+  })
+
+  it('uses destroyEmail for single email permanent delete when IN trash', () => {
+    const resetSelection = vi.fn()
+    const { result } = renderHook(() => useEmailBulkActions({
+      emails: [
+        { id: 'email-1', mailboxIds: { 'mailbox-trash': true } },
+      ],
+      mailboxes: [{ id: 'mailbox-trash', role: 'trash', name: 'Deleted Items' }],
+      selectedEmailId: 'email-1',
+      selectedEmailIds: new Set(),
+      selectedMailboxId: 'mailbox-trash', // IN trash (Deleted Items)
+      resetSelection,
+    }))
+
+    act(() => {
+      result.current.handleDelete()
+    })
+
+    expect(destroyEmailMutate).toHaveBeenCalledWith({
+      emailId: 'email-1',
+    })
+    expect(moveEmailMutate).not.toHaveBeenCalled()
+    expect(resetSelection).toHaveBeenCalledTimes(1)
+
+    // Verify toast shows "permanently deleted" message
+    expect(toastSuccess).toHaveBeenCalledWith(
+      '1 message permanently deleted',
+      expect.any(Object)
+    )
   })
 })

@@ -116,6 +116,7 @@ export function mergeFiltersOR(
 
 /**
  * Negate a filter (NOT logic) — RFC 8620 §5.5 FilterOperator
+ * Returns { operator: 'NOT', conditions: [filter] } structure per JMAP spec
  */
 export function negateFilter(filter: Record<string, any>): Record<string, any> {
   return {

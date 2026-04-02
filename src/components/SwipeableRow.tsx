@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from 'react';
+import { useRef, useState, useCallback, useEffect } from 'react';
 import { Archive, Trash2 } from 'lucide-react';
 
 interface SwipeableRowProps {
@@ -24,6 +24,16 @@ export function SwipeableRow({ children, onSwipeLeft, onSwipeRight, enabled = tr
   const currentX = useRef(0);
   const isTracking = useRef(false);
   const directionLocked = useRef<'horizontal' | 'vertical' | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cleanup timeouts on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     if (!enabled) return;

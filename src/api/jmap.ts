@@ -3,6 +3,7 @@ import { eventSourceManager } from './eventSource';
 import { webSocketManager } from './websocket';
 import { stateManager } from './stateManager';
 import type { QueryClient } from '@tanstack/react-query';
+import type { JMAPMethodCall, JMAPAccount } from '../types/jmap';
 
 export interface JMAPSession {
   username: string;
@@ -12,22 +13,17 @@ export interface JMAPSession {
   eventSourceUrl: string;
   webSocketUrl?: string;
   accounts: {
-    [accountId: string]: {
-      name: string;
-      isPersonal: boolean;
-      isReadOnly: boolean;
-      accountCapabilities: any;
-    };
+    [accountId: string]: JMAPAccount;
   };
   primaryAccounts: {
     [capability: string]: string;
   };
-  capabilities: any;
+  capabilities: Record<string, unknown>;
   state: string;
 }
 
 export interface JMAPResponse {
-  methodResponses: [string, any, string][];
+  methodResponses: [string, unknown, string][];
   sessionState: string;
 }
 
@@ -73,6 +69,8 @@ function buildAuthVariants(rawUsername: string): string[] {
 
   return variants;
 }
+
+const DEFAULT_REQUEST_TIMEOUT_MS = 30_000;
 
 class JMAPClient {
   private session: JMAPSession | null = null;
@@ -125,7 +123,8 @@ class JMAPClient {
     let lastError: Error | null = null;
 
     for (const variant of variants) {
-      const credentials = btoa(`${variant}:${password}`);
+      // Encode to UTF-8 bytes first, then Base64 to handle non-ASCII passwords
+      const credentials = btoa(unescape(encodeURIComponent(`${variant}:${password}`)));
       const authHeader = `Basic ${credentials}`;
 
       logger.debug(`[JMAP Auth Request] Trying username: ${variant}`);
@@ -164,7 +163,7 @@ class JMAPClient {
     return this.session;
   }
 
-  async request(methodCalls: any[], extraCapabilities?: string[]): Promise<JMAPResponse> {
+  async request(methodCalls: JMAPMethodCall[], extraCapabilities?: string[], signal?: AbortSignal): Promise<JMAPResponse> {
     if (!this.session || !this.authHeader) {
       throw new Error('Not authenticated');
     }
@@ -183,42 +182,52 @@ class JMAPClient {
     
     logger.debug(`[JMAP Request ${requestId}]`, JSON.stringify(body, null, 2));
 
-    const response = await fetch(this.session.apiUrl, {
-      method: 'POST',
-      headers: {
-        'Authorization': this.authHeader,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-    });
+    // Create a timeout signal if no signal provided
+    const timeoutController = signal ? null : new AbortController();
+    const timeoutId = timeoutController ? setTimeout(() => timeoutController.abort(), DEFAULT_REQUEST_TIMEOUT_MS) : null;
+    const effectiveSignal = signal || timeoutController?.signal;
 
-    if (response.status === 401) {
-      logger.error(`[JMAP Error ${requestId}] 401 Unauthorized`);
-      this.logout();
-      throw new Error('Session expired');
+    try {
+      const response = await fetch(this.session.apiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': this.authHeader,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+        signal: effectiveSignal,
+      });
+
+      if (response.status === 401) {
+        logger.error(`[JMAP Error ${requestId}] 401 Unauthorized`);
+        this.logout();
+        throw new Error('Session expired');
+      }
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        logger.error(`[JMAP Error ${requestId}] HTTP ${response.status}`);
+        logger.debug(`[JMAP Error ${requestId}] Response:`, errorText);
+        throw new Error(`JMAP request failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+      logger.debug(`[JMAP Response ${requestId}]`, JSON.stringify(data, null, 2));
+      return data;
+    } finally {
+      if (timeoutId) clearTimeout(timeoutId);
     }
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      logger.error(`[JMAP Error ${requestId}] HTTP ${response.status}`);
-      logger.debug(`[JMAP Error ${requestId}] Response:`, errorText);
-      throw new Error(`JMAP request failed: ${response.status}`);
-    }
-
-    const data = await response.json();
-    logger.debug(`[JMAP Response ${requestId}]`, JSON.stringify(data, null, 2));
-    return data;
   }
 
   hasCapability(urn: string): boolean {
     return !!this.session?.capabilities?.[urn];
   }
 
-  getCapabilityConfig(urn: string): any {
+  getCapabilityConfig(urn: string): unknown {
     return this.session?.capabilities?.[urn] || null;
   }
 
-  getAccountCapability(urn: string): any {
+  getAccountCapability(urn: string): unknown {
     const accountId = this.getPrimaryAccount();
     if (!accountId || !this.session?.accounts?.[accountId]) return null;
     return this.session.accounts[accountId].accountCapabilities?.[urn] || null;
@@ -256,9 +265,11 @@ class JMAPClient {
   getBlobUrl(blobId: string, type: string, name: string): string {
     if (!this.session || !this.authHeader) return '';
     
+    const accountId = this.getPrimaryAccount();
+    
     return this.session.downloadUrl
-      .replace('{accountId}', this.getPrimaryAccount() || '')
-      .replace('{blobId}', blobId)
+      .replace('{accountId}', encodeURIComponent(accountId || ''))
+      .replace('{blobId}', encodeURIComponent(blobId))
       .replace('{name}', encodeURIComponent(name))
       .replace('{type}', encodeURIComponent(type));
   }
@@ -267,7 +278,9 @@ class JMAPClient {
     if (!this.session || !this.authHeader) throw new Error('No session');
 
     const accountId = this.getPrimaryAccount();
-    const url = this.session.uploadUrl.replace('{accountId}', accountId || '');
+    if (!accountId) throw new Error('No primary account available');
+    
+    const url = this.session.uploadUrl.replace('{accountId}', encodeURIComponent(accountId));
 
     const response = await fetch(url, {
       method: 'POST',
@@ -326,6 +339,8 @@ class JMAPClient {
       return this.session.primaryAccounts[keys[0]];
     }
 
+    // Log clear error for debugging - returning null maintains backward compatibility
+    logger.error(`No JMAP account found. Missing capability: ${cap}. Available: ${Object.keys(this.session.capabilities || {}).join(', ')}`);
     return null;
   }
 }

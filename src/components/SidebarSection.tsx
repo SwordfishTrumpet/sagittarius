@@ -55,7 +55,7 @@ export function SidebarSection({
         {actionButton && (
           <button
             onClick={actionButton.onClick}
-            className="p-1 text-[#007AFF] hover:bg-black/[0.05] rounded transition-colors opacity-0 group-hover:opacity-100"
+            className="p-1 text-[#007AFF] hover:bg-black/[0.05] rounded transition-colors opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 min-w-[32px] min-h-[32px] flex items-center justify-center"
             title={actionButton.label}
             aria-label={actionButton.label}
           >

@@ -11,6 +11,7 @@ describe('composer draft storage', () => {
     expect(getComposerDraftKey('account-1', { id: 'message-1' })).toBe('sagittarius_composer_draft:account-1:reply:message-1');
     expect(getComposerDraftKey('account-1', { id: 'message-1', _replyAll: true })).toBe('sagittarius_composer_draft:account-1:reply-all:message-1');
     expect(getComposerDraftKey('account-1', { id: 'message-1', _forward: true })).toBe('sagittarius_composer_draft:account-1:forward:message-1');
+    expect(getComposerDraftKey('account-1', { id: 'message-1', _draft: true })).toBe('sagittarius_composer_draft:account-1:draft:message-1');
   });
 
   it('round-trips saved drafts', () => {

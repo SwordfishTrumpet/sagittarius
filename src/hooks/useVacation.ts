@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { jmapClient } from '../api/jmap';
+import { extractGetResponse } from '../types/jmap';
 
 export interface VacationResponse {
   id: string;
@@ -17,11 +18,13 @@ export function useVacation() {
   return useQuery<VacationResponse | null>({
     queryKey: ['vacation', accountId],
     queryFn: async () => {
-      const response = await jmapClient.request([
-        ['VacationResponse/get', { accountId, ids: null }, '0'],
-      ]);
+      const response = await jmapClient.request(
+        [['VacationResponse/get', { accountId, ids: null }, '0']],
+        ['urn:ietf:params:jmap:vacationresponse']
+      );
 
-      const list: VacationResponse[] = response.methodResponses[0][1].list || [];
+      const result = extractGetResponse<VacationResponse>(response.methodResponses);
+      const list: VacationResponse[] = result?.list ?? [];
       return list[0] ?? null;
     },
     enabled: !!accountId,
@@ -37,16 +40,19 @@ export function useVacationUpdate() {
 
   return useMutation<unknown, Error, VacationUpdatePayload>({
     mutationFn: async (updatePayload) => {
-      return jmapClient.request([
+      return jmapClient.request(
         [
-          'VacationResponse/set',
-          {
-            accountId,
-            update: { singleton: updatePayload },
-          },
-          '0',
+          [
+            'VacationResponse/set',
+            {
+              accountId,
+              update: { singleton: updatePayload },
+            },
+            '0',
+          ],
         ],
-      ]);
+        ['urn:ietf:params:jmap:vacationresponse']
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vacation'] });

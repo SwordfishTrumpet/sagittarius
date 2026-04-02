@@ -4,6 +4,7 @@ import { jmapClient } from '../api/jmap';
 import { queryClient } from '../main';
 import { playNotificationSound } from '../utils/notificationSound';
 import { logger, redactUrl } from '../utils/logger';
+import { extractAuthToken } from '../utils/auth';
 
 export interface UseWebSocketResult {
   isConnected: boolean;
@@ -48,9 +49,7 @@ export function useWebSocket(enabled: boolean): UseWebSocketResult {
       return;
     }
 
-    const authToken = authHeader.startsWith('Basic ')
-      ? authHeader.slice(6)
-      : authHeader;
+    const authToken = extractAuthToken(authHeader);
 
     const finalUrl = buildWebSocketUrl(url, authToken);
     logger.debug('[useWebSocket] Connecting to', redactUrl(finalUrl));

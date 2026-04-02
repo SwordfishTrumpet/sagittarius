@@ -46,7 +46,7 @@ export function MessageListHeader({
           {isMobile ? (
             <button
               onClick={onShowSidebar}
-              className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors -ml-1"
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-gray-100 rounded-lg transition-colors -ml-1"
               title="Menu"
               aria-label="Show sidebar menu"
             >
@@ -55,7 +55,7 @@ export function MessageListHeader({
           ) : isSidebarCollapsed ? (
             <button
               onClick={onShowSidebar}
-              className="p-1 hover:bg-gray-100 rounded transition-colors"
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-gray-100 rounded transition-colors"
               title="Show Sidebar"
               aria-label="Show sidebar"
             >
@@ -65,7 +65,7 @@ export function MessageListHeader({
           {!isMobile && emails && emails.length > 0 && (
             <button 
               onClick={() => allSelected ? onClearSelection() : onSelectAll()}
-              className="p-1 hover:bg-gray-100 rounded transition-colors"
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-gray-100 rounded transition-colors"
               title={allSelected ? 'Deselect all' : 'Select all'}
               aria-label={allSelected ? 'Deselect all messages' : 'Select all messages'}
             >
@@ -80,7 +80,7 @@ export function MessageListHeader({
            <div className="relative">
               <button 
                 onClick={onToggleFilterBar}
-                className="p-1 hover:bg-gray-100 rounded transition-colors"
+                className="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-gray-100 rounded transition-colors"
                 aria-label={activeListFilters.size > 0 ? 'Toggle filters, active filters applied' : 'Toggle filters'}
               >
                <Filter className={`w-4 h-4 ${activeListFilters.size > 0 ? 'text-[#007AFF] fill-[#007AFF]/20' : 'text-[#007AFF]'}`} strokeWidth={1.25} />
@@ -102,15 +102,15 @@ export function MessageListHeader({
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
           aria-label="Search emails"
-          className="w-full bg-[#8E8E93]/10 border-none rounded-lg py-1.5 pl-9 pr-4 text-[14px] focus:ring-0 placeholder-[#8E8E93] transition-colors hover:bg-[#8E8E93]/15"
+          className="w-full bg-[#8E8E93]/10 border-none rounded-lg py-1.5 pl-9 pr-12 text-[14px] focus:ring-0 placeholder-[#8E8E93] transition-colors hover:bg-[#8E8E93]/15"
         />
         {searchTerm && (
           <button 
             onClick={onClearSearch}
             aria-label="Clear search"
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 hover:bg-black/5 rounded-full"
+            className="absolute right-2 top-1/2 -translate-y-1/2 min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-black/5 rounded-full"
           >
-            <X className="w-3 h-3 text-[#8E8E93]" />
+            <X className="w-4 h-4 text-[#8E8E93]" />
           </button>
         )}
       </div>

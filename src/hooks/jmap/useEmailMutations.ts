@@ -1,6 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { jmapClient } from '../../api/jmap'
+import { stateManager } from '../../api/stateManager'
 import { isDeferredMutationResult, runDeferredAwareMutation } from '../../utils/offlineSyncQueue'
+import type { Email } from '../../types/jmap'
 import {
   invalidateEmailQueries,
   jmapMethodCall,
@@ -19,9 +21,12 @@ export function useEmailActions() {
       for (const [key, value] of Object.entries(keywords)) {
         patch[`keywords/${key}`] = value ? true : null
       }
+      // Include ifInState for conflict detection per RFC 8620
+      const emailState = stateManager.getState('Email')
       const requests = [
         jmapMethodCall('Email/set', {
           accountId,
+          ifInState: emailState || undefined,
           update: {
             [emailId]: patch,
           },
@@ -43,23 +48,27 @@ export function useEmailActions() {
       await queryClient.cancelQueries({ queryKey: ['emailDetail'] })
       await queryClient.cancelQueries({ queryKey: ['threads'] })
 
-      const previousEmailDetail = queryClient.getQueryData(['emailDetail', accountId, emailId])
+      // Capture mailboxId in closure for proper rollback
+      const previousEmailDetail = queryClient.getQueryData<Email[]>(['emailDetail', accountId, emailId])
       const previousThreads = queryClient.getQueriesData({ queryKey: ['threads'] })
+      // Store the query keys for proper rollback
+      const affectedThreadQueryKeys = previousThreads.map(([queryKey]) => queryKey)
 
-      queryClient.setQueryData(['emailDetail', accountId, emailId], (old: any) => {
+      queryClient.setQueryData(['emailDetail', accountId, emailId], (old: Email[] | undefined) => {
         if (!old) return old
-        return old.map((email: any) =>
+        return old.map((email) =>
           email.id === emailId
             ? { ...email, keywords: { ...email.keywords, ...keywords } }
             : email,
         )
       })
 
-      queryClient.getQueriesData({ queryKey: ['threads'] }).forEach(([queryKey, oldData]: any) => {
+      // Reuse previousThreads to avoid double query
+      previousThreads.forEach(([queryKey, oldData]) => {
         if (!oldData) return
-        queryClient.setQueryData(queryKey, (old: any) => {
+        queryClient.setQueryData(queryKey, (old: Email[] | undefined) => {
           if (!old) return old
-          return old.map((email: any) =>
+          return old.map((email) =>
             email.id === emailId
               ? { ...email, keywords: { ...email.keywords, ...keywords } }
               : email,
@@ -67,13 +76,16 @@ export function useEmailActions() {
         })
       })
 
-      return { previousEmailDetail, previousThreads }
+      return { previousEmailDetail, previousThreads, affectedThreadQueryKeys, emailId }
     },
-    onError: (_err, newData, context: any) => {
-      if (context?.previousEmailDetail) {
-        queryClient.setQueryData(['emailDetail', accountId, newData.emailId], context.previousEmailDetail)
+    onError: (_err, newData, context: { previousEmailDetail?: Email[]; previousThreads?: unknown; affectedThreadQueryKeys?: unknown; emailId?: string } | undefined) => {
+      // Rollback to correct cache using captured context
+      if (context?.emailId) {
+        if (context?.previousEmailDetail) {
+          queryClient.setQueryData(['emailDetail', accountId, context.emailId], context.previousEmailDetail)
+        }
+        rollbackQueries(queryClient, context?.previousThreads)
       }
-      rollbackQueries(queryClient, context?.previousThreads)
     },
     onSuccess: (result) => {
       if (isDeferredMutationResult(result)) return
@@ -91,9 +103,12 @@ export function useEmailActions() {
       emailIds.forEach((id: string) => {
         updates[id] = patch
       })
+      // Include ifInState for conflict detection per RFC 8620
+      const emailState = stateManager.getState('Email')
       const requests = [
         jmapMethodCall('Email/set', {
           accountId,
+          ifInState: emailState || undefined,
           update: updates,
         }, '0'),
       ]
@@ -116,7 +131,7 @@ export function useEmailActions() {
       await queryClient.cancelQueries({ queryKey: ['emails'] })
 
       const emailIdSet = new Set(emailIds)
-      const applyKeywordPatch = (email: any) => (
+      const applyKeywordPatch = (email: Email) => (
         emailIdSet.has(email.id)
           ? { ...email, keywords: { ...(email.keywords ?? {}), ...keywords } }
           : email
@@ -143,7 +158,7 @@ export function useEmailActions() {
 
       return { previousEmailDetail, previousThreads, previousEmails }
     },
-    onError: (_err, _newData, context: any) => {
+    onError: (_err, _newData, context: { previousEmailDetail?: unknown; previousThreads?: unknown; previousEmails?: unknown } | undefined) => {
       rollbackQueries(queryClient, context?.previousEmailDetail)
       rollbackQueries(queryClient, context?.previousThreads)
       rollbackQueries(queryClient, context?.previousEmails)
@@ -156,9 +171,12 @@ export function useEmailActions() {
 
   const moveEmail = useMutation({
     mutationFn: async ({ emailId, mailboxIds }: { emailId: string, mailboxIds: Record<string, boolean> }) => {
+      // Include ifInState for conflict detection per RFC 8620
+      const emailState = stateManager.getState('Email')
       const requests = [
         jmapMethodCall('Email/set', {
           accountId,
+          ifInState: emailState || undefined,
           update: {
             [emailId]: { mailboxIds },
           },
@@ -185,35 +203,35 @@ export function useEmailActions() {
       const previousThreads = queryClient.getQueriesData({ queryKey: ['threads'] })
       const previousEmails = queryClient.getQueriesData({ queryKey: ['emails'] })
 
-      const threadQueriesSnapshot = queryClient.getQueriesData({ queryKey: ['threads'] })
-      threadQueriesSnapshot.forEach(([queryKey, oldData]: any) => {
+      // Reuse previousThreads to avoid double query
+      previousThreads.forEach(([queryKey, oldData]) => {
         if (!Array.isArray(oldData)) return
 
-        const queryParams = queryKey as any[]
+        const queryParams = queryKey as string[]
         const queriedMailboxId = queryParams[2]
         const isDestination = destinationMailboxIds.includes(queriedMailboxId)
 
         if (!isDestination) {
-          queryClient.setQueryData(queryKey, oldData.filter((email: any) => email.id !== emailId))
+          queryClient.setQueryData(queryKey, oldData.filter((email: Email) => email.id !== emailId))
         }
       })
 
-      const emailQueriesSnapshot = queryClient.getQueriesData({ queryKey: ['emails'] })
-      emailQueriesSnapshot.forEach(([queryKey, oldData]: any) => {
+      // Reuse previousEmails to avoid double query
+      previousEmails.forEach(([queryKey, oldData]) => {
         if (!Array.isArray(oldData)) return
 
-        const queryParams = queryKey as any[]
+        const queryParams = queryKey as string[]
         const queriedMailboxId = queryParams[2]
         const isDestination = destinationMailboxIds.includes(queriedMailboxId)
 
         if (!isDestination) {
-          queryClient.setQueryData(queryKey, oldData.filter((email: any) => email.id !== emailId))
+          queryClient.setQueryData(queryKey, oldData.filter((email: Email) => email.id !== emailId))
         }
       })
 
       return { previousThreads, previousEmails }
     },
-    onError: (_err, _newData, context: any) => {
+    onError: (_err, _newData, context: { previousThreads?: unknown; previousEmails?: unknown } | undefined) => {
       rollbackQueries(queryClient, context?.previousThreads)
       rollbackQueries(queryClient, context?.previousEmails)
     },
@@ -229,9 +247,12 @@ export function useEmailActions() {
       emailIds.forEach((id: string) => {
         updates[id] = { mailboxIds }
       })
+      // Include ifInState for conflict detection per RFC 8620
+      const emailState = stateManager.getState('Email')
       const requests = [
         jmapMethodCall('Email/set', {
           accountId,
+          ifInState: emailState || undefined,
           update: updates,
         }, '0'),
       ]
@@ -257,25 +278,27 @@ export function useEmailActions() {
       const previousThreads = queryClient.getQueriesData({ queryKey: ['threads'] })
       const previousEmails = queryClient.getQueriesData({ queryKey: ['emails'] })
 
-      queryClient.getQueriesData({ queryKey: ['threads'] }).forEach(([queryKey, oldData]: any) => {
+      // Reuse previousThreads to avoid double query
+      previousThreads.forEach(([queryKey, oldData]) => {
         if (!Array.isArray(oldData)) return
-        const queriedMailboxId = (queryKey as any[])[2]
+        const queriedMailboxId = (queryKey as string[])[2]
         if (!destinationMailboxIds.includes(queriedMailboxId)) {
-          queryClient.setQueryData(queryKey, oldData.filter((email: any) => !emailIdSet.has(email.id)))
+          queryClient.setQueryData(queryKey, oldData.filter((email: Email) => !emailIdSet.has(email.id)))
         }
       })
 
-      queryClient.getQueriesData({ queryKey: ['emails'] }).forEach(([queryKey, oldData]: any) => {
+      // Reuse previousEmails to avoid double query
+      previousEmails.forEach(([queryKey, oldData]) => {
         if (!Array.isArray(oldData)) return
-        const queriedMailboxId = (queryKey as any[])[2]
+        const queriedMailboxId = (queryKey as string[])[2]
         if (!destinationMailboxIds.includes(queriedMailboxId)) {
-          queryClient.setQueryData(queryKey, oldData.filter((email: any) => !emailIdSet.has(email.id)))
+          queryClient.setQueryData(queryKey, oldData.filter((email: Email) => !emailIdSet.has(email.id)))
         }
       })
 
       return { previousThreads, previousEmails }
     },
-    onError: (_err, _newData, context: any) => {
+    onError: (_err, _newData, context: { previousThreads?: unknown; previousEmails?: unknown } | undefined) => {
       rollbackQueries(queryClient, context?.previousThreads)
       rollbackQueries(queryClient, context?.previousEmails)
     },
@@ -285,5 +308,114 @@ export function useEmailActions() {
     },
   })
 
-  return { updateKeywords, updateKeywordsBulk, moveEmail, moveEmailBulk }
+  const destroyEmail = useMutation({
+    mutationFn: async ({ emailId }: { emailId: string }) => {
+      // Include ifInState for conflict detection per RFC 8620
+      const emailState = stateManager.getState('Email')
+      const requests = [
+        jmapMethodCall('Email/set', {
+          accountId,
+          ifInState: emailState || undefined,
+          destroy: [emailId],
+        }, '0'),
+      ]
+
+      return runDeferredAwareMutation({
+        accountId,
+        operation: 'destroyEmail',
+        payload: {
+          description: `Permanently delete ${emailId}`,
+          requests,
+        },
+        execute: () => jmapRequest(requests),
+      })
+    },
+    onMutate: async ({ emailId }) => {
+      suppressNewMailNotification()
+      await queryClient.cancelQueries({ queryKey: ['threads'] })
+      await queryClient.cancelQueries({ queryKey: ['emails'] })
+
+      const previousThreads = queryClient.getQueriesData({ queryKey: ['threads'] })
+      const previousEmails = queryClient.getQueriesData({ queryKey: ['emails'] })
+
+      // Reuse previousThreads to avoid double query
+      previousThreads.forEach(([queryKey, oldData]) => {
+        if (!Array.isArray(oldData)) return
+        queryClient.setQueryData(queryKey, oldData.filter((email: Email) => email.id !== emailId))
+      })
+
+      // Reuse previousEmails to avoid double query
+      previousEmails.forEach(([queryKey, oldData]) => {
+        if (!Array.isArray(oldData)) return
+        queryClient.setQueryData(queryKey, oldData.filter((email: Email) => email.id !== emailId))
+      })
+
+      return { previousThreads, previousEmails }
+    },
+    onError: (_err, _newData, context: { previousThreads?: unknown; previousEmails?: unknown } | undefined) => {
+      rollbackQueries(queryClient, context?.previousThreads)
+      rollbackQueries(queryClient, context?.previousEmails)
+    },
+    onSuccess: (result) => {
+      if (isDeferredMutationResult(result)) return
+      invalidateEmailQueries(queryClient)
+    },
+  })
+
+  const destroyEmailBulk = useMutation({
+    mutationFn: async ({ emailIds }: { emailIds: string[] }) => {
+      // Include ifInState for conflict detection per RFC 8620
+      const emailState = stateManager.getState('Email')
+      const requests = [
+        jmapMethodCall('Email/set', {
+          accountId,
+          ifInState: emailState || undefined,
+          destroy: emailIds,
+        }, '0'),
+      ]
+
+      return runDeferredAwareMutation({
+        accountId,
+        operation: 'destroyEmailBulk',
+        payload: {
+          description: `Permanently delete ${emailIds.length} emails`,
+          requests,
+        },
+        execute: () => jmapRequest(requests),
+      })
+    },
+    onMutate: async ({ emailIds }) => {
+      suppressNewMailNotification()
+      await queryClient.cancelQueries({ queryKey: ['threads'] })
+      await queryClient.cancelQueries({ queryKey: ['emails'] })
+
+      const emailIdSet = new Set(emailIds)
+      const previousThreads = queryClient.getQueriesData({ queryKey: ['threads'] })
+      const previousEmails = queryClient.getQueriesData({ queryKey: ['emails'] })
+
+      // Reuse previousThreads to avoid double query
+      previousThreads.forEach(([queryKey, oldData]) => {
+        if (!Array.isArray(oldData)) return
+        queryClient.setQueryData(queryKey, oldData.filter((email: Email) => !emailIdSet.has(email.id)))
+      })
+
+      // Reuse previousEmails to avoid double query
+      previousEmails.forEach(([queryKey, oldData]) => {
+        if (!Array.isArray(oldData)) return
+        queryClient.setQueryData(queryKey, oldData.filter((email: Email) => !emailIdSet.has(email.id)))
+      })
+
+      return { previousThreads, previousEmails }
+    },
+    onError: (_err, _newData, context: { previousThreads?: unknown; previousEmails?: unknown } | undefined) => {
+      rollbackQueries(queryClient, context?.previousThreads)
+      rollbackQueries(queryClient, context?.previousEmails)
+    },
+    onSuccess: (result) => {
+      if (isDeferredMutationResult(result)) return
+      invalidateEmailQueries(queryClient)
+    },
+  })
+
+  return { updateKeywords, updateKeywordsBulk, moveEmail, moveEmailBulk, destroyEmail, destroyEmailBulk }
 }

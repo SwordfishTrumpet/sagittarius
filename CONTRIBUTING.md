@@ -56,6 +56,7 @@ Types: `feat`, `fix`, `refactor`, `docs`, `style`, `test`, `chore`, `perf`
 - **Performance** -- Avoid unnecessary re-renders. Use `useMemo` and `useCallback` where appropriate. Large lists must use virtual scrolling.
 - **Security** -- Always sanitize HTML email content with DOMPurify. Never log credentials or sensitive data.
 - **Error handling** -- Wrap component trees in `ErrorBoundary`. Use try-catch in async operations.
+- **Shared patterns** -- Use the utilities documented in [docs/patterns-and-utilities.md](./docs/patterns-and-utilities.md) for JMAP hooks, optimistic updates, dialogs, and toast notifications. Avoid duplicating existing patterns.
 
 ## Pull Request Guidelines
 

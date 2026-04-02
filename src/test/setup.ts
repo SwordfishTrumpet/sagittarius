@@ -11,6 +11,23 @@ afterEach(() => {
   document.body.innerHTML = '';
 });
 
+// Provide a minimal matchMedia stub for responsive hooks
+if (typeof window !== 'undefined' && typeof window.matchMedia === 'undefined') {
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: (query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: () => {},
+      removeListener: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      dispatchEvent: () => true,
+    }),
+  });
+}
+
 // Provide a minimal sessionStorage stub when jsdom doesn't expose one
 if (typeof globalThis.sessionStorage === 'undefined') {
   const store: Record<string, string> = {};
