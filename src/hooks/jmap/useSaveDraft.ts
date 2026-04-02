@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { jmapClient } from '../../api/jmap'
 import { isDeferredMutationResult, runDeferredAwareMutation } from '../../utils/offlineSyncQueue'
+import { buildEmailBody } from '../../utils/buildEmailBody'
 import {
   invalidateEmailQueries,
   jmapMethodCall,
@@ -63,48 +64,16 @@ export function useSaveDraft() {
 
       if (!draftBox) throw new Error('Could not find Drafts mailbox')
 
-      const bodyPartType = body.includes('<') ? 'text/html' : 'text/plain'
-      const bodyPartKey = bodyPartType === 'text/html' ? 'htmlBody' : 'textBody'
-      
-      const draftEmail: Record<string, any> = {
+      const bodyStructure = buildEmailBody(body, attachments, draftId)
+      const draftEmail: Record<string, unknown> = {
         mailboxIds: { [draftBox.id]: true },
         from: [{ name: null, email: fromEmail }],
         to,
         cc,
         bcc,
         subject,
-        bodyValues: {
-          'body-1': {
-            value: body,
-            isTruncated: false,
-          },
-        },
         keywords: { '$draft': true },
-      }
-
-      if (attachments?.length) {
-        draftEmail.bodyStructure = {
-          type: 'multipart/mixed',
-          subParts: [
-            { partId: 'body-1', type: bodyPartType },
-            ...attachments.map((attachment) => ({
-              blobId: attachment.blobId,
-              type: attachment.type || 'application/octet-stream',
-              name: attachment.name,
-              disposition: 'attachment',
-            })),
-          ],
-        }
-        if (draftId) {
-          draftEmail.textBody = null
-          draftEmail.htmlBody = null
-        }
-      } else {
-        draftEmail[bodyPartKey] = [{ partId: 'body-1', type: bodyPartType }]
-        if (draftId) {
-          draftEmail.bodyStructure = null
-          draftEmail[bodyPartType === 'text/html' ? 'textBody' : 'htmlBody'] = null
-        }
+        ...bodyStructure,
       }
 
       const requests = [

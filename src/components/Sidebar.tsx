@@ -7,11 +7,12 @@ import { QuotaBar } from './QuotaBar'
 import { classifyMailboxes } from '../utils/mailboxClassifier'
 import { jmapClient } from '../api/jmap'
 import type { MailboxNode } from '../utils/mailboxTree'
+import type { Mailbox, Quota, JMAPSession } from '../types/jmap'
 
 export interface SidebarProps {
-  session: any
+  session: JMAPSession | null
   userLabel?: string
-  mailboxes: any[] | undefined
+  mailboxes: Mailbox[] | undefined
   mailboxesLoading: boolean
   refetchMailboxes: () => void
   selectedMailboxId: string | null
@@ -23,7 +24,7 @@ export interface SidebarProps {
   hasNewMail: boolean
   esConnected: boolean
   isOffline: boolean
-  quota: any
+  quota: Quota | null
   isMobile?: boolean
   mobileVisible?: boolean
   onToggleSidebarCollapsed: () => void
@@ -58,9 +59,9 @@ const MAILBOX_ICONS: Record<string, React.ReactNode> = {
   default: <Mail className="w-[18px] h-[18px]" strokeWidth={1.5} />,
 }
 
-function getMailboxIcon(mailbox: any) {
-  const role = mailbox._effectiveRole || mailbox.role;
-  return MAILBOX_ICONS[role] || MAILBOX_ICONS.default;
+function getMailboxIcon(mailbox: Mailbox | MailboxNode | { role?: string | null; _effectiveRole?: string }) {
+  const role = ('_effectiveRole' in mailbox && mailbox._effectiveRole) || mailbox.role;
+  return MAILBOX_ICONS[role || 'default'] || MAILBOX_ICONS.default;
 }
 
 export function Sidebar({
@@ -167,7 +168,7 @@ export function Sidebar({
                 onToggleExpand={() => onToggleSectionExpanded('mailboxes')}
               >
                 <div role="tree" aria-label="System mailboxes" className="space-y-0.5">
-                  {systemMailboxes.map((mailbox: any) => (
+                  {systemMailboxes.map((mailbox) => (
                     <SidebarItem 
                       key={mailbox.id}
                       mailboxId={mailbox.id}
@@ -206,7 +207,7 @@ export function Sidebar({
                   onSelect={onSelectMailbox}
                    onToggleExpand={onToggleFolderExpanded}
                    onDrop={(emailIds, mailboxId) => {
-                     const folderName = mailboxes?.find((m: any) => m.id === mailboxId)?.name || 'Folder';
+                     const folderName = mailboxes?.find((m) => m.id === mailboxId)?.name || 'Folder';
                      onMoveEmailsToFolder(emailIds, mailboxId, folderName);
                    }}
                   getMailboxIcon={getMailboxIcon}
@@ -265,12 +266,12 @@ export function Sidebar({
       </nav>
 
       <div className="p-4 border-t border-[#E5E5E5] text-[11px] text-[#8E8E93] bg-white/30 space-y-2">
-         {quota && quota.hardLimit > 0 && (
+         {quota && quota.hardLimit && quota.hardLimit > 0 && (
            <QuotaBar used={quota.used || 0} total={quota.hardLimit || 0} />
          )}
          <div className="flex items-center justify-between">
            <div className="flex items-center gap-2">
-              <span className="truncate max-w-[100px] font-medium">{userLabel || session.username}</span>
+              <span className="truncate max-w-[100px] font-medium">{userLabel || 'User'}</span>
               {isOffline ? (
                 <>
                   <WifiOff className="w-3 h-3 text-[#FF9500]" strokeWidth={2} />

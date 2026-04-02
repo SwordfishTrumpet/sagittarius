@@ -3,6 +3,7 @@ import { X, Sun, User, Filter, Settings as SettingsIcon, Volume2, LucideIcon } f
 import { VacationSettings } from './settings/VacationSettings';
 import { IdentitySettings } from './settings/IdentitySettings';
 import { SieveSettings } from './settings/SieveSettings';
+import { IOSToggle } from './ui/IOSToggle';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import {
   isNotificationSoundEnabled,
@@ -70,21 +71,11 @@ function GeneralSettings() {
             <Volume2 className="w-4 h-4 text-[#6C6C70]" strokeWidth={1.5} />
             <span className="text-[15px] text-[#1C1C1E]">New mail sound</span>
           </div>
-          <button
-            onClick={handleToggleSound}
-            role="switch"
-            aria-checked={soundEnabled}
-            aria-label="New mail sound"
-            className={`relative w-[51px] h-[31px] rounded-full transition-colors duration-200 ${
-              soundEnabled ? 'bg-[#34C759]' : 'bg-[#E5E5EA]'
-            }`}
-          >
-            <span
-              className={`absolute left-0 top-[2px] w-[27px] h-[27px] bg-white rounded-full shadow-sm transition-transform duration-200 ${
-                soundEnabled ? 'translate-x-[22px]' : 'translate-x-[2px]'
-              }`}
-            />
-          </button>
+          <IOSToggle
+            checked={soundEnabled}
+            onChange={handleToggleSound}
+            ariaLabel="New mail sound"
+          />
         </div>
 
         {/* Volume slider */}

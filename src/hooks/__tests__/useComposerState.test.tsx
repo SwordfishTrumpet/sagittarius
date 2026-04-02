@@ -1,6 +1,7 @@
 import { renderHook, act } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useComposerState } from '../useComposerState'
+import { createTestEmail } from '../../test/testUtils'
 
 const STORAGE_PREFIX = 'sagittarius_composer_draft'
 
@@ -82,12 +83,12 @@ describe('useComposerState', () => {
     
     // Open reply composer
     act(() => {
-      result.current.handleReply({
+      result.current.handleReply(createTestEmail({
         id: 'email-2',
         threadId: 'thread-1',
         subject: 'New subject',
         from: [{ email: 'sender@example.com' }],
-      })
+      }))
     })
     
     // Different key, so original reply draft should remain

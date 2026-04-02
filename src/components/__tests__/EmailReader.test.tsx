@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { EmailReader } from '../EmailReader'
+import { EmailReader, type EmailReaderProps } from '../EmailReader'
 
 const { getBlobUrl, getAuthHeader, getSession } = vi.hoisted(() => ({
   getBlobUrl: vi.fn(() => 'https://mail.test/download/blob-1/image.png'),
@@ -29,13 +29,36 @@ vi.mock('sonner', () => ({
   },
 }))
 
-const baseProps = {
+/** Helper to create test emails with minimal required fields */
+function createTestEmail(overrides: Record<string, unknown>): NonNullable<EmailReaderProps['threadEmails']>[0] {
+  return {
+    id: 'email-1',
+    blobId: 'blob-1',
+    threadId: 'thread-1',
+    mailboxIds: { 'inbox-1': true },
+    keywords: {},
+    size: 1000,
+    receivedAt: '2025-01-01T12:00:00Z',
+    hasAttachment: false,
+    preview: 'Test preview',
+    subject: 'Test Subject',
+    from: [{ name: 'Alice', email: 'alice@example.com' }],
+    to: [{ name: 'Bob', email: 'bob@example.com' }],
+    cc: null,
+    bcc: null,
+    replyTo: null,
+    ...overrides,
+  } as NonNullable<EmailReaderProps['threadEmails']>[0];
+}
+
+const baseProps: EmailReaderProps = {
   emailLoading: false,
   isEmailDetailError: false,
   emailDetailError: null,
   selectedEmailId: 'email-1',
   mailboxes: [],
-  primaryIdentity: null,
+  primaryIdentity: undefined,
+  threadEmails: undefined,
   sendMDN: { mutate: vi.fn() },
   updateKeywords: { mutate: vi.fn() },
 }
@@ -50,17 +73,13 @@ describe('EmailReader', () => {
       <EmailReader
         {...baseProps}
         threadEmails={[
-          {
-            id: 'email-1',
+          createTestEmail({
             subject: 'Remote images',
-            receivedAt: '2025-01-01T12:00:00Z',
-            from: [{ name: 'Alice', email: 'alice@example.com' }],
-            to: [{ name: 'Bob', email: 'bob@example.com' }],
-            htmlBody: [{ partId: '1' }],
+            htmlBody: [{ partId: '1', type: 'text/html' }],
             bodyValues: {
               '1': { value: '<p>Hello</p><img src="https://example.com/track.png" alt="t">' },
             },
-          },
+          }),
         ]}
       />,
     )
@@ -83,17 +102,13 @@ describe('EmailReader', () => {
       <EmailReader
         {...baseProps}
         threadEmails={[
-          {
-            id: 'email-1',
+          createTestEmail({
             subject: 'Plain text',
-            receivedAt: '2025-01-01T12:00:00Z',
-            from: [{ name: 'Alice', email: 'alice@example.com' }],
-            to: [{ name: 'Bob', email: 'bob@example.com' }],
-            textBody: [{ partId: '1' }],
+            textBody: [{ partId: '1', type: 'text/plain' }],
             bodyValues: {
               '1': { value: '<script>alert(1)</script>\nhello' },
             },
-          },
+          }),
         ]}
       />,
     )
@@ -108,13 +123,9 @@ describe('EmailReader', () => {
       <EmailReader
         {...baseProps}
         threadEmails={[
-          {
-            id: 'email-1',
+          createTestEmail({
             subject: 'Inline image',
-            receivedAt: '2025-01-01T12:00:00Z',
-            from: [{ name: 'Alice', email: 'alice@example.com' }],
-            to: [{ name: 'Bob', email: 'bob@example.com' }],
-            htmlBody: [{ partId: '1' }],
+            htmlBody: [{ partId: '1', type: 'text/html' }],
             bodyValues: {
               '1': { value: '<p>Hi</p><img src="cid:inline-1">' },
             },
@@ -126,7 +137,7 @@ describe('EmailReader', () => {
                 name: 'image.png',
               },
             ],
-          },
+          }),
         ]}
       />,
     )
@@ -142,17 +153,14 @@ describe('EmailReader', () => {
       <EmailReader
         {...baseProps}
         threadEmails={[
-          {
-            id: 'email-1',
+          createTestEmail({
             subject: 'Bad date',
             receivedAt: 'not-a-date',
-            from: [{ name: 'Alice', email: 'alice@example.com' }],
-            to: [{ name: 'Bob', email: 'bob@example.com' }],
-            htmlBody: [{ partId: '1' }],
+            htmlBody: [{ partId: '1', type: 'text/html' }],
             bodyValues: {
               '1': { value: '<p>Hello</p>' },
             },
-          },
+          }),
         ]}
       />,
     )

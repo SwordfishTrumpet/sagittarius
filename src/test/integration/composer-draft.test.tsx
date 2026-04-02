@@ -4,6 +4,7 @@ import { forwardRef, useRef, useState } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { Composer } from '../../components/Composer'
 import { getComposerDraftKey } from '../../utils/draftStorage'
+import { createTestEmail } from '../testUtils'
 
 let lastEditorOptions: any = null
 let mockIdentities = [{ id: 'identity-1', email: 'user@example.com', name: 'User Example', textSignature: '' }]
@@ -220,7 +221,7 @@ describe('Composer draft recovery', () => {
     render(
       <Composer
         onClose={() => {}}
-        draftEmail={{
+        draftEmail={createTestEmail({
           id: 'draft-123',
           from: [{ email: 'user@example.com' }],
           to: [{ email: 'friend@example.com' }],
@@ -232,7 +233,7 @@ describe('Composer draft recovery', () => {
             'body-1': { value: '<p>Saved on server</p>', isTruncated: false },
           },
           htmlBody: [{ partId: 'body-1', type: 'text/html' }],
-        }}
+        })}
       />,
     )
 
@@ -250,7 +251,7 @@ describe('Composer draft recovery', () => {
     render(
       <Composer
         onClose={() => {}}
-        draftEmail={{
+        draftEmail={createTestEmail({
           id: 'draft-123',
           from: [{ email: 'user@example.com' }],
           to: [{ email: 'friend@example.com' }],
@@ -259,7 +260,7 @@ describe('Composer draft recovery', () => {
             'body-1': { value: '<p>Saved on server</p>', isTruncated: false },
           },
           htmlBody: [{ partId: 'body-1', type: 'text/html' }],
-        }}
+        })}
       />,
     )
 

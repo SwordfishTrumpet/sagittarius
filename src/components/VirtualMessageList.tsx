@@ -8,14 +8,15 @@ import { ContextMenu, ContextMenuItemConfig } from './ContextMenu';
 import { AnimatePresence } from 'framer-motion';
 import { PullToRefresh } from './PullToRefresh';
 import { ErrorBoundary } from './ErrorBoundary';
+import type { Email, Mailbox } from '../types/jmap';
 
 interface VirtualMessageListProps {
-  emails: any[];
+  emails: Email[];
   isLoading: boolean;
   isRefetching: boolean;
   selectedEmailId: string | null;
   selectedEmailIds: Set<string>;
-  mailboxes: any[];
+  mailboxes: Mailbox[];
   onToggleSelection: (emailId: string, ctrlKey: boolean, shiftKey: boolean) => void;
   onToggleFlag: (emailId: string, flagged: boolean) => void;
   formatMessageDate: (date: string) => string;
@@ -30,7 +31,7 @@ interface VirtualMessageListProps {
   onArchive?: (emailId: string) => void;
   onDelete?: (emailId: string) => void;
   onOpenDraft?: (emailId: string) => void;
-  onRefresh?: () => Promise<any>;
+  onRefresh?: () => Promise<unknown>;
 }
 
 // Stable empty Set for default removingEmailIds
@@ -71,7 +72,7 @@ export function VirtualMessageList({
   // Build context menu items for the targeted email
   const contextMenuItems: ContextMenuItemConfig[] = useMemo(() => {
     if (!contextMenu) return [];
-    const email = emails.find((e: any) => e.id === contextMenu.emailId);
+    const email = emails.find((e) => e.id === contextMenu.emailId);
     const isFlagged = !!email?.keywords?.['$flagged'];
     const iconClass = 'w-4 h-4';
     const iconStroke = 1.5;
@@ -132,12 +133,12 @@ export function VirtualMessageList({
 
   // Get the sent mailbox to determine if message is sent
   const sentBoxId = useMemo(() => {
-    return mailboxes?.find((m: any) => m.role === 'sent' || (!m.role && ['sent', 'sent items', 'sent mail'].includes((m.name || '').toLowerCase())))?.id;
+    return mailboxes?.find((m) => m.role === 'sent' || (!m.role && ['sent', 'sent items', 'sent mail'].includes((m.name || '').toLowerCase())))?.id;
   }, [mailboxes]);
 
   // Prepare email data with memoization to prevent unnecessary re-renders
   const emailsWithMeta = useMemo(() => {
-    return emails.map((email: any) => ({
+    return emails.map((email) => ({
       ...email,
       isSent: sentBoxId ? !!email.mailboxIds?.[sentBoxId] : false,
     }));
@@ -155,7 +156,7 @@ export function VirtualMessageList({
 
   // Handle item click with selection logic
   const handleItemClick = useCallback(
-    (email: any, e: React.MouseEvent<HTMLDivElement>) => {
+    (email: Email, e: React.MouseEvent<HTMLDivElement>) => {
       const ctrlKey = e.ctrlKey || e.metaKey;
       const shiftKey = e.shiftKey;
       onToggleSelection(email.id, ctrlKey, shiftKey);
@@ -165,7 +166,7 @@ export function VirtualMessageList({
 
   // Handle double-click to open drafts
   const handleItemDoubleClick = useCallback(
-    (email: any) => {
+    (email: Email) => {
       if (email.keywords?.['$draft']) {
         onOpenDraft?.(email.id);
       }
@@ -175,7 +176,7 @@ export function VirtualMessageList({
 
   // Handle flag toggle with event propagation stop
   const handleToggleFlag = useCallback(
-    (email: any, e: React.MouseEvent<HTMLButtonElement>) => {
+    (email: Email, e: React.MouseEvent<HTMLButtonElement>) => {
       e.stopPropagation();
       onToggleFlag(email.id, !!email.keywords?.['$flagged']);
     },

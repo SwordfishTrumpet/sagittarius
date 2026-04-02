@@ -1,8 +1,9 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { suppressNewMailNotification, rollbackQueries } from './queryCacheUtils';
+import type { Email } from '../../types/jmap';
 
 export interface OptimisticUpdateContext {
-  previousData: [any, any][];
+  previousData: [unknown, unknown][];
   queryKeys: string[][];
 }
 
@@ -11,9 +12,9 @@ export interface OptimisticEmailUpdateOptions<TData> {
   /** Query keys to update (e.g., ['threads'], ['emails']) */
   queryKeys: string[][];
   /** Function to apply the optimistic patch to each email item */
-  applyPatch: (email: any) => any;
+  applyPatch: (email: Email) => Email;
   /** Optional filter to determine which emails to patch */
-  shouldPatch?: (email: any) => boolean;
+  shouldPatch?: (email: Email) => boolean;
   /** Callback before the update (e.g., cancel queries) */
   onBeforeUpdate?: () => Promise<void>;
 }
@@ -28,7 +29,7 @@ export async function performOptimisticEmailUpdate<TData>({
   applyPatch,
   shouldPatch = () => true,
   onBeforeUpdate,
-}: OptimisticEmailUpdateOptions<TData>): Promise<{ previousSnapshots: [any, any][][] }> {
+}: OptimisticEmailUpdateOptions<TData>): Promise<{ previousSnapshots: [unknown, unknown][][] }> {
   // Suppress notifications for local mutations
   suppressNewMailNotification();
 
@@ -43,7 +44,7 @@ export async function performOptimisticEmailUpdate<TData>({
   }
 
   // Capture previous snapshots
-  const previousSnapshots: [any, any][][] = [];
+  const previousSnapshots: [unknown, unknown][][] = [];
 
   // Apply optimistic updates
   for (const baseKey of queryKeys) {
@@ -52,7 +53,7 @@ export async function performOptimisticEmailUpdate<TData>({
 
     previous.forEach(([queryKey, oldData]) => {
       if (!Array.isArray(oldData)) return;
-      queryClient.setQueryData(queryKey, oldData.map((email: any) =>
+      queryClient.setQueryData(queryKey as string[], oldData.map((email: Email) =>
         shouldPatch(email) ? applyPatch(email) : email,
       ));
     });
@@ -66,10 +67,10 @@ export async function performOptimisticEmailUpdate<TData>({
  */
 export function rollbackOptimisticUpdates(
   queryClient: QueryClient,
-  snapshots: [any, any][][] | undefined,
+  snapshots: [unknown, unknown][][] | undefined,
 ): void {
   if (!snapshots) return;
-  snapshots.forEach((snapshot) => rollbackQueries(queryClient, snapshot));
+  snapshots.forEach((snapshot) => rollbackQueries(queryClient, snapshot as [unknown, unknown][]));
 }
 
 /**
@@ -83,7 +84,7 @@ export function createEmailOptimisticHandlers<TVariables>(options: {
   /** Get the email IDs to patch from mutation variables */
   getEmailIds: (vars: TVariables) => string[] | Set<string>;
   /** Get the patch to apply from mutation variables */
-  getPatch: (vars: TVariables) => Record<string, any>;
+  getPatch: (vars: TVariables) => Partial<Email>;
   /** Optional additional query keys to cancel */
   extraCancelKeys?: string[][];
 }) {
@@ -98,7 +99,7 @@ export function createEmailOptimisticHandlers<TVariables>(options: {
       const allCancelKeys = [...queryKeys, ...extraCancelKeys];
 
       // Capture previous data BEFORE applying optimistic update (for correct rollback)
-      const previousData: [any, any][][] = [];
+      const previousData: [unknown, unknown][][] = [];
       for (const key of queryKeys) {
         previousData.push(queryClient.getQueriesData({ queryKey: key }));
       }
@@ -106,8 +107,8 @@ export function createEmailOptimisticHandlers<TVariables>(options: {
       await performOptimisticEmailUpdate({
         queryClient,
         queryKeys: allCancelKeys,
-        applyPatch: (email: any) => ({ ...email, ...patch }),
-        shouldPatch: (email: any) => emailIdSet.has(email.id),
+        applyPatch: (email: Email) => ({ ...email, ...patch }),
+        shouldPatch: (email: Email) => emailIdSet.has(email.id),
         onBeforeUpdate: async () => {
           for (const key of allCancelKeys) {
             await queryClient.cancelQueries({ queryKey: key });
@@ -118,7 +119,7 @@ export function createEmailOptimisticHandlers<TVariables>(options: {
       return { previousData, queryKeys };
     },
 
-    onError: (_err: unknown, _vars: TVariables, context: { previousData?: [any, any][][] } | undefined) => {
+    onError: (_err: unknown, _vars: TVariables, context: { previousData?: [unknown, unknown][][] } | undefined) => {
       if (context?.previousData) {
         rollbackOptimisticUpdates(queryClient, context.previousData);
       }

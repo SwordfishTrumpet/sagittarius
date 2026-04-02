@@ -3,6 +3,7 @@ import { Plus, Edit2, Trash2, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useIdentities } from '../../hooks/jmap/useIdentities';
 import { useIdentityActions, type IdentityData } from '../../hooks/useIdentityActions';
+import { toastOperationError } from '../../utils/toastHelpers';
 
 interface IdentityFormState {
   name: string;
@@ -135,7 +136,7 @@ export function IdentitySettings() {
       toast.success('Identity created');
       setShowAddForm(false);
     } catch {
-      toast.error('Failed to create identity');
+      toastOperationError('identity.create');
     }
   };
 
@@ -145,7 +146,7 @@ export function IdentitySettings() {
       toast.success('Identity updated');
       setEditingId(null);
     } catch {
-      toast.error('Failed to update identity');
+      toastOperationError('identity.update');
     }
   };
 
@@ -154,7 +155,7 @@ export function IdentitySettings() {
       await deleteIdentity.mutateAsync({ identityId });
       toast.success(`Removed "${name}"`);
     } catch {
-      toast.error('Failed to delete identity');
+      toastOperationError('identity.delete');
     }
   };
 

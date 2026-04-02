@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { forwardRef } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import { VirtualMessageList } from '../VirtualMessageList'
+import { createTestEmail } from '../../test/testUtils'
 
 vi.mock('framer-motion', () => ({
   AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -36,7 +37,7 @@ describe('VirtualMessageList draft behavior', () => {
     render(
       <VirtualMessageList
         emails={[
-          {
+          createTestEmail({
             id: 'draft-1',
             threadId: 'thread-1',
             from: [{ email: 'user@example.com' }],
@@ -45,7 +46,7 @@ describe('VirtualMessageList draft behavior', () => {
             receivedAt: '2026-04-01T10:00:00.000Z',
             keywords: { '$draft': true },
             mailboxIds: { 'mailbox-drafts': true },
-          },
+          }),
         ]}
         isLoading={false}
         isRefetching={false}

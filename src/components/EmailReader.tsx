@@ -11,17 +11,29 @@ import { DeliveryStatus } from './DeliveryStatus'
 import { AttachmentItem } from './AttachmentItem'
 import { EmailBodyFrame } from './EmailBodyFrame'
 import { logger } from '../utils/logger'
+import { toastOperationError } from '../utils/toastHelpers'
+import type { Email, Mailbox, Identity, EmailBodyPart } from '../types/jmap'
+
+interface MutationWithMutate<TVariables, TOptions = Record<string, unknown>> {
+  mutate: (variables: TVariables, options?: TOptions) => void;
+}
+
+/** Extended Email type with dynamic header properties and body values */
+type EmailWithHeaders = Email & {
+  'header:Disposition-Notification-To:asText'?: string;
+  bodyValues?: Record<string, { value: string }>;
+}
 
 export interface EmailReaderProps {
-  threadEmails: any[] | undefined
+  threadEmails: EmailWithHeaders[] | undefined
   emailLoading: boolean
   isEmailDetailError: boolean
   emailDetailError: Error | null
   selectedEmailId: string | null
-  mailboxes: any[] | undefined
-  primaryIdentity: any
-  sendMDN: any
-  updateKeywords: any
+  mailboxes: Mailbox[] | undefined
+  primaryIdentity: Identity | undefined
+  sendMDN: MutationWithMutate<{ emailId: string; identityId: string }, { onSuccess?: () => void; onError?: (err: Error) => void }>
+  updateKeywords: MutationWithMutate<{ emailId: string; keywords: Record<string, boolean> }>
 }
 
 export function EmailReader({
@@ -76,19 +88,19 @@ export function EmailReader({
       )
   }
 
-  const getProcessedHtml = useCallback((email: any): { blockedImageCount: number; displayHtml: string } | null => {
+  const getProcessedHtml = useCallback((email: EmailWithHeaders): { blockedImageCount: number; displayHtml: string } | null => {
     if (!email) return null;
     try {
       const emailState = remoteImageState[email.id];
 
       let html = '';
       const isHtmlEmail = email.htmlBody && email.htmlBody.length > 0;
-      if (isHtmlEmail) {
+      if (isHtmlEmail && email.htmlBody) {
         const partId = email.htmlBody[0].partId;
-        html = email.bodyValues?.[partId]?.value || '';
+        html = (partId && email.bodyValues?.[partId]?.value) || '';
       } else if (email.textBody && email.textBody.length > 0) {
         const partId = email.textBody[0].partId;
-        html = `<pre style="font-family: inherit; white-space: pre-wrap; margin: 0;">${escapeHtml(email.bodyValues?.[partId]?.value || '')}</pre>`;
+        html = `<pre style="font-family: inherit; white-space: pre-wrap; margin: 0;">${escapeHtml((partId && email.bodyValues?.[partId]?.value) || '')}</pre>`;
       }
 
       // Handle empty body content as "no content"
@@ -144,7 +156,7 @@ export function EmailReader({
   };
 
   const processedEmails = useMemo(
-    () => (threadEmails ?? []).map((email: any) => ({
+    () => (threadEmails ?? []).map((email) => ({
       email,
       emailImageState: remoteImageState[email.id],
       processedHtml: getProcessedHtml(email),
@@ -213,11 +225,14 @@ export function EmailReader({
                         </span>
                       </div>
                       <div className="text-[13px] text-[#8E8E93] truncate font-medium mt-0.5 flex items-center gap-2">
-                        <span>To: {email.to?.map((t: any) => t.name || t.email).join(', ')}</span>
+                        <span>To: {email.to?.map((t: { name?: string | null; email: string }) => t.name || t.email).join(', ')}</span>
                         {/* Delivery status for sent emails */}
-                        {mailboxes?.find((m: any) => m.role === 'sent' || (!m.role && ['sent', 'sent items', 'sent mail'].includes(m.name.toLowerCase()))) && email.mailboxIds?.[mailboxes.find((m: any) => m.role === 'sent' || (!m.role && ['sent', 'sent items', 'sent mail'].includes(m.name.toLowerCase())))?.id] && (
-                          <DeliveryStatus emailId={email.id} />
-                        )}
+                        {(() => {
+                          const sentMailbox = mailboxes?.find((m) => m.role === 'sent' || (!m.role && ['sent', 'sent items', 'sent mail'].includes(m.name.toLowerCase())));
+                          return sentMailbox && email.mailboxIds?.[sentMailbox.id] && (
+                            <DeliveryStatus emailId={email.id} />
+                          );
+                        })()}
                       </div>
                     </div>
                 </div>
@@ -255,7 +270,7 @@ export function EmailReader({
                           toast.success('Read receipt sent');
                           updateKeywords.mutate({ emailId: email.id, keywords: { '$mdnsent': true } });
                         },
-                        onError: (err: any) => toast.error(`Failed to send receipt: ${err.message}`),
+                        onError: (err: Error) => toastOperationError('mdn.send', err),
                       });
                     }
                   }}
@@ -270,7 +285,7 @@ export function EmailReader({
               </div>
 
               {(() => {
-                const visibleAttachments = email.attachments?.filter((a: any) => !isInlineAttachment(a)) || [];
+                const visibleAttachments = (email.attachments?.filter((a) => !isInlineAttachment(a)) || []) as EmailBodyPart[];
                 return visibleAttachments.length > 0 && (
                 <div className="mt-12 pt-10 border-t border-[#F2F2F7]">
                   <div className="flex items-center gap-2 mb-6 text-[#8E8E93] font-bold text-[11px] uppercase tracking-wider">
@@ -278,7 +293,7 @@ export function EmailReader({
                     {visibleAttachments.length} {visibleAttachments.length === 1 ? 'Attachment' : 'Attachments'}
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {visibleAttachments.map((attachment: any) => (
+                    {visibleAttachments.map((attachment) => (
                       <AttachmentItem key={attachment.blobId} attachment={attachment} />
                     ))}
                   </div>

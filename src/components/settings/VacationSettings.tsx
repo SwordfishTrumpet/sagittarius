@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Save, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { IOSToggle } from '../ui/IOSToggle';
 import { useVacation, useVacationUpdate, type VacationUpdatePayload } from '../../hooks/useVacation';
+import { toastOperationError } from '../../utils/toastHelpers';
 
 function isoToLocal(iso?: string | null): string {
   if (!iso) return '';
@@ -63,7 +65,7 @@ export function VacationSettings() {
       await saveVacation(payload);
       toast.success('Vacation response saved');
     } catch {
-      toast.error('Failed to save vacation response');
+      toastOperationError('vacation.save');
     }
   };
 
@@ -96,21 +98,11 @@ export function VacationSettings() {
           <p className="text-[15px] font-medium text-[#1C1C1E]">Enable Vacation Response</p>
           <p className="text-[13px] text-[#8E8E93] mt-0.5">Auto-reply to incoming messages</p>
         </div>
-        {/* iOS-style toggle */}
-        <button
-          role="switch"
-          aria-checked={isEnabled}
-          onClick={() => setIsEnabled((v) => !v)}
-          className={`relative w-[51px] h-[31px] rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#007AFF] ${
-            isEnabled ? 'bg-[#34C759]' : 'bg-[#E5E5EA]'
-          }`}
-        >
-          <span
-            className={`absolute top-[2px] left-[2px] w-[27px] h-[27px] bg-white rounded-full shadow-md transition-transform duration-200 ${
-              isEnabled ? 'translate-x-[20px]' : 'translate-x-0'
-            }`}
-          />
-        </button>
+        <IOSToggle
+          checked={isEnabled}
+          onChange={(checked) => setIsEnabled(checked)}
+          ariaLabel="Enable Vacation Response"
+        />
       </div>
 
       {/* Detail fields — only when enabled */}
