@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+
+# Build output (will be regenerated)
+dist/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Development
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+coverage/
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+
+# Internal tooling
+.weave/
+TODO.md
+AGENTS.md
+
+# Documentation (keep DEPLOYMENT.md for reference)
+docs/DEVELOPMENT.md
+docs/accessibility.md
+docs/patterns-and-utilities.md
+
+# CI/CD
+.github/
+.gitignore
+.editorconfig
+
+# Git
+.git/
+.gitattributes
+
+# Node
+*.log
+logs/
+*.tsbuildinfo
