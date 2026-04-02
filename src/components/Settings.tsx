@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { X, Sun, User, Filter, Settings as SettingsIcon, Volume2 } from 'lucide-react';
+import { X, Sun, User, Filter, Settings as SettingsIcon, Volume2, LucideIcon } from 'lucide-react';
 import { VacationSettings } from './settings/VacationSettings';
 import { IdentitySettings } from './settings/IdentitySettings';
 import { SieveSettings } from './settings/SieveSettings';
@@ -20,11 +20,11 @@ interface SettingsProps {
 
 type Category = 'general' | 'vacation' | 'identities' | 'filters';
 
-const CATEGORIES: { id: Category; label: string; Icon: React.FC<React.SVGProps<SVGSVGElement>> }[] = [
-  { id: 'general', label: 'General', Icon: SettingsIcon as any },
-  { id: 'vacation', label: 'Vacation', Icon: Sun as any },
-  { id: 'identities', label: 'Identities', Icon: User as any },
-  { id: 'filters', label: 'Filters', Icon: Filter as any },
+const CATEGORIES: { id: Category; label: string; Icon: LucideIcon }[] = [
+  { id: 'general', label: 'General', Icon: SettingsIcon },
+  { id: 'vacation', label: 'Vacation', Icon: Sun },
+  { id: 'identities', label: 'Identities', Icon: User },
+  { id: 'filters', label: 'Filters', Icon: Filter },
 ];
 
 function GeneralSettings() {

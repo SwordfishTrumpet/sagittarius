@@ -14,7 +14,7 @@ export interface ToolbarProps {
   onReply: () => void
   onReplyAll: () => void
   onForward: () => void
-  onToggleFlag: (emailId: string, currentFlagged: boolean) => void
+  onToggleFlag: () => void
   onArchive: () => void
   onDelete: () => void
   onToggleMoreMenu: () => void
@@ -70,7 +70,7 @@ export function Toolbar({
                 label={selectedEmail?.keywords?.['$flagged'] ? 'Unflag' : 'Flag'}
                 pressed={!!selectedEmail?.keywords?.['$flagged']}
                 disabled={!selectedEmailId} 
-                onClick={() => onToggleFlag(selectedEmailId!, !!selectedEmail?.keywords?.['$flagged'])}
+                onClick={onToggleFlag}
               />
               {!isMobile && <div aria-hidden="true" className="w-[1px] h-7 bg-[#E5E5E5] self-center"></div>}
               <ActionButton 

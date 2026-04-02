@@ -1,8 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { jmapClient } from '../api/jmap';
-import { eventSourceManager } from '../api/eventSource';
-import { webSocketManager } from '../api/websocket';
+import { sharedNotificationSuppressor } from '../utils/notificationSuppressor';
+import { invalidateEmailQueries } from './jmap/queryCacheUtils';
+import type { JMAPSetResponse, Email, JMAPSetError } from '../types/jmap';
 
 export interface EmailImportParams {
   blobId: string;
@@ -19,10 +20,10 @@ export function useEmailImport() {
 
   return useMutation({
     onMutate: () => {
-      eventSourceManager.suppressNotification();
-      webSocketManager.suppressNotification();
+      sharedNotificationSuppressor.suppress();
     },
     mutationFn: async ({ blobId, mailboxIds, keywords }: EmailImportParams) => {
+      // ... (same mutation logic)
       const createObj: Record<string, any> = {
         blobId,
         mailboxIds,
@@ -45,25 +46,30 @@ export function useEmailImport() {
 
       const methodRes = response.methodResponses[0];
       if (!methodRes || methodRes[0] === 'error') {
-        throw new Error(methodRes?.[1]?.description || 'Import failed');
+        const errorResult = methodRes?.[1] as { description?: string } | undefined;
+        throw new Error(errorResult?.description || 'Import failed');
       }
 
-      const notCreated = methodRes[1]?.notCreated;
+      const importResult = methodRes[1] as JMAPSetResponse<Email>;
+      const notCreated = importResult?.notCreated;
       if (notCreated && Object.keys(notCreated).length > 0) {
-        const firstError = Object.values(notCreated)[0] as any;
+        const firstError = Object.values(notCreated)[0] as JMAPSetError;
         throw new Error(firstError?.description || firstError?.type || 'Import failed');
       }
 
-      return methodRes[1];
+      return importResult;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['threads'] });
-      queryClient.invalidateQueries({ queryKey: ['emails'] });
-      queryClient.invalidateQueries({ queryKey: ['mailboxes'] });
+      invalidateEmailQueries(queryClient);
       toast.success('Message imported successfully');
     },
     onError: (err: Error) => {
       toast.error(`Import failed: ${err.message}`);
+    },
+    onSettled: () => {
+      // Clear notification suppressor when mutation completes (success or error)
+      // This ensures notifications work correctly after import finishes
+      sharedNotificationSuppressor.suppress();
     },
   });
 }

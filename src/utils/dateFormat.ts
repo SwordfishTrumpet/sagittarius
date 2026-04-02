@@ -2,6 +2,10 @@ import { format, isToday, isYesterday } from 'date-fns'
 
 export const formatMessageDate = (dateStr: string) => {
   const d = new Date(dateStr)
+  // Validate date before formatting
+  if (isNaN(d.getTime())) {
+    return ''
+  }
   if (isToday(d)) return format(d, 'h:mm a')
   if (isYesterday(d)) return 'Yesterday'
   // Show day name for last ~7 days, then "Jan 15" style

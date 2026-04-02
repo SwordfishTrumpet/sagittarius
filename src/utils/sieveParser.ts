@@ -68,14 +68,15 @@ function parseConditions(condStr: string): { conditions: SieveCondition[]; opera
   const conditions: SieveCondition[] = [];
 
   // Match individual tests: header :contains "Hdr" "value"  or  size :over N
-  const headerRe = /(not\s+)?header\s+(:is|:contains|:matches)\s+"([^"]+)"\s+"([^"]*)"/gi;
+  // This regex handles escaped quotes within quoted strings
+  const headerRe = /(not\s+)?header\s+(:is|:contains|:matches)\s+"((?:[^"\\]|\\.)*)"\s+"((?:[^"\\]|\\.)*)"/gi;
   let m: RegExpExecArray | null;
 
   while ((m = headerRe.exec(testsStr)) !== null) {
     const negate = !!m[1];
     const matchType = m[2].toLowerCase();
-    const headerName = m[3].toLowerCase();
-    const value = m[4];
+    const headerName = m[3].replace(/\\(.)/g, '$1').toLowerCase(); // Unescape
+    const value = m[4].replace(/\\(.)/g, '$1'); // Unescape
 
     let field: SieveCondition['field'] = 'header';
     if (headerName === 'from') field = 'from';
@@ -108,17 +109,17 @@ function parseConditions(condStr: string): { conditions: SieveCondition[]; opera
 function parseActions(body: string): SieveAction[] {
   const actions: SieveAction[] = [];
 
-  // fileinto "folder";
-  const fileintoRe = /fileinto\s+"([^"]+)"\s*;/gi;
+  // fileinto "folder"; - handles escaped quotes
+  const fileintoRe = /fileinto\s+"((?:[^"\\]|\\.)*)"\s*;/gi;
   let m: RegExpExecArray | null;
   while ((m = fileintoRe.exec(body)) !== null) {
-    actions.push({ type: 'fileinto', value: m[1] });
+    actions.push({ type: 'fileinto', value: m[1].replace(/\\(.)/g, '$1') });
   }
 
-  // redirect "addr";
-  const redirectRe = /redirect\s+"([^"]+)"\s*;/gi;
+  // redirect "addr"; - handles escaped quotes
+  const redirectRe = /redirect\s+"((?:[^"\\]|\\.)*)"\s*;/gi;
   while ((m = redirectRe.exec(body)) !== null) {
-    actions.push({ type: 'redirect', value: m[1] });
+    actions.push({ type: 'redirect', value: m[1].replace(/\\(.)/g, '$1') });
   }
 
   // discard;
@@ -136,10 +137,10 @@ function parseActions(body: string): SieveAction[] {
     actions.push({ type: 'flag' });
   }
 
-  // vacation "...";
-  const vacRe = /vacation\s+"([^"]+)"\s*;/gi;
+  // vacation "..."; - handles escaped quotes
+  const vacRe = /vacation\s+"((?:[^"\\]|\\.)*)"\s*;/gi;
   while ((m = vacRe.exec(body)) !== null) {
-    actions.push({ type: 'vacation', value: m[1] });
+    actions.push({ type: 'vacation', value: m[1].replace(/\\(.)/g, '$1') });
   }
 
   return actions;

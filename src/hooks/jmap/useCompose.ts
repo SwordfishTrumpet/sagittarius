@@ -7,13 +7,23 @@ import {
   jmapRequest,
   suppressNewMailNotification,
 } from './queryCacheUtils'
+import type { Mailbox } from '../../types/jmap'
+
+// Type helper for mailbox list response
+interface MailboxGetResult {
+  list: Mailbox[];
+}
+
+function asMailboxGet(data: unknown): MailboxGetResult {
+  return data as MailboxGetResult;
+}
 
 export function useCompose() {
   const accountId = jmapClient.getPrimaryAccount()
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ to, cc, bcc, subject, body, attachments, identityId, fromEmail, sendAt }: {
+    mutationFn: async ({ to, cc, bcc, subject, body, attachments, identityId, fromEmail, sendAt, draftId }: {
       to: { name?: string, email: string }[],
       cc?: { name?: string, email: string }[],
       bcc?: { name?: string, email: string }[],
@@ -23,12 +33,19 @@ export function useCompose() {
       identityId: string,
       fromEmail: string,
       sendAt?: string,
+      draftId?: string,
     }) => {
       const mailboxesRes = await jmapClient.request([
         ['Mailbox/get', { accountId, ids: null }, '0'],
       ])
-      const draftBox = mailboxesRes.methodResponses[0][1].list.find((mailbox: any) => mailbox.role === 'drafts')
-      const sentBox = mailboxesRes.methodResponses[0][1].list.find((mailbox: any) => mailbox.role === 'sent')
+      // Check for JMAP error before accessing data
+      if (mailboxesRes.methodResponses[0][0] === 'error') {
+        const errorData = mailboxesRes.methodResponses[0][1] as { type?: string; description?: string }
+        throw new Error(`Failed to fetch mailboxes: ${errorData.type || 'Unknown error'}`)
+      }
+      const mailboxResult = asMailboxGet(mailboxesRes.methodResponses[0][1])
+      const draftBox = mailboxResult.list.find((mailbox) => mailbox.role === 'drafts')
+      const sentBox = mailboxResult.list.find((mailbox) => mailbox.role === 'sent')
 
       if (!draftBox || !sentBox) throw new Error('Could not find Drafts or Sent mailbox')
 
@@ -63,22 +80,39 @@ export function useCompose() {
             })),
           ],
         }
+        if (draftId) {
+          draftEmail.textBody = null
+          draftEmail.htmlBody = null
+        }
       } else {
         draftEmail[bodyPartKey] = [{ partId: 'body-1', type: bodyPartType }]
+        if (draftId) {
+          draftEmail.bodyStructure = null
+          draftEmail[bodyPartType === 'text/html' ? 'textBody' : 'htmlBody'] = null
+        }
       }
 
+      const emailIdReference = draftId || '#draft-1'
       const requests = [
         jmapMethodCall('Email/set', {
           accountId,
-          create: {
-            'draft-1': draftEmail,
-          },
+          ...(draftId
+            ? {
+                update: {
+                  [draftId]: draftEmail,
+                },
+              }
+            : {
+                create: {
+                  'draft-1': draftEmail,
+                },
+              }),
         }, '0'),
         jmapMethodCall('EmailSubmission/set', {
           accountId,
           create: {
             'send-1': {
-              emailId: '#draft-1',
+              emailId: emailIdReference,
               identityId,
               ...(sendAt ? { sendAt } : {}),
             },

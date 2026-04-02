@@ -7,6 +7,16 @@ import {
   jmapRequest,
   suppressNewMailNotification,
 } from './queryCacheUtils'
+import type { Mailbox } from '../../types/jmap'
+
+// Type helper for mailbox list response
+interface MailboxGetResult {
+  list: Mailbox[];
+}
+
+function asMailboxGet(data: unknown): MailboxGetResult {
+  return data as MailboxGetResult;
+}
 
 interface SaveDraftParams {
   to?: { name?: string; email: string }[]
@@ -41,8 +51,14 @@ export function useSaveDraft() {
       const mailboxesRes = await jmapClient.request([
         ['Mailbox/get', { accountId, ids: null }, '0'],
       ])
-      const draftBox = mailboxesRes.methodResponses[0][1].list.find(
-        (mailbox: any) => mailbox.role === 'drafts'
+      // Check for JMAP error before accessing data
+      if (mailboxesRes.methodResponses[0][0] === 'error') {
+        const errorData = mailboxesRes.methodResponses[0][1] as { type?: string; description?: string }
+        throw new Error(`Failed to fetch mailboxes: ${errorData.type || 'Unknown error'}`)
+      }
+      const mailboxResult = asMailboxGet(mailboxesRes.methodResponses[0][1])
+      const draftBox = mailboxResult.list.find(
+        (mailbox) => mailbox.role === 'drafts'
       )
 
       if (!draftBox) throw new Error('Could not find Drafts mailbox')

@@ -1,11 +1,21 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, memo } from 'react'
 import { Download, ExternalLink, FileIcon } from 'lucide-react'
 import { jmapClient } from '../api/jmap'
 
-export function AttachmentItem({ attachment }: { attachment: any }) {
+function AttachmentItemComponent({ attachment }: { attachment: any }) {
   const downloadUrl = jmapClient.getBlobUrl(attachment.blobId, attachment.type, attachment.name);
   const isImage = attachment.type.startsWith('image/');
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
+  const revokeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  
+  // Cleanup timeout on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (revokeTimeoutRef.current) {
+        clearTimeout(revokeTimeoutRef.current);
+      }
+    };
+  }, []);
   
   // Fetch image thumbnail with auth header
   useEffect(() => {
@@ -23,7 +33,7 @@ export function AttachmentItem({ attachment }: { attachment: any }) {
           setThumbnailUrl(objectUrl);
         }
       })
-      .catch(() => {});
+      .catch(() => { setThumbnailUrl(null); });
     return () => { cancelled = true; if (objectUrl) URL.revokeObjectURL(objectUrl); };
   }, [downloadUrl, isImage]);
 
@@ -47,7 +57,7 @@ export function AttachmentItem({ attachment }: { attachment: any }) {
       a.click();
       document.body.removeChild(a);
     }
-    setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+    revokeTimeoutRef.current = setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
   };
 
   const handleOpen = async () => {
@@ -87,10 +97,10 @@ export function AttachmentItem({ attachment }: { attachment: any }) {
           {(attachment.size / 1024).toFixed(0)} KB · {attachment.type.split('/')[1]?.toUpperCase() || 'FILE'}
         </div>
       </div>
-      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="flex items-center gap-1 opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 transition-opacity">
         <button 
           onClick={handleDownload}
-          className="p-2 text-[#007AFF] hover:bg-[#F2F2F7] rounded-full transition-colors"
+          className="p-2 text-[#007AFF] hover:bg-[#F2F2F7] rounded-full transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
           title="Download"
           aria-label={`Download ${attachment.name}`}
         >
@@ -98,7 +108,7 @@ export function AttachmentItem({ attachment }: { attachment: any }) {
         </button>
         <button 
           onClick={(e) => { e.stopPropagation(); handleOpen(); }}
-          className="p-2 text-[#6C6C70] hover:bg-[#F2F2F7] rounded-full transition-colors"
+          className="p-2 text-[#6C6C70] hover:bg-[#F2F2F7] rounded-full transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
           title="Open in New Tab"
           aria-label={`Open ${attachment.name} in new tab`}
         >
@@ -107,4 +117,6 @@ export function AttachmentItem({ attachment }: { attachment: any }) {
       </div>
     </div>
   );
-}
+ }
+
+ export const AttachmentItem = memo(AttachmentItemComponent)

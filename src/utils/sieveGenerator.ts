@@ -27,9 +27,9 @@ function collectRequires(rules: SieveRule[]): string[] {
 
     for (const cond of rule.conditions) {
       if (cond.field === 'size') {
-        // :over / :under are built-in relational tests; require relational for portability
+        // :over / :under are built-in size tests; relational extension is optional
+        // but improves portability across servers
         exts.add('relational');
-        exts.add('comparator-i;ascii-numeric');
       }
       if (cond.operator === 'matches') {
         // :matches uses wildcards — part of the base spec, no extra require

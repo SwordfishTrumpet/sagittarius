@@ -280,8 +280,12 @@ export function EmailBodyFrame({ html }: EmailBodyFrameProps) {
     }
   }, [srcDoc])
 
+  // Use srcDoc as key to force iframe remount when content changes.
+  // Browsers don't reliably re-render iframe content when srcDoc attribute
+  // changes on an existing element - this ensures fresh render.
   return (
     <iframe
+      key={srcDoc}
       ref={iframeRef}
       title="Email body"
       sandbox="allow-same-origin allow-popups"

@@ -393,7 +393,7 @@ describe('RFC 8620 — JMAP Core Protocol', () => {
         text: async () => JSON.stringify(mockResponse),
       });
 
-      const methodCalls = [
+      const methodCalls: [string, Record<string, unknown>, string][] = [
         ['Email/query', { accountId: 'account-001', filter: {} }, '0'],
         ['Email/get', { accountId: 'account-001', '#ids': { resultOf: '0', name: 'Email/query', path: '/ids' } }, '1'],
       ];

@@ -1,6 +1,9 @@
 import { QueryClient } from '@tanstack/react-query';
 import { stateManager } from './stateManager';
 import { logger, redactUrl } from '../utils/logger';
+import { createReconnectionStrategy, RECONNECTION_DEFAULTS } from '../utils/reconnectionStrategy';
+import { createStateChangeHandler, type NewMailListener } from '../utils/stateChangeHandler';
+import { sharedNotificationSuppressor } from '../utils/notificationSuppressor';
 
 type StateChangePayload = {
   changed: {
@@ -10,35 +13,22 @@ type StateChangePayload = {
   };
 };
 
-type NewMailListener = () => void;
-
-const BASE_BACKOFF_MS = 1000;
-const MAX_BACKOFF_MS = 60_000;
-
-/**
- * Duration (ms) after a local mutation during which we suppress new-mail
- * notifications.  The server echoes our own changes back as Email state
- * updates — this window prevents those from playing the notification sound.
- */
-const LOCAL_MUTATION_SUPPRESS_MS = 3_000;
-
 class EventSourceManager {
   private es: EventSource | null = null;
   private queryClient: QueryClient | null = null;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-  private reconnectAttempts = 0;
-  private _isConnected = false;
   private url: string | null = null;
   private authToken: string | null = null;
   private newMailListeners: Set<NewMailListener> = new Set();
   private _destroyed = false;
+  private _isConnected = false;
 
-  /**
-   * Timestamp of the last local Email mutation (delete, move, flag, etc.).
-   * While Date.now() − _lastLocalMutation < LOCAL_MUTATION_SUPPRESS_MS,
-   * Email state changes will NOT fire new-mail listeners.
-   */
-  private _lastLocalMutation = 0;
+  private reconnectionStrategy = createReconnectionStrategy({
+    baseDelayMs: RECONNECTION_DEFAULTS.BASE_BACKOFF_MS,
+    maxDelayMs: RECONNECTION_DEFAULTS.MAX_BACKOFF_MS,
+  });
+
+  private stateChangeHandler = createStateChangeHandler(null, { logPrefix: '[EventSource]' });
 
   /**
    * Build the final EventSource URL from the JMAP server template.
@@ -74,7 +64,9 @@ class EventSourceManager {
     this.url = url;
     this.authToken = authToken;
     this.queryClient = queryClient;
-    this.reconnectAttempts = 0;
+    this.reconnectionStrategy.reset();
+    // Update state change handler with the new queryClient
+    this.stateChangeHandler = createStateChangeHandler(queryClient, { logPrefix: '[EventSource]' });
     this.openConnection();
   }
 
@@ -90,7 +82,7 @@ class EventSourceManager {
     es.onopen = () => {
       logger.debug('[EventSource] Connected');
       this._isConnected = true;
-      this.reconnectAttempts = 0;
+      this.reconnectionStrategy.reset();
     };
 
     es.onmessage = (event: MessageEvent) => {
@@ -107,6 +99,14 @@ class EventSourceManager {
       this._isConnected = false;
       es.close();
       this.es = null;
+      
+      // Don't reconnect if we've never successfully connected (likely auth failure)
+      // This prevents infinite reconnect loops when credentials are invalid (401/403)
+      if (this.reconnectionStrategy.attempts === 0) {
+        logger.error('[EventSource] Connection failed on first attempt — possible auth failure. Not reconnecting.');
+        return;
+      }
+      
       this.scheduleReconnect();
     };
   }
@@ -122,66 +122,15 @@ class EventSourceManager {
 
     if (!payload?.changed) return;
 
-    for (const [, typeMap] of Object.entries(payload.changed)) {
-      for (const [dataType, newState] of Object.entries(typeMap)) {
-        const oldState = stateManager.getState(dataType);
-
-        if (oldState === newState) continue; // nothing changed
-
-        logger.debug(`[EventSource] State change: ${dataType} ${oldState} → ${newState}`);
-        stateManager.setState(dataType, newState);
-
-        this.invalidateForType(dataType);
-      }
-    }
-  }
-
-  private invalidateForType(dataType: string): void {
-    const qc = this.queryClient;
-    if (!qc) return;
-
-    switch (dataType) {
-      case 'Email':
-        qc.invalidateQueries({ queryKey: ['threads'] });
-        qc.invalidateQueries({ queryKey: ['emails'] });
-        qc.invalidateQueries({ queryKey: ['emailDetail'] });
-        // Fire new-mail listeners ONLY if no recent local mutation caused this.
-        // Local mutations (delete, move, flag) trigger Email state changes on
-        // the server which echo back — those should NOT play the notification.
-        if (Date.now() - this._lastLocalMutation > LOCAL_MUTATION_SUPPRESS_MS) {
-          this.newMailListeners.forEach((fn) => fn());
-        }
-        break;
-
-      case 'Mailbox':
-        qc.invalidateQueries({ queryKey: ['mailboxes'] });
-        break;
-
-      case 'Thread':
-        qc.invalidateQueries({ queryKey: ['threads'] });
-        break;
-
-      case 'EmailDelivery':
-        qc.invalidateQueries({ queryKey: ['threads'] });
-        // EmailDelivery is always new inbound mail — always notify
-        this.newMailListeners.forEach((fn) => fn());
-        break;
-
-      default:
-        // Unknown type — ignore
-        break;
-    }
+    // Use shared state change handler
+    this.stateChangeHandler.handleStateChange(payload.changed, this.newMailListeners);
   }
 
   private scheduleReconnect(): void {
     if (this._destroyed) return;
 
-    const delay = Math.min(
-      BASE_BACKOFF_MS * Math.pow(2, this.reconnectAttempts),
-      MAX_BACKOFF_MS,
-    );
-    this.reconnectAttempts += 1;
-    logger.debug(`[EventSource] Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts})`);
+    const delay = this.reconnectionStrategy.nextDelay();
+    logger.debug(`[EventSource] Reconnecting in ${delay}ms (attempt ${this.reconnectionStrategy.attempts})`);
 
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null;
@@ -203,6 +152,9 @@ class EventSourceManager {
       this.es = null;
     }
 
+    // Clear auth token from memory after disconnect for security
+    this.authToken = null;
+
     logger.debug('[EventSource] Disconnected');
   }
 
@@ -222,7 +174,7 @@ class EventSourceManager {
    * not trigger the new-mail notification sound.
    */
   suppressNotification(): void {
-    this._lastLocalMutation = Date.now();
+    sharedNotificationSuppressor.suppress();
   }
 }
 

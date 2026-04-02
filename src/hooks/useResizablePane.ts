@@ -82,24 +82,29 @@ export function useResizablePane({
     setIsDragging(true)
     document.body.classList.add('is-resizing')
 
+    // Track if component is still mounted to prevent state updates after unmount
+    let isMounted = true
+
     const onPointerMove = (ev: PointerEvent) => {
+      if (!isMounted) return
       const delta = ev.clientX - dragState.current.startX
       const clamped = Math.min(maxWidth, Math.max(minWidth, dragState.current.startWidth + delta))
       dragState.current.latestWidth = clamped
 
       cancelAnimationFrame(dragState.current.rafId)
       dragState.current.rafId = requestAnimationFrame(() => {
-         setWidthState(clamped)
+        if (isMounted) setWidthState(clamped)
       })
     }
 
     const onPointerUp = () => {
+      isMounted = false
       cancelAnimationFrame(dragState.current.rafId)
       setIsDragging(false)
       document.body.classList.remove('is-resizing')
 
       // Persist final width
-       setWidth(dragState.current.latestWidth)
+      setWidth(dragState.current.latestWidth)
 
       target.removeEventListener('pointermove', onPointerMove)
       target.removeEventListener('pointerup', onPointerUp)
@@ -109,6 +114,18 @@ export function useResizablePane({
     target.addEventListener('pointermove', onPointerMove)
     target.addEventListener('pointerup', onPointerUp)
     target.addEventListener('pointercancel', onPointerUp)
+
+    // Store cleanup function for unmount scenario
+    const cleanup = () => {
+      if (isMounted) {
+        isMounted = false
+        target.removeEventListener('pointermove', onPointerMove)
+        target.removeEventListener('pointerup', onPointerUp)
+        target.removeEventListener('pointercancel', onPointerUp)
+      }
+    }
+    // Attach cleanup to dragState for access during component unmount
+    ;(dragState.current as any).cleanup = cleanup
   }, [width, minWidth, maxWidth, persistWidth, setWidth])
 
   // Safety cleanup: remove body class if component unmounts during drag
@@ -116,6 +133,9 @@ export function useResizablePane({
     return () => {
       document.body.classList.remove('is-resizing')
       cancelAnimationFrame(dragState.current.rafId)
+      // Clean up any orphaned pointer event listeners
+      const cleanup = (dragState.current as any).cleanup
+      if (cleanup) cleanup()
     }
   }, [])
 

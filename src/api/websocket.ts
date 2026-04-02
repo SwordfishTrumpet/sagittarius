@@ -1,7 +1,11 @@
 import type { QueryClient } from '@tanstack/react-query';
 import type { JMAPResponse } from './jmap';
+import type { JMAPStateChange } from '../types/jmap';
 import { stateManager } from './stateManager';
 import { logger, redactUrl } from '../utils/logger';
+import { createReconnectionStrategy, RECONNECTION_DEFAULTS } from '../utils/reconnectionStrategy';
+import { createStateChangeHandler, type NewMailListener } from '../utils/stateChangeHandler';
+import { sharedNotificationSuppressor } from '../utils/notificationSuppressor';
 
 type PendingRequest = {
   resolve: (v: JMAPResponse) => void;
@@ -9,37 +13,25 @@ type PendingRequest = {
   timer: ReturnType<typeof setTimeout>;
 };
 
-type NewMailListener = () => void;
-
 const JMAP_SUBPROTOCOL = 'jmap';
 const REQUEST_TIMEOUT_MS = 30_000;
-const BASE_BACKOFF_MS = 1_000;
-const MAX_BACKOFF_MS = 60_000;
-
-/**
- * Duration (ms) after a local mutation during which we suppress new-mail
- * notifications.  The server echoes our own changes back as Email state
- * updates — this window prevents those from playing the notification sound.
- */
-const LOCAL_MUTATION_SUPPRESS_MS = 3_000;
 
 class WebSocketManager {
   private ws: WebSocket | null = null;
   private pendingRequests: Map<string, PendingRequest> = new Map();
   private queryClient: QueryClient | null = null;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-  private reconnectDelay = BASE_BACKOFF_MS;
   private url: string | null = null;
   private _destroyed = false;
   private _connected = false;
   private newMailListeners: Set<NewMailListener> = new Set();
 
-  /**
-   * Timestamp of the last local Email mutation (delete, move, flag, etc.).
-   * While Date.now() − _lastLocalMutation < LOCAL_MUTATION_SUPPRESS_MS,
-   * Email state changes will NOT fire new-mail listeners.
-   */
-  private _lastLocalMutation = 0;
+  private reconnectionStrategy = createReconnectionStrategy({
+    baseDelayMs: RECONNECTION_DEFAULTS.BASE_BACKOFF_MS,
+    maxDelayMs: RECONNECTION_DEFAULTS.MAX_BACKOFF_MS,
+  });
+
+  private stateChangeHandler = createStateChangeHandler(null, { logPrefix: '[JMAP WebSocket]' });
 
   // ─── Public API ──────────────────────────────────────────────────────────────
 
@@ -56,7 +48,9 @@ class WebSocketManager {
     this._destroyed = false;
     this.url = url;
     this.queryClient = queryClient;
-    this.reconnectDelay = BASE_BACKOFF_MS;
+    this.reconnectionStrategy.reset();
+    // Update state change handler with the new queryClient
+    this.stateChangeHandler = createStateChangeHandler(queryClient, { logPrefix: '[JMAP WebSocket]' });
     this._openConnection();
   }
 
@@ -126,7 +120,7 @@ class WebSocketManager {
       this.reconnectTimer = null;
     }
 
-    // Reject every pending request immediately.
+    // Clear pending requests on connection close to prevent Promise leaks
     for (const [id, pending] of this.pendingRequests) {
       clearTimeout(pending.timer);
       pending.reject(new Error('[JMAP WebSocket] Connection closed'));
@@ -151,7 +145,7 @@ class WebSocketManager {
    * not trigger the new-mail notification sound.
    */
   suppressNotification(): void {
-    this._lastLocalMutation = Date.now();
+    sharedNotificationSuppressor.suppress();
   }
 
   // ─── Private helpers ─────────────────────────────────────────────────────────
@@ -172,7 +166,7 @@ class WebSocketManager {
 
     this.ws.onopen = () => {
       this._connected = true;
-      this.reconnectDelay = BASE_BACKOFF_MS; // reset exponential back-off
+      this.reconnectionStrategy.reset(); // reset exponential back-off
       logger.debug('[JMAP WebSocket] Connected');
     };
 
@@ -189,14 +183,17 @@ class WebSocketManager {
     this.ws.onclose = (event: CloseEvent) => {
       this._connected = false;
       logger.debug(
-        `[JMAP WebSocket] Closed (code=${event.code}, reason=${event.reason || '—'})`,
+        `[JMAP WebSocket] Closed (code=${event.code}, reason=${event.reason || '—'}, clean=${event.wasClean})`,
       );
-      this._scheduleReconnect();
+      // Only schedule reconnect if not a normal close (code 1000) and not destroyed
+      if (!this._destroyed && event.code !== 1000) {
+        this._scheduleReconnect();
+      }
     };
   }
 
   private _handleMessage(raw: string): void {
-    let data: any;
+    let data: unknown;
     try {
       data = JSON.parse(raw);
     } catch (err) {
@@ -204,23 +201,36 @@ class WebSocketManager {
       return;
     }
 
-    if (data['@type'] === 'StateChange') {
+    if (typeof data === 'object' && data !== null && (data as Record<string, unknown>)['@type'] === 'StateChange') {
       // RFC 8887 §4.3 — push notification
-      this._handleStateChange(data);
+      this._handleStateChange(data as JMAPStateChange);
       return;
     }
 
-    if (typeof data.requestId === 'string') {
+    const dataRecord = data as Record<string, unknown>;
+    if (typeof dataRecord.requestId === 'string') {
       // Response to a request we sent (RFC 8887 §4.2)
-      const pending = this.pendingRequests.get(data.requestId);
+      const pending = this.pendingRequests.get(dataRecord.requestId);
       if (pending) {
         clearTimeout(pending.timer);
-        this.pendingRequests.delete(data.requestId);
-        pending.resolve(data as JMAPResponse);
+        this.pendingRequests.delete(dataRecord.requestId);
+        
+        // Check for JMAP error responses in methodResponses and reject if found
+        const response = data as JMAPResponse;
+        if (response.methodResponses) {
+          const errorResponse = response.methodResponses.find(([method]) => method === 'error');
+          if (errorResponse) {
+            const errorData = errorResponse[1] as { type?: string; description?: string };
+            pending.reject(new Error(`JMAP error: ${errorData.type || 'Unknown'} — ${errorData.description || 'No description'}`));
+            return;
+          }
+        }
+        
+        pending.resolve(response);
       } else {
         logger.warn(
           '[JMAP WebSocket] Received response for unknown requestId:',
-          data.requestId,
+          dataRecord.requestId,
         );
       }
       return;
@@ -242,77 +252,25 @@ class WebSocketManager {
    * }
    * ```
    */
-  private _handleStateChange(data: any): void {
-    if (!this.queryClient || !data.changed) return;
-
-    for (const accountId of Object.keys(data.changed)) {
-      const typeMap: Record<string, string> = data.changed[accountId];
-
-      for (const [type, newState] of Object.entries(typeMap)) {
-        const oldState = stateManager.getState(type);
-
-        if (oldState === newState) continue; // nothing actually changed
-
-        logger.debug(
-          `[JMAP WebSocket] State change (account=${accountId}): ${type} ${oldState} → ${newState}`,
-        );
-        stateManager.setState(type, newState);
-        this._invalidateForType(type);
-      }
-    }
-  }
-
-  private _invalidateForType(type: string): void {
-    const qc = this.queryClient;
-    if (!qc) return;
-
-    switch (type) {
-      case 'Email':
-        qc.invalidateQueries({ queryKey: ['threads'] });
-        qc.invalidateQueries({ queryKey: ['emails'] });
-        qc.invalidateQueries({ queryKey: ['emailDetail'] });
-        // Fire new-mail listeners ONLY if no recent local mutation caused this.
-        // Local mutations (delete, move, flag) trigger Email state changes on
-        // the server which echo back — those should NOT play the notification.
-        if (Date.now() - this._lastLocalMutation > LOCAL_MUTATION_SUPPRESS_MS) {
-          this.newMailListeners.forEach((fn) => fn());
-        }
-        break;
-
-      case 'Mailbox':
-        qc.invalidateQueries({ queryKey: ['mailboxes'] });
-        break;
-
-      case 'Thread':
-        qc.invalidateQueries({ queryKey: ['threads'] });
-        break;
-
-      case 'EmailDelivery':
-        qc.invalidateQueries({ queryKey: ['threads'] });
-        // EmailDelivery is always new inbound mail — always notify
-        this.newMailListeners.forEach((fn) => fn());
-        break;
-
-      default:
-        // Unknown / future JMAP type — no-op.
-        break;
-    }
+  private _handleStateChange(data: JMAPStateChange): void {
+    if (!data.changed) return;
+    
+    // Use shared state change handler for consistency with EventSource
+    this.stateChangeHandler.handleStateChange(data.changed, this.newMailListeners);
   }
 
   private _scheduleReconnect(): void {
     if (this._destroyed) return;
 
+    const delay = this.reconnectionStrategy.nextDelay();
     logger.debug(
-      `[JMAP WebSocket] Reconnecting in ${this.reconnectDelay}ms…`,
+      `[JMAP WebSocket] Reconnecting in ${delay}ms…`,
     );
 
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null;
       this._openConnection();
-    }, this.reconnectDelay);
-
-    // Exponential back-off, capped at MAX_BACKOFF_MS.
-    this.reconnectDelay = Math.min(this.reconnectDelay * 2, MAX_BACKOFF_MS);
+    }, delay);
   }
 }
 

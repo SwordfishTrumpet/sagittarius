@@ -5,20 +5,6 @@
 
 import { SearchFilter, ParsedQuery } from '../types/search';
 
-const PATTERNS = {
-  from: /from:(\S+)/g,
-  to: /to:(\S+)/g,
-  cc: /cc:(\S+)/g,
-  subject: /subject:("([^"]+)"|([^\s]+))/g,
-  has_attachment: /has:attachment/g,
-  is_unread: /is:unread/g,
-  is_flagged: /is:flagged/g,
-  is_draft: /is:draft/g,
-  is_answered: /is:answered/g,
-  before: /before:(\d{4}-\d{2}-\d{2})/g,
-  after: /after:(\d{4}-\d{2}-\d{2})/g,
-};
-
 /**
  * Parse a search query string with special syntax
  * Examples:
@@ -90,17 +76,21 @@ export function parseSearchQuery(query: string): ParsedQuery {
     remaining = remaining.replace(/is:answered/i, '').trim();
   }
 
-  // Extract before: (YYYY-MM-DD format)
+  // Extract before: (YYYY-MM-DD format) - parse as UTC to match JMAP expectations
   const beforeMatch = remaining.match(/before:(\d{4}-\d{2}-\d{2})/);
   if (beforeMatch) {
-    filters.before = new Date(beforeMatch[1]);
+    // Create date at end of day in UTC to include all emails before that date
+    const date = new Date(`${beforeMatch[1]}T23:59:59.999Z`);
+    filters.before = date;
     remaining = remaining.replace(beforeMatch[0], '').trim();
   }
 
-  // Extract after: (YYYY-MM-DD format)
+  // Extract after: (YYYY-MM-DD format) - parse as UTC to match JMAP expectations
   const afterMatch = remaining.match(/after:(\d{4}-\d{2}-\d{2})/);
   if (afterMatch) {
-    filters.after = new Date(afterMatch[1]);
+    // Create date at start of day in UTC to include all emails after that date
+    const date = new Date(`${afterMatch[1]}T00:00:00.000Z`);
+    filters.after = date;
     remaining = remaining.replace(afterMatch[0], '').trim();
   }
 

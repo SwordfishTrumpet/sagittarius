@@ -1,59 +1,140 @@
-# Sagittarius
+<p align="center">
+  <img src="https://img.shields.io/badge/JMAP-RFC%208620%20%2F%208621-4A90D9?style=for-the-badge" alt="JMAP RFC 8620/8621">
+  <img src="https://img.shields.io/badge/TypeScript-Strict-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript Strict">
+  <img src="https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React 18">
+  <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="MIT License">
+</p>
 
-A high-performance, server-agnostic **JMAP web client** with the aesthetic and user experience of iCloud Mail. Works with any [RFC 8620](https://datatracker.ietf.org/doc/html/rfc8620) / [RFC 8621](https://datatracker.ietf.org/doc/html/rfc8621) compliant JMAP server.
+<h1 align="center">Sagittarius</h1>
 
-![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
-![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-06B6D4?logo=tailwindcss&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-green)
+<p align="center">
+  <strong>A beautiful, high-performance JMAP web client inspired by iCloud Mail</strong>
+</p>
 
----
-
-## Overview
-
-Sagittarius is a modern email client built entirely on the JMAP standard. It provides a polished three-pane mail interface with glassmorphic design, real-time push notifications, virtual scrolling for large mailboxes, and a rich-text composer -- all running in the browser with zero server-side rendering.
-
-### Key Highlights
-
-- **Standards-first** -- Pure JMAP (RFC 8620/8621) with no proprietary extensions required
-- **Server-agnostic** -- Works with Stalwart, Cyrus, Apache James, or any compliant JMAP server
-- **Real-time** -- EventSource and WebSocket push (RFC 8887) for instant updates
-- **Performant** -- Virtual scrolling handles 10,000+ messages; aggressive caching via TanStack Query
-- **Privacy-aware** -- Remote image blocking, credential redaction in logs, DOMPurify sanitization
+<p align="center">
+  Server-agnostic. Standards-compliant. Privacy-first.
+</p>
 
 ---
 
-## Features
+## Why Sagittarius?
 
-| Category | Details |
-|---|---|
-| **Mail Operations** | Read, compose, reply, reply-all, forward, scheduled send |
-| **Organization** | Folders (CRUD), subfolder hierarchy, drag-and-drop reparenting, flagging, batch selection |
-| **Search** | Real-time JMAP query, advanced filters (`from:`, `to:`, `has:attachment`), search snippets with highlighting |
-| **Threads** | Conversation grouping via `Thread/get`, per-message expand/collapse, reply to specific message |
-| **Composer** | Rich text (Tiptap), identity/alias selection, attachments, message quoting, draft auto-save/recovery, MDN read receipts |
-| **Sync** | Incremental sync via `Email/changes`, EventSource push, WebSocket push, state persistence |
-| **Attachments** | Inline viewing, download, double-click open, drag-and-drop `.eml` import |
-| **Settings** | Vacation/OOO responder, identity management, Sieve filter editor (visual + raw script) |
-| **Advanced** | Email/parse (raw viewer + MIME tree), delivery status tracking, quota display |
-| **UX** | Keyboard shortcuts, filter bar, loading skeletons, toast notifications with undo, responsive pane resizing |
+Most webmail clients are either tied to a specific backend or feel like they were designed in 2005. Sagittarius is different:
+
+- **Pure JMAP** — No proprietary protocols. Works with [Stalwart](https://stalw.art/), [Cyrus](https://www.cyrusimap.org/), [Apache James](https://james.apache.org/), or any RFC 8620/8621-compliant server.
+- **Feels Native** — Glassmorphic three-pane layout, smooth animations, and keyboard-driven workflows that rival desktop apps.
+- **Blazing Fast** — Virtual scrolling handles 10,000+ messages. Aggressive caching and incremental sync keep everything snappy.
+- **Privacy by Default** — Remote images blocked until you approve them. Credentials never leak into logs.
+
+---
+
+## Features at a Glance
+
+### Core Email
+
+| Feature | Description |
+|---------|-------------|
+| **Three-Pane Layout** | Collapsible sidebar, message list, and reading pane with draggable borders |
+| **Threaded Conversations** | Messages grouped by thread with per-message expand/collapse |
+| **Rich Text Composer** | Tiptap-powered editor with formatting, attachments, and identity selection |
+| **Reply / Reply All / Forward** | Smart recipient and subject prefilling with quoted message content |
+| **Scheduled Send** | Queue emails to send at a specific date and time |
+| **Draft Auto-Save** | Never lose a message — drafts persist automatically |
+
+### Organization & Search
+
+| Feature | Description |
+|---------|-------------|
+| **Folder Management** | Create, rename, delete, and nest folders via drag-and-drop |
+| **Batch Operations** | Multi-select with Shift/Cmd+Click, move, delete, or flag in bulk |
+| **Advanced Search** | `from:`, `to:`, `subject:`, `has:attachment` filters with highlighted snippets |
+| **Quick Filters** | One-click filtering for Unread, Flagged, To Me, and Attachments |
+| **Drag & Drop** | Move messages between folders or nest folders visually |
+
+### Real-Time Sync
+
+| Feature | Description |
+|---------|-------------|
+| **Incremental Sync** | `Email/changes` keeps your mailbox current without full reloads |
+| **EventSource Push** | Instant notifications via Server-Sent Events with auto-reconnect |
+| **WebSocket Push** | RFC 8887 JMAP-over-WebSocket for lowest-latency updates |
+| **State Persistence** | Sync state survives page reloads via sessionStorage |
+
+### Privacy & Security
+
+| Feature | Description |
+|---------|-------------|
+| **Remote Image Blocking** | External images and CSS backgrounds blocked by default |
+| **HTML Sanitization** | DOMPurify cleans every message before rendering |
+| **Sandboxed Rendering** | Email bodies render in isolated iframes |
+| **Credential Redaction** | Auth headers scrubbed from all logs |
+| **Trusted URL Validation** | CID blob fetches only send credentials to your JMAP server |
+
+### Attachments & Import
+
+| Feature | Description |
+|---------|-------------|
+| **View & Download** | Preview inline or download any attachment |
+| **Double-Click Open** | Open attachments directly in a new tab |
+| **Drag & Drop Import** | Drop `.eml` files to import via `Email/import` |
+| **Raw Email Viewer** | Inspect headers, MIME structure, and source via `Email/parse` |
+
+### Settings & Automation
+
+| Feature | Description |
+|---------|-------------|
+| **Identity Management** | Create, edit, and delete sending identities |
+| **Vacation Responder** | Configure out-of-office messages with date ranges |
+| **Sieve Filters** | Visual rule editor plus raw script mode with server-side validation |
+| **Quota Display** | See storage usage at a glance in the sidebar |
+
+### Extras
+
+| Feature | Description |
+|---------|-------------|
+| **Read Receipts (MDN)** | Request and send read receipts per RFC 8098 |
+| **Delivery Status** | Track whether sent emails were delivered |
+| **Keyboard Shortcuts** | Navigate, reply, forward, star, delete — all without touching the mouse |
+| **Loading Skeletons** | Smooth shimmer animations during data fetches |
+| **Toast Notifications** | Apple-style alerts with undo support |
+| **WCAG 2.1 AA Accessibility** | Full keyboard navigation, ARIA landmarks, focus traps, and live regions |
+
+---
+
+## Keyboard Shortcuts
+
+| Key | Action |
+|-----|--------|
+| `j` / `k` | Next / Previous message |
+| `Enter` | Open selected message |
+| `r` | Reply |
+| `R` | Reply All |
+| `f` | Forward |
+| `s` | Toggle star |
+| `d` | Delete |
+| `e` | Archive |
+| `/` | Focus search |
+| `Escape` | Clear selection / Close composer |
+| `?` | Show shortcut help |
+| `Cmd/Ctrl + B` | Toggle sidebar |
+| `Cmd/Ctrl + N` | New message |
 
 ---
 
 ## Tech Stack
 
 | Layer | Technology |
-|---|---|
-| Framework | React 18 (Vite) |
-| Language | TypeScript (strict mode) |
-| Styling | Tailwind CSS + Framer Motion |
-| State | React Context + TanStack Query |
-| Editor | Tiptap (rich text) |
-| Virtualization | react-virtuoso |
-| Icons | Lucide React (1.25px stroke) |
-| Sanitization | DOMPurify |
-| Drag & Drop | react-dnd |
-| Notifications | sonner |
+|-------|------------|
+| **Framework** | React 18 (Vite) |
+| **Language** | TypeScript (strict mode) |
+| **Styling** | Tailwind CSS + Framer Motion |
+| **State** | React Context + TanStack Query |
+| **Editor** | Tiptap |
+| **Virtualization** | react-virtuoso |
+| **Icons** | Lucide React |
+| **Sanitization** | DOMPurify |
+| **Drag & Drop** | react-dnd |
+| **Notifications** | sonner |
 
 ---
 
@@ -61,39 +142,29 @@ Sagittarius is a modern email client built entirely on the JMAP standard. It pro
 
 ### Prerequisites
 
-- **Node.js** >= 18
-- **npm** >= 9
-- A running JMAP server (RFC 8620/8621 compliant)
+- Node.js >= 18
+- npm >= 9
+- A JMAP server (RFC 8620/8621 compliant)
 
-### Installation
+### Quick Start
 
 ```bash
-git clone https://github.com/SwordfishTrumpet/sagittarius.git
+# Clone the repository
+git clone https://github.com/AnomalyInnovations/sagittarius.git
 cd sagittarius
+
+# Install dependencies
 npm install
-```
 
-### Configuration
-
-Copy the example environment file and set your JMAP server URL:
-
-```bash
+# Configure your JMAP server
 cp .env.example .env
-```
+# Edit .env and set VITE_JMAP_SERVER=https://your-jmap-server.example.com
 
-Edit `.env`:
-
-```
-VITE_JMAP_SERVER=https://your-jmap-server.example.com
-```
-
-### Development
-
-```bash
+# Start development server
 npm run dev
 ```
 
-The app starts on **http://localhost:8081**. Vite proxies JMAP API requests to your configured server.
+Open **http://localhost:8081** and log in with your JMAP credentials.
 
 ### Production Build
 
@@ -108,78 +179,73 @@ npm run preview
 
 ```
 src/
-  api/           # JMAP client, session management, EventSource & WebSocket push
+  api/           # JMAP client, session, EventSource & WebSocket push
   components/    # UI components (Sidebar, MessageList, EmailReader, Composer, ...)
-    dialogs/     # Modal dialogs (create/rename/delete folder)
+    dialogs/     # Modal dialogs (folder CRUD, email parse, etc.)
     settings/    # Settings panels (identities, vacation, sieve filters)
-  hooks/         # Custom React hooks (useMailboxes, useEmails, useThreads, ...)
-  types/         # TypeScript type definitions
-  utils/         # Helpers (date formatting, HTML sanitization, search parsing, ...)
-  App.tsx        # Main application shell (three-pane layout)
+  hooks/         # Custom hooks (useMailboxes, useEmails, useThreads, ...)
+  types/         # TypeScript definitions
+  utils/         # Helpers (date formatting, sanitization, search parsing, ...)
+  App.tsx        # Main application shell
   main.tsx       # Entry point
 ```
 
 ---
 
-## Keyboard Shortcuts
+## JMAP Capabilities
 
-| Key | Action |
-|-----|--------|
-| `j` / `k` | Navigate messages |
-| `r` | Reply |
-| `R` | Reply All |
-| `f` | Forward |
-| `s` | Toggle star |
-| `d` | Delete |
-| `/` | Focus search |
-| `?` | Show shortcut help |
-| `Cmd+B` | Toggle sidebar |
+Sagittarius uses the following JMAP capabilities:
 
----
+| Capability | Purpose |
+|------------|---------|
+| `urn:ietf:params:jmap:core` | Session bootstrap, request/response |
+| `urn:ietf:params:jmap:mail` | Email, Mailbox, Thread, SearchSnippet |
+| `urn:ietf:params:jmap:submission` | Send email, delivery status |
+| `urn:ietf:params:jmap:vacationresponse` | Out-of-office |
+| `urn:ietf:params:jmap:quota` | Storage quota |
+| `urn:ietf:params:jmap:mdn` | Read receipts |
+| `urn:ietf:params:jmap:blob` | Attachments, email import |
+| `urn:ietf:params:jmap:websocket` | Real-time push (RFC 8887) |
 
-## JMAP Capabilities Used
+Optional/extended capabilities (when available):
 
-Sagittarius leverages the following JMAP capabilities:
-
-- `urn:ietf:params:jmap:core` -- Session, request/response
-- `urn:ietf:params:jmap:mail` -- Email, Mailbox, Thread, SearchSnippet
-- `urn:ietf:params:jmap:submission` -- EmailSubmission with delivery status
-- `urn:ietf:params:jmap:vacationresponse` -- Out-of-office
-- `urn:ietf:params:jmap:quota` -- Quota display
-- `urn:ietf:params:jmap:mdn` -- Read receipts
-- `urn:ietf:params:jmap:blob` -- Attachment upload/download, email import
-- `urn:ietf:params:jmap:websocket` -- Real-time push (RFC 8887)
+| Capability | Purpose |
+|------------|---------|
+| `urn:ietf:params:jmap:sieve` | Server-side mail filtering |
 
 ---
 
-## Mail Rendering Principles
+## Rendering Philosophy
 
-Sagittarius aims to render incoming mail as faithfully as possible **without giving up safety**.
+Sagittarius renders email faithfully **without compromising security**:
 
-- **Sanitize, but do not cosmetically rewrite sender content** -- keep DOMPurify, but avoid trimming `<br>` tags, collapsing whitespace, or stripping sender `white-space` styles.
-- **Preserve sender formatting in an isolated document** -- render sanitized message bodies inside a sandboxed iframe so app-level CSS does not mutate the email layout.
-- **Treat plain text separately** -- escape plain text before wrapping it in `<pre>` so line breaks are preserved without interpreting text as HTML.
-- **Resolve CID images before sanitization** -- inline `cid:` references must be converted to JMAP blob download URLs before DOMPurify runs.
-- **Block remote resources by default** -- external images and CSS background URLs are privacy-sensitive and should remain blocked until the user opts in.
-- **Only send auth headers to trusted JMAP download URLs** -- CID blob fetching must validate the target URL before attaching credentials.
-- **Prefer tests around the rendering pipeline** -- the highest-value coverage is `resolveCidImages`, remote image approval, iframe rendering helpers, and plain-text escaping.
-
-These rules came out of debugging whitespace fidelity, remote image loading, and iframe sandboxing issues in the email reader.
+1. **Sanitize, don't rewrite** — DOMPurify removes dangerous content but preserves sender formatting
+2. **Isolated rendering** — Sandboxed iframes prevent email CSS from affecting the app
+3. **Plain text preserved** — Text emails are escaped and wrapped in `<pre>` to honor whitespace
+4. **CID resolution first** — Inline images are resolved to blob URLs before sanitization
+5. **Remote content blocked** — External images require explicit user approval
+6. **Auth only to trusted URLs** — Credentials are only sent to your configured JMAP server
 
 ---
 
 ## Contributing
 
-Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) before submitting a pull request.
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
 
 ---
 
 ## Security
 
-If you discover a security vulnerability, please follow the instructions in [SECURITY.md](SECURITY.md). Do not open a public issue.
+Found a vulnerability? Please follow the instructions in [SECURITY.md](SECURITY.md). Do not open a public issue.
 
 ---
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+[MIT License](LICENSE) — use it, fork it, make it yours.
+
+---
+
+<p align="center">
+  <sub>Built with coffee, curiosity, and an unhealthy obsession with email protocols.</sub>
+</p>

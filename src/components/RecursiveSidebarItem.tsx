@@ -10,7 +10,7 @@
  * - Inline edit/delete for custom folders (right-click context menu)
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, memo } from 'react';
 import { useDrop, useDrag } from 'react-dnd';
 import { ChevronRight, ChevronDown, MinusCircle } from 'lucide-react';
 import { MailboxNode, getUnreadCountRecursive } from '../utils/mailboxTree';
@@ -435,6 +435,8 @@ function RootDropZone({ onReparent }: { onReparent?: (draggedId: string, newPare
   );
 }
 
+export const MemoizedRecursiveSidebarItem = memo(RecursiveSidebarItem);
+
 export function MailboxTree({
   nodes,
   selectedMailboxId,
@@ -452,7 +454,7 @@ export function MailboxTree({
   return (
     <div role="tree" aria-label="Folders" className="space-y-0.5">
       {nodes.map((node) => (
-        <RecursiveSidebarItem
+        <MemoizedRecursiveSidebarItem
           key={node.id}
           node={node}
           icon={getMailboxIcon(node)}

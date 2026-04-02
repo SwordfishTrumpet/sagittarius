@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { jmapClient } from '../api/jmap';
+import { extractGetResponse } from '../types/jmap';
 
 const SIEVE_CAP = 'urn:ietf:params:jmap:sieve';
 
@@ -36,7 +37,8 @@ export function useSieve() {
       const methodRes = response.methodResponses[0];
       if (!methodRes || methodRes[0] === 'error') return null;
 
-      return (methodRes[1].list ?? []) as SieveScript[];
+      const result = extractGetResponse<SieveScript>(response.methodResponses);
+      return result?.list ?? [];
     },
     enabled: !!accountId,
     staleTime: 5 * 60 * 1000,
@@ -144,7 +146,8 @@ export function useSieveActions() {
       );
       const res = response.methodResponses[0];
       if (res[0] === 'error') {
-        throw new Error(res[1]?.description || 'Validation failed');
+        const errorResult = res[1] as { description?: string } | undefined;
+        throw new Error(errorResult?.description || 'Validation failed');
       }
       // SieveScript/validate returns an empty object on success
       return res[1];

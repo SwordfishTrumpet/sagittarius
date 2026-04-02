@@ -1,4 +1,5 @@
 import Dexie, { type Table } from 'dexie'
+import { logger } from './logger'
 
 export type OfflineCachePolicy = {
   maxAgeMs: number
@@ -150,8 +151,10 @@ export function selectOfflineCacheVictims(
     .reduce((sum, record) => sum + record.approxBytes, 0)
 
   for (const record of remaining) {
-    if (!victims.has(record.cacheKey) && totalBytes <= policy.maxBytes) break
+    // Skip if already marked as victim (previous iteration or over-entries)
     if (victims.has(record.cacheKey)) continue
+    // Stop evicting if we're under the byte limit
+    if (totalBytes <= policy.maxBytes) break
     victims.add(record.cacheKey)
     totalBytes -= record.approxBytes
   }
@@ -205,7 +208,7 @@ async function sweepScope(scope: string, policy: OfflineCachePolicy) {
 function enqueueSweep(scope: string, policy: OfflineCachePolicy) {
   cleanupQueue = cleanupQueue
     .then(() => sweepScope(scope, policy))
-    .catch(() => {})
+    .catch((err) => { logger.debug('Cleanup sweep failed:', err); })
 
   return cleanupQueue
 }

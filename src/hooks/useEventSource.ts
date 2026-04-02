@@ -4,6 +4,7 @@ import { jmapClient } from '../api/jmap';
 import { queryClient } from '../main';
 import { playNotificationSound } from '../utils/notificationSound';
 import { logger } from '../utils/logger';
+import { extractAuthToken } from '../utils/auth';
 
 export interface UseEventSourceResult {
   isConnected: boolean;
@@ -36,9 +37,7 @@ export function useEventSource(enabled: boolean): UseEventSourceResult {
     }
 
     // Strip "Basic " prefix — the token is already base64-encoded
-    const authToken = authHeader.startsWith('Basic ')
-      ? authHeader.slice(6) // already-base64 credentials string
-      : authHeader;
+    const authToken = extractAuthToken(authHeader);
 
     // Connect the singleton manager
     eventSourceManager.connect(url, authToken, queryClient);
@@ -65,7 +64,11 @@ export function useEventSource(enabled: boolean): UseEventSourceResult {
       eventSourceManager.disconnect();
       setIsConnected(false);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // jmapClient is a stable singleton; getEventSourceUrl/getAuthHeader are synchronous
+    // accessors that read from the current session state. Including them would cause
+    // unnecessary reconnects since these method references can change. We only want
+    // to reconnect when `enabled` changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled]);
 
   return { isConnected, hasNewMail, clearNewMail };

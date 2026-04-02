@@ -52,24 +52,24 @@ export function SearchBar({
         <button
           onClick={onHistoryClick}
           disabled={disabled}
-          className="p-1 hover:bg-black/5 rounded-md transition-colors disabled:opacity-50"
+          className="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-black/5 rounded-md transition-colors disabled:opacity-50"
           title="Search History"
           aria-label="Search history"
           type="button"
         >
-          <History className="w-3.5 h-3.5 text-[#8E8E93]" strokeWidth={1.5} />
+          <History className="w-4 h-4 text-[#8E8E93]" strokeWidth={1.5} />
         </button>
 
         {/* Advanced Filter Button */}
         <button
           onClick={onAdvancedClick}
           disabled={disabled}
-          className="p-1 hover:bg-black/5 rounded-md transition-colors disabled:opacity-50"
+          className="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-black/5 rounded-md transition-colors disabled:opacity-50"
           title="Advanced Search"
           aria-label="Advanced search"
           type="button"
         >
-          <Filter className="w-3.5 h-3.5 text-[#007AFF]" strokeWidth={1.5} />
+          <Filter className="w-4 h-4 text-[#007AFF]" strokeWidth={1.5} />
         </button>
 
         {/* Clear Button (only show when input has value) */}
@@ -77,12 +77,12 @@ export function SearchBar({
           <button
             onClick={() => onChange('')}
             disabled={disabled}
-            className="p-0.5 hover:bg-black/5 rounded-full transition-colors disabled:opacity-50"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-black/5 rounded-full transition-colors disabled:opacity-50"
             title="Clear search"
             aria-label="Clear search"
             type="button"
           >
-            <X className="w-3 h-3 text-[#8E8E93]" strokeWidth={2} />
+            <X className="w-4 h-4 text-[#8E8E93]" strokeWidth={2} />
           </button>
         )}
       </div>

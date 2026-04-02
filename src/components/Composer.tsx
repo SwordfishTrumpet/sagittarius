@@ -83,8 +83,21 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
   const shouldPersistDraftRef = useRef(true);
   const latestDraftRef = useRef<ComposerDraft | null>(null);
   const saveDraftTimeoutRef = useRef<number | null>(null);
+  const focusTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useFocusTrap(dialogRef, { isActive: !isMinimized });
+
+  // Cleanup timeouts on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (focusTimeoutRef.current) {
+        clearTimeout(focusTimeoutRef.current);
+      }
+      if (saveDraftTimeoutRef.current !== null) {
+        window.clearTimeout(saveDraftTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Build initial content for the editor from reply/forward
   const initialReplyContent = useMemo(() => {
@@ -128,7 +141,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
       setBodyHtml(editor.getHTML());
       if (initialReplyContent) {
         // Position cursor at start (above quoted text) for replies
-        setTimeout(() => editor.commands.focus('start'), 50);
+        focusTimeoutRef.current = setTimeout(() => editor.commands.focus('start'), 50);
       }
     },
     editorProps: {
@@ -231,6 +244,11 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
     try {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
+        // Validate file size - reject zero-byte files as some mail servers reject them
+        if (file.size === 0) {
+          toast.error(`Cannot upload "${file.name}": file is empty (0 bytes)`);
+          continue;
+        }
         const res = await jmapClient.uploadBlob(file);
         setAttachments(prev => [...prev, {
           blobId: res.blobId,
@@ -367,6 +385,19 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
     }
   }, [draftKey, onClose, hasDraftContent, saveDraftMutation, to, cc, bcc, subject, bodyHtml, attachments, selectedIdentity, draftEmail]);
 
+  // Memoized backdrop click handler
+  const handleBackdropClick = useCallback((e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      handleCloseWithSave();
+    }
+  }, [handleCloseWithSave]);
+
+  // Memoized close button click handler
+  const handleCloseButtonClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    handleCloseWithSave();
+  }, [handleCloseWithSave]);
+
   const setLink = useCallback(() => {
     if (!editor) return;
     const previousUrl = editor.getAttributes('link').href;
@@ -404,7 +435,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
           <button aria-label="Expand composer" onClick={(e) => { e.stopPropagation(); setIsMinimized(false); }} className="p-0.5 hover:bg-black/5 rounded text-[#6C6C70] transition-colors">
             <Maximize2 className="w-3.5 h-3.5" strokeWidth={1.5} />
           </button>
-          <button aria-label="Close and save draft" onClick={(e) => { e.stopPropagation(); handleCloseWithSave(); }} className="p-0.5 hover:bg-black/5 rounded text-[#6C6C70] transition-colors">
+          <button aria-label="Close and save draft" onClick={handleCloseButtonClick} className="p-0.5 hover:bg-black/5 rounded text-[#6C6C70] transition-colors">
             <X className="w-3.5 h-3.5" strokeWidth={1.5} />
           </button>
         </div>
@@ -422,7 +453,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
       aria-modal="true"
       aria-labelledby="composer-title"
       className="fixed inset-0 z-[200] flex items-center justify-center bg-black/30 backdrop-blur-[2px]"
-      onClick={(e) => { if (e.target === e.currentTarget) handleCloseWithSave(); }}
+      onClick={handleBackdropClick}
     >
       <motion.div
         ref={dialogRef}

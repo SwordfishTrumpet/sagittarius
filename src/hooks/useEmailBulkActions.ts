@@ -6,6 +6,7 @@ interface UseEmailBulkActionsParams {
   mailboxes: any[] | undefined
   selectedEmailId: string | null
   selectedEmailIds: Set<string>
+  selectedMailboxId: string | null
   resetSelection: () => void
 }
 
@@ -14,9 +15,25 @@ export function useEmailBulkActions({
   mailboxes,
   selectedEmailId,
   selectedEmailIds,
+  selectedMailboxId,
   resetSelection,
 }: UseEmailBulkActionsParams) {
-  const { moveEmail, moveEmailBulk } = useEmailActions()
+  const { moveEmail, moveEmailBulk, destroyEmail, destroyEmailBulk } = useEmailActions()
+
+  // Helper to find the trash mailbox
+  const findTrashMailbox = () => {
+    return mailboxes?.find((m: any) => 
+      m.role === 'trash' || 
+      m.name.toLowerCase() === 'trash' || 
+      m.name.toLowerCase() === 'deleted items'
+    )
+  }
+
+  // Check if currently viewing the trash mailbox
+  const isInTrashMailbox = () => {
+    const trashBox = findTrashMailbox()
+    return trashBox && selectedMailboxId === trashBox.id
+  }
 
   const restoreMailboxSelection = (
     emailIds: string[],
@@ -84,7 +101,30 @@ export function useEmailBulkActions({
     const idsToDelete = selectedEmailIds.size > 0 ? Array.from(selectedEmailIds) : (selectedEmailId ? [selectedEmailId] : [])
     if (!idsToDelete.length || !mailboxes) return
 
-    const trashBox = mailboxes.find((m: any) => m.role === 'trash' || m.name.toLowerCase() === 'trash' || m.name.toLowerCase() === 'deleted items')
+    // If already in trash, permanently delete
+    if (isInTrashMailbox()) {
+      if (idsToDelete.length === 1) {
+        destroyEmail.mutate({ emailId: idsToDelete[0] })
+      } else {
+        destroyEmailBulk.mutate({ emailIds: idsToDelete })
+      }
+
+      resetSelection()
+
+      toast.success(`${idsToDelete.length} message${idsToDelete.length > 1 ? 's' : ''} permanently deleted`, {
+        action: {
+          label: 'Undo',
+          onClick: () => {
+            // Cannot undo permanent deletion - show info toast
+            toast.info('Cannot undo permanent deletion')
+          }
+        }
+      })
+      return
+    }
+
+    // Otherwise, move to trash
+    const trashBox = findTrashMailbox()
     if (trashBox) {
       const originalMailboxIds = new Map<string, Record<string, boolean>>()
       idsToDelete.forEach(id => {
@@ -111,5 +151,5 @@ export function useEmailBulkActions({
     }
   }
 
-  return { handleArchive, handleDelete, moveEmail, moveEmailBulk }
+  return { handleArchive, handleDelete, moveEmail, moveEmailBulk, destroyEmail, destroyEmailBulk }
 }

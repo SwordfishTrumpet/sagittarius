@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { jmapClient } from '../api/jmap';
+import { extractQueryResponse, extractGetResponse } from '../types/jmap';
 
 export interface EmailSubmission {
   id: string;
@@ -46,7 +47,8 @@ export function useSubmissionStatus(emailId?: string) {
         ],
       ]);
 
-      const ids: string[] = queryResponse.methodResponses[0]?.[1]?.ids ?? [];
+      const queryResult = extractQueryResponse(queryResponse.methodResponses);
+      const ids: string[] = queryResult?.ids ?? [];
       if (ids.length === 0) return [];
 
       // Step 2: fetch the full submission objects
@@ -61,7 +63,8 @@ export function useSubmissionStatus(emailId?: string) {
         ],
       ]);
 
-      return getResponse.methodResponses[0]?.[1]?.list ?? [];
+      const getResult = extractGetResponse<EmailSubmission>(getResponse.methodResponses);
+      return getResult?.list ?? [];
     },
     enabled: !!accountId && !!emailId,
     staleTime: 2 * 60 * 1000,

@@ -1,4 +1,5 @@
 import { useDrop } from 'react-dnd'
+import { memo } from 'react'
 
 export interface SidebarItemProps {
   icon: React.ReactNode
@@ -13,7 +14,7 @@ export interface SidebarItemProps {
   onDrop?: (emailIds: string[]) => void
 }
 
-export function SidebarItem({ icon, label, active = false, count, mailboxId, hasNewMail = false, level = 1, onClick, onContextMenu, onDrop }: SidebarItemProps) {
+function SidebarItemComponent({ icon, label, active = false, count, mailboxId, hasNewMail = false, level = 1, onClick, onContextMenu, onDrop }: SidebarItemProps) {
   const [{ isOver, canDrop }, drop] = useDrop(() => ({
     accept: 'EMAIL',
     canDrop: () => !!mailboxId,
@@ -63,3 +64,5 @@ export function SidebarItem({ icon, label, active = false, count, mailboxId, has
     </div>
   )
 }
+
+export const SidebarItem = memo(SidebarItemComponent)

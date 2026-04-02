@@ -37,22 +37,27 @@ export function useSearchHistory() {
       timestamp: Date.now(),
     };
 
-    // Avoid duplicates: remove if exact query already exists
-    const filtered = history.filter((h) => h.query !== query);
+    // Use functional update to avoid stale closure issues with rapid calls
+    setHistory(prevHistory => {
+      // Avoid duplicates: remove if exact query already exists
+      const filtered = prevHistory.filter((h) => h.query !== query);
 
-    // Add new entry to front and limit to MAX_HISTORY
-    const updated = [newEntry, ...filtered].slice(0, MAX_HISTORY);
-    setHistory(updated);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      // Add new entry to front and limit to MAX_HISTORY
+      const updated = [newEntry, ...filtered].slice(0, MAX_HISTORY);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      return updated;
+    });
   };
 
   /**
    * Remove a specific search from history
    */
   const removeFromHistory = (id: string) => {
-    const updated = history.filter((h) => h.id !== id);
-    setHistory(updated);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    setHistory(prevHistory => {
+      const updated = prevHistory.filter((h) => h.id !== id);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      return updated;
+    });
   };
 
   /**

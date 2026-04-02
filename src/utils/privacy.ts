@@ -65,8 +65,12 @@ export function blockExternalImages(html: string): BlockedImageInfo {
 
     blockedCount += 1;
 
-    const width = img.getAttribute('width') || String(img.width || 120);
-    const height = img.getAttribute('height') || String(img.height || 80);
+    // Use explicit width/height attributes or fallback to default
+    // (DOMParser context returns 0 for img.width/img.height since image isn't loaded)
+    const explicitWidth = img.getAttribute('width');
+    const explicitHeight = img.getAttribute('height');
+    const width = explicitWidth || '120';
+    const height = explicitHeight || '80';
     const style = img.getAttribute('style') || '';
     const stylePrefix = style && !style.trim().endsWith(';') ? `${style};` : style;
 
@@ -78,7 +82,8 @@ export function blockExternalImages(html: string): BlockedImageInfo {
   const styledElements = Array.from(doc.querySelectorAll<HTMLElement>('[style]'));
   styledElements.forEach(el => {
     const style = el.getAttribute('style') || '';
-    if (!/url\s*\(\s*['"]?(?:https?:)?\/\//i.test(style)) return;
+    // Match http://, https://, and protocol-relative URLs (//example.com)
+    if (!/url\s*\(\s*['"]?(?:https?:|\/\/)/i.test(style)) return;
 
     const blocked = style.replace(
       /url\s*\(\s*['"]?((?:https?:)?\/\/[^'")\s]+)['"]?\s*\)/gi,

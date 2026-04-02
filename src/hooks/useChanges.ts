@@ -1,12 +1,33 @@
 import { jmapClient } from '../api/jmap';
 import { stateManager } from '../api/stateManager';
 import { logger } from '../utils/logger';
+import type { Email, Mailbox, Thread, JMAPChangesResponse, JMAPError } from '../types/jmap';
 
-export interface ChangesResult {
-  created: any[];
-  updated: any[];
+// Generic type for items that have an id
+type JMAPItem = Email | Mailbox | Thread;
+
+export interface ChangesResult<T = JMAPItem> {
+  created: T[];
+  updated: T[];
   destroyed: string[];
   newState: string;
+}
+
+// Type helpers for JMAP responses
+interface GetResult<T> {
+  list: T[];
+}
+
+function asChangesResponse(data: unknown): JMAPChangesResponse {
+  return data as JMAPChangesResponse;
+}
+
+function asGetResult<T>(data: unknown): GetResult<T> {
+  return data as GetResult<T>;
+}
+
+function isJMAPError(data: unknown): data is JMAPError {
+  return typeof data === 'object' && data !== null && 'type' in data;
 }
 
 /**
@@ -51,7 +72,7 @@ export async function applyChanges(
 
   // cannotCalculateChanges or any other error → full fetch needed
   if (methodName === 'error') {
-    if (methodResult?.type === 'cannotCalculateChanges') {
+    if (isJMAPError(methodResult) && methodResult.type === 'cannotCalculateChanges') {
       logger.info(`[applyChanges] ${type}: cannotCalculateChanges — falling back to full fetch`);
     } else {
       logger.warn(`[applyChanges] ${type}/changes error:`, methodResult);
@@ -59,25 +80,21 @@ export async function applyChanges(
     return null;
   }
 
+  const changesResult = asChangesResponse(methodResult);
   const {
     created: createdIds = [] as string[],
     updated: updatedIds = [] as string[],
     destroyed: destroyedIds = [] as string[],
     newState,
-  } = methodResult as {
-    created: string[];
-    updated: string[];
-    destroyed: string[];
-    newState: string;
-  };
+  } = changesResult;
 
   // Step 3: fetch data for created + updated IDs
   const idsToFetch = [...createdIds, ...updatedIds];
-  let createdItems: any[] = [];
-  let updatedItems: any[] = [];
+  let createdItems: JMAPItem[] = [];
+  let updatedItems: JMAPItem[] = [];
 
   if (idsToFetch.length > 0) {
-    const getArgs: Record<string, any> = { accountId, ids: idsToFetch };
+    const getArgs: Record<string, unknown> = { accountId, ids: idsToFetch };
     if (properties && properties.length > 0) {
       getArgs.properties = properties;
     }
@@ -99,10 +116,11 @@ export async function applyChanges(
       return null;
     }
 
-    const list: any[] = getResult.list ?? [];
+    const typedResult = asGetResult<JMAPItem>(getResult);
+    const list = typedResult.list ?? [];
     const createdSet = new Set(createdIds);
-    createdItems = list.filter((item: any) => createdSet.has(item.id));
-    updatedItems = list.filter((item: any) => !createdSet.has(item.id));
+    createdItems = list.filter((item) => createdSet.has(item.id));
+    updatedItems = list.filter((item) => !createdSet.has(item.id));
   }
 
   // Step 4: persist the new state
