@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { jmapClient } from '../api/jmap'
+import { logger } from '../utils/logger'
 
 interface EmailBodyFrameProps {
   html: string
@@ -256,8 +257,9 @@ export function EmailBodyFrame({ html }: EmailBodyFrameProps) {
             img.style.opacity = ''
             setHeight()
           })
-          .catch(() => {
+          .catch((err) => {
             if (cancelled) return
+            logger.warn('[EmailBodyFrame] Failed to load CID image:', { src: downloadUrl, error: err })
             img.style.opacity = ''
             setHeight()
           })

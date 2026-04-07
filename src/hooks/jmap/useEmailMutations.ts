@@ -9,6 +9,7 @@ import {
   jmapRequest,
   rollbackQueries,
   suppressNewMailNotification,
+  type QuerySnapshot,
 } from './queryCacheUtils'
 
 export function useEmailActions() {
@@ -78,7 +79,7 @@ export function useEmailActions() {
 
       return { previousEmailDetail, previousThreads, affectedThreadQueryKeys, emailId }
     },
-    onError: (_err, newData, context: { previousEmailDetail?: Email[]; previousThreads?: unknown; affectedThreadQueryKeys?: unknown; emailId?: string } | undefined) => {
+    onError: (_err, newData, context: { previousEmailDetail?: Email[]; previousThreads?: QuerySnapshot; affectedThreadQueryKeys?: (readonly unknown[])[]; emailId?: string } | undefined) => {
       // Rollback to correct cache using captured context
       if (context?.emailId) {
         if (context?.previousEmailDetail) {
@@ -158,7 +159,7 @@ export function useEmailActions() {
 
       return { previousEmailDetail, previousThreads, previousEmails }
     },
-    onError: (_err, _newData, context: { previousEmailDetail?: unknown; previousThreads?: unknown; previousEmails?: unknown } | undefined) => {
+    onError: (_err, _newData, context: { previousEmailDetail?: QuerySnapshot; previousThreads?: QuerySnapshot; previousEmails?: QuerySnapshot } | undefined) => {
       rollbackQueries(queryClient, context?.previousEmailDetail)
       rollbackQueries(queryClient, context?.previousThreads)
       rollbackQueries(queryClient, context?.previousEmails)
@@ -231,7 +232,7 @@ export function useEmailActions() {
 
       return { previousThreads, previousEmails }
     },
-    onError: (_err, _newData, context: { previousThreads?: unknown; previousEmails?: unknown } | undefined) => {
+    onError: (_err, _newData, context: { previousThreads?: QuerySnapshot; previousEmails?: QuerySnapshot } | undefined) => {
       rollbackQueries(queryClient, context?.previousThreads)
       rollbackQueries(queryClient, context?.previousEmails)
     },
@@ -298,7 +299,7 @@ export function useEmailActions() {
 
       return { previousThreads, previousEmails }
     },
-    onError: (_err, _newData, context: { previousThreads?: unknown; previousEmails?: unknown } | undefined) => {
+    onError: (_err, _newData, context: { previousThreads?: QuerySnapshot; previousEmails?: QuerySnapshot } | undefined) => {
       rollbackQueries(queryClient, context?.previousThreads)
       rollbackQueries(queryClient, context?.previousEmails)
     },
@@ -352,7 +353,7 @@ export function useEmailActions() {
 
       return { previousThreads, previousEmails }
     },
-    onError: (_err, _newData, context: { previousThreads?: unknown; previousEmails?: unknown } | undefined) => {
+    onError: (_err, _newData, context: { previousThreads?: QuerySnapshot; previousEmails?: QuerySnapshot } | undefined) => {
       rollbackQueries(queryClient, context?.previousThreads)
       rollbackQueries(queryClient, context?.previousEmails)
     },
@@ -407,7 +408,7 @@ export function useEmailActions() {
 
       return { previousThreads, previousEmails }
     },
-    onError: (_err, _newData, context: { previousThreads?: unknown; previousEmails?: unknown } | undefined) => {
+    onError: (_err, _newData, context: { previousThreads?: QuerySnapshot; previousEmails?: QuerySnapshot } | undefined) => {
       rollbackQueries(queryClient, context?.previousThreads)
       rollbackQueries(queryClient, context?.previousEmails)
     },

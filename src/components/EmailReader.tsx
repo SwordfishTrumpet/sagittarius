@@ -138,6 +138,7 @@ export function EmailReader({
   }, [remoteImageState]);
 
   const handleLoadRemoteImages = (emailId: string) => {
+    logger.info('[EmailReader] Loading remote images for email:', { emailId })
     setRemoteImageState(prev => {
       const next = {
         ...prev,

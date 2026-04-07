@@ -5,6 +5,32 @@ All notable changes to Sagittarius will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Email templates feature — Save and reuse common email formats
+  - Create, edit, delete, and duplicate templates
+  - Templates stored per-account in localStorage
+  - Quick template insertion from composer toolbar
+  - Templates include name, subject, body, and optional default recipients
+- **RFC 9610 JMAP for Contacts** — Complete implementation
+  - Type definitions for AddressBook and ContactCard (RFC 9553 JSContact)
+  - Hooks: `useAddressBooks`, `useContactCards`, `useContactSearch`, `useContactCardQuery`
+  - CRUD operations via `useAddressBookActions` and `useContactCardActions`
+  - Sharing support (RFC 9670) with `AddressBookRights`
+  - 21 new tests for full coverage
+
+### Fixed
+- **BUG 9 (P0):** Calendar event creation now properly initializes with default calendar
+  - Fixed `handleSelectDate()` and `handleNewEvent()` to set `calendarId` from available calendars
+  - Event form now properly initializes start/end times when creating new events
+- **BUG 11 (P1):** FilterBar filtering now triggers immediate refetch
+  - Added query invalidation in `useListFilters` when filters change
+  - Ensures fresh data is fetched when toggling filters (unread, flagged, to me, attachments)
+- Search functionality caching safeguards verified and enhanced
+  - Confirmed `staleTime: 0` ensures refetch on search term changes
+  - Query key properly includes search term for cache isolation
+
 ## [1.0.0] - 2026-04-02
 
 ### Added

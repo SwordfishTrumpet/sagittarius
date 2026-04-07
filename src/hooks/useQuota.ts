@@ -1,39 +1,26 @@
-import { useQuery } from '@tanstack/react-query';
-import { jmapClient } from '../api/jmap';
-import { extractGetResponse } from '../types/jmap';
+import { createJMAPQueryHook } from './jmap/jmapHookFactory';
+import type { Quota } from '../types/jmap';
 
-export interface JMAPQuota {
-  id: string;
-  resourceType: string;
-  used: number;
-  hardLimit: number;
-  warnLimit?: number;
-  softLimit?: number;
-  name?: string;
-  scope?: string;
-  types?: string[];
-}
+const QUOTA_CAP = 'urn:ietf:params:jmap:quotas';
 
-export function useQuota() {
-  const accountId = jmapClient.getPrimaryAccount();
+// Re-export the Quota type for backwards compatibility
+export type JMAPQuota = Quota;
 
-  return useQuery<JMAPQuota | null>({
-    queryKey: ['quota', accountId],
-    queryFn: async () => {
-      if (!jmapClient.hasCapability('urn:ietf:params:jmap:quotas')) return null;
-
-      const response = await jmapClient.request(
-        [['Quota/get', { accountId, ids: null }, '0']],
-        ['urn:ietf:params:jmap:quotas'],
-      );
-
-      const result = extractGetResponse<JMAPQuota>(response.methodResponses);
-      const list: JMAPQuota[] = result?.list ?? [];
-
+/**
+ * Hook to fetch quota information using the JMAP factory.
+ * Returns the storage quota (octets) or the first available quota.
+ */
+export const useQuota = createJMAPQueryHook<Quota | null>(
+  'Quota/get',
+  'quota',
+  {
+    capability: QUOTA_CAP,
+    staleTime: 15 * 60 * 1000, // 15 minutes
+    transform: (response) => {
+      const result = response.methodResponses[0]?.[1] as { list?: Quota[] } | undefined;
+      const list = result?.list ?? [];
       // Prefer octets (storage) quota; fall back to first available
       return list.find((q) => q.resourceType === 'octets') ?? list[0] ?? null;
     },
-    enabled: !!accountId,
-    staleTime: 15 * 60 * 1000,
-  });
-}
+  }
+);

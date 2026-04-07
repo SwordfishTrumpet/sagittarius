@@ -3,24 +3,24 @@ import { eventSourceManager } from './eventSource';
 import { webSocketManager } from './websocket';
 import { stateManager } from './stateManager';
 import type { QueryClient } from '@tanstack/react-query';
-import type { JMAPMethodCall, JMAPAccount } from '../types/jmap';
+import type { JMAPMethodCall, JMAPAccount, JMAPSession } from '../types/jmap';
+import type {
+  BlobCapability,
+  BlobCopyRequest,
+  BlobCopyResponse,
+  BlobLookupRequest,
+  BlobLookupResponse,
+  DataSourceObject,
+  BlobUploadResponse,
+  BlobGetRequest,
+  BlobGetResponse,
+  CreatedBlob,
+} from '../types/jmap-blob';
+import type { ContactsCapability } from '../types/jmap-contacts';
+import type { CalendarsCapability } from '../types/jmap-calendar';
 
-export interface JMAPSession {
-  username: string;
-  apiUrl: string;
-  downloadUrl: string;
-  uploadUrl: string;
-  eventSourceUrl: string;
-  webSocketUrl?: string;
-  accounts: {
-    [accountId: string]: JMAPAccount;
-  };
-  primaryAccounts: {
-    [capability: string]: string;
-  };
-  capabilities: Record<string, unknown>;
-  state: string;
-}
+// Re-export JMAPSession from types for backward compatibility
+export type { JMAPSession } from '../types/jmap';
 
 export interface JMAPResponse {
   methodResponses: [string, unknown, string][];
@@ -112,7 +112,7 @@ class JMAPClient {
       apiUrl: toRelative(session.apiUrl),
       downloadUrl: toRelative(session.downloadUrl),
       uploadUrl: toRelative(session.uploadUrl),
-      eventSourceUrl: toRelative(session.eventSourceUrl),
+      ...(session.eventSourceUrl ? { eventSourceUrl: toRelative(session.eventSourceUrl) } : {}),
       ...(session.webSocketUrl ? { webSocketUrl: toRelative(session.webSocketUrl) } : {}),
     };
   }
@@ -147,6 +147,12 @@ class JMAPClient {
       logger.debug(`[JMAP Auth Success] Session:`, JSON.stringify(session, null, 2));
       logger.debug(`[JMAP Auth] primaryAccounts keys:`, Object.keys(session.primaryAccounts || {}));
       logger.debug(`[JMAP Auth] accounts keys:`, Object.keys(session.accounts || {}));
+      
+      // TEMP: Production diagnostic logging
+      logger.error(`[JMAP Session Debug] accounts type: ${typeof session.accounts}, isArray: ${Array.isArray(session.accounts)}`);
+      logger.error(`[JMAP Session Debug] accounts value: ${JSON.stringify(session.accounts)}`);
+      logger.error(`[JMAP Session Debug] primaryAccounts value: ${JSON.stringify(session.primaryAccounts)}`);
+      
       this.session = this.rewriteSessionUrls(session);
       this.authHeader = authHeader;
 
@@ -166,6 +172,16 @@ class JMAPClient {
   async request(methodCalls: JMAPMethodCall[], extraCapabilities?: string[], signal?: AbortSignal): Promise<JMAPResponse> {
     if (!this.session || !this.authHeader) {
       throw new Error('Not authenticated');
+    }
+
+    // Validate that all method calls have valid accountIds
+    for (const call of methodCalls) {
+      const tupleCall = call as [string, Record<string, unknown>, string];
+      const params = tupleCall[1];
+      if (!params || !params.accountId) {
+        logger.error('[JMAP Error] Method call missing accountId:', tupleCall[0]);
+        throw new Error(`JMAP ${tupleCall[0]} requires accountId`);
+      }
     }
 
     const defaultCapabilities = [
@@ -207,7 +223,8 @@ class JMAPClient {
       if (!response.ok) {
         const errorText = await response.text();
         logger.error(`[JMAP Error ${requestId}] HTTP ${response.status}`);
-        logger.debug(`[JMAP Error ${requestId}] Response:`, errorText);
+        logger.error(`[JMAP Error ${requestId}] Request body:`, JSON.stringify(body, null, 2));
+        logger.error(`[JMAP Error ${requestId}] Response:`, errorText.substring(0, 1000));
         throw new Error(`JMAP request failed: ${response.status}`);
       }
 
@@ -238,7 +255,13 @@ class JMAPClient {
   }
 
   getWebSocketUrl(): string | null {
-    const rawUrl = this.session?.webSocketUrl;
+    // Check both locations per RFC 8887:
+    // 1. Root level `webSocketUrl` (some servers)
+    // 2. Capability object `capabilities["urn:ietf:params:jmap:websocket"].url` (Stalwart, RFC 8887 §2)
+    const rawUrl =
+      this.session?.webSocketUrl ??
+      (this.session?.capabilities?.['urn:ietf:params:jmap:websocket'] as { url?: string } | undefined)?.url;
+
     if (!rawUrl) return null;
 
     if (/^wss?:\/\//i.test(rawUrl)) {
@@ -318,30 +341,346 @@ class JMAPClient {
   }
 
   getPrimaryAccount(capability?: string): string | null {
-    if (!this.session?.primaryAccounts) return null;
+    if (!this.session) return null;
 
-    // Try exact capability match first
     const cap = capability || 'urn:ietf:params:jmap:mail';
-    if (this.session.primaryAccounts[cap]) {
+
+    // Try exact capability match in primaryAccounts first
+    if (this.session.primaryAccounts?.[cap]) {
       return this.session.primaryAccounts[cap];
     }
 
-    // Fallback: try any mail-related capability
-    for (const key of Object.keys(this.session.primaryAccounts)) {
-      if (key.includes('mail')) {
-        return this.session.primaryAccounts[key];
+    // Fallback: try any mail-related capability in primaryAccounts
+    if (this.session.primaryAccounts) {
+      for (const key of Object.keys(this.session.primaryAccounts)) {
+        if (key.includes('mail')) {
+          return this.session.primaryAccounts[key];
+        }
+      }
+
+      // Try first available in primaryAccounts
+      const primaryKeys = Object.keys(this.session.primaryAccounts);
+      if (primaryKeys.length > 0) {
+        return this.session.primaryAccounts[primaryKeys[0]];
       }
     }
 
-    // Last resort: return the first available account
-    const keys = Object.keys(this.session.primaryAccounts);
-    if (keys.length > 0) {
-      return this.session.primaryAccounts[keys[0]];
+    // Fallback: search session.accounts for an account with the required capability
+    // This handles servers where primaryAccounts is empty but accounts is populated
+    if (this.session.accounts) {
+      for (const [accountId, account] of Object.entries(this.session.accounts)) {
+        if (account.accountCapabilities?.[cap]) {
+          logger.debug(`Found account ${accountId} via accountCapabilities fallback for ${cap}`);
+          return accountId;
+        }
+      }
+
+      // Try any mail-related capability in accounts
+      for (const [accountId, account] of Object.entries(this.session.accounts)) {
+        for (const capKey of Object.keys(account.accountCapabilities || {})) {
+          if (capKey.includes('mail')) {
+            logger.debug(`Found account ${accountId} via mail capability fallback: ${capKey}`);
+            return accountId;
+          }
+        }
+      }
+
+      // Last resort: return first account if any exist
+      const accountIds = Object.keys(this.session.accounts);
+      if (accountIds.length > 0) {
+        logger.debug(`Using first available account ${accountIds[0]} as fallback`);
+        return accountIds[0];
+      }
     }
 
     // Log clear error for debugging - returning null maintains backward compatibility
-    logger.error(`No JMAP account found. Missing capability: ${cap}. Available: ${Object.keys(this.session.capabilities || {}).join(', ')}`);
+    logger.error(`No JMAP account found. Missing capability: ${cap}. Available capabilities: ${Object.keys(this.session.capabilities || {}).join(', ')}. Accounts: ${Object.keys(this.session.accounts || {}).join(', ')}`);
     return null;
+  }
+
+  // ============ RFC 9404 Blob Management Methods ============
+
+  /**
+   * Check if the server supports RFC 9404 Blob Management
+   */
+  hasBlobCapability(): boolean {
+    return this.hasCapability('urn:ietf:params:jmap:blob');
+  }
+
+  /**
+   * Get the blob capability configuration for the primary account
+   */
+  getBlobCapability(): BlobCapability | null {
+    return this.getAccountCapability('urn:ietf:params:jmap:blob') as BlobCapability | null;
+  }
+
+  /**
+   * Blob/copy - Copy blobs from one account to another per RFC 8620
+   * Requires urn:ietf:params:jmap:core capability
+   */
+  async copyBlobs(fromAccountId: string, blobIds: string[], toAccountId?: string): Promise<BlobCopyResponse> {
+    if (!this.session || !this.authHeader) {
+      throw new Error('Not authenticated');
+    }
+
+    const targetAccountId = toAccountId ?? this.getPrimaryAccount();
+    if (!targetAccountId) {
+      throw new Error('No target account specified');
+    }
+
+    const request: BlobCopyRequest = {
+      accountId: targetAccountId,
+      fromAccountId,
+      ids: blobIds,
+    };
+
+    const response = await this.request(
+      [['Blob/copy', request, 'copyBlobs0']],
+      ['urn:ietf:params:jmap:core']
+    );
+
+    const methodRes = response.methodResponses[0];
+    if (!methodRes || methodRes[0] === 'error') {
+      const error = methodRes?.[1] as { description?: string } | undefined;
+      throw new Error(error?.description || 'Blob/copy failed');
+    }
+
+    return methodRes[1] as BlobCopyResponse;
+  }
+
+  /**
+   * Blob/lookup - Find objects that reference specific blobs per RFC 9404
+   * Requires urn:ietf:params:jmap:blob capability
+   */
+  async lookupBlobs(blobIds: string[], typeNames: string[], accountId?: string): Promise<BlobLookupResponse> {
+    if (!this.hasBlobCapability()) {
+      throw new Error('Server does not support RFC 9404 Blob Management');
+    }
+
+    const targetAccountId = accountId ?? this.getPrimaryAccount();
+    if (!targetAccountId) {
+      throw new Error('No account specified');
+    }
+
+    // Validate type names against supported types
+    const blobCap = this.getBlobCapability();
+    if (blobCap?.supportedTypeNames?.length) {
+      const unsupportedTypes = typeNames.filter(t => !blobCap.supportedTypeNames.includes(t));
+      if (unsupportedTypes.length > 0) {
+        throw new Error(`Unsupported type names for Blob/lookup: ${unsupportedTypes.join(', ')}`);
+      }
+    }
+
+    const request: BlobLookupRequest = {
+      accountId: targetAccountId,
+      typeNames,
+      ids: blobIds,
+    };
+
+    const response = await this.request(
+      [['Blob/lookup', request, 'lookupBlobs0']],
+      ['urn:ietf:params:jmap:blob']
+    );
+
+    const methodRes = response.methodResponses[0];
+    if (!methodRes || methodRes[0] === 'error') {
+      const error = methodRes?.[1] as { description?: string; type?: string } | undefined;
+      throw new Error(error?.description || error?.type || 'Blob/lookup failed');
+    }
+
+    return methodRes[1] as BlobLookupResponse;
+  }
+
+  /**
+   * Blob/upload - Create blobs from data sources per RFC 9404
+   * Requires urn:ietf:params:jmap:blob capability
+   */
+  async uploadBlobData(
+    uploads: Record<string, { data: DataSourceObject[]; type?: string | null }>,
+    accountId?: string
+  ): Promise<BlobUploadResponse> {
+    if (!this.hasBlobCapability()) {
+      throw new Error('Server does not support RFC 9404 Blob Management');
+    }
+
+    const targetAccountId = accountId ?? this.getPrimaryAccount();
+    if (!targetAccountId) {
+      throw new Error('No account specified');
+    }
+
+    // Validate maxDataSources limit
+    const blobCap = this.getBlobCapability();
+    if (blobCap?.maxDataSources) {
+      for (const [id, upload] of Object.entries(uploads)) {
+        if (upload.data.length > blobCap.maxDataSources) {
+          throw new Error(
+            `Upload "${id}" exceeds maxDataSources limit (${blobCap.maxDataSources})`
+          );
+        }
+      }
+    }
+
+    const response = await this.request(
+      [['Blob/upload', { accountId: targetAccountId, create: uploads }, 'uploadBlobs0']],
+      ['urn:ietf:params:jmap:blob']
+    );
+
+    const methodRes = response.methodResponses[0];
+    if (!methodRes || methodRes[0] === 'error') {
+      const error = methodRes?.[1] as { description?: string } | undefined;
+      throw new Error(error?.description || 'Blob/upload failed');
+    }
+
+    return methodRes[1] as BlobUploadResponse;
+  }
+
+  /**
+   * Blob/get - Fetch blob data per RFC 9404
+   * Requires urn:ietf:params:jmap:blob capability
+   */
+  async getBlobData(
+    blobIds: string[],
+    options: {
+      properties?: string[];
+      offset?: number;
+      length?: number;
+      accountId?: string;
+    } = {}
+  ): Promise<BlobGetResponse> {
+    if (!this.hasBlobCapability()) {
+      throw new Error('Server does not support RFC 9404 Blob Management');
+    }
+
+    const targetAccountId = options.accountId ?? this.getPrimaryAccount();
+    if (!targetAccountId) {
+      throw new Error('No account specified');
+    }
+
+    const request: BlobGetRequest = {
+      accountId: targetAccountId,
+      ids: blobIds,
+      ...(options.properties && { properties: options.properties }),
+      ...(options.offset !== undefined && { offset: options.offset }),
+      ...(options.length !== undefined && { length: options.length }),
+    };
+
+    const response = await this.request(
+      [['Blob/get', request, 'getBlobs0']],
+      ['urn:ietf:params:jmap:blob']
+    );
+
+    const methodRes = response.methodResponses[0];
+    if (!methodRes || methodRes[0] === 'error') {
+      const error = methodRes?.[1] as { description?: string } | undefined;
+      throw new Error(error?.description || 'Blob/get failed');
+    }
+
+    return methodRes[1] as BlobGetResponse;
+  }
+
+  /**
+   * Convenience method: Create a blob from text content
+   * Uses Blob/upload with data:asText source
+   */
+  async createBlobFromText(
+    content: string,
+    type: string | null = null,
+    accountId?: string
+  ): Promise<CreatedBlob> {
+    const result = await this.uploadBlobData(
+      {
+        blob: {
+          data: [{ 'data:asText': content }],
+          type,
+        },
+      },
+      accountId
+    );
+
+    if (result.notCreated?.blob) {
+      throw new Error(
+        result.notCreated.blob.description || `Failed to create blob: ${result.notCreated.blob.type}`
+      );
+    }
+
+    const created = result.created?.blob;
+    if (!created) {
+      throw new Error('Blob creation returned no result');
+    }
+
+    return created;
+  }
+
+  /**
+   * Convenience method: Create a blob from base64 content
+   * Uses Blob/upload with data:asBase64 source
+   */
+  async createBlobFromBase64(
+    base64Content: string,
+    type: string | null = null,
+    accountId?: string
+  ): Promise<CreatedBlob> {
+    const result = await this.uploadBlobData(
+      {
+        blob: {
+          data: [{ 'data:asBase64': base64Content }],
+          type,
+        },
+      },
+      accountId
+    );
+
+    if (result.notCreated?.blob) {
+      throw new Error(
+        result.notCreated.blob.description || `Failed to create blob: ${result.notCreated.blob.type}`
+      );
+    }
+
+    const created = result.created?.blob;
+    if (!created) {
+      throw new Error('Blob creation returned no result');
+    }
+
+    return created;
+  }
+
+  // ============ RFC 9610 JMAP Contacts Methods ============
+
+  /**
+   * Check if the server supports RFC 9610 JMAP Contacts
+   */
+  hasContactsCapability(): boolean {
+    return this.hasCapability('urn:ietf:params:jmap:contacts');
+  }
+
+  /**
+   * Get the contacts capability configuration for the primary account
+   */
+  getContactsCapability(): ContactsCapability | null {
+    return this.getAccountCapability('urn:ietf:params:jmap:contacts') as ContactsCapability | null;
+  }
+
+  // ============ RFC 8984 JSCalendar Methods ============
+
+  /**
+   * Check if the server supports RFC 8984 JSCalendar
+   */
+  hasCalendarCapability(): boolean {
+    return this.hasCapability('urn:ietf:params:jmap:calendars');
+  }
+
+  /**
+   * Check if the server supports RFC 8984 CalendarEvents
+   */
+  hasCalendarEventCapability(): boolean {
+    return this.hasCapability('urn:ietf:params:jmap:calendarEvents');
+  }
+
+  /**
+   * Get the calendar capability configuration for the primary account
+   */
+  getCalendarCapability(): CalendarsCapability | null {
+    return this.getAccountCapability('urn:ietf:params:jmap:calendars') as CalendarsCapability | null;
   }
 }
 

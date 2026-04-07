@@ -1,4 +1,5 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 
 export interface ListFilter {
   id: string
@@ -22,11 +23,12 @@ interface UseListFiltersReturn {
 
 /**
  * Available list filters with their JMAP filter conditions.
+ * Note: "toMe" is populated dynamically with userEmail at runtime.
  */
 export const AVAILABLE_FILTERS: ListFilter[] = [
   { id: 'unread', label: 'Unread', jmapCondition: { notHasKeyword: '$seen' } },
   { id: 'flagged', label: 'Flagged', jmapCondition: { hasKeyword: '$flagged' } },
-  { id: 'toMe', label: 'To Me', jmapCondition: { to: [] } }, // to condition populated dynamically
+  { id: 'toMe', label: 'To Me', jmapCondition: {} }, // to condition populated dynamically with userEmail
   { id: 'attachments', label: 'Attachments', jmapCondition: { hasAttachment: true } },
 ]
 
@@ -35,8 +37,10 @@ export const AVAILABLE_FILTERS: ListFilter[] = [
  * Handles filter toggling, building JMAP filter conditions, and UI state.
  */
 export function useListFilters({ userEmail }: UseListFiltersOptions): UseListFiltersReturn {
+  const queryClient = useQueryClient()
   const [activeListFilters, setActiveListFilters] = useState<Set<string>>(new Set())
   const [showFilterBar, setShowFilterBarState] = useState(false)
+  const previousFiltersRef = useRef<Set<string>>(new Set())
 
   const toggleFilter = useCallback((filterId: string) => {
     setActiveListFilters(prev => {
@@ -62,6 +66,24 @@ export function useListFilters({ userEmail }: UseListFiltersOptions): UseListFil
     setActiveListFilters(new Set())
   }, [])
 
+  // Invalidate threads query when filters change
+  useEffect(() => {
+    const previous = previousFiltersRef.current
+    const current = activeListFilters
+    
+    // Check if filters actually changed
+    const filtersChanged = 
+      previous.size !== current.size ||
+      [...previous].some(id => !current.has(id)) ||
+      [...current].some(id => !previous.has(id))
+    
+    if (filtersChanged) {
+      // Invalidate threads queries to force refetch with new filters
+      queryClient.invalidateQueries({ queryKey: ['threads'] })
+      previousFiltersRef.current = new Set(current)
+    }
+  }, [activeListFilters, queryClient])
+
   // Build JMAP filter from active quick filters
   const quickJMAPFilter = useMemo(() => {
     if (activeListFilters.size === 0) return undefined
@@ -75,7 +97,8 @@ export function useListFilters({ userEmail }: UseListFiltersOptions): UseListFil
       conditions.push({ hasKeyword: '$flagged' })
     }
     if (activeListFilters.has('toMe') && userEmail) {
-      conditions.push({ to: [{ email: userEmail }] })
+      // RFC 8621 §4.4.1: "to" filter is a String that the server matches against
+      conditions.push({ to: userEmail })
     }
     if (activeListFilters.has('attachments')) {
       conditions.push({ hasAttachment: true })

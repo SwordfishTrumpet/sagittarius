@@ -21,9 +21,24 @@ function buildWebSocketUrl(rawUrl: string, authToken: string): string {
    *   a revocable session token, so it must never be logged unredacted.
    * - The local proxy reads `access_token` from the request URL and forwards
    *   the upstream request with an Authorization header.
+   * 
+   * CSP COMPATIBILITY:
+   * - The JMAP session returns a WebSocket URL pointing to the JMAP server.
+   * - We rewrite this to use the same origin (current hostname) so CSP
+   *   can stay strict with just 'self' for connect-src.
+   * - The server proxies WebSocket connections to the actual JMAP backend.
    */
-  const separator = rawUrl.includes('?') ? '&' : '?';
-  return `${rawUrl}${separator}access_token=${encodeURIComponent(authToken)}`;
+  
+  // Parse the JMAP WebSocket URL to get the path
+  const parsed = new URL(rawUrl);
+  
+  // Rewrite to use the same origin (current page's host), but preserve the path
+  // This ensures CSP 'self' allows the connection
+  const currentProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const sameOriginUrl = `${currentProtocol}//${window.location.host}${parsed.pathname}`;
+  
+  const separator = sameOriginUrl.includes('?') ? '&' : '?';
+  return `${sameOriginUrl}${separator}access_token=${encodeURIComponent(authToken)}`;
 }
 
 export function useWebSocket(enabled: boolean): UseWebSocketResult {
@@ -61,9 +76,18 @@ export function useWebSocket(enabled: boolean): UseWebSocketResult {
       playNotificationSound();
     });
 
+    // Subscribe to connection state changes for immediate updates
+    const unsubscribeConnectionState = webSocketManager.onConnectionStateChange((connected) => {
+      logger.debug('[useWebSocket] Connection state changed:', connected);
+      isConnectedRef.current = connected;
+      setIsConnected(connected);
+    });
+
+    // Also poll periodically as a fallback in case callbacks are missed
     const pollInterval = setInterval(() => {
       const connected = webSocketManager.isConnected();
       if (connected !== isConnectedRef.current) {
+        logger.debug('[useWebSocket] Connection state changed (poll):', connected);
         isConnectedRef.current = connected;
         setIsConnected(connected);
       }
@@ -72,6 +96,7 @@ export function useWebSocket(enabled: boolean): UseWebSocketResult {
     return () => {
       clearInterval(pollInterval);
       unsubscribeNewMail();
+      unsubscribeConnectionState();
       webSocketManager.disconnect();
       setIsConnected(false);
     };

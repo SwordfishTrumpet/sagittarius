@@ -1,6 +1,7 @@
 import { QueryClient } from '@tanstack/react-query'
 import { jmapClient } from '../../api/jmap'
 import { sharedNotificationSuppressor } from '../../utils/notificationSuppressor'
+import type { Mailbox } from '../../types/jmap'
 
 export type JMAPRequestCall<TArgs extends Record<string, unknown> = Record<string, unknown>> = [
   method: string,
@@ -31,15 +32,20 @@ export function invalidateMailboxQueries(queryClient: QueryClient) {
   queryClient.invalidateQueries({ queryKey: ['mailboxes'] })
 }
 
-export function rollbackQueries(queryClient: QueryClient, snapshots: unknown) {
+// Type for query snapshots from getQueriesData
+export type QuerySnapshot<T = unknown> = [queryKey: readonly unknown[], data: T][]
+
+export function rollbackQueries<T>(queryClient: QueryClient, snapshots: QuerySnapshot<T> | null | undefined) {
   if (snapshots && Array.isArray(snapshots)) {
     snapshots.forEach(([queryKey, data]) => {
-      queryClient.setQueryData(queryKey as unknown[], data)
+      if (queryKey) {
+        queryClient.setQueryData(queryKey, data)
+      }
     })
   }
 }
 
-export function rollbackMailboxes(queryClient: QueryClient, accountId: string | null, previous: any) {
+export function rollbackMailboxes(queryClient: QueryClient, accountId: string | null, previous: Mailbox[] | undefined) {
   if (previous) {
     queryClient.setQueryData(['mailboxes', accountId], previous)
   }

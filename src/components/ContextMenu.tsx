@@ -51,12 +51,22 @@ export function ContextMenu({ items, x, y, onClose }: ContextMenuProps) {
     if (!item.submenu || item.submenu.length === 0) return;
 
     const rect = (button || itemRefs.current[index])?.getBoundingClientRect();
-    if (!rect) return;
-
-    setSubmenuPos({
-      top: rect.top - (menuRef.current?.getBoundingClientRect().top || 0),
-      left: rect.right - (menuRef.current?.getBoundingClientRect().left || 0),
-    });
+    const menuRect = menuRef.current?.getBoundingClientRect();
+    
+    // If we have a rect, position relative to the item; otherwise use menu position as fallback
+    if (rect && menuRect) {
+      setSubmenuPos({
+        top: rect.top - menuRect.top,
+        left: rect.right - menuRect.left,
+      });
+    } else if (menuRect) {
+      // Fallback: position at menu top with some offset based on index
+      setSubmenuPos({
+        top: index * 40, // Approximate item height
+        left: menuRect.width,
+      });
+    }
+    // If no positioning available, still show submenu at default position
     setActiveSubmenu(item.id);
     setActiveSubmenuIndex(0);
   };

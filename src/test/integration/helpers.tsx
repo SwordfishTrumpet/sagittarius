@@ -28,28 +28,36 @@ const hoisted = vi.hoisted(() => ({
   toastError: vi.fn(),
 }))
 
-function createMotionComponent(tag = 'div') {
-  return forwardRef<any, any>(({ children, ...props }, ref) =>
-    React.createElement(tag, { ...props, ref }, children),
+vi.mock('framer-motion', async () => {
+  const { forwardRef, createElement } = await import('react')
+  
+  // Helper to create stable motion components
+  const createMotion = (tag: string) => forwardRef<any, any>(({ children, ...props }, ref) =>
+    createElement(tag, { ...props, ref }, children),
   )
-}
-
-vi.mock('sonner', () => ({
-  Toaster: () => null,
-  toast: {
-    success: hoisted.toastSuccess,
-    error: hoisted.toastError,
-  },
-}))
-
-vi.mock('framer-motion', () => {
-  const motionProxy = new Proxy({}, {
-    get: (_target, key) => createMotionComponent(String(key)),
-  })
+  
+  // Create all components upfront so they're stable across renders
+  const motionComponents = {
+    div: createMotion('div'),
+    span: createMotion('span'),
+    button: createMotion('button'),
+    nav: createMotion('nav'),
+    aside: createMotion('aside'),
+    main: createMotion('main'),
+    section: createMotion('section'),
+    header: createMotion('header'),
+    footer: createMotion('footer'),
+    ul: createMotion('ul'),
+    li: createMotion('li'),
+    form: createMotion('form'),
+    input: createMotion('input'),
+    textarea: createMotion('textarea'),
+    p: createMotion('p'),
+  }
 
   return {
     AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-    motion: motionProxy,
+    motion: motionComponents,
   }
 })
 

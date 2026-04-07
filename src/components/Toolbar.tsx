@@ -17,6 +17,7 @@ export interface ToolbarProps {
   onToggleFlag: () => void
   onArchive: () => void
   onDelete: () => void
+  onMarkUnread?: () => void
   onToggleMoreMenu: () => void
   onViewSource: (blobId: string) => void
   onCloseMoreMenu: () => void
@@ -36,6 +37,7 @@ export function Toolbar({
   onToggleFlag,
   onArchive,
   onDelete,
+  onMarkUnread,
   onToggleMoreMenu,
   onViewSource,
   onCloseMoreMenu,
@@ -115,7 +117,10 @@ export function Toolbar({
               View Source
             </button>
             <button
-              onClick={() => { onCloseMoreMenu(); }}
+              onClick={() => {
+                onMarkUnread?.();
+                onCloseMoreMenu();
+              }}
               role="menuitem"
               className="flex items-center gap-3 w-full px-4 py-2 text-[13px] text-[#1C1C1E] hover:bg-[#F2F2F7] transition-colors"
             >

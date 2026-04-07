@@ -1,7 +1,30 @@
 import { within } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+import * as React from 'react'
+import { useCompose } from '../../hooks/jmap/useCompose'
+import { useIdentities } from '../../hooks/jmap/useIdentities'
 import { makeEmailDetail, makeEmailList, makeIdentityList, makeMailboxList, makeSession, makeThreadList, wrapMethodResponse } from '../fixtures/jmap'
 import { jsonResponse, renderApp, respondWith, storeAuthenticatedSession } from './helpers'
+
+// Mock Composer with simplified version for testing
+vi.mock('../../components/Composer', () => {
+  return {
+    Composer: ({ onClose, draftEmail }: { onClose: () => void; draftEmail?: any }) => {
+      const [to, setTo] = React.useState(draftEmail?.to?.map((r: any) => r.email).join(', ') || '')
+      const [subject, setSubject] = React.useState(draftEmail?.subject || '')
+      const [body, setBody] = React.useState(draftEmail?.bodyValues?.['body-1']?.value || '')
+
+      return (
+        <div role="dialog" aria-label="Compose dialog">
+          <input aria-label="To" value={to} onChange={(e) => setTo(e.target.value)} />
+          <input aria-label="Subject" value={subject} onChange={(e) => setSubject(e.target.value)} />
+          <textarea aria-label="Message body" value={body} onChange={(e) => setBody(e.target.value)} />
+          <button onClick={onClose}>Close</button>
+        </div>
+      )
+    },
+  }
+})
 
 describe('draft reopen flow', () => {
   it('opens a draft from the Drafts mailbox in the composer', async () => {
@@ -50,7 +73,7 @@ describe('draft reopen flow', () => {
       jsonResponse({ methodResponses: [wrapMethodResponse('Thread/get', makeThreadList([draftDetail]))], sessionState: 'draft-detail-thread-state' }, { methodCalls: ['Thread/get'] }),
       jsonResponse({ methodResponses: [wrapMethodResponse('Email/get', { accountId: 'account-001', state: 'draft-detail-state', list: [draftDetail], notFound: [] })], sessionState: 'draft-detail-state' }, { methodCalls: ['Email/get'] }),
       // Extra Email/get for fetchEmailWithBody when double-clicking to reopen draft
-      jsonResponse({ methodResponses: [wrapMethodResponse('Email/get', { accountId: 'account-001', state: 'draft-reopen-state', list: [draftDetail], notFound: [] })], sessionState: 'draft-reopen-state' }),
+      jsonResponse({ methodResponses: [wrapMethodResponse('Email/get', { accountId: 'account-001', state: 'draft-reopen-state', list: [draftDetail], notFound: [] })], sessionState: 'draft-reopen-state' }, { methodCalls: ['Email/get'] }),
     ])
 
     const { user, screen } = renderApp()
@@ -58,11 +81,11 @@ describe('draft reopen flow', () => {
     await screen.findByRole('treeitem', { name: 'Drafts' })
     await user.click(screen.getByRole('treeitem', { name: 'Drafts' }))
 
-    const draftOption = await screen.findByLabelText(/Saved draft/)
-    // Double-click on the option itself (not the text inside) to trigger draft open
+    // Wait for the draft to appear in the message list
+    // The aria-label format is: "sender, subject, date" e.g., "User Example, Saved draft, Jan 1"
+    const draftOption = await screen.findByLabelText(/User Example, Saved draft/)
+    // Use user.dblClick for proper event handling with React's async updates
     await user.dblClick(draftOption)
-    // Wait for the async operation and React re-render
-    await new Promise(resolve => setTimeout(resolve, 500))
 
     const dialog = await screen.findByRole('dialog')
     expect(within(dialog).getByDisplayValue('friend@example.com')).toBeInTheDocument()

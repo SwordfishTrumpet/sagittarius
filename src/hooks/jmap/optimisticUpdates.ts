@@ -1,9 +1,9 @@
 import type { QueryClient } from '@tanstack/react-query';
-import { suppressNewMailNotification, rollbackQueries } from './queryCacheUtils';
+import { suppressNewMailNotification, rollbackQueries, type QuerySnapshot } from './queryCacheUtils';
 import type { Email } from '../../types/jmap';
 
 export interface OptimisticUpdateContext {
-  previousData: [unknown, unknown][];
+  previousData: QuerySnapshot[];
   queryKeys: string[][];
 }
 
@@ -29,7 +29,7 @@ export async function performOptimisticEmailUpdate<TData>({
   applyPatch,
   shouldPatch = () => true,
   onBeforeUpdate,
-}: OptimisticEmailUpdateOptions<TData>): Promise<{ previousSnapshots: [unknown, unknown][][] }> {
+}: OptimisticEmailUpdateOptions<TData>): Promise<{ previousSnapshots: QuerySnapshot[] }> {
   // Suppress notifications for local mutations
   suppressNewMailNotification();
 
@@ -44,7 +44,7 @@ export async function performOptimisticEmailUpdate<TData>({
   }
 
   // Capture previous snapshots
-  const previousSnapshots: [unknown, unknown][][] = [];
+  const previousSnapshots: QuerySnapshot[] = [];
 
   // Apply optimistic updates
   for (const baseKey of queryKeys) {
@@ -67,10 +67,10 @@ export async function performOptimisticEmailUpdate<TData>({
  */
 export function rollbackOptimisticUpdates(
   queryClient: QueryClient,
-  snapshots: [unknown, unknown][][] | undefined,
+  snapshots: QuerySnapshot[] | undefined,
 ): void {
   if (!snapshots) return;
-  snapshots.forEach((snapshot) => rollbackQueries(queryClient, snapshot as [unknown, unknown][]));
+  snapshots.forEach((snapshot) => rollbackQueries(queryClient, snapshot));
 }
 
 /**
@@ -99,7 +99,7 @@ export function createEmailOptimisticHandlers<TVariables>(options: {
       const allCancelKeys = [...queryKeys, ...extraCancelKeys];
 
       // Capture previous data BEFORE applying optimistic update (for correct rollback)
-      const previousData: [unknown, unknown][][] = [];
+      const previousData: QuerySnapshot[] = [];
       for (const key of queryKeys) {
         previousData.push(queryClient.getQueriesData({ queryKey: key }));
       }
@@ -119,7 +119,7 @@ export function createEmailOptimisticHandlers<TVariables>(options: {
       return { previousData, queryKeys };
     },
 
-    onError: (_err: unknown, _vars: TVariables, context: { previousData?: [unknown, unknown][][] } | undefined) => {
+    onError: (_err: unknown, _vars: TVariables, context: { previousData?: QuerySnapshot[] } | undefined) => {
       if (context?.previousData) {
         rollbackOptimisticUpdates(queryClient, context.previousData);
       }

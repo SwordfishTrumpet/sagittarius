@@ -67,8 +67,12 @@ export function useResizablePane({
   }, [clampWidth, persistWidth])
 
   const adjustWidth = useCallback((delta: number) => {
-    setWidth(width + delta)
-  }, [setWidth, width])
+    setWidthState(prev => {
+      const newWidth = clampWidth(prev + delta)
+      persistWidth(newWidth)
+      return newWidth
+    })
+  }, [clampWidth, persistWidth])
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     e.preventDefault()

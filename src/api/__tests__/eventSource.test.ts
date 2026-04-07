@@ -169,4 +169,34 @@ describe('eventSourceManager', () => {
 
     expect(MockEventSource.instances).toHaveLength(2)
   })
+
+  it('reconnects even when first connection attempt fails (regression test for attempts===0 bug)', () => {
+    vi.useFakeTimers()
+    const qc = { invalidateQueries: vi.fn() } as unknown as QueryClient
+
+    // First connection attempt
+    eventSourceManager.connect(
+      '/jmap/eventsource/?types={types}&closeafter={closeafter}&ping={ping}',
+      'token',
+      qc,
+    )
+
+    expect(MockEventSource.instances).toHaveLength(1)
+    const firstInstance = MockEventSource.instances[0]
+
+    // Simulate first connection failure (e.g., 401 auth error on first attempt)
+    // This previously would block ALL reconnection attempts due to attempts===0 check
+    firstInstance.onerror?.(new Event('error'))
+
+    // Should still reconnect even though this was the first attempt (attempts was 0)
+    vi.advanceTimersByTime(1000)
+    expect(MockEventSource.instances).toHaveLength(2)
+
+    // Verify exponential backoff: second reconnect should take 2000ms
+    const secondInstance = MockEventSource.instances[1]
+    secondInstance.onerror?.(new Event('error'))
+
+    vi.advanceTimersByTime(2000)
+    expect(MockEventSource.instances).toHaveLength(3)
+  })
 })

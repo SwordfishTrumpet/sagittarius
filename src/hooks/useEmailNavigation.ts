@@ -1,7 +1,8 @@
 import { useState, useCallback } from 'react'
+import type { Email } from '../types/jmap'
 
 interface UseEmailNavigationOptions {
-  emails: any[] | undefined
+  emails: Email[] | undefined
   currentEmailId: string | null
   onSelectEmail: (emailId: string, threadId: string | null) => void
 }
@@ -30,7 +31,7 @@ export function useEmailNavigation({
 
     // Find currently selected email index using currentEmailId
     const currentIndex = currentEmailId
-      ? emails.findIndex((e: any) => e.id === currentEmailId)
+      ? emails.findIndex((e: Email) => e.id === currentEmailId)
       : -1
 
     // Return early if current email not found in list
@@ -49,7 +50,7 @@ export function useEmailNavigation({
     if (!emails || emails.length === 0) return
 
     const currentIndex = currentEmailId
-      ? emails.findIndex((e: any) => e.id === currentEmailId)
+      ? emails.findIndex((e: Email) => e.id === currentEmailId)
       : -1
 
     // Return early if current email not found in list
@@ -65,7 +66,7 @@ export function useEmailNavigation({
   }, [emails, currentEmailId, onSelectEmail])
 
   const navigateToEmail = useCallback((emailId: string) => {
-    const email = emails?.find((e: any) => e.id === emailId)
+    const email = emails?.find((e: Email) => e.id === emailId)
     if (email) {
       onSelectEmail(emailId, email.threadId || null)
       setScrollToEmailId(emailId)

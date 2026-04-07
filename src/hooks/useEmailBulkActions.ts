@@ -1,9 +1,10 @@
 import { toast } from 'sonner'
 import { useEmailActions } from './jmap/useEmailMutations'
+import type { Email, Mailbox } from '../types/jmap'
 
 interface UseEmailBulkActionsParams {
-  emails: any[] | undefined
-  mailboxes: any[] | undefined
+  emails: Email[] | undefined
+  mailboxes: Mailbox[] | undefined
   selectedEmailId: string | null
   selectedEmailIds: Set<string>
   selectedMailboxId: string | null
@@ -22,7 +23,7 @@ export function useEmailBulkActions({
 
   // Helper to find the trash mailbox
   const findTrashMailbox = () => {
-    return mailboxes?.find((m: any) => 
+    return mailboxes?.find((m: Mailbox) => 
       m.role === 'trash' || 
       m.name.toLowerCase() === 'trash' || 
       m.name.toLowerCase() === 'deleted items'
@@ -70,11 +71,11 @@ export function useEmailBulkActions({
     const idsToArchive = selectedEmailIds.size > 0 ? Array.from(selectedEmailIds) : (selectedEmailId ? [selectedEmailId] : [])
     if (!idsToArchive.length || !mailboxes) return
 
-    const archiveBox = mailboxes.find((m: any) => m.role === 'archive' || m.name.toLowerCase() === 'archive')
+    const archiveBox = mailboxes.find((m: Mailbox) => m.role === 'archive' || m.name.toLowerCase() === 'archive')
     if (archiveBox) {
       const originalMailboxIds = new Map<string, Record<string, boolean>>()
       idsToArchive.forEach(id => {
-        const email = emails?.find((e: any) => e.id === id)
+        const email = emails?.find((e: Email) => e.id === id)
         if (email?.mailboxIds) {
           originalMailboxIds.set(id, email.mailboxIds)
         }
@@ -128,7 +129,7 @@ export function useEmailBulkActions({
     if (trashBox) {
       const originalMailboxIds = new Map<string, Record<string, boolean>>()
       idsToDelete.forEach(id => {
-        const email = emails?.find((e: any) => e.id === id)
+        const email = emails?.find((e: Email) => e.id === id)
         if (email?.mailboxIds) {
           originalMailboxIds.set(id, email.mailboxIds)
         }

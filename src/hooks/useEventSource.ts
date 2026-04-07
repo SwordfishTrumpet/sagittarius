@@ -40,6 +40,7 @@ export function useEventSource(enabled: boolean): UseEventSourceResult {
     const authToken = extractAuthToken(authHeader);
 
     // Connect the singleton manager
+    logger.debug('[useEventSource] Connecting to', url);
     eventSourceManager.connect(url, authToken, queryClient);
 
     // Subscribe to new-mail notifications
@@ -48,11 +49,19 @@ export function useEventSource(enabled: boolean): UseEventSourceResult {
       playNotificationSound();
     });
 
-    // Poll the connection state so the hook surface reflects live status.
+    // Subscribe to connection state changes for immediate updates
+    const unsubscribeConnectionState = eventSourceManager.onConnectionStateChange((connected) => {
+      logger.debug('[useEventSource] Connection state changed:', connected);
+      isConnectedRef.current = connected;
+      setIsConnected(connected);
+    });
+
+    // Poll the connection state as a fallback in case callbacks are missed.
     // EventSource doesn't expose a "connected" event on its own.
     const pollInterval = setInterval(() => {
       const connected = eventSourceManager.isConnected();
       if (connected !== isConnectedRef.current) {
+        logger.debug('[useEventSource] Connection state changed (poll):', connected);
         isConnectedRef.current = connected;
         setIsConnected(connected);
       }
@@ -61,6 +70,7 @@ export function useEventSource(enabled: boolean): UseEventSourceResult {
     return () => {
       clearInterval(pollInterval);
       unsubscribeNewMail();
+      unsubscribeConnectionState();
       eventSourceManager.disconnect();
       setIsConnected(false);
     };

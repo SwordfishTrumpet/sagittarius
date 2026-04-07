@@ -38,7 +38,13 @@
     "lint": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "test:fast": "vitest run --reporter=dot",
+    "test:ci": "CI=true vitest run --reporter=dot",
+    "test:sequential": "vitest run --pool=vmThreads --poolOptions.threads.singleThread=true",
+    "test:debug": "vitest run --reporter=verbose --pool=vmThreads --poolOptions.threads.singleThread=true",
+    "benchmark": "tsx src/test/performance/index.ts",
+    "benchmark:quick": "tsx src/test/performance/index.ts --quick"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.0.0",
@@ -77,6 +83,7 @@
     "jsdom": "^24.1.3",
     "postcss": "^8.4.35",
     "tailwindcss": "^3.4.1",
+    "tsx": "^4.7.0",
     "typescript": "^5.2.2",
     "vite": "5.4.11",
     "vitest": "^2.1.9",

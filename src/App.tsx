@@ -30,11 +30,15 @@ import { Sidebar } from './components/Sidebar'
 import { ConnectionStatusBadge } from './components/ConnectionStatusBadge'
 import { MessageListHeader } from './components/MessageListHeader'
 import { LiveRegion } from './components/accessible/LiveRegion'
+import { CalendarView } from './components/CalendarView'
+import { ContactsView } from './components/ContactsView'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { formatMessageDate } from './utils/dateFormat'
 import { useNetworkStatus } from './hooks/useNetworkStatus'
 import { useOfflineSyncQueue } from './hooks/useOfflineSyncQueue'
 import { usePushConnection } from './hooks/usePushConnection'
+import { useAppUpdateChecker } from './hooks/useAppUpdateChecker'
+import type { Mailbox, Email } from './types/jmap'
 
 // Extracted state hooks
 import { useEmailSelection } from './hooks/useEmailSelection'
@@ -53,6 +57,11 @@ function App() {
   const [rawViewerBlobId, setRawViewerBlobId] = useState<string | null>(null)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [showShortcutsHelp, setShowShortcutsHelp] = useState(false)
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false)
+  const [isContactsOpen, setIsContactsOpen] = useState(false)
+
+  // Check for app updates periodically
+  useAppUpdateChecker()
 
   // Mobile detection and navigation
   const isMobile = useIsMobile()
@@ -112,6 +121,13 @@ function App() {
   const handleToggleFlag = useCallback((emailId: string, flagged: boolean) => {
     updateKeywords.mutate({ emailId, keywords: { '$flagged': !flagged } })
   }, [updateKeywords])
+
+  // Handler for marking email as unread
+  const handleMarkUnread = useCallback(() => {
+    if (selectedEmailId) {
+      updateKeywords.mutate({ emailId: selectedEmailId, keywords: { '$seen': false } })
+    }
+  }, [selectedEmailId, updateKeywords])
 
   // Sidebar state
   const {
@@ -284,7 +300,7 @@ function App() {
   // Auto-select inbox on first load
   useEffect(() => {
     if (mailboxes && !selectedMailboxId) {
-      const inbox = mailboxes.find((m: any) => m.role === 'inbox' || (!m.role && m.name.toLowerCase() === 'inbox')) || mailboxes[0]
+      const inbox = mailboxes.find((m: Mailbox) => m.role === 'inbox' || (!m.role && m.name.toLowerCase() === 'inbox')) || mailboxes[0]
       if (inbox) setSelectedMailboxId(inbox.id)
     }
   }, [mailboxes, selectedMailboxId])
@@ -308,7 +324,7 @@ function App() {
       setLiveAnnouncement('Loading email...')
       return
     }
-    const fullEmail = threadEmails?.find((e: any) => e.id === selectedEmailId)
+    const fullEmail = threadEmails?.find((e: Email) => e.id === selectedEmailId)
     if (fullEmail) {
       const sender = fullEmail.from?.[0]?.name || fullEmail.from?.[0]?.email || 'unknown sender'
       setLiveAnnouncement(`Email from ${sender} loaded`)
@@ -340,7 +356,7 @@ function App() {
 
   // Selected email detail for reader
   const selectedEmailDetail = useMemo(() => {
-    return threadEmails?.find((e: any) => e.id === selectedEmailId) || threadEmails?.[threadEmails.length - 1]
+    return threadEmails?.find((e: Email) => e.id === selectedEmailId) || threadEmails?.[threadEmails.length - 1]
   }, [threadEmails, selectedEmailId])
 
   // Memoized handler for toggling flag on the currently selected email
@@ -441,6 +457,8 @@ function App() {
           onReorderMailbox={handleMailboxReorder}
           onReparentMailbox={handleMailboxReparent}
           onOpenSettings={() => setIsSettingsOpen(true)}
+          onOpenCalendar={() => setIsCalendarOpen(true)}
+          onOpenContacts={() => setIsContactsOpen(true)}
           resetSelection={resetSelection}
           setSelectedMailboxId={setSelectedMailboxId}
           setSelectedFolderId={setSelectedFolderId}
@@ -468,7 +486,7 @@ function App() {
             title={
               selectedMailboxId === 'all' ? 'All Mail' :
               selectedMailboxId === 'flagged' ? 'Flagged' :
-              mailboxes?.find((m: any) => m.id === selectedMailboxId)?.name || 'Messages'
+              mailboxes?.find((m: Mailbox) => m.id === selectedMailboxId)?.name || 'Messages'
             }
             isSidebarCollapsed={isSidebarCollapsed}
             isMobile={isMobile}
@@ -542,6 +560,7 @@ function App() {
               onToggleFlag={handleToggleSelectedFlag}
               onArchive={handleArchive}
               onDelete={handleDelete}
+              onMarkUnread={handleMarkUnread}
               onToggleMoreMenu={() => setMoreMenuOpen(!moreMenuOpen)}
               onViewSource={(blobId) => setRawViewerBlobId(blobId)}
               onCloseMoreMenu={() => setMoreMenuOpen(false)}
@@ -573,6 +592,12 @@ function App() {
         <FolderDialogsUI />
         <ErrorBoundary>
           <Settings isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+        </ErrorBoundary>
+        <ErrorBoundary>
+          <CalendarView isOpen={isCalendarOpen} onClose={() => setIsCalendarOpen(false)} />
+        </ErrorBoundary>
+        <ErrorBoundary>
+          <ContactsView isOpen={isContactsOpen} onClose={() => setIsContactsOpen(false)} />
         </ErrorBoundary>
         {!isMobile && <KeyboardShortcutsHelp isOpen={showShortcutsHelp} onClose={() => setShowShortcutsHelp(false)} />}
         {selectedMailboxId && selectedMailboxId !== 'all' && selectedMailboxId !== 'flagged' && (
