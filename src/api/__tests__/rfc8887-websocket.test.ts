@@ -428,4 +428,129 @@ describe('RFC 8887 — JMAP over WebSocket', () => {
       webSocketManager.disconnect();
     });
   });
+
+  // =========================================================================
+  // Reconnection Behavior
+  // =========================================================================
+  describe('Reconnection Behavior', () => {
+    it('should reconnect after connection closes with non-1000 code', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      const { webSocketManager } = await import('../websocket');
+
+      webSocketManager.connect('wss://mail.example.com/jmap/ws', 'jmap', mockQueryClient);
+      await vi.waitFor(() => expect(capturedWs?.readyState).toBe(MockWebSocket.OPEN));
+
+      const firstWs = capturedWs;
+      expect(firstWs).not.toBeNull();
+
+      // Simulate connection close with error code (not clean close 1000)
+      firstWs!.onclose?.({
+        code: 1006, // Abnormal closure
+        reason: 'Connection lost',
+        wasClean: false,
+      } as CloseEvent);
+
+      // Should not be connected anymore
+      expect(webSocketManager.isConnected()).toBe(false);
+
+      // Advance timers to trigger reconnection (1000ms base delay)
+      await vi.advanceTimersByTimeAsync(1000);
+
+      // A new WebSocket should have been created
+      expect(capturedWs).not.toBe(firstWs);
+      expect(capturedWs?.readyState).toBe(MockWebSocket.OPEN);
+      expect(webSocketManager.isConnected()).toBe(true);
+
+      webSocketManager.disconnect();
+      vi.useRealTimers();
+    });
+
+    it('should use exponential backoff for reconnection attempts', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      const { createReconnectionStrategy } = await import('../../utils/reconnectionStrategy');
+      
+      // Create a strategy to verify backoff timing
+      const strategy = createReconnectionStrategy({
+        baseDelayMs: 1000,
+        maxDelayMs: 60000,
+      });
+
+      // First delay should be 1000ms
+      const firstDelay = strategy.nextDelay();
+      expect(firstDelay).toBe(1000);
+      expect(strategy.attempts).toBe(1);
+
+      // Second delay should be 2000ms (doubled)
+      const secondDelay = strategy.nextDelay();
+      expect(secondDelay).toBe(2000);
+      expect(strategy.attempts).toBe(2);
+
+      // Third delay should be 4000ms
+      const thirdDelay = strategy.nextDelay();
+      expect(thirdDelay).toBe(4000);
+      expect(strategy.attempts).toBe(3);
+
+      // Reset should return to initial state
+      strategy.reset();
+      expect(strategy.attempts).toBe(0);
+      const resetDelay = strategy.nextDelay();
+      expect(resetDelay).toBe(1000);
+
+      vi.useRealTimers();
+    });
+
+    it('should NOT reconnect after clean close (code 1000)', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      const { webSocketManager } = await import('../websocket');
+
+      webSocketManager.connect('wss://mail.example.com/jmap/ws', 'jmap', mockQueryClient);
+      await vi.waitFor(() => expect(capturedWs?.readyState).toBe(MockWebSocket.OPEN));
+
+      const firstWs = capturedWs;
+
+      // Simulate clean close (code 1000 = normal closure)
+      firstWs!.onclose?.({
+        code: 1000,
+        reason: 'Normal closure',
+        wasClean: true,
+      } as CloseEvent);
+
+      // Should not reconnect after clean close
+      await vi.advanceTimersByTimeAsync(5000);
+
+      // No new WebSocket should have been created
+      expect(capturedWs).toBe(firstWs);
+      expect(webSocketManager.isConnected()).toBe(false);
+
+      vi.useRealTimers();
+    });
+
+    it('should reset backoff after successful connection', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      const { createReconnectionStrategy } = await import('../../utils/reconnectionStrategy');
+      
+      const strategy = createReconnectionStrategy({
+        baseDelayMs: 1000,
+        maxDelayMs: 60000,
+      });
+
+      // First delay
+      expect(strategy.nextDelay()).toBe(1000);
+      expect(strategy.attempts).toBe(1);
+
+      // Second delay (doubled)
+      expect(strategy.nextDelay()).toBe(2000);
+      expect(strategy.attempts).toBe(2);
+
+      // Reset on successful connection
+      strategy.reset();
+      expect(strategy.attempts).toBe(0);
+
+      // After reset, should start at base delay again
+      expect(strategy.nextDelay()).toBe(1000);
+      expect(strategy.attempts).toBe(1);
+
+      vi.useRealTimers();
+    });
+  });
 });

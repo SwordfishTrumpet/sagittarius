@@ -87,7 +87,10 @@ export function useCompose() {
               ...(sendAt ? { sendAt } : {}),
             },
           },
-          onSuccessUpdateEmail: {
+          // Per RFC 8621 Section 7.5: When sendAt is specified, the email is queued
+          // for later delivery. onSuccessUpdateEmail should NOT be applied immediately
+          // for scheduled sends - the email should stay in Drafts until send time.
+          onSuccessUpdateEmail: sendAt ? undefined : {
             '#send-1': {
               [`mailboxIds/${draftBox.id}`]: null,
               [`mailboxIds/${sentBox.id}`]: true,
@@ -119,6 +122,11 @@ export function useCompose() {
         if (result.notCreated) {
           const firstError = Object.values(result.notCreated)[0] as any
           throw new Error(`Failed to create: ${firstError?.type || 'Unknown error'}`)
+        }
+        // Check for notUpdated errors from onSuccessUpdateEmail patch
+        if (result.notUpdated) {
+          const firstError = Object.values(result.notUpdated)[0] as any
+          throw new Error(`Failed to move email to Sent: ${firstError?.type || 'Unknown error'}`)
         }
       }
 

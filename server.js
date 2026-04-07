@@ -13,6 +13,7 @@
 import express from 'express';
 import compression from 'compression';
 import { createProxyMiddleware } from 'http-proxy-middleware';
+import httpProxy from 'http-proxy';
 import { fileURLToPath } from 'url';
 import path from 'path';
 
@@ -20,6 +21,22 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = parseInt(process.env.PORT || '8081', 10);
 const JMAP_SERVER = process.env.JMAP_SERVER || 'http://localhost:8080';
 const AUTH_TOKEN_RE = /^[A-Za-z0-9+/=]+$/;
+
+// Compute WebSocket target from JMAP_SERVER
+let JMAP_WS_SERVER = JMAP_SERVER;
+if (JMAP_SERVER.startsWith('http://')) {
+  JMAP_WS_SERVER = 'ws://' + JMAP_SERVER.slice(7);
+} else if (JMAP_SERVER.startsWith('https://')) {
+  JMAP_WS_SERVER = 'wss://' + JMAP_SERVER.slice(8);
+}
+
+// Create a raw http-proxy instance for SSE (bypasses Express buffering)
+// selfHandleResponse: true means we manually handle the response (to flush headers immediately)
+const sseProxy = httpProxy.createProxyServer({
+  target: JMAP_SERVER,
+  changeOrigin: true,
+  selfHandleResponse: true, // We handle piping ourselves to flush headers immediately
+});
 
 const app = express();
 
@@ -49,10 +66,27 @@ function attachBasicAuthFromAccessToken(proxyReq, url) {
 app.disable('x-powered-by');
 
 // ── Compression (gzip/brotli) ───────────────────────────────────────
-app.use(compression());
+// Skip compression for all JMAP endpoints - the proxy handles streaming
+// responses and compression can interfere with SSE/WebSocket
+app.use(compression({
+  filter: (req, res) => {
+    const url = req.originalUrl || req.url || '';
+    // Don't compress any JMAP endpoints (session, queries, SSE, etc.)
+    if (url.startsWith('/jmap')) {
+      return false;
+    }
+    // Use default filter for everything else (static assets)
+    return compression.filter(req, res);
+  },
+}));
 
 // ── Security headers ────────────────────────────────────────────────
-app.use((_req, res, next) => {
+app.use((req, res, next) => {
+  // Skip security headers for EventSource (raw proxy handles it)
+  if (req.url?.startsWith('/jmap/eventsource')) {
+    return next();
+  }
+
   // HSTS — force HTTPS, prevent SSL-stripping (critical with Basic Auth)
   res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   // Prevent clickjacking
@@ -65,20 +99,22 @@ app.use((_req, res, next) => {
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   // Permissions — disable unneeded APIs
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
-  // CSP — allow self + inline for Vite, connect to JMAP backend
+  // CSP — production-ready, inline styles allowed for Tailwind
+  // WebSocket connects to same origin (proxied to JMAP backend)
   res.setHeader(
     'Content-Security-Policy',
     [
       "default-src 'self'",
-      "script-src 'self'",
-      "style-src 'self' 'unsafe-inline'",          // Tailwind injects inline styles
+      "script-src 'self'",                          // No inline scripts in production
+      "style-src 'self' 'unsafe-inline'",           // Tailwind CSS uses inline styles
       "img-src 'self' data: blob:",                 // inline images, blob previews
       "font-src 'self'",
-      "connect-src 'self' wss:",                 // JMAP API + WebSocket push (encrypted only)
+      "connect-src 'self'",                         // Same-origin only (JMAP API + WebSocket proxied)
       "media-src 'self' blob:",                     // audio notifications
       "frame-ancestors 'none'",                     // no embedding
       "base-uri 'self'",
       "form-action 'self'",
+      "object-src 'none'",                          // no plugins
     ].join('; '),
   );
   next();
@@ -89,44 +125,87 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok', uptime: process.uptime() });
 });
 
+// ── EventSource (SSE) proxy ─────────────────────────────────────────
+// Handled at HTTP server level before Express to avoid middleware buffering
+// See server creation below
+
+// Handle SSE proxy errors
+sseProxy.on('error', (err, req, res) => {
+  logError('[sse-proxy] Proxy error:', err.message);
+  if (res.writeHead && !res.headersSent) {
+    res.writeHead(502, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'SSE backend unavailable' }));
+  }
+});
+
+// Force headers to be sent immediately when proxy response starts
+// This is critical for SSE - browsers time out if headers aren't sent promptly
+sseProxy.on('proxyRes', (proxyRes, req, res) => {
+  logInfo('[sse-proxy] Response:', proxyRes.statusCode, 'content-type:', proxyRes.headers['content-type']);
+
+  // Write status and headers immediately to the client
+  if (!res.headersSent) {
+    res.writeHead(proxyRes.statusCode, proxyRes.headers);
+    // Force flush headers by writing an empty string
+    res.flushHeaders();
+    logInfo('[sse-proxy] Headers flushed');
+  }
+
+  // Pipe the rest of the response
+  proxyRes.pipe(res);
+});
+
 // ── JMAP reverse proxy ──────────────────────────────────────────────
-app.use(
-  createProxyMiddleware({
-    target: JMAP_SERVER,
-    changeOrigin: true,
-    ws: true,
-    pathFilter: '/jmap',
+const jmapProxy = createProxyMiddleware({
+  target: JMAP_SERVER,
+  changeOrigin: true,
+  ws: true,
+  pathFilter: '/jmap',
 
-    on: {
-      proxyReq: (proxyReq, req) => {
-        // EventSource (SSE) can't send custom headers, so the client
-        // passes Base64 credentials as ?access_token=<b64>.  Convert
-        // that into a proper Authorization header for the JMAP backend.
-        attachBasicAuthFromAccessToken(proxyReq, req.url);
-      },
+  on: {
+    proxyReq: (proxyReq, req) => {
+      // EventSource (SSE) can't send custom headers, so the client
+      // passes Base64 credentials as ?access_token=<b64>.  Convert
+      // that into a proper Authorization header for the JMAP backend.
+      attachBasicAuthFromAccessToken(proxyReq, req.url);
 
-      proxyReqWs: (proxyReq, req) => {
-        attachBasicAuthFromAccessToken(proxyReq, req.url);
-      },
-
-      proxyRes: (proxyRes) => {
-        // Strip WWW-Authenticate so the browser doesn't pop its native
-        // Basic Auth dialog — the app handles auth via its own login UI.
-        if (proxyRes.statusCode === 401) {
-          delete proxyRes.headers['www-authenticate'];
-        }
-      },
-
-      error: (err, _req, res) => {
-        logError(`[proxy] ${err.message}`);
-        if (res.writeHead) {
-          res.writeHead(502, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'JMAP backend unavailable' }));
-        }
-      },
+      if (req.url?.includes('/eventsource')) {
+        logInfo('[proxy] EventSource request:', req.url);
+      }
     },
-  }),
-);
+
+    proxyReqWs: (proxyReq, req) => {
+      // Change target to WebSocket URL for WebSocket connections
+      proxyReq.setHeader('Host', new URL(JMAP_WS_SERVER).host);
+      logInfo('[proxy] WebSocket upgrade:', req.url, '→', JMAP_WS_SERVER);
+      attachBasicAuthFromAccessToken(proxyReq, req.url);
+    },
+
+    proxyRes: (proxyRes, req) => {
+      // Strip WWW-Authenticate so the browser doesn't pop its native
+      // Basic Auth dialog — the app handles auth via its own login UI.
+      if (proxyRes.statusCode === 401) {
+        delete proxyRes.headers['www-authenticate'];
+      }
+      if (req.url?.includes('/ws')) {
+        logInfo('[proxy] WebSocket response:', proxyRes.statusCode, req.url);
+      }
+      if (req.url?.includes('/eventsource')) {
+        logInfo('[proxy] EventSource connected:', proxyRes.statusCode, 'content-type:', proxyRes.headers['content-type']);
+      }
+    },
+
+    error: (err, _req, res) => {
+      logError(`[proxy] ${err.message}`);
+      if (res.writeHead) {
+        res.writeHead(502, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'JMAP backend unavailable' }));
+      }
+    },
+  },
+});
+
+app.use(jmapProxy);
 
 // ── Static files (Vite production build) ────────────────────────────
 const distDir = path.join(__dirname, 'dist');
@@ -162,14 +241,95 @@ app.get('/{*splat}', (_req, res) => {
 // upstream nginx reverse proxy on 192.168.68.251 forwards to.
 const PROXY_PORT = parseInt(process.env.PROXY_PORT || '3000', 10);
 
-const server = app.listen(PORT, '0.0.0.0', () => {
+// Create HTTP servers manually so we can intercept EventSource before Express
+import { createServer } from 'http';
+
+const server = createServer((req, res) => {
+  // Handle EventSource directly, bypassing Express entirely
+  if (req.url?.startsWith('/jmap/eventsource')) {
+    logInfo('[sse-direct] EventSource request:', req.url);
+
+    // Extract access_token from query and add Authorization header
+    try {
+      const url = new URL(req.url, 'http://localhost');
+      const token = url.searchParams.get('access_token');
+      if (token && AUTH_TOKEN_RE.test(token) && token.length <= 512) {
+        req.headers['authorization'] = `Basic ${token}`;
+      }
+    } catch (e) {
+      // ignore parse errors
+    }
+
+    sseProxy.web(req, res);
+    return;
+  }
+
+  // Everything else goes through Express
+  app(req, res);
+});
+
+server.listen(PORT, '0.0.0.0', () => {
   logInfo(`listening on 0.0.0.0:${PORT}`);
   logInfo(`JMAP backend: ${JMAP_SERVER}`);
   logInfo(`serving: ${distDir}`);
 });
 
-const proxyServer = app.listen(PROXY_PORT, '0.0.0.0', () => {
+// Handle WebSocket upgrade for JMAP proxy
+server.on('upgrade', (req, socket, head) => {
+  logInfo('[ws-upgrade] Port', PORT, '- URL:', req.url, '- Headers:', JSON.stringify({
+    upgrade: req.headers.upgrade,
+    connection: req.headers.connection,
+    host: req.headers.host,
+  }));
+  if (req.url?.startsWith('/jmap')) {
+    jmapProxy.upgrade(req, socket, head);
+  } else {
+    logInfo('[ws-upgrade] Rejected - not /jmap path');
+    socket.destroy();
+  }
+});
+
+const proxyServer = createServer((req, res) => {
+  // Handle EventSource directly, bypassing Express entirely
+  if (req.url?.startsWith('/jmap/eventsource')) {
+    logInfo('[sse-direct] EventSource request (proxy port):', req.url);
+
+    // Extract access_token from query and add Authorization header
+    try {
+      const url = new URL(req.url, 'http://localhost');
+      const token = url.searchParams.get('access_token');
+      if (token && AUTH_TOKEN_RE.test(token) && token.length <= 512) {
+        req.headers['authorization'] = `Basic ${token}`;
+      }
+    } catch (e) {
+      // ignore parse errors
+    }
+
+    sseProxy.web(req, res);
+    return;
+  }
+
+  // Everything else goes through Express
+  app(req, res);
+});
+
+proxyServer.listen(PROXY_PORT, '0.0.0.0', () => {
   logInfo(`listening on 0.0.0.0:${PROXY_PORT} (reverse proxy upstream)`);
+});
+
+// Also handle WebSocket on proxy port
+proxyServer.on('upgrade', (req, socket, head) => {
+  logInfo('[ws-upgrade] Port', PROXY_PORT, '- URL:', req.url, '- Headers:', JSON.stringify({
+    upgrade: req.headers.upgrade,
+    connection: req.headers.connection,
+    host: req.headers.host,
+  }));
+  if (req.url?.startsWith('/jmap')) {
+    jmapProxy.upgrade(req, socket, head);
+  } else {
+    logInfo('[ws-upgrade] Rejected - not /jmap path');
+    socket.destroy();
+  }
 });
 
 // Graceful shutdown

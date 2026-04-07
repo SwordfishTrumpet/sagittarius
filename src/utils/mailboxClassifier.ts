@@ -3,6 +3,8 @@
  * Aligns with iCloud Mail's "MAILBOXES" and "FOLDERS" categorization
  */
 
+import type { Mailbox } from '../types/jmap';
+
 /**
  * System mailbox roles as per RFC 8621
  */
@@ -55,15 +57,15 @@ const KNOWN_SYSTEM_NAMES: Record<string, string> = {
 };
 
 export interface ClassifiedMailboxes {
-  system: any[];  // Mailboxes with system roles (Inbox, Sent, Drafts, etc.)
-  custom: any[];  // Custom user-created folders
+  system: Mailbox[];  // Mailboxes with system roles (Inbox, Sent, Drafts, etc.)
+  custom: Mailbox[];  // Custom user-created folders
 }
 
 /**
  * Resolve the effective role for a mailbox.
  * Uses the server-provided role first, then falls back to name matching.
  */
-function getEffectiveRole(mailbox: any): string | null {
+function getEffectiveRole(mailbox: Mailbox): Mailbox['role'] | null {
   if (mailbox.role && SYSTEM_ROLES.has(mailbox.role)) {
     return mailbox.role;
   }
@@ -71,7 +73,7 @@ function getEffectiveRole(mailbox: any): string | null {
   if (!mailbox.parentId) {
     const nameLower = (mailbox.name || '').toLowerCase().trim();
     if (KNOWN_SYSTEM_NAMES[nameLower]) {
-      return KNOWN_SYSTEM_NAMES[nameLower];
+      return KNOWN_SYSTEM_NAMES[nameLower] as Mailbox['role'];
     }
   }
   return null;
@@ -83,15 +85,15 @@ function getEffectiveRole(mailbox: any): string | null {
  * - Custom: everything else
  * System mailboxes are sorted in iCloud Mail order.
  */
-export function classifyMailboxes(mailboxes: any[]): ClassifiedMailboxes {
-  const system: any[] = [];
-  const custom: any[] = [];
+export function classifyMailboxes(mailboxes: Mailbox[]): ClassifiedMailboxes {
+  const system: Mailbox[] = [];
+  const custom: Mailbox[] = [];
 
   mailboxes.forEach((mailbox) => {
     const role = getEffectiveRole(mailbox);
     if (role) {
       // Attach effective role for downstream use (icon, sort)
-      system.push({ ...mailbox, _effectiveRole: role });
+      system.push({ ...mailbox, _effectiveRole: role } as Mailbox);
     } else {
       custom.push(mailbox);
     }
@@ -99,8 +101,8 @@ export function classifyMailboxes(mailboxes: any[]): ClassifiedMailboxes {
 
   // Sort system mailboxes in iCloud Mail canonical order
   system.sort((a, b) => {
-    const orderA = SYSTEM_SORT_ORDER[a._effectiveRole] ?? 99;
-    const orderB = SYSTEM_SORT_ORDER[b._effectiveRole] ?? 99;
+    const orderA = SYSTEM_SORT_ORDER[(a as unknown as { _effectiveRole: string })._effectiveRole] ?? 99;
+    const orderB = SYSTEM_SORT_ORDER[(b as unknown as { _effectiveRole: string })._effectiveRole] ?? 99;
     return orderA - orderB;
   });
 
@@ -110,13 +112,13 @@ export function classifyMailboxes(mailboxes: any[]): ClassifiedMailboxes {
 /**
  * Check if a mailbox is a system mailbox
  */
-export function isSystemMailbox(mailbox: any): boolean {
+export function isSystemMailbox(mailbox: Mailbox): boolean {
   return getEffectiveRole(mailbox) !== null;
 }
 
 /**
  * Check if a mailbox is a custom folder
  */
-export function isCustomFolder(mailbox: any): boolean {
+export function isCustomFolder(mailbox: Mailbox): boolean {
   return !isSystemMailbox(mailbox);
 }

@@ -217,12 +217,9 @@ describe('compose send flow', () => {
         identityId: 'identity-001',
         sendAt: '2026-04-01T10:00:00.000Z',
       })
-      expect(submissionCall[1].onSuccessUpdateEmail['#send-1']).toEqual({
-        'mailboxIds/mailbox-drafts': null,
-        'mailboxIds/mailbox-sent': true,
-        'keywords/$draft': null,
-        'keywords/$seen': true,
-      })
+      // Per RFC 8621 Section 7.5: onSuccessUpdateEmail should NOT be applied immediately
+      // for scheduled sends — the email stays in Drafts until actual send time
+      expect(submissionCall[1].onSuccessUpdateEmail).toBeUndefined()
     })
   })
 })

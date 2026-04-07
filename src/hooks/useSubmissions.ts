@@ -8,8 +8,8 @@ export interface EmailSubmission {
   emailId: string;
   threadId: string;
   envelope: {
-    mailFrom: { email: string; parameters?: any };
-    rcptTo: { email: string; parameters?: any }[];
+    mailFrom: { email: string; parameters?: Record<string, unknown> };
+    rcptTo: { email: string; parameters?: Record<string, unknown> }[];
   } | null;
   sendAt: string;
   undoStatus: 'pending' | 'final' | 'canceled';

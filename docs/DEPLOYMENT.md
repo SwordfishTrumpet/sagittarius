@@ -152,6 +152,31 @@ server {
 - Ensure CORS headers allow your domain on the JMAP server
 - The `Authorization` header must be passed through for Basic Auth
 - `Range` header support is required for attachment downloads
+- **Content Security Policy (CSP):** Sagittarius uses a strict CSP (`connect-src 'self'`) for security. The frontend automatically rewrites JMAP WebSocket URLs to use the same origin (your domain), and the server proxies them to the actual JMAP backend. No CSP configuration needed.
+
+---
+
+## Content Security Policy
+
+Sagittarius ships with a strict, production-ready CSP:
+
+```
+default-src 'self'
+script-src 'self'
+style-src 'self'
+connect-src 'self'
+img-src 'self' data: blob:
+font-src 'self'
+media-src 'self' blob:
+frame-ancestors 'none'
+object-src 'none'
+```
+
+**Key points:**
+- No `'unsafe-inline'` or `'unsafe-eval'`
+- No external domains in `connect-src`
+- WebSocket connections use same-origin proxying (automatic)
+- All JMAP requests go through `/jmap` proxy
 
 ---
 
@@ -303,6 +328,42 @@ location /jmap/ws {
     proxy_set_header Connection "upgrade";
 }
 ```
+
+### EventSource Push Not Connecting (Stalwart)
+
+**Important:** Stalwart's EventSource endpoint requires `Authorization` header authentication, but browsers cannot send custom headers with the EventSource API. Sagittarius works around this by passing credentials as an `access_token` query parameter.
+
+**Solution A: Use WebSocket (Recommended)**
+
+Stalwart supports JMAP over WebSocket (RFC 8887), which handles authentication properly. Sagittarius automatically prefers WebSocket when available. Ensure your nginx config includes WebSocket support (see above).
+
+**Solution B: Add nginx auth rewriting for EventSource**
+
+If WebSocket is unavailable, add this to convert `access_token` to `Authorization` header:
+
+```nginx
+location /jmap/eventsource {
+    # Convert access_token query param to Authorization header
+    set $auth_header "";
+    if ($arg_access_token) {
+        set $auth_header "Basic $arg_access_token";
+    }
+
+    proxy_pass https://mail-backend.example.com/jmap/eventsource;
+    proxy_http_version 1.1;
+    proxy_set_header Authorization $auth_header;
+    proxy_set_header Host $proxy_host;
+    proxy_buffering off;
+    proxy_cache off;
+    chunked_transfer_encoding off;
+    
+    # SSE-specific settings
+    proxy_read_timeout 86400s;
+    proxy_send_timeout 86400s;
+}
+```
+
+**Note:** The `access_token` contains Base64-encoded credentials. Using HTTPS is mandatory to protect these in transit.
 
 ### Attachment Downloads Fail
 

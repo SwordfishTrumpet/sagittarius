@@ -3,13 +3,15 @@
  * RFC 8621: JMAP Mailboxes have optional parentId for nesting
  */
 
+import type { Mailbox } from '../types/jmap';
+
 export interface MailboxNode {
   id: string;
   name: string;
-  role?: string;
-  parentId?: string | null;
-  unreadEmails?: number;
-  sortOrder?: number;
+  role: Mailbox['role'];
+  parentId: string | null;
+  unreadEmails: number;
+  sortOrder: number;
   children: MailboxNode[];
   isExpanded?: boolean;
   depth: number;
@@ -19,7 +21,7 @@ export interface MailboxNode {
  * Build a tree structure from flat mailbox array using parentId references
  * Supports RFC 8621 Mailbox objects with optional parentId property
  */
-export function buildMailboxTree(flatMailboxes: any[]): MailboxNode[] {
+export function buildMailboxTree(flatMailboxes: Mailbox[]): MailboxNode[] {
   const mailboxMap = new Map<string, MailboxNode>();
   const roots: MailboxNode[] = [];
 

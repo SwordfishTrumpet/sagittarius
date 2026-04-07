@@ -3,8 +3,9 @@ import { toast } from 'sonner'
 import { useMailboxReorder } from './jmap/useMailboxes'
 import { classifyMailboxes } from '../utils/mailboxClassifier'
 import { buildMailboxTree, type MailboxNode } from '../utils/mailboxTree'
+import type { Mailbox } from '../types/jmap'
 
-export function useCustomFolderTree(mailboxes: any[] | undefined) {
+export function useCustomFolderTree(mailboxes: Mailbox[] | undefined) {
   const { reorderMailbox, reparentMailbox } = useMailboxReorder()
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set())
 
@@ -30,16 +31,16 @@ export function useCustomFolderTree(mailboxes: any[] | undefined) {
   const handleMailboxReorder = useCallback((draggedId: string, targetId: string) => {
     if (!mailboxes) return
     const { custom } = classifyMailboxes(mailboxes)
-    const sorted = [...custom].sort((a: any, b: any) => (a.sortOrder || 0) - (b.sortOrder || 0))
-    const dragIdx = sorted.findIndex((m: any) => m.id === draggedId)
-    const targetIdx = sorted.findIndex((m: any) => m.id === targetId)
+    const sorted = [...custom].sort((a: Mailbox, b: Mailbox) => (a.sortOrder || 0) - (b.sortOrder || 0))
+    const dragIdx = sorted.findIndex((m: Mailbox) => m.id === draggedId)
+    const targetIdx = sorted.findIndex((m: Mailbox) => m.id === targetId)
     if (dragIdx === -1 || targetIdx === -1 || dragIdx === targetIdx) return
 
     const [dragged] = sorted.splice(dragIdx, 1)
-    const newTargetIdx = sorted.findIndex((m: any) => m.id === targetId)
+    const newTargetIdx = sorted.findIndex((m: Mailbox) => m.id === targetId)
     sorted.splice(newTargetIdx, 0, dragged)
 
-    const updates = sorted.map((m: any, i: number) => ({
+    const updates = sorted.map((m: Mailbox, i: number) => ({
       mailboxId: m.id,
       sortOrder: i + 1,
     }))

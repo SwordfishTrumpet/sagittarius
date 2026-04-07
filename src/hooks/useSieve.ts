@@ -1,6 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { jmapClient } from '../api/jmap';
-import { extractGetResponse } from '../types/jmap';
+import { createJMAPListHook } from './jmap/jmapHookFactory';
 
 const SIEVE_CAP = 'urn:ietf:params:jmap:sieve';
 
@@ -12,38 +12,16 @@ export interface SieveScript {
 }
 
 // ---------------------------------------------------------------------------
-// useSieve — fetch all sieve scripts
+// useSieve — fetch all sieve scripts using the JMAP hook factory
 // ---------------------------------------------------------------------------
-export function useSieve() {
-  const accountId = jmapClient.getPrimaryAccount();
-  const supported = jmapClient.hasCapability(SIEVE_CAP);
-
-  return useQuery<SieveScript[] | null>({
-    queryKey: ['sieve', accountId],
-    queryFn: async () => {
-      if (!supported) return null;
-
-      const response = await jmapClient.request(
-        [
-          [
-            'SieveScript/get',
-            { accountId, ids: null },
-            '0',
-          ],
-        ],
-        [SIEVE_CAP],
-      );
-
-      const methodRes = response.methodResponses[0];
-      if (!methodRes || methodRes[0] === 'error') return null;
-
-      const result = extractGetResponse<SieveScript>(response.methodResponses);
-      return result?.list ?? [];
-    },
-    enabled: !!accountId,
-    staleTime: 5 * 60 * 1000,
-  });
-}
+export const useSieve = createJMAPListHook<SieveScript>(
+  'SieveScript/get',
+  'sieve',
+  {
+    capability: SIEVE_CAP,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  }
+);
 
 // ---------------------------------------------------------------------------
 // useSieveActions — create / update / delete / validate / activate scripts

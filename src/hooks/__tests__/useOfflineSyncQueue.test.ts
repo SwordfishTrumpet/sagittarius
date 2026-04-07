@@ -3,12 +3,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useOfflineSyncQueue } from '../useOfflineSyncQueue'
 
 const {
-  invalidateQueries,
+  invalidateEmailQueries,
   getDeferredMutationCount,
   replayDeferredMutations,
   subscribeOfflineQueueChanges,
 } = vi.hoisted(() => ({
-  invalidateQueries: vi.fn(),
+  invalidateEmailQueries: vi.fn(),
   getDeferredMutationCount: vi.fn(),
   replayDeferredMutations: vi.fn(),
   subscribeOfflineQueueChanges: vi.fn(),
@@ -16,7 +16,7 @@ const {
 
 vi.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({
-    invalidateQueries,
+    invalidateQueries: vi.fn(),
   }),
 }))
 
@@ -30,9 +30,13 @@ vi.mock('../../utils/offlineSyncQueue', () => ({
   subscribeOfflineQueueChanges,
 }))
 
+vi.mock('../jmap/queryCacheUtils', () => ({
+  invalidateEmailQueries,
+}))
+
 describe('useOfflineSyncQueue', () => {
   beforeEach(() => {
-    invalidateQueries.mockReset()
+    invalidateEmailQueries.mockReset()
     getDeferredMutationCount.mockReset()
     replayDeferredMutations.mockReset()
     subscribeOfflineQueueChanges.mockReset()
@@ -53,10 +57,6 @@ describe('useOfflineSyncQueue', () => {
       await result.current.replayQueue()
     })
 
-    expect(invalidateQueries).toHaveBeenCalledTimes(4)
-    expect(invalidateQueries).toHaveBeenNthCalledWith(1, { queryKey: ['threads'] })
-    expect(invalidateQueries).toHaveBeenNthCalledWith(2, { queryKey: ['emails'] })
-    expect(invalidateQueries).toHaveBeenNthCalledWith(3, { queryKey: ['emailDetail'] })
-    expect(invalidateQueries).toHaveBeenNthCalledWith(4, { queryKey: ['mailboxes'] })
+    expect(invalidateEmailQueries).toHaveBeenCalledTimes(1)
   })
 })

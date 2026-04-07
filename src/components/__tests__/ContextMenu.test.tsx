@@ -34,6 +34,9 @@ describe('ContextMenu', () => {
     await user.keyboard('[ArrowDown]')
     await waitFor(() => expect(screen.getByRole('menuitem', { name: 'Move' })).toHaveFocus())
 
+    // Small delay to ensure refs are set
+    await new Promise(resolve => setTimeout(resolve, 50))
+    
     await user.keyboard('[ArrowRight]')
     expect(await screen.findByRole('menu', { name: 'Move submenu' })).toBeInTheDocument()
     await waitFor(() => expect(screen.getByRole('menuitem', { name: 'Archive' })).toHaveFocus())
@@ -66,7 +69,13 @@ describe('ContextMenu', () => {
       />,
     )
 
-    await user.keyboard('[ArrowDown][ArrowRight]')
+    await user.keyboard('[ArrowDown]')
+    await waitFor(() => expect(screen.getByRole('menuitem', { name: 'Move' })).toHaveFocus())
+
+    // Small delay to ensure refs are set
+    await new Promise(resolve => setTimeout(resolve, 50))
+    
+    await user.keyboard('[ArrowRight]')
     expect(await screen.findByRole('menu', { name: 'Move submenu' })).toBeInTheDocument()
 
     await user.keyboard('[Escape]')

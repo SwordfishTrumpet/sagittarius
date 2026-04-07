@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useEmailBulkActions } from '../useEmailBulkActions'
+import { createTestEmail, createTestMailbox } from '../../test/testUtils'
 
 const {
   toastSuccess,
@@ -48,10 +49,10 @@ describe('useEmailBulkActions', () => {
     const resetSelection = vi.fn()
     const { result } = renderHook(() => useEmailBulkActions({
       emails: [
-        { id: 'email-1', mailboxIds: { 'mailbox-inbox': true } },
-        { id: 'email-2', mailboxIds: { 'mailbox-inbox': true } },
+        createTestEmail({ id: 'email-1', mailboxIds: { 'mailbox-inbox': true } }),
+        createTestEmail({ id: 'email-2', mailboxIds: { 'mailbox-inbox': true } }),
       ],
-      mailboxes: [{ id: 'mailbox-archive', role: 'archive', name: 'Archive' }],
+      mailboxes: [createTestMailbox({ id: 'mailbox-archive', role: 'archive', name: 'Archive' })],
       selectedEmailId: null,
       selectedEmailIds: new Set(['email-1', 'email-2']),
       selectedMailboxId: 'mailbox-inbox',
@@ -83,10 +84,10 @@ describe('useEmailBulkActions', () => {
   it('uses moveEmailBulk for delete when NOT in trash (move to trash)', () => {
     const { result } = renderHook(() => useEmailBulkActions({
       emails: [
-        { id: 'email-1', mailboxIds: { 'mailbox-inbox': true } },
-        { id: 'email-2', mailboxIds: { 'mailbox-inbox': true } },
+        createTestEmail({ id: 'email-1', mailboxIds: { 'mailbox-inbox': true } }),
+        createTestEmail({ id: 'email-2', mailboxIds: { 'mailbox-inbox': true } }),
       ],
-      mailboxes: [{ id: 'mailbox-trash', role: 'trash', name: 'Trash' }],
+      mailboxes: [createTestMailbox({ id: 'mailbox-trash', role: 'trash', name: 'Trash' })],
       selectedEmailId: null,
       selectedEmailIds: new Set(['email-1', 'email-2']),
       selectedMailboxId: 'mailbox-inbox', // NOT in trash
@@ -118,10 +119,10 @@ describe('useEmailBulkActions', () => {
     const resetSelection = vi.fn()
     const { result } = renderHook(() => useEmailBulkActions({
       emails: [
-        { id: 'email-1', mailboxIds: { 'mailbox-trash': true } },
-        { id: 'email-2', mailboxIds: { 'mailbox-trash': true } },
+        createTestEmail({ id: 'email-1', mailboxIds: { 'mailbox-trash': true } }),
+        createTestEmail({ id: 'email-2', mailboxIds: { 'mailbox-trash': true } }),
       ],
-      mailboxes: [{ id: 'mailbox-trash', role: 'trash', name: 'Trash' }],
+      mailboxes: [createTestMailbox({ id: 'mailbox-trash', role: 'trash', name: 'Trash' })],
       selectedEmailId: null,
       selectedEmailIds: new Set(['email-1', 'email-2']),
       selectedMailboxId: 'mailbox-trash', // IN trash
@@ -149,9 +150,9 @@ describe('useEmailBulkActions', () => {
     const resetSelection = vi.fn()
     const { result } = renderHook(() => useEmailBulkActions({
       emails: [
-        { id: 'email-1', mailboxIds: { 'mailbox-trash': true } },
+        createTestEmail({ id: 'email-1', mailboxIds: { 'mailbox-trash': true } }),
       ],
-      mailboxes: [{ id: 'mailbox-trash', role: 'trash', name: 'Deleted Items' }],
+      mailboxes: [createTestMailbox({ id: 'mailbox-trash', role: 'trash', name: 'Deleted Items' })],
       selectedEmailId: 'email-1',
       selectedEmailIds: new Set(),
       selectedMailboxId: 'mailbox-trash', // IN trash (Deleted Items)

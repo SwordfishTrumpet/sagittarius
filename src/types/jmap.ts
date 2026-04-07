@@ -15,14 +15,34 @@ export interface JMAPAccount {
   accountCapabilities: Record<string, unknown>;
 }
 
+/**
+ * JMAP Session object per RFC 8620 §2
+ * 
+ * Note: `username` is a server extension (not part of RFC 8620) but commonly provided.
+ * Note: `eventSourceUrl` is REQUIRED per RFC 8620, but we mark it optional for
+ *       graceful handling of non-compliant servers.
+ */
 export interface JMAPSession {
+  /** Server extension: the authenticated username */
+  username?: string;
+  /** RFC 8620 §2: URL for JMAP API requests */
   apiUrl: string;
+  /** RFC 8620 §2: URL template for blob downloads */
   downloadUrl: string;
+  /** RFC 8620 §2: URL template for blob uploads */
   uploadUrl: string;
+  /** RFC 8620 §2: URL template for EventSource push notifications */
   eventSourceUrl?: string;
+  /** RFC 8887: WebSocket URL (may also be in capabilities["urn:ietf:params:jmap:websocket"].url) */
+  webSocketUrl?: string;
+  /** RFC 8620 §2: Server capabilities */
   capabilities: Record<string, unknown>;
+  /** RFC 8620 §2: Map of capability URN to primary accountId */
   primaryAccounts: Record<string, string>;
+  /** RFC 8620 §2: Map of accountId to account details */
   accounts: Record<string, JMAPAccount>;
+  /** RFC 8620 §2: Opaque session state string */
+  state?: string;
 }
 
 export interface JMAPMethodCallObject {
@@ -208,6 +228,38 @@ export interface Quota {
   types?: string[];
 }
 
+/**
+ * Quota Filter Condition per RFC 9425
+ * Used for Quota/query filter parameter
+ */
+export interface QuotaFilterCondition {
+  /** Quota IDs to match */
+  ids?: string[];
+  /** Resource type (e.g., 'octets', 'messages') */
+  resourceType?: string;
+  /** Scope of the quota (e.g., 'account', 'domain') */
+  scope?: string;
+  /** Name contains this string */
+  name?: string;
+  /** Types this quota applies to */
+  types?: string[];
+}
+
+/**
+ * Quota Filter Operator for combining conditions
+ */
+export interface QuotaFilterOperator {
+  /** AND - all conditions must match */
+  allOf?: (QuotaFilterCondition | QuotaFilterOperator)[];
+  /** OR - any condition can match */
+  anyOf?: (QuotaFilterCondition | QuotaFilterOperator)[];
+  /** NOT - condition must not match */
+  not?: QuotaFilterCondition | QuotaFilterOperator;
+}
+
+/** Combined Quota Filter type */
+export type QuotaFilter = QuotaFilterCondition | QuotaFilterOperator;
+
 // ============ Search Types ============
 
 export interface SearchFilter {
@@ -224,6 +276,81 @@ export interface SearchFilter {
   flagged?: boolean | null;
   unread?: boolean | null;
 }
+
+// ============ JMAP Email/query Filter Types (RFC 8621 §4.4) ============
+
+/**
+ * JMAP Email Filter Condition per RFC 8621 §4.4.1
+ * Used for Email/query filter parameter
+ */
+export interface EmailFilterCondition {
+  /** Email IDs to match */
+  ids?: string[];
+  /** Must be in this mailbox */
+  inMailbox?: string;
+  /** Must NOT be in this mailbox */
+  notInMailbox?: string;
+  /** Must be in a mailbox with this role */
+  inMailboxOtherThan?: string[];
+  /** From field contains */
+  from?: string;
+  /** To field contains */
+  to?: string;
+  /** Cc field contains */
+  cc?: string;
+  /** Bcc field contains (server may not expose) */
+  bcc?: string;
+  /** Subject field contains */
+  subject?: string;
+  /** Body text contains */
+  body?: string;
+  /** Any text field contains */
+  text?: string;
+  /** Header field contains */
+  header?: string[];
+  /** Must have this attachment */
+  hasAttachment?: boolean;
+  /** File name pattern for attachments */
+  attachmentName?: string;
+  /** Must have this keyword */
+  hasKeyword?: string;
+  /** Must NOT have this keyword */
+  notHasKeyword?: string;
+  /** Minimum size in bytes */
+  minSize?: number;
+  /** Maximum size in bytes */
+  maxSize?: number;
+  /** Received on or after this date (UTCDate) */
+  after?: string;
+  /** Received on or before this date (UTCDate) */
+  before?: string;
+}
+
+/**
+ * JMAP Filter Operator per RFC 8620 §5.5
+ * Allows combining conditions with AND, OR, NOT logic
+ */
+export interface EmailFilterOperator {
+  /** AND - all conditions must match */
+  allOf?: (EmailFilterCondition | EmailFilterOperator)[];
+  /** OR - any condition can match */
+  anyOf?: (EmailFilterCondition | EmailFilterOperator)[];
+  /** NOT - condition must not match */
+  not?: EmailFilterCondition | EmailFilterOperator;
+  /**
+   * Legacy operator field (some servers use this format)
+   * @deprecated Use allOf/anyOf/not instead per RFC 8620
+   */
+  operator?: 'AND' | 'OR' | 'NOT';
+  /**
+   * Legacy conditions field
+   * @deprecated Use allOf/anyOf/not instead
+   */
+  conditions?: (EmailFilterCondition | EmailFilterOperator)[];
+}
+
+/** Combined Email Filter type - either a condition or an operator */
+export type EmailFilter = EmailFilterCondition | EmailFilterOperator;
 
 // ============ Attachment Types ============
 
@@ -447,11 +574,200 @@ export function extractChangesResponse(
   methodResponses: [string, unknown, string][],
   index = 0
 ): JMAPChangesResponse | null {
-  const response = methodResponses[index];
-  if (!response) return null;
+  const response = methodResponses[index]
+  if (!response) return null
   
-  const [method, result] = response;
-  if (method === 'error' || !result) return null;
+  const [method, result] = response
+  if (method === 'error' || !result) return null
   
-  return result as JMAPChangesResponse;
+  return result as JMAPChangesResponse
+}
+
+// ============ JMAP Query Filter Types ============
+
+/**
+ * Mailbox Filter Condition per RFC 8621 §4.4
+ * Used for Mailbox/query filter parameter
+ */
+export interface MailboxFilterCondition {
+  /** Parent mailbox ID */
+  parentId?: string | null;
+  /** Mailbox name contains */
+  name?: string;
+  /** Has this role (e.g., 'inbox', 'sent') */
+  role?: string;
+  /** Is subscribed */
+  isSubscribed?: boolean;
+}
+
+/**
+ * Mailbox Filter Operator for combining conditions
+ */
+export interface MailboxFilterOperator {
+  /** AND - all conditions must match */
+  allOf?: (MailboxFilterCondition | MailboxFilterOperator)[];
+  /** OR - any condition can match */
+  anyOf?: (MailboxFilterCondition | MailboxFilterOperator)[];
+  /** NOT - condition must not match */
+  not?: MailboxFilterCondition | MailboxFilterOperator;
+}
+
+/** Combined Mailbox Filter type */
+export type MailboxFilter = MailboxFilterCondition | MailboxFilterOperator;
+
+/**
+ * Thread Filter Condition per RFC 8621 §4.4
+ * Used for Thread/query filter parameter
+ */
+export interface ThreadFilterCondition {
+  /** Thread IDs to match */
+  ids?: string[];
+  /** Must include an email in this mailbox */
+  inMailbox?: string;
+  /** Must include an email from this sender */
+  from?: string;
+  /** Must include an email to this recipient */
+  to?: string;
+  /** Must include an email with this subject */
+  subject?: string;
+  /** Thread has any text matching */
+  text?: string;
+  /** Thread has attachments */
+  hasAttachment?: boolean;
+  /** Thread has this keyword */
+  hasKeyword?: string;
+  /** Thread does not have this keyword */
+  notHasKeyword?: string;
+  /** Thread has email received after this date */
+  after?: string;
+  /** Thread has email received before this date */
+  before?: string;
+  /** Minimum total size of emails in thread */
+  minSize?: number;
+  /** Maximum total size of emails in thread */
+  maxSize?: number;
+}
+
+/**
+ * Thread Filter Operator for combining conditions
+ */
+export interface ThreadFilterOperator {
+  /** AND - all conditions must match */
+  allOf?: (ThreadFilterCondition | ThreadFilterOperator)[];
+  /** OR - any condition can match */
+  anyOf?: (ThreadFilterCondition | ThreadFilterOperator)[];
+  /** NOT - condition must not match */
+  not?: ThreadFilterCondition | ThreadFilterOperator;
+}
+
+/** Combined Thread Filter type */
+export type ThreadFilter = ThreadFilterCondition | ThreadFilterOperator;
+
+/**
+ * Identity Filter Condition for Identity/query
+ */
+export interface IdentityFilterCondition {
+  /** Identity IDs to match */
+  ids?: string[];
+  /** Email address contains */
+  email?: string;
+  /** Name contains */
+  name?: string;
+  /** May delete this identity */
+  mayDelete?: boolean;
+}
+
+/**
+ * Identity Filter Operator for combining conditions
+ */
+export interface IdentityFilterOperator {
+  /** AND - all conditions must match */
+  allOf?: (IdentityFilterCondition | IdentityFilterOperator)[];
+  /** OR - any condition can match */
+  anyOf?: (IdentityFilterCondition | IdentityFilterOperator)[];
+  /** NOT - condition must not match */
+  not?: IdentityFilterCondition | IdentityFilterOperator;
+}
+
+/** Combined Identity Filter type */
+export type IdentityFilter = IdentityFilterCondition | IdentityFilterOperator;
+
+// ============ JMAP Query Sort Types ============
+
+/**
+ * Sort comparator for JMAP queries per RFC 8620 §5.5
+ */
+export interface JMAPSortComparator {
+  /** Property to sort by */
+  property: string;
+  /** Sort in ascending order (default: false) */
+  isAscending?: boolean;
+  /** Collation for string comparison (optional) */
+  collation?: string;
+}
+
+// ============ JMAP Copy Types ============
+
+/**
+ * Email/copy request arguments per RFC 8620 §5.4
+ */
+export interface EmailCopyRequest {
+  accountId: string;
+  fromAccountId: string;
+  create: Record<string, { id: string; mailboxIds: Record<string, boolean>; keywords?: Record<string, boolean> }>;
+  onSuccessDestroyOriginal?: boolean;
+  destroyFromIfSuccess?: boolean;
+}
+
+/**
+ * Email/copy response per RFC 8620 §5.4
+ */
+export interface EmailCopyResponse {
+  accountId: string;
+  fromAccountId: string;
+  created?: Record<string, { id: string; blobId: string; threadId: string; size: number }>;
+  notCreated?: Record<string, JMAPSetError>;
+}
+
+// ============ Email Template Types (Local Storage) ============
+
+/**
+ * Email template for reusable email formats
+ * Stored locally since there's no JMAP RFC for templates yet
+ */
+export interface EmailTemplate {
+  id: string;
+  name: string;
+  subject: string;
+  body: string;
+  to?: string;
+  cc?: string;
+  bcc?: string;
+  createdAt: number;
+  updatedAt: number;
+  accountId: string;
+}
+
+/**
+ * Template creation payload
+ */
+export interface CreateTemplatePayload {
+  name: string;
+  subject: string;
+  body: string;
+  to?: string;
+  cc?: string;
+  bcc?: string;
+}
+
+/**
+ * Template update payload (all fields optional)
+ */
+export interface UpdateTemplatePayload {
+  name?: string;
+  subject?: string;
+  body?: string;
+  to?: string;
+  cc?: string;
+  bcc?: string;
 }

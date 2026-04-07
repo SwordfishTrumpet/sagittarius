@@ -1,36 +1,19 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { jmapClient } from '../api/jmap';
-import { extractGetResponse } from '../types/jmap';
+import { createJMAPSingletonHook } from './jmap/jmapHookFactory';
+import type { VacationResponse } from '../types/jmap';
 
-export interface VacationResponse {
-  id: string;
-  isEnabled: boolean;
-  fromDate?: string | null;
-  toDate?: string | null;
-  subject?: string | null;
-  textBody?: string | null;
-  htmlBody?: string | null;
-}
+const VACATION_CAP = 'urn:ietf:params:jmap:vacationresponse';
 
-export function useVacation() {
-  const accountId = jmapClient.getPrimaryAccount();
-
-  return useQuery<VacationResponse | null>({
-    queryKey: ['vacation', accountId],
-    queryFn: async () => {
-      const response = await jmapClient.request(
-        [['VacationResponse/get', { accountId, ids: null }, '0']],
-        ['urn:ietf:params:jmap:vacationresponse']
-      );
-
-      const result = extractGetResponse<VacationResponse>(response.methodResponses);
-      const list: VacationResponse[] = result?.list ?? [];
-      return list[0] ?? null;
-    },
-    enabled: !!accountId,
-    staleTime: 10 * 60 * 1000,
-  });
-}
+// Use the singleton hook factory for the VacationResponse/get query
+export const useVacation = createJMAPSingletonHook<VacationResponse>(
+  'VacationResponse/get',
+  'vacation',
+  {
+    capability: VACATION_CAP,
+    staleTime: 10 * 60 * 1000, // 10 minutes
+  }
+);
 
 export type VacationUpdatePayload = Partial<Omit<VacationResponse, 'id'>>;
 

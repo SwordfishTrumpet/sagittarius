@@ -20,6 +20,7 @@ vi.mock('react-dnd', () => ({
 const rootNode: MailboxNode = {
   id: 'folder-1',
   name: 'Projects',
+  role: null,
   parentId: null,
   unreadEmails: 2,
   sortOrder: 0,
@@ -63,6 +64,7 @@ describe('RecursiveSidebarItem', () => {
       children: [{
         id: 'folder-2',
         name: 'Child',
+        role: null,
         parentId: 'folder-1',
         unreadEmails: 0,
         sortOrder: 1,

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, memo } from 'react'
 import { Download, ExternalLink, FileIcon } from 'lucide-react'
 import { jmapClient } from '../api/jmap'
+import { logger } from '../utils/logger'
 
 function AttachmentItemComponent({ attachment }: { attachment: any }) {
   const downloadUrl = jmapClient.getBlobUrl(attachment.blobId, attachment.type, attachment.name);
@@ -33,7 +34,10 @@ function AttachmentItemComponent({ attachment }: { attachment: any }) {
           setThumbnailUrl(objectUrl);
         }
       })
-      .catch(() => { setThumbnailUrl(null); });
+      .catch((err) => { 
+        logger.warn('[AttachmentItem] Failed to load thumbnail:', err);
+        setThumbnailUrl(null); 
+      });
     return () => { cancelled = true; if (objectUrl) URL.revokeObjectURL(objectUrl); };
   }, [downloadUrl, isImage]);
 
@@ -63,7 +67,8 @@ function AttachmentItemComponent({ attachment }: { attachment: any }) {
   const handleOpen = async () => {
     try {
       await fetchBlob('open');
-    } catch {
+    } catch (err) {
+      logger.warn('[AttachmentItem] Failed to open attachment, falling back to direct URL:', err);
       window.open(downloadUrl, '_blank');
     }
   };
@@ -73,7 +78,8 @@ function AttachmentItemComponent({ attachment }: { attachment: any }) {
     e.stopPropagation();
     try {
       await fetchBlob('download');
-    } catch {
+    } catch (err) {
+      logger.warn('[AttachmentItem] Failed to download attachment, falling back to direct URL:', err);
       window.open(downloadUrl, '_blank');
     }
   };

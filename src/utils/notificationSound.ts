@@ -4,6 +4,8 @@
  * Persists enabled state + volume to localStorage
  */
 
+import { logger } from './logger';
+
 const STORAGE_KEY = 'sagittarius:notification-sound';
 
 interface NotificationSoundSettings {
@@ -29,8 +31,9 @@ function load(): NotificationSoundSettings {
       const parsed = JSON.parse(raw);
       return { ...DEFAULTS, ...parsed };
     }
-  } catch {
+  } catch (err) {
     // corrupt or unavailable — use defaults
+    logger.warn('[NotificationSound] Failed to load settings from localStorage:', err);
   }
   return { ...DEFAULTS };
 }
@@ -38,8 +41,9 @@ function load(): NotificationSoundSettings {
 function persist() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
-  } catch {
+  } catch (err) {
     // localStorage full or unavailable — ignore
+    logger.warn('[NotificationSound] Failed to persist settings to localStorage:', err);
   }
 }
 
@@ -77,11 +81,13 @@ export function playNotificationSound() {
   try {
     const el = getAudio();
     el.currentTime = 0;
-    el.play().catch(() => {
-      // Browser autoplay policy — silently skip
+    el.play().catch((err) => {
+      // Browser autoplay policy — log but don't throw
+      logger.debug('[NotificationSound] Playback prevented by browser policy:', err);
     });
-  } catch {
+  } catch (err) {
     // Audio not supported
+    logger.warn('[NotificationSound] Audio playback failed:', err);
   }
 }
 
@@ -90,6 +96,10 @@ export function previewNotificationSound() {
   try {
     const el = getAudio();
     el.currentTime = 0;
-    el.play().catch(() => {});
-  } catch {}
+    el.play().catch((err) => {
+      logger.debug('[NotificationSound] Preview playback prevented:', err);
+    });
+  } catch (err) {
+    logger.warn('[NotificationSound] Preview playback failed:', err);
+  }
 }

@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
-import { X, Maximize2, Minimize2, Trash2, Send, Paperclip, Bold, Italic, Underline, List, ListOrdered, Link, ChevronDown, Clock } from 'lucide-react';
+import { X, Maximize2, Minimize2, Trash2, Send, Paperclip, Bold, Italic, Underline, List, ListOrdered, Link, ChevronDown, Clock, FileText } from 'lucide-react';
 import { useCompose } from '../hooks/jmap/useCompose';
 import { useIdentities } from '../hooks/jmap/useIdentities';
 import { toast } from 'sonner';
@@ -10,6 +10,7 @@ import UnderlineExtension from '@tiptap/extension-underline';
 import LinkExtension from '@tiptap/extension-link';
 import { jmapClient } from '../api/jmap';
 import { ScheduleSendPicker } from './ScheduleSendPicker';
+import { EmailTemplatesDialog } from './dialogs/EmailTemplatesDialog';
 import { motion } from 'framer-motion';
 import { buildReplyQuote, buildForwardQuote, getEmailBodyHtml } from '../utils/quoteBuilder';
 import { upsertIdentitySignature } from '../utils/signatureBuilder';
@@ -18,7 +19,7 @@ import { clearComposerDraft, getComposerDraftKey, loadComposerDraft, saveCompose
 import { isDeferredMutationResult } from '../utils/offlineSyncQueue';
 import { useSaveDraft } from '../hooks/jmap/useSaveDraft';
 import { toastOperationError } from '../utils/toastHelpers';
-import type { Email, Identity, EmailAddress, Attachment } from '../types/jmap';
+import type { Email, Identity, EmailAddress, Attachment, EmailTemplate } from '../types/jmap';
 import type { ReplyContext } from '../hooks/useComposerState';
 
 /** Local recipient format used in composer */
@@ -83,6 +84,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
   const [showSchedulePicker, setShowSchedulePicker] = useState(false);
   const [sendAt, setSendAt] = useState<string | null>(() => restoredDraft ? restoredDraft.sendAt : null);
   const [isQuoteCollapsed, setIsQuoteCollapsed] = useState<boolean>(() => restoredDraft ? restoredDraft.isQuoteCollapsed : false);
+  const [showTemplatesDialog, setShowTemplatesDialog] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
   const shouldPersistDraftRef = useRef(true);
   const latestDraftRef = useRef<ComposerDraft | null>(null);
@@ -344,6 +346,26 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
       }
     });
   };
+
+  const handleSelectTemplate = useCallback((template: EmailTemplate) => {
+    // Only fill in empty fields or fields that are just the default signature
+    if (!to.trim()) setTo(template.to || '');
+    if (!cc.trim()) setCc(template.cc || '');
+    if (!bcc.trim()) setBcc(template.bcc || '');
+    if (!subject.trim()) setSubject(template.subject);
+    
+    // For body, only replace if it's empty or just a signature
+    const currentBody = editor?.getHTML() || '';
+    const isEmptyOrSignature = !currentBody.trim() || 
+      currentBody === '<p></p>' || 
+      (currentBody.includes('Sent from Sagittarius') && currentBody.replace(/<[^>]*>/g, '').trim().length < 30);
+    
+    if (isEmptyOrSignature && editor) {
+      const newBody = template.body;
+      setBodyHtml(newBody);
+      editor.commands.setContent(newBody, false);
+    }
+  }, [editor, to, cc, bcc, subject]);
 
   const handleDiscardDraft = useCallback(() => {
     shouldPersistDraftRef.current = false;
@@ -712,6 +734,13 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
                 icon={<Link className="w-3.5 h-3.5" />} 
                 label="Insert link"
               />
+              <div aria-hidden="true" className="w-[1px] h-4 bg-[#E5E5EA] mx-1" />
+              <ToolbarButton 
+                onClick={() => setShowTemplatesDialog(true)} 
+                active={false}
+                icon={<FileText className="w-3.5 h-3.5" />} 
+                label="Insert template"
+              />
             </div>
           )}
 
@@ -766,6 +795,14 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
           <div className="w-7" />
         </footer>
       </motion.div>
+      
+      {/* Templates Dialog */}
+      <EmailTemplatesDialog
+        isOpen={showTemplatesDialog}
+        onClose={() => setShowTemplatesDialog(false)}
+        onSelectTemplate={handleSelectTemplate}
+        selectionMode={true}
+      />
     </motion.div>
   );
 }

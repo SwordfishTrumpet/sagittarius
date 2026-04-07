@@ -2,8 +2,20 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { forwardRef } from 'react'
 import { describe, expect, it, vi } from 'vitest'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Composer } from '../../components/Composer'
 import { checkA11y } from './helpers'
+
+const createTestQueryClient = () => new QueryClient({
+  defaultOptions: {
+    queries: { retry: false, gcTime: 0 },
+    mutations: { retry: false },
+  },
+})
+
+const Wrapper = ({ children }: { children: React.ReactNode }) => (
+  <QueryClientProvider client={createTestQueryClient()}>{children}</QueryClientProvider>
+)
 
 vi.mock('../../hooks/jmap/useCompose', () => ({
   useCompose: () => ({ mutate: vi.fn(), isPending: false }),
@@ -17,6 +29,7 @@ vi.mock('../../api/jmap', () => ({
   jmapClient: {
     getAccountCapability: () => ({ maxDelayedSend: 3600 }),
     uploadBlob: vi.fn(),
+    getPrimaryAccount: () => 'account-1',
   },
 }))
 
@@ -69,11 +82,11 @@ vi.mock('@tiptap/extension-link', () => ({ default: { configure: () => ({}) } })
 describe('Composer accessibility', () => {
   it('renders without axe violations and keeps focus within the dialog', async () => {
     const user = userEvent.setup()
-    const { container } = render(<Composer onClose={() => {}} />)
+    const { container } = render(<Composer onClose={() => {}} />, { wrapper: Wrapper })
 
     expect((await checkA11y(container)).violations).toHaveLength(0)
 
-    expect(screen.getByRole('button', { name: 'Close composer' })).toHaveFocus()
+    expect(screen.getByRole('button', { name: 'Close and save draft' })).toHaveFocus()
 
     await user.tab({ shift: true })
     await waitFor(() => expect(screen.getByRole('button', { name: 'Discard draft' })).toHaveFocus())
@@ -81,7 +94,7 @@ describe('Composer accessibility', () => {
 
   it('exposes an accessible minimized state and supports keyboard re-open', async () => {
     const user = userEvent.setup()
-    render(<Composer onClose={() => {}} />)
+    render(<Composer onClose={() => {}} />, { wrapper: Wrapper })
 
     await user.click(screen.getByRole('button', { name: 'Minimize composer' }))
 

@@ -67,79 +67,52 @@ export function useComposerState(): UseComposerStateReturn {
     setDraftEmail(null)
   }, [])
 
+  /**
+   * Helper to build ReplyContext from an email.
+   */
+  const buildReplyContext = useCallback((
+    selectedEmail: Email,
+    options: { replyAll?: boolean; forward?: boolean } = {}
+  ): ReplyContext => ({
+    id: selectedEmail.id,
+    subject: selectedEmail.subject || '',
+    from: (selectedEmail.from || []).map((a: EmailAddress) => ({ name: a.name || undefined, email: a.email })),
+    to: (selectedEmail.to || []).map((a: EmailAddress) => ({ name: a.name || undefined, email: a.email })),
+    cc: selectedEmail.cc?.map((a: EmailAddress) => ({ name: a.name || undefined, email: a.email })),
+    blobId: selectedEmail.blobId,
+    threadId: selectedEmail.threadId,
+    receivedAt: selectedEmail.receivedAt,
+    bodyParts: {
+      htmlBody: selectedEmail.htmlBody?.map(p => ({ partId: p.partId, type: p.type })) || undefined,
+      textBody: selectedEmail.textBody?.map(p => ({ partId: p.partId, type: p.type })) || undefined,
+      bodyValues: selectedEmail.bodyValues ?
+        Object.fromEntries(Object.entries(selectedEmail.bodyValues).map(([k, v]) => [k, { value: v.value }])) :
+        undefined,
+    },
+    _replyAll: options.replyAll,
+    _forward: options.forward,
+  }), [])
+
   const handleReply = useCallback((selectedEmail: Email) => {
     if (!selectedEmail) return
-    const context: ReplyContext = {
-      id: selectedEmail.id,
-      subject: selectedEmail.subject || '',
-      from: (selectedEmail.from || []).map((a: EmailAddress) => ({ name: a.name || undefined, email: a.email })),
-      to: (selectedEmail.to || []).map((a: EmailAddress) => ({ name: a.name || undefined, email: a.email })),
-      cc: selectedEmail.cc?.map((a: EmailAddress) => ({ name: a.name || undefined, email: a.email })),
-      blobId: selectedEmail.blobId,
-      threadId: selectedEmail.threadId,
-      receivedAt: selectedEmail.receivedAt,
-      bodyParts: {
-        htmlBody: selectedEmail.htmlBody?.map(p => ({ partId: p.partId, type: p.type })) || undefined,
-        textBody: selectedEmail.textBody?.map(p => ({ partId: p.partId, type: p.type })) || undefined,
-        bodyValues: selectedEmail.bodyValues ? 
-          Object.fromEntries(Object.entries(selectedEmail.bodyValues).map(([k, v]) => [k, { value: v.value }])) : 
-          undefined,
-      },
-    }
-    setReplyToEmail(context)
+    setReplyToEmail(buildReplyContext(selectedEmail))
     setDraftEmail(null)
     setIsComposerOpen(true)
-  }, [])
+  }, [buildReplyContext])
 
   const handleReplyAll = useCallback((selectedEmail: Email) => {
     if (!selectedEmail) return
-    const context: ReplyContext = {
-      id: selectedEmail.id,
-      subject: selectedEmail.subject || '',
-      from: (selectedEmail.from || []).map((a: EmailAddress) => ({ name: a.name || undefined, email: a.email })),
-      to: (selectedEmail.to || []).map((a: EmailAddress) => ({ name: a.name || undefined, email: a.email })),
-      cc: selectedEmail.cc?.map((a: EmailAddress) => ({ name: a.name || undefined, email: a.email })),
-      blobId: selectedEmail.blobId,
-      threadId: selectedEmail.threadId,
-      receivedAt: selectedEmail.receivedAt,
-      bodyParts: {
-        htmlBody: selectedEmail.htmlBody?.map(p => ({ partId: p.partId, type: p.type })) || undefined,
-        textBody: selectedEmail.textBody?.map(p => ({ partId: p.partId, type: p.type })) || undefined,
-        bodyValues: selectedEmail.bodyValues ? 
-          Object.fromEntries(Object.entries(selectedEmail.bodyValues).map(([k, v]) => [k, { value: v.value }])) : 
-          undefined,
-      },
-      _replyAll: true,
-    }
-    setReplyToEmail(context)
+    setReplyToEmail(buildReplyContext(selectedEmail, { replyAll: true }))
     setDraftEmail(null)
     setIsComposerOpen(true)
-  }, [])
+  }, [buildReplyContext])
 
   const handleForward = useCallback((selectedEmail: Email) => {
     if (!selectedEmail) return
-    const context: ReplyContext = {
-      id: selectedEmail.id,
-      subject: selectedEmail.subject || '',
-      from: (selectedEmail.from || []).map((a: EmailAddress) => ({ name: a.name || undefined, email: a.email })),
-      to: (selectedEmail.to || []).map((a: EmailAddress) => ({ name: a.name || undefined, email: a.email })),
-      cc: selectedEmail.cc?.map((a: EmailAddress) => ({ name: a.name || undefined, email: a.email })),
-      blobId: selectedEmail.blobId,
-      threadId: selectedEmail.threadId,
-      receivedAt: selectedEmail.receivedAt,
-      bodyParts: {
-        htmlBody: selectedEmail.htmlBody?.map(p => ({ partId: p.partId, type: p.type })) || undefined,
-        textBody: selectedEmail.textBody?.map(p => ({ partId: p.partId, type: p.type })) || undefined,
-        bodyValues: selectedEmail.bodyValues ? 
-          Object.fromEntries(Object.entries(selectedEmail.bodyValues).map(([k, v]) => [k, { value: v.value }])) : 
-          undefined,
-      },
-      _forward: true,
-    }
-    setReplyToEmail(context)
+    setReplyToEmail(buildReplyContext(selectedEmail, { forward: true }))
     setDraftEmail(null)
     setIsComposerOpen(true)
-  }, [])
+  }, [buildReplyContext])
 
   const handleOpenDraft = useCallback(async (emailId: string) => {
     try {

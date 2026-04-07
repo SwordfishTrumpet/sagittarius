@@ -17,9 +17,11 @@ class EventSourceManager {
   private es: EventSource | null = null;
   private queryClient: QueryClient | null = null;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private connectionTimeout: ReturnType<typeof setTimeout> | null = null;
   private url: string | null = null;
   private authToken: string | null = null;
   private newMailListeners: Set<NewMailListener> = new Set();
+  private connectionStateListeners: Set<(connected: boolean) => void> = new Set();
   private _destroyed = false;
   private _isConnected = false;
 
@@ -73,16 +75,58 @@ class EventSourceManager {
   private openConnection(): void {
     if (this._destroyed || !this.url || !this.authToken || !this.queryClient) return;
 
+    // Log raw URL from server for diagnostics
+    logger.debug('[EventSource] Raw URL from session:', this.url);
+    
     const finalUrl = this.buildUrl(this.url, this.authToken);
-    logger.debug('[EventSource] Connecting to', redactUrl(finalUrl));
+    logger.info('[EventSource] Connecting to:', redactUrl(finalUrl));
+    
+    // Warn if template placeholders weren't replaced (indicates server URL format issue)
+    if (finalUrl.includes('{types}') || finalUrl.includes('{closeafter}') || finalUrl.includes('{ping}')) {
+      logger.warn('[EventSource] URL still contains template placeholders - server may have returned pre-formatted URL');
+    }
 
-    const es = new EventSource(finalUrl);
+    // Add cache-busting param to prevent aggressive caching of failed connections
+    const cacheBustedUrl = finalUrl.includes('?') 
+      ? `${finalUrl}&_cb=${Date.now()}` 
+      : `${finalUrl}?_cb=${Date.now()}`;
+
+    logger.debug('[EventSource] Cache-bust URL:', redactUrl(cacheBustedUrl));
+
+    // Note: withCredentials defaults to false, but being explicit helps debugging
+    // We use URL-based auth (access_token param) rather than cookies, so withCredentials=false is correct
+    let es: EventSource;
+    try {
+      es = new EventSource(cacheBustedUrl, { withCredentials: false });
+    } catch (err) {
+      logger.error('[EventSource] Failed to construct EventSource:', err);
+      this._isConnected = false;
+      this.notifyConnectionStateChange(false);
+      this.scheduleReconnect();
+      return;
+    }
     this.es = es;
 
+    // Connection timeout - if onopen doesn't fire within 10s, treat as failure
+    this.connectionTimeout = setTimeout(() => {
+      if (!this._isConnected) {
+        logger.warn('[EventSource] Connection timeout - no onopen event after 10s');
+        es.close();
+        this._isConnected = false;
+        this.notifyConnectionStateChange(false);
+        this.scheduleReconnect();
+      }
+    }, 10_000);
+
     es.onopen = () => {
+      if (this.connectionTimeout) {
+        clearTimeout(this.connectionTimeout);
+        this.connectionTimeout = null;
+      }
       logger.debug('[EventSource] Connected');
       this._isConnected = true;
       this.reconnectionStrategy.reset();
+      this.notifyConnectionStateChange(true);
     };
 
     es.onmessage = (event: MessageEvent) => {
@@ -95,18 +139,27 @@ class EventSourceManager {
     });
 
     es.onerror = (err) => {
-      logger.warn('[EventSource] Error / connection lost', err);
+      // Clear connection timeout if still pending
+      if (this.connectionTimeout) {
+        clearTimeout(this.connectionTimeout);
+        this.connectionTimeout = null;
+      }
+      
+      // Capture detailed error info for diagnostics
+      const errorInfo = {
+        readyState: es.readyState,
+        url: redactUrl(finalUrl),
+        event: err.type,
+        timestamp: new Date().toISOString(),
+      };
+      
+      logger.error('[EventSource] Connection error:', errorInfo);
       this._isConnected = false;
+      this.notifyConnectionStateChange(false);
       es.close();
       this.es = null;
       
-      // Don't reconnect if we've never successfully connected (likely auth failure)
-      // This prevents infinite reconnect loops when credentials are invalid (401/403)
-      if (this.reconnectionStrategy.attempts === 0) {
-        logger.error('[EventSource] Connection failed on first attempt — possible auth failure. Not reconnecting.');
-        return;
-      }
-      
+      // Schedule reconnect - the reconnection strategy will handle backoff
       this.scheduleReconnect();
     };
   }
@@ -130,7 +183,7 @@ class EventSourceManager {
     if (this._destroyed) return;
 
     const delay = this.reconnectionStrategy.nextDelay();
-    logger.debug(`[EventSource] Reconnecting in ${delay}ms (attempt ${this.reconnectionStrategy.attempts})`);
+    logger.warn(`[EventSource] Connection lost. Reconnecting in ${delay}ms... (attempt ${this.reconnectionStrategy.attempts})`);
 
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null;
@@ -141,6 +194,11 @@ class EventSourceManager {
   disconnect(): void {
     this._destroyed = true;
     this._isConnected = false;
+
+    if (this.connectionTimeout !== null) {
+      clearTimeout(this.connectionTimeout);
+      this.connectionTimeout = null;
+    }
 
     if (this.reconnectTimer !== null) {
       clearTimeout(this.reconnectTimer);
@@ -159,13 +217,34 @@ class EventSourceManager {
   }
 
   isConnected(): boolean {
-    return this._isConnected;
+    // Check both the internal flag AND the actual EventSource readyState
+    // EventSource.OPEN === 1
+    return this._isConnected && this.es?.readyState === EventSource.OPEN;
   }
 
   /** Subscribe to new-mail (EmailDelivery) events. Returns an unsubscribe fn. */
   onNewMail(listener: NewMailListener): () => void {
     this.newMailListeners.add(listener);
     return () => this.newMailListeners.delete(listener);
+  }
+
+  /**
+   * Register a callback that fires whenever the connection state changes.
+   * Returns an unsubscribe function.
+   */
+  onConnectionStateChange(listener: (connected: boolean) => void): () => void {
+    this.connectionStateListeners.add(listener);
+    return () => this.connectionStateListeners.delete(listener);
+  }
+
+  private notifyConnectionStateChange(connected: boolean): void {
+    for (const listener of this.connectionStateListeners) {
+      try {
+        listener(connected);
+      } catch (err) {
+        logger.error('[EventSource] Error in connection state listener:', err);
+      }
+    }
   }
 
   /**

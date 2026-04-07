@@ -73,6 +73,8 @@ const baseProps = {
   onReorderMailbox: vi.fn(),
   onReparentMailbox: vi.fn(),
   onOpenSettings: vi.fn(),
+  onOpenCalendar: vi.fn(),
+  onOpenContacts: vi.fn(),
   resetSelection: vi.fn(),
   setSelectedMailboxId: vi.fn(),
   setSelectedFolderId: vi.fn(),

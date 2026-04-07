@@ -14,6 +14,10 @@ import React, { useState, useRef, useEffect, memo } from 'react';
 import { useDrop, useDrag } from 'react-dnd';
 import { ChevronRight, ChevronDown, MinusCircle } from 'lucide-react';
 import { MailboxNode, getUnreadCountRecursive } from '../utils/mailboxTree';
+import { logger } from '../utils/logger';
+
+/** Maximum nesting depth for folders to prevent potential infinite loops with circular references */
+const MAX_FOLDER_DEPTH = 10;
 
 type DropPosition = 'before' | 'inside' | 'after' | null;
 
@@ -33,6 +37,8 @@ interface RecursiveSidebarItemProps {
   onReparent?: (draggedId: string, newParentId: string | null) => void;
   siblingNodes?: MailboxNode[];
   onContextMenu?: (mailboxId: string, mailboxName: string, e: React.MouseEvent) => void;
+  /** Maximum depth to render children (prevents infinite loops with circular refs) */
+  maxDepth?: number;
 }
 
 function isDescendant(nodes: MailboxNode[], parentId: string, childId: string): boolean {
@@ -72,7 +78,14 @@ export function RecursiveSidebarItem({
   onReparent,
   siblingNodes,
   onContextMenu: onContextMenuProp,
+  maxDepth = MAX_FOLDER_DEPTH,
 }: RecursiveSidebarItemProps) {
+  // Safety check: stop rendering if we've exceeded max depth (prevents circular ref loops)
+  if (maxDepth <= 0) {
+    logger.warn(`[RecursiveSidebarItem] Max depth exceeded at folder "${node.name}" (${node.id}). Stopping recursion to prevent infinite loop.`);
+    return null;
+  }
+
   const active = selectedMailboxId === node.id;
   const itemRef = useRef<HTMLDivElement | null>(null);
   const [dropPosition, setDropPosition] = useState<DropPosition>(null);
@@ -372,6 +385,7 @@ export function RecursiveSidebarItem({
               onReparent={onReparent}
               siblingNodes={node.children}
               onContextMenu={onContextMenuProp}
+              maxDepth={maxDepth - 1}
             />
           ))}
         </div>

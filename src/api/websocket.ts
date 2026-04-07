@@ -25,6 +25,7 @@ class WebSocketManager {
   private _destroyed = false;
   private _connected = false;
   private newMailListeners: Set<NewMailListener> = new Set();
+  private connectionStateListeners: Set<(connected: boolean) => void> = new Set();
 
   private reconnectionStrategy = createReconnectionStrategy({
     baseDelayMs: RECONNECTION_DEFAULTS.BASE_BACKOFF_MS,
@@ -107,6 +108,25 @@ class WebSocketManager {
   }
 
   /**
+   * Register a callback that fires whenever the connection state changes.
+   * Returns an unsubscribe function.
+   */
+  onConnectionStateChange(listener: (connected: boolean) => void): () => void {
+    this.connectionStateListeners.add(listener);
+    return () => this.connectionStateListeners.delete(listener);
+  }
+
+  private notifyConnectionStateChange(connected: boolean): void {
+    for (const listener of this.connectionStateListeners) {
+      try {
+        listener(connected);
+      } catch (err) {
+        logger.error('[JMAP WebSocket] Error in connection state listener:', err);
+      }
+    }
+  }
+
+  /**
    * Permanently close the connection and cancel all in-flight requests.
    * After calling `disconnect()` the instance will not attempt to reconnect
    * until `connect()` is called again.
@@ -168,6 +188,7 @@ class WebSocketManager {
       this._connected = true;
       this.reconnectionStrategy.reset(); // reset exponential back-off
       logger.debug('[JMAP WebSocket] Connected');
+      this.notifyConnectionStateChange(true);
     };
 
     this.ws.onmessage = (event: MessageEvent) => {
@@ -182,12 +203,13 @@ class WebSocketManager {
 
     this.ws.onclose = (event: CloseEvent) => {
       this._connected = false;
-      logger.debug(
-        `[JMAP WebSocket] Closed (code=${event.code}, reason=${event.reason || '—'}, clean=${event.wasClean})`,
-      );
-      // Only schedule reconnect if not a normal close (code 1000) and not destroyed
+      this.notifyConnectionStateChange(false);
+      const closeReason = `code=${event.code}, reason=${event.reason || '—'}, clean=${event.wasClean}`;
       if (!this._destroyed && event.code !== 1000) {
+        logger.warn(`[JMAP WebSocket] Closed (${closeReason}). Will reconnect...`);
         this._scheduleReconnect();
+      } else {
+        logger.debug(`[JMAP WebSocket] Closed (${closeReason})`);
       }
     };
   }

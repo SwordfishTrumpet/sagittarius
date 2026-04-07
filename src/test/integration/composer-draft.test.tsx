@@ -2,9 +2,21 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { forwardRef, useRef, useState } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Composer } from '../../components/Composer'
 import { getComposerDraftKey } from '../../utils/draftStorage'
 import { createTestEmail } from '../testUtils'
+
+const createTestQueryClient = () => new QueryClient({
+  defaultOptions: {
+    queries: { retry: false, gcTime: 0 },
+    mutations: { retry: false },
+  },
+})
+
+const Wrapper = ({ children }: { children: React.ReactNode }) => (
+  <QueryClientProvider client={createTestQueryClient()}>{children}</QueryClientProvider>
+)
 
 let lastEditorOptions: any = null
 let mockIdentities = [{ id: 'identity-1', email: 'user@example.com', name: 'User Example', textSignature: '' }]
@@ -147,7 +159,7 @@ describe('Composer draft recovery', () => {
       isQuoteCollapsed: true,
     }))
 
-    render(<Composer onClose={() => {}} />)
+    render(<Composer onClose={() => {}} />, { wrapper: Wrapper })
 
     expect(lastEditorOptions.content).toBe('<p>Saved body</p>')
     expect(screen.getByDisplayValue('friend@example.com')).toBeInTheDocument()
@@ -162,7 +174,7 @@ describe('Composer draft recovery', () => {
     const onClose = vi.fn()
     const key = getComposerDraftKey('account-1')
 
-    render(<Composer onClose={onClose} />)
+    render(<Composer onClose={onClose} />, { wrapper: Wrapper })
 
     await user.type(screen.getByRole('textbox', { name: /Recipients/ }), 'friend@example.com')
     await user.type(screen.getByRole('textbox', { name: 'Subject:' }), 'Auto saved subject')
@@ -185,7 +197,7 @@ describe('Composer draft recovery', () => {
     const onClose = vi.fn()
     const key = getComposerDraftKey('account-1')
 
-    render(<Composer onClose={onClose} />)
+    render(<Composer onClose={onClose} />, { wrapper: Wrapper })
 
     await user.type(screen.getByRole('textbox', { name: /Recipients/ }), 'friend@example.com')
     await user.type(screen.getByRole('textbox', { name: 'Subject:' }), 'Send clears draft')
@@ -211,7 +223,7 @@ describe('Composer draft recovery', () => {
       textSignature: '—\nUser Example',
     }]
 
-    render(<Composer onClose={() => {}} />)
+    render(<Composer onClose={() => {}} />, { wrapper: Wrapper })
 
     expect(lastEditorOptions.content).toContain('data-sagittarius-signature="1"')
     expect(lastEditorOptions.content).toContain('User Example')
@@ -235,6 +247,7 @@ describe('Composer draft recovery', () => {
           htmlBody: [{ partId: 'body-1', type: 'text/html' }],
         })}
       />,
+      { wrapper: Wrapper },
     )
 
     expect(lastEditorOptions.content).toBe('<p>Saved on server</p>')
@@ -262,6 +275,7 @@ describe('Composer draft recovery', () => {
           htmlBody: [{ partId: 'body-1', type: 'text/html' }],
         })}
       />,
+      { wrapper: Wrapper },
     )
 
     await user.click(screen.getByRole('button', { name: 'Send' }))
@@ -293,7 +307,7 @@ describe('Composer draft recovery', () => {
       },
     ]
 
-    render(<Composer onClose={() => {}} />)
+    render(<Composer onClose={() => {}} />, { wrapper: Wrapper })
 
     await user.selectOptions(screen.getByRole('combobox'), 'identity-2')
 

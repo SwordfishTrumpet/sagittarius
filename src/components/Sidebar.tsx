@@ -1,4 +1,4 @@
-import { Mail, Send, FileText, Archive, Trash2, ShieldAlert, Inbox, Star, Plus, ChevronLeft, Settings as SettingsIcon, Wifi, WifiOff } from 'lucide-react'
+import { Mail, Send, FileText, Archive, Trash2, ShieldAlert, Inbox, Star, Plus, ChevronLeft, Settings as SettingsIcon, Wifi, WifiOff, Calendar, Users } from 'lucide-react'
 import { useMemo } from 'react'
 import { SidebarItem } from './SidebarItem'
 import { SidebarSection } from './SidebarSection'
@@ -8,6 +8,9 @@ import { classifyMailboxes } from '../utils/mailboxClassifier'
 import { jmapClient } from '../api/jmap'
 import type { MailboxNode } from '../utils/mailboxTree'
 import type { Mailbox, Quota, JMAPSession } from '../types/jmap'
+
+// Extend Mailbox type to include the dynamic _effectiveRole property added by classifyMailboxes
+type MailboxWithEffectiveRole = Mailbox & { _effectiveRole?: string };
 
 export interface SidebarProps {
   session: JMAPSession | null
@@ -41,6 +44,8 @@ export interface SidebarProps {
   onReorderMailbox: (draggedId: string, targetId: string) => void
   onReparentMailbox: (draggedId: string, newParentId: string | null) => void
   onOpenSettings: () => void
+  onOpenCalendar: () => void
+  onOpenContacts: () => void
   resetSelection: () => void
   setSelectedMailboxId: (id: string | null) => void
   setSelectedFolderId: (id: string | null) => void
@@ -96,6 +101,8 @@ export function Sidebar({
   onReorderMailbox,
   onReparentMailbox,
   onOpenSettings,
+  onOpenCalendar,
+  onOpenContacts,
   resetSelection,
   setSelectedMailboxId,
   setSelectedFolderId,
@@ -168,23 +175,27 @@ export function Sidebar({
                 onToggleExpand={() => onToggleSectionExpanded('mailboxes')}
               >
                 <div role="tree" aria-label="System mailboxes" className="space-y-0.5">
-                  {systemMailboxes.map((mailbox) => (
-                    <SidebarItem 
-                      key={mailbox.id}
-                      mailboxId={mailbox.id}
-                      icon={getMailboxIcon(mailbox)} 
-                      label={mailbox.name} 
-                      active={selectedMailboxId === mailbox.id} 
-                      count={mailbox.unreadEmails}
-                      hasNewMail={(mailbox._effectiveRole || mailbox.role) === 'inbox' && hasNewMail}
-                       onClick={() => {
-                         onSelectMailbox(mailbox.id)
-                         if ((mailbox._effectiveRole || mailbox.role) === 'inbox') onClearNewMail()
-                       }}
-                       onContextMenu={(e) => onMailboxContextMenu(mailbox.id, mailbox.name, e)}
-                       onDrop={(emailIds) => onMoveEmailsToFolder(emailIds, mailbox.id, mailbox.name)}
-                    />
-                  ))}
+                  {systemMailboxes.map((mailbox) => {
+                    const mb = mailbox as MailboxWithEffectiveRole;
+                    const effectiveRole = mb._effectiveRole || mb.role;
+                    return (
+                      <SidebarItem 
+                        key={mb.id}
+                        mailboxId={mb.id}
+                        icon={getMailboxIcon(mb)} 
+                        label={mb.name} 
+                        active={selectedMailboxId === mb.id} 
+                        count={mb.unreadEmails}
+                        hasNewMail={effectiveRole === 'inbox' && hasNewMail}
+                        onClick={() => {
+                          onSelectMailbox(mb.id)
+                          if (effectiveRole === 'inbox') onClearNewMail()
+                        }}
+                        onContextMenu={(e) => onMailboxContextMenu(mb.id, mb.name, e)}
+                        onDrop={(emailIds) => onMoveEmailsToFolder(emailIds, mb.id, mb.name)}
+                      />
+                    );
+                  })}
                 </div>
               </SidebarSection>
             )}
@@ -258,6 +269,25 @@ export function Sidebar({
                   label="Flagged" 
                   active={selectedMailboxId === 'flagged'} 
                   onClick={() => onSelectMailbox('flagged')} 
+                />
+              </div>
+            </div>
+
+            {/* Apps Section */}
+            <div className="pt-2 border-t border-[#E5E5E5]">
+              <div className="pt-3 pb-2 px-3 text-[10px] font-bold text-[#8E8E93] uppercase tracking-wider opacity-60">Apps</div>
+              <div role="tree" aria-label="Apps" className="space-y-0.5">
+                <SidebarItem 
+                  icon={<Calendar className="w-[18px] h-[18px]" strokeWidth={1.5} />} 
+                  label="Calendar" 
+                  active={false} 
+                  onClick={onOpenCalendar} 
+                />
+                <SidebarItem 
+                  icon={<Users className="w-[18px] h-[18px]" strokeWidth={1.5} />} 
+                  label="Contacts" 
+                  active={false} 
+                  onClick={onOpenContacts} 
                 />
               </div>
             </div>
