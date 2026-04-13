@@ -18,15 +18,19 @@ export function useEventSource(enabled: boolean): UseEventSourceResult {
   );
   const [hasNewMail, setHasNewMail] = useState(false);
 
-  // Keep a ref so the interval callback always reads the latest value
+  // Keep refs to avoid stale closures and ensure we always have fresh values
   const isConnectedRef = useRef(isConnected);
+  const enabledRef = useRef(enabled);
+  
+  // Update refs when props change
+  enabledRef.current = enabled;
 
   const clearNewMail = useCallback(() => {
     setHasNewMail(false);
   }, []);
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabledRef.current) return;
 
     const url = jmapClient.getEventSourceUrl();
     const authHeader = jmapClient.getAuthHeader();
@@ -74,10 +78,7 @@ export function useEventSource(enabled: boolean): UseEventSourceResult {
       eventSourceManager.disconnect();
       setIsConnected(false);
     };
-    // jmapClient is a stable singleton; getEventSourceUrl/getAuthHeader are synchronous
-    // accessors that read from the current session state. Including them would cause
-    // unnecessary reconnects since these method references can change. We only want
-    // to reconnect when `enabled` changes.
+    // Only reconnect when enabled changes, not when jmapClient methods change
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled]);
 

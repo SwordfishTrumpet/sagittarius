@@ -170,7 +170,16 @@ export function EmailReader({
       <article className="flex-1 overflow-y-auto bg-white select-text">
         <div className="flex flex-col items-center justify-center h-full text-center px-10" role="alert">
           <p className="text-lg font-medium text-[#FF3B30]">Failed to load message</p>
-          <p className="text-sm text-[#8E8E93] mt-2">{emailDetailError?.message}</p>
+          <p className="text-sm text-[#8E8E93] mt-2 max-w-md">{emailDetailError?.message || 'An unexpected error occurred while loading the email.'}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-6 px-4 py-2 bg-[#007AFF] text-white rounded-lg text-sm font-medium hover:bg-[#0056CC] transition-colors"
+          >
+            Retry
+          </button>
+          <p className="text-xs text-[#C7C7CC] mt-4">
+            If the problem persists, check your connection or contact support.
+          </p>
         </div>
       </article>
     );

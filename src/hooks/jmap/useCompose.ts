@@ -115,22 +115,47 @@ export function useCompose() {
         return response
       }
 
-      for (const [method, result] of (response as any).methodResponses) {
+      // Type guards for JMAP response validation
+      interface JMAPError {
+        type: string
+        description?: string
+      }
+      
+      interface JMAPMethodResult {
+        notCreated?: Record<string, JMAPError>
+        notUpdated?: Record<string, JMAPError>
+      }
+      
+      interface JMAPResponse {
+        methodResponses: Array<[string, JMAPMethodResult | JMAPError, string]>
+      }
+      
+      // Validate response structure
+      if (!response || typeof response !== 'object' || !Array.isArray((response as JMAPResponse).methodResponses)) {
+        throw new Error('Invalid JMAP response: missing methodResponses')
+      }
+      
+      const jmapResponse = response as JMAPResponse
+
+      for (const [method, result] of jmapResponse.methodResponses) {
         if (method === 'error') {
-          throw new Error(`JMAP error: ${result.type} — ${result.description || 'Unknown error'}`)
+          const errorResult = result as JMAPError
+          throw new Error(`JMAP error: ${errorResult.type} — ${errorResult.description || 'Unknown error'}`)
         }
-        if (result.notCreated) {
-          const firstError = Object.values(result.notCreated)[0] as any
+        
+        const methodResult = result as JMAPMethodResult
+        if (methodResult.notCreated && Object.keys(methodResult.notCreated).length > 0) {
+          const firstError = Object.values(methodResult.notCreated)[0] as JMAPError
           throw new Error(`Failed to create: ${firstError?.type || 'Unknown error'}`)
         }
         // Check for notUpdated errors from onSuccessUpdateEmail patch
-        if (result.notUpdated) {
-          const firstError = Object.values(result.notUpdated)[0] as any
+        if (methodResult.notUpdated && Object.keys(methodResult.notUpdated).length > 0) {
+          const firstError = Object.values(methodResult.notUpdated)[0] as JMAPError
           throw new Error(`Failed to move email to Sent: ${firstError?.type || 'Unknown error'}`)
         }
       }
 
-      return response as any
+      return jmapResponse
     },
     onMutate: () => {
       suppressNewMailNotification()

@@ -112,12 +112,28 @@ export function useResizablePane({
 
       target.removeEventListener('pointermove', onPointerMove)
       target.removeEventListener('pointerup', onPointerUp)
-      target.removeEventListener('pointercancel', onPointerUp)
+      target.removeEventListener('pointercancel', onPointerCancel)
+    }
+    
+    const onPointerCancel = () => {
+      // On pointercancel (system interrupt), restore original width and clean up
+      isMounted = false
+      cancelAnimationFrame(dragState.current.rafId)
+      setIsDragging(false)
+      document.body.classList.remove('is-resizing')
+      
+      // Restore the original width from before the drag started
+      setWidthState(dragState.current.startWidth)
+      persistWidth(dragState.current.startWidth)
+
+      target.removeEventListener('pointermove', onPointerMove)
+      target.removeEventListener('pointerup', onPointerUp)
+      target.removeEventListener('pointercancel', onPointerCancel)
     }
 
     target.addEventListener('pointermove', onPointerMove)
     target.addEventListener('pointerup', onPointerUp)
-    target.addEventListener('pointercancel', onPointerUp)
+    target.addEventListener('pointercancel', onPointerCancel)
 
     // Store cleanup function for unmount scenario
     const cleanup = () => {
@@ -125,7 +141,7 @@ export function useResizablePane({
         isMounted = false
         target.removeEventListener('pointermove', onPointerMove)
         target.removeEventListener('pointerup', onPointerUp)
-        target.removeEventListener('pointercancel', onPointerUp)
+        target.removeEventListener('pointercancel', onPointerCancel)
       }
     }
     // Attach cleanup to dragState for access during component unmount

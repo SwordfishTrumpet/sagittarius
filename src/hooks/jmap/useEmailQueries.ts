@@ -170,6 +170,10 @@ export function useThreads(
 
       if (searchTerm && ids.length > 0) {
         try {
+          // Reuse the same parsed filter logic as Email/query for consistency
+          const parsed = parseSearchQuery(searchTerm)
+          const parsedFilter = buildJMAPFilter(parsed.filters)
+          
           const snippetFilter: Record<string, unknown> = {}
           if (mailboxId && mailboxId !== 'all' && mailboxId !== 'flagged') {
             snippetFilter.inMailbox = mailboxId
@@ -177,7 +181,19 @@ export function useThreads(
           if (mailboxId === 'flagged') {
             snippetFilter.hasKeyword = '$flagged'
           }
-          snippetFilter.text = searchTerm
+          
+          // Merge parsed filters into snippet filter
+          if (Object.keys(parsedFilter).length > 0) {
+            Object.assign(snippetFilter, parsedFilter)
+          }
+          
+          // Add free text search if present (parsed.text contains remaining unparsed text)
+          if (parsed.text) {
+            snippetFilter.text = parsed.text
+          } else if (Object.keys(snippetFilter).length === 0) {
+            // Fallback: if no parsed filters and no text, use original search term
+            snippetFilter.text = searchTerm
+          }
 
           const snippetResponse = await jmapClient.request([
             ['SearchSnippet/get', {

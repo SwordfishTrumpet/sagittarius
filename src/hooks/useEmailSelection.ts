@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useRef } from 'react'
 import type { Email } from '../types/jmap'
 
 interface UseEmailSelectionOptions {
@@ -28,26 +28,37 @@ export function useEmailSelection({ emails }: UseEmailSelectionOptions): UseEmai
   const [selectedEmailId, setSelectedEmailIdState] = useState<string | null>(null)
   const [selectedThreadId, setSelectedThreadIdState] = useState<string | null>(null)
   const [selectedEmailIds, setSelectedEmailIdsState] = useState<Set<string>>(new Set())
+  
+  // Use a ref to store the anchor email ID for shift+click range selection
+  // This avoids stale closure issues when rapidly clicking
+  const anchorEmailIdRef = useRef<string | null>(null)
 
   const resetSelection = useCallback(() => {
     setSelectedEmailIdState(null)
     setSelectedThreadIdState(null)
     setSelectedEmailIdsState(new Set())
+    anchorEmailIdRef.current = null
   }, [])
 
   const toggleEmailSelection = useCallback((emailId: string, ctrlKey: boolean, shiftKey: boolean) => {
     // Use functional update to avoid stale closure issues
     setSelectedEmailIdsState((prevSelectedIds) => {
       const newSelection = new Set(prevSelectedIds)
+      
+      // Use the ref for shift selections to ensure consistent anchor point
+      const anchorId = anchorEmailIdRef.current
 
-      if (shiftKey && selectedEmailId && emails) {
-        // Shift+click: select range
-        const currentIndex = emails.findIndex((e) => e.id === selectedEmailId)
+      if (shiftKey && anchorId && emails) {
+        // Shift+click: select range from anchor to clicked email
+        const anchorIndex = emails.findIndex((e) => e.id === anchorId)
         const clickedIndex = emails.findIndex((e) => e.id === emailId)
-        const start = Math.min(currentIndex, clickedIndex)
-        const end = Math.max(currentIndex, clickedIndex)
-        for (let i = start; i <= end; i++) {
-          newSelection.add(emails[i].id)
+        const start = Math.min(anchorIndex, clickedIndex)
+        const end = Math.max(anchorIndex, clickedIndex)
+        // Only proceed if both indices are valid
+        if (start !== -1 && end !== -1) {
+          for (let i = start; i <= end; i++) {
+            newSelection.add(emails[i].id)
+          }
         }
       } else if (ctrlKey) {
         // Ctrl/Cmd+click: toggle individual
@@ -65,10 +76,15 @@ export function useEmailSelection({ emails }: UseEmailSelectionOptions): UseEmai
       return newSelection
     })
 
+    // Update the anchor point on non-shift clicks
+    if (!shiftKey) {
+      anchorEmailIdRef.current = emailId
+    }
+    
     // These can be set directly as they don't depend on the previous state
     setSelectedEmailIdState(emailId)
     setSelectedThreadIdState(emails?.find((e) => e.id === emailId)?.threadId || null)
-  }, [selectedEmailId, emails])
+  }, [emails])
 
   const selectAllEmails = useCallback(() => {
     if (emails) {

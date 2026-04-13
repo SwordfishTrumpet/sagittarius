@@ -164,32 +164,47 @@ export async function clearDeferredMutations() {
   await Promise.all(records.map(record => removeMutation(record.id)))
 }
 
+// Processing lock to prevent concurrent replays
+let isReplaying = false
+
 export async function replayDeferredMutations() {
-  const queued = await loadMutations()
-  let syncedCount = 0
-  const errors: Array<{ id: string; error: string }> = []
-
-  for (const record of queued) {
-    try {
-      const response = await jmapClient.request(record.payload.requests as OfflineJmapRequest[])
-      assertSuccessfulJmapResponse(response)
-      await removeMutation(record.id)
-      syncedCount += 1
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error)
-      const updated: DeferredMutation = {
-        ...record,
-        attemptCount: record.attemptCount + 1,
-        lastError: message,
-      }
-      await persistMutation(updated)
-      errors.push({ id: record.id, error: message })
-      // Continue processing remaining mutations instead of breaking
-      // This allows independent mutations to succeed even if one fails
-    }
+  // Prevent concurrent replays which could cause duplicate processing
+  if (isReplaying) {
+    return { syncedCount: 0, errors: [{ id: 'lock', error: 'Replay already in progress' }] }
   }
+  
+  isReplaying = true
+  
+  try {
+    const queued = await loadMutations()
+    let syncedCount = 0
+    const errors: Array<{ id: string; error: string }> = []
+    
+    // Process mutations one at a time
+    for (const record of queued) {
+      try {
+        const response = await jmapClient.request(record.payload.requests as OfflineJmapRequest[])
+        assertSuccessfulJmapResponse(response)
+        await removeMutation(record.id)
+        syncedCount += 1
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error)
+        const updated: DeferredMutation = {
+          ...record,
+          attemptCount: record.attemptCount + 1,
+          lastError: message,
+        }
+        await persistMutation(updated)
+        errors.push({ id: record.id, error: message })
+        // Continue processing remaining mutations instead of breaking
+        // This allows independent mutations to succeed even if one fails
+      }
+    }
 
-  return { syncedCount, errors }
+    return { syncedCount, errors }
+  } finally {
+    isReplaying = false
+  }
 }
 
 export async function runDeferredAwareMutation<T>(args: {
