@@ -3,6 +3,7 @@ import { Toaster, toast } from 'sonner'
 import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
 import { AnimatePresence } from 'framer-motion'
+import { useQueryClient } from '@tanstack/react-query'
 import { Login } from './components/Login'
 import { Composer } from './components/Composer'
 import { VirtualMessageList } from './components/VirtualMessageList'
@@ -49,6 +50,7 @@ import { useAnimatedEmailMoves } from './hooks/useAnimatedEmailMoves'
 import { useAppSidebar } from './hooks/useAppSidebar'
 
 function App() {
+  const queryClient = useQueryClient()
   const [session, setSession] = useState(jmapClient.getStoredSession())
   const [selectedMailboxId, setSelectedMailboxId] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
@@ -213,6 +215,8 @@ function App() {
 
   // Select mailbox helper
   const selectMailbox = useCallback((mailboxId: string) => {
+    // Cancel any in-flight email detail queries to prevent stale data display
+    queryClient.cancelQueries({ queryKey: ['emailDetail'] })
     setSelectedMailboxId(mailboxId)
     resetSelection()
     setSearchTerm('')
@@ -222,7 +226,7 @@ function App() {
     if (isMobile) {
       setMobileView('list')
     }
-  }, [resetSelection, clearFilters, setShowFilterBar, isMobile])
+  }, [queryClient, resetSelection, clearFilters, setShowFilterBar, isMobile])
 
   // Mobile navigation helpers
   const navigateToMailboxList = useCallback(() => {
@@ -599,7 +603,7 @@ function App() {
         <ErrorBoundary>
           <ContactsView isOpen={isContactsOpen} onClose={() => setIsContactsOpen(false)} />
         </ErrorBoundary>
-        {!isMobile && <KeyboardShortcutsHelp isOpen={showShortcutsHelp} onClose={() => setShowShortcutsHelp(false)} />}
+        <KeyboardShortcutsHelp isOpen={showShortcutsHelp} onClose={() => setShowShortcutsHelp(false)} isMobile={isMobile} />
         {selectedMailboxId && selectedMailboxId !== 'all' && selectedMailboxId !== 'flagged' && (
           <EmailImportZone mailboxId={selectedMailboxId} />
         )}

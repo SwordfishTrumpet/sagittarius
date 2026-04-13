@@ -254,6 +254,12 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
 
   useEffect(() => {
     return () => {
+      // Clear any pending debounced save to prevent race condition
+      if (saveDraftTimeoutRef.current !== null) {
+        window.clearTimeout(saveDraftTimeoutRef.current);
+        saveDraftTimeoutRef.current = null;
+      }
+      // Then perform the final save
       if (!draftKey || !shouldPersistDraftRef.current || !latestDraftRef.current) return;
       saveComposerDraft(draftKey, latestDraftRef.current);
     };

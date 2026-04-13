@@ -1,11 +1,12 @@
 import { useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X } from 'lucide-react';
+import { X, Smartphone } from 'lucide-react';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface KeyboardShortcutsHelpProps {
   isOpen: boolean;
   onClose: () => void;
+  isMobile?: boolean;
 }
 
 const SHORTCUT_GROUPS = [
@@ -52,7 +53,7 @@ const SHORTCUT_GROUPS = [
   },
 ];
 
-export function KeyboardShortcutsHelp({ isOpen, onClose }: KeyboardShortcutsHelpProps) {
+export function KeyboardShortcutsHelp({ isOpen, onClose, isMobile = false }: KeyboardShortcutsHelpProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
 
   useFocusTrap(dialogRef, { isActive: isOpen });
@@ -92,6 +93,17 @@ export function KeyboardShortcutsHelp({ isOpen, onClose }: KeyboardShortcutsHelp
                 <X size={12} strokeWidth={2.5} className="text-[#636366]" />
               </button>
             </div>
+
+            {/* Mobile notice */}
+            {isMobile && (
+              <div className="mb-6 p-3 bg-[#F2F2F7] rounded-lg flex items-start gap-3">
+                <Smartphone className="w-5 h-5 text-[#007AFF] shrink-0 mt-0.5" />
+                <p className="text-[13px] text-[#636366]">
+                  These shortcuts work when using an external keyboard with your mobile device. 
+                  Tap on screen elements for touch-based navigation.
+                </p>
+              </div>
+            )}
 
             {/* Shortcut groups in responsive grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">

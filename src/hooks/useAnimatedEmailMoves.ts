@@ -22,6 +22,7 @@ export function useAnimatedEmailMoves({
 }: UseAnimatedEmailMovesOptions): UseAnimatedEmailMovesReturn {
   const [removingEmailIds, setRemovingEmailIds] = useState<Set<string>>(new Set())
   const pendingTimersRef = useRef<Set<number>>(new Set())
+  const operationCounterRef = useRef(0)
 
   // Cleanup pending timers on unmount to prevent memory leaks
   useEffect(() => {
@@ -34,6 +35,18 @@ export function useAnimatedEmailMoves({
   }, [])
 
   const moveEmailsToFolder = useCallback((emailIds: string[], mailboxId: string, folderName: string) => {
+    // Increment operation counter to track this specific operation
+    const currentOperation = ++operationCounterRef.current
+    
+    // Clear any pending timers from previous operations to prevent accumulation
+    pendingTimersRef.current.forEach(timerId => {
+      window.clearTimeout(timerId)
+    })
+    pendingTimersRef.current.clear()
+    
+    // Clear previous removing state for clean animation
+    setRemovingEmailIds(new Set())
+
     // Add to removing set for animation
     setRemovingEmailIds(prev => {
       const next = new Set(prev)
@@ -43,6 +56,12 @@ export function useAnimatedEmailMoves({
 
     // Schedule the actual move
     const timerId = window.setTimeout(() => {
+      // Only execute if this is still the most recent operation
+      if (operationCounterRef.current !== currentOperation) {
+        pendingTimersRef.current.delete(timerId)
+        return
+      }
+      
       pendingTimersRef.current.delete(timerId)
 
       if (emailIds.length === 1) {
