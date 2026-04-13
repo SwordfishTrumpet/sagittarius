@@ -1,5 +1,11 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Security Vulnerability
+  - name: 💬 Ask a Question
+    url: https://github.com/SwordfishTrumpet/sagittarius/discussions
+    about: Get help or ask questions in GitHub Discussions
+  - name: 📖 Documentation
+    url: https://github.com/SwordfishTrumpet/sagittarius/blob/main/README.md
+    about: Check the README for quick answers
+  - name: 🔒 Security Vulnerability
     url: https://github.com/SwordfishTrumpet/sagittarius/security/advisories/new
     about: Report security vulnerabilities privately via GitHub's advisory system

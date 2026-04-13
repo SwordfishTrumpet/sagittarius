@@ -1,14 +1,22 @@
 # Security Policy
 
+## Supported Versions
+
+| Version | Supported          | Notes                            |
+| ------- | ------------------ | -------------------------------- |
+| 1.0.x   | ✅ Yes             | Current stable release           |
+| 0.9.x   | ⚠️ Critical fixes only | Previous stable              |
+| < 0.9   | ❌ No              | End of life, please upgrade      |
+
 ## Reporting a Vulnerability
 
 If you discover a security vulnerability in Sagittarius, please report it responsibly.
 
 **Do not open a public GitHub issue for security vulnerabilities.**
 
-Instead, please send a detailed report to the repository owner via GitHub's private vulnerability reporting feature:
+Instead, please use GitHub's private vulnerability reporting:
 
-1. Go to the [Security tab](https://github.com/SwordfishTrumpet/sagittarius/security) of this repository
+1. Go to the [Security tab](../../security) of this repository
 2. Click "Report a vulnerability"
 3. Provide a detailed description of the issue
 
