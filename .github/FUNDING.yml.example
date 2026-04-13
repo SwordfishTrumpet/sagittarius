@@ -1,0 +1,13 @@
+# FUNDING.yml
+# GitHub Sponsors and funding configuration
+# Uncomment and fill in when ready to accept sponsorships
+
+# github: [SwordfishTrumpet]  # Replace with your GitHub username
+# patreon: # Replace with your Patreon username
+# open_collective: # Replace with your Open Collective username
+# ko_fi: # Replace with your Ko-fi username
+# tidelift: # npm/sagittarius  # Replace with your Tidelift platform-name/package-name
+# custom: ["https://www.buymeacoffee.com/yourusername"]  # Replace with custom sponsorship URLs
+
+# Note: To enable, go to Settings → Sponsorships → Set up sponsor button
+# Then rename this file to FUNDING.yml (remove the .example extension)

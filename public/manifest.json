@@ -1,0 +1,48 @@
+{
+  "name": "Sagittarius",
+  "short_name": "Sagittarius",
+  "description": "A high-performance JMAP web client with iCloud Mail aesthetics",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F2F2F7",
+  "theme_color": "#007AFF",
+  "orientation": "any",
+  "scope": "/",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "utilities"],
+  "screenshots": [
+    {
+      "src": "screenshots/inbox-three-pane.png",
+      "sizes": "1440x900",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Three-pane email interface"
+    },
+    {
+      "src": "screenshots/mobile-responsive.png",
+      "sizes": "375x812",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Mobile responsive layout"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Compose",
+      "short_name": "Compose",
+      "description": "Start a new email",
+      "url": "/?compose=true",
+      "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}
