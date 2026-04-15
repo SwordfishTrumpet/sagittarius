@@ -82,8 +82,15 @@ app.use(compression({
 
 // ── Security headers ────────────────────────────────────────────────
 app.use((req, res, next) => {
-  // Skip security headers for EventSource (raw proxy handles it)
+  // Apply minimal security headers even for EventSource (VULN-007 fix)
+  // These headers are safe for SSE and provide baseline protection
   if (req.url?.startsWith('/jmap/eventsource')) {
+    // Prevent clickjacking even for EventSource
+    res.setHeader('X-Frame-Options', 'DENY');
+    // CSP frame-ancestors for modern browsers
+    res.setHeader('Content-Security-Policy', "frame-ancestors 'none'");
+    // Block MIME-type sniffing
+    res.setHeader('X-Content-Type-Options', 'nosniff');
     return next();
   }
 

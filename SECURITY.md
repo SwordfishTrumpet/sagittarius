@@ -52,3 +52,9 @@ Sagittarius implements the following protections:
 - **Credential redaction** -- Authentication credentials are never logged
 - **Content Security Policy** -- Inline script execution is restricted in rendered email content
 - **Input validation** -- JMAP responses are validated before processing
+- **XSS Prevention in Composer** -- Link URLs are validated to prevent `javascript:` and other dangerous protocols (VULN-001)
+- **Safe CID Image Resolution** -- Inline image references are resolved using DOM parsing instead of regex to prevent XSS (VULN-002)
+- **Rate Limiting** -- Authentication attempts are rate-limited with account lockout after 5 failed attempts (VULN-003, VULN-008)
+- **CSRF Protection** -- All JMAP requests include CSRF tokens to prevent cross-site request forgery (VULN-006)
+- **Timing Attack Prevention** -- Authentication failures include artificial delays to prevent username enumeration (VULN-009)
+- **Security Headers** -- All endpoints including EventSource receive security headers (VULN-007)

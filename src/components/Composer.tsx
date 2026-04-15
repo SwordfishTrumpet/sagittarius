@@ -457,6 +457,19 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
       editor.chain().focus().extendMarkRange('link').unsetLink().run();
       return;
     }
+    // Validate URL - only allow http:, https:, mailto:, tel:
+    // This prevents javascript: URLs which could lead to XSS attacks
+    const allowedProtocols = ['http:', 'https:', 'mailto:', 'tel:'];
+    try {
+      const parsed = new URL(url, window.location.origin);
+      if (!allowedProtocols.includes(parsed.protocol)) {
+        toast.error('Invalid URL protocol. Only http, https, mailto, and tel are allowed.');
+        return;
+      }
+    } catch {
+      toast.error('Invalid URL format.');
+      return;
+    }
     editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
   }, [editor]);
 

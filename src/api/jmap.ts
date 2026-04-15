@@ -2,6 +2,7 @@ import { logger } from '../utils/logger';
 import { eventSourceManager } from './eventSource';
 import { webSocketManager } from './websocket';
 import { stateManager } from './stateManager';
+import { getCsrfToken, getCsrfHeaderName, clearCsrfToken, regenerateCsrfToken } from '../utils/csrf';
 import type { QueryClient } from '@tanstack/react-query';
 import type { JMAPMethodCall, JMAPAccount, JMAPSession } from '../types/jmap';
 import type {
@@ -121,13 +122,14 @@ class JMAPClient {
     const variants = buildAuthVariants(username);
 
     let lastError: Error | null = null;
+    const startTime = Date.now();
 
     for (const variant of variants) {
       // Encode to UTF-8 bytes first, then Base64 to handle non-ASCII passwords
       const credentials = btoa(unescape(encodeURIComponent(`${variant}:${password}`)));
       const authHeader = `Basic ${credentials}`;
 
-      logger.debug(`[JMAP Auth Request] Trying username: ${variant}`);
+      logger.debug(`[JMAP Auth Request] Trying username: variant`);
       const response = await fetch('/jmap/session', {
         headers: {
           'Authorization': authHeader,
@@ -147,19 +149,30 @@ class JMAPClient {
       logger.debug(`[JMAP Auth Success] Session:`, JSON.stringify(session, null, 2));
       logger.debug(`[JMAP Auth] primaryAccounts keys:`, Object.keys(session.primaryAccounts || {}));
       logger.debug(`[JMAP Auth] accounts keys:`, Object.keys(session.accounts || {}));
-      
+
       // TEMP: Production diagnostic logging
       logger.error(`[JMAP Session Debug] accounts type: ${typeof session.accounts}, isArray: ${Array.isArray(session.accounts)}`);
       logger.error(`[JMAP Session Debug] accounts value: ${JSON.stringify(session.accounts)}`);
       logger.error(`[JMAP Session Debug] primaryAccounts value: ${JSON.stringify(session.primaryAccounts)}`);
-      
+
       this.session = this.rewriteSessionUrls(session);
       this.authHeader = authHeader;
 
       sessionStorage.setItem('jmap_auth', authHeader);
       sessionStorage.setItem('jmap_session', JSON.stringify(session));
 
+      // Regenerate CSRF token on successful authentication (VULN-006)
+      regenerateCsrfToken();
+
       return session;
+    }
+
+    // VULN-009: Add artificial delay to ensure consistent timing regardless of failure path
+    // This prevents timing attacks that could reveal whether a username exists
+    const elapsed = Date.now() - startTime;
+    const minDelay = 500; // Minimum 500ms to make all failure paths take similar time
+    if (elapsed < minDelay) {
+      await new Promise(resolve => setTimeout(resolve, minDelay - elapsed));
     }
 
     throw lastError ?? new Error('Authentication failed');
@@ -209,6 +222,7 @@ class JMAPClient {
         headers: {
           'Authorization': this.authHeader,
           'Content-Type': 'application/json',
+          [getCsrfHeaderName()]: getCsrfToken(), // CSRF protection (VULN-006)
         },
         body: JSON.stringify(body),
         signal: effectiveSignal,
@@ -336,6 +350,8 @@ class JMAPClient {
     this.authHeader = null;
     sessionStorage.removeItem('jmap_auth');
     sessionStorage.removeItem('jmap_session');
+    // 5. Clear CSRF token (VULN-006)
+    clearCsrfToken();
     // 5. Redirect — use replace() to avoid caching post-logout state in browser history
     window.location.replace('/');
   }

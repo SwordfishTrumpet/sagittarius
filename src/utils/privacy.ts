@@ -147,14 +147,15 @@ export function countExternalImages(html: string): number {
 
 /**
  * Resolve CID (Content-ID) image references in HTML to blob download URLs.
- * 
+ *
  * Email HTML references inline images as `<img src="cid:content-id">`.
  * JMAP attachments include a `cid` field (without angle brackets) and a `blobId`.
  * This function replaces cid: URLs with the JMAP blob download URL so the browser
  * can fetch them. The download URL is marked with a data attribute so a post-render
  * effect can fetch with auth headers and swap in a blob: URL.
  *
- * MUST be called BEFORE DOMPurify, since DOMPurify strips the cid: protocol.
+ * SECURITY: This function uses DOM parsing instead of regex to prevent XSS
+ * via malformed HTML. It should be called AFTER DOMPurify sanitization.
  */
 export function resolveCidImages(
   html: string,
@@ -166,7 +167,7 @@ export function resolveCidImages(
   // Build a map of Content-ID → { blobId, type, name }
   // Check both attachments and bodyStructure (inline images may only appear in the latter)
   const cidMap = new Map<string, { blobId: string; type: string; name: string }>();
-  
+
   const addToCidMap = (part: any) => {
     if (!part) return;
     if (part.cid && part.blobId) {
@@ -188,20 +189,26 @@ export function resolveCidImages(
 
   if (cidMap.size === 0) return html;
 
-  // Replace cid: references in img src attributes.
-  // Use regex to work on the raw HTML string (before DOM parsing) so DOMPurify
-  // never sees cid: protocol. Also handles edge cases like quoted/unquoted src.
-  return html.replace(
-    /(<img\b[^>]*?\bsrc\s*=\s*)(["'])cid:([^"'\s>]+)\2/gi,
-    (match, prefix, quote, cidValue) => {
-      const cleanCid = cidValue.replace(/^<|>$/g, '');
-      const info = cidMap.get(cleanCid);
-      if (!info) return match; // Unknown CID — leave as-is
+  // SECURITY FIX (VULN-002): Use DOM parsing instead of regex to prevent XSS
+  // via malformed HTML. Regex-based replacement on raw HTML could be bypassed.
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+
+  // Process images using DOM API instead of regex
+  const images = doc.querySelectorAll('img[src^="cid:"]');
+  images.forEach(img => {
+    const src = img.getAttribute('src');
+    if (!src) return;
+    const cid = src.replace(/^cid:/, '').replace(/^<|>$/g, '');
+    const info = cidMap.get(cid);
+    if (info) {
       const url = getBlobUrl(info.blobId, info.type, info.name);
-      // Mark with data-cid-src so post-render auth fetch can find it
-      return `${prefix}${quote}${url}${quote} data-cid-src="${cleanCid}"`;
-    },
-  );
+      img.setAttribute('src', url);
+      img.setAttribute('data-cid-src', cid);
+    }
+  });
+
+  return doc.body.innerHTML;
 }
 
 /**
