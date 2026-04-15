@@ -108,15 +108,15 @@ export function EmailReader({
         html = '<div style="padding:20px;color:#8E8E93;font-style:italic;">(No content)</div>';
       }
 
-      // Resolve CID inline images BEFORE DOMPurify (DOMPurify strips cid: protocol)
-      html = resolveCidImages(html, email, (blobId, type, name) =>
-        jmapClient.getBlobUrl(blobId, type, name)
-      );
-
-      // Sanitize with DOMPurify — allow data-cid-src for post-render auth fetch
+      // Sanitize with DOMPurify FIRST (security)
       let sanitized = DOMPurify.sanitize(html, {
         ADD_ATTR: ['target', 'data-blocked-src', 'data-cid-src', 'data-blocked-style', 'data-sagittarius-quote']
       });
+
+      // Resolve CID inline images AFTER sanitization (VULN-002 fix: now uses safe DOM parsing)
+      sanitized = resolveCidImages(sanitized, email, (blobId, type, name) =>
+        jmapClient.getBlobUrl(blobId, type, name)
+      );
 
       sanitized = normalizeSagittariusQuoteSpacing(sanitized)
 

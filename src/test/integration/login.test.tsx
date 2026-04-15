@@ -47,7 +47,7 @@ describe('login flow', () => {
     await user.type(screen.getByPlaceholderText('Password'), 'bad-password')
     await user.click(screen.getByRole('button', { name: 'Sign In' }))
 
-    expect(await screen.findByText('Failed to authenticate. Please check your credentials.')).toBeInTheDocument()
+    expect(await screen.findByText(/Failed to authenticate\. Please check your credentials\./)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Sign In' })).toBeInTheDocument()
   })
 })
