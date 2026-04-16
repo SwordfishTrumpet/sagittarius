@@ -10,7 +10,7 @@ interface ScheduleSendPickerProps {
 
 interface QuickOption {
   label: string;
-  sublabel: string;
+  sublabel: string | (() => string);
   date: () => Date;
 }
 
@@ -53,17 +53,17 @@ const QUICK_OPTIONS: QuickOption[] = [
     label: 'Tomorrow 9 AM',
     sublabel: () => formatDateLabel(tomorrow(9)),
     date: () => tomorrow(9),
-  } as any,
+  },
   {
     label: 'Tomorrow 1 PM',
     sublabel: () => formatDateLabel(tomorrow(13)),
     date: () => tomorrow(13),
-  } as any,
+  },
   {
     label: 'Monday 9 AM',
     sublabel: () => formatDateLabel(getNextWeekday(1, 9)),
     date: () => getNextWeekday(1, 9),
-  } as any,
+  },
 ];
 
 export function ScheduleSendPicker({ onSchedule, onCancel, maxDelaySeconds }: ScheduleSendPickerProps) {
@@ -160,7 +160,9 @@ export function ScheduleSendPicker({ onSchedule, onCancel, maxDelaySeconds }: Sc
             >
               <div className="text-left">
                 <p className="text-[14px] font-medium text-[#1C1C1E]">{opt.label}</p>
-                <p className="text-[12px] text-[#8E8E93]">{(opt as any).sublabel()}</p>
+                <p className="text-[12px] text-[#8E8E93]">
+                  {typeof opt.sublabel === 'function' ? opt.sublabel() : opt.sublabel}
+                </p>
               </div>
               <ChevronRight size={14} strokeWidth={1.5} className="text-[#C7C7CC]" />
             </button>

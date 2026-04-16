@@ -19,6 +19,31 @@ function asMailboxGet(data: unknown): MailboxGetResult {
   return data as MailboxGetResult;
 }
 
+// Type guards for JMAP response validation
+interface JMAPError {
+  type: string
+  description?: string
+}
+
+interface JMAPMethodResult {
+  created?: Record<string, { id: string }>
+  notCreated?: Record<string, JMAPError>
+  notUpdated?: Record<string, JMAPError>
+}
+
+interface JMAPResponse {
+  methodResponses: Array<[string, JMAPMethodResult | JMAPError, string]>
+}
+
+function isJMAPResponse(response: unknown): response is JMAPResponse {
+  return Boolean(
+    response &&
+    typeof response === 'object' &&
+    'methodResponses' in response &&
+    Array.isArray((response as JMAPResponse).methodResponses)
+  )
+}
+
 interface SaveDraftParams {
   to?: { name?: string; email: string }[]
   cc?: { name?: string; email: string }[]
@@ -111,26 +136,34 @@ export function useSaveDraft() {
         return { ...response, draftId }
       }
 
+      // Validate response structure
+      if (!isJMAPResponse(response)) {
+        throw new Error('Invalid JMAP response: missing methodResponses')
+      }
+
       // Extract created email ID for new drafts
       let newDraftId = draftId
       if (!draftId) {
-        for (const [method, result] of (response as any).methodResponses) {
-          if (method === 'Email/set' && result.created?.['draft-1']) {
-            newDraftId = result.created['draft-1'].id
+        for (const [method, result] of response.methodResponses) {
+          const methodResult = result as JMAPMethodResult
+          if (method === 'Email/set' && methodResult.created?.['draft-1']) {
+            newDraftId = methodResult.created['draft-1'].id
           }
         }
       }
 
-      for (const [method, result] of (response as any).methodResponses) {
+      for (const [method, result] of response.methodResponses) {
         if (method === 'error') {
-          throw new Error(`JMAP error: ${result.type} — ${result.description || 'Unknown error'}`)
+          const errorResult = result as JMAPError
+          throw new Error(`JMAP error: ${errorResult.type} — ${errorResult.description || 'Unknown error'}`)
         }
-        if (result.notCreated) {
-          const firstError = Object.values(result.notCreated)[0] as any
+        const methodResult = result as JMAPMethodResult
+        if (methodResult.notCreated && Object.keys(methodResult.notCreated).length > 0) {
+          const firstError = Object.values(methodResult.notCreated)[0] as JMAPError
           throw new Error(`Failed to create draft: ${firstError?.type || 'Unknown error'}`)
         }
-        if (result.notUpdated) {
-          const firstError = Object.values(result.notUpdated)[0] as any
+        if (methodResult.notUpdated && Object.keys(methodResult.notUpdated).length > 0) {
+          const firstError = Object.values(methodResult.notUpdated)[0] as JMAPError
           throw new Error(`Failed to update draft: ${firstError?.type || 'Unknown error'}`)
         }
       }

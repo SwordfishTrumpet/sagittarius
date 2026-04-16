@@ -69,6 +69,9 @@ describe('ContextMenu', () => {
       />,
     )
 
+    // Wait for initial focus to be set
+    await waitFor(() => expect(screen.getByRole('menuitem', { name: 'Reply' })).toHaveFocus())
+
     await user.keyboard('[ArrowDown]')
     await waitFor(() => expect(screen.getByRole('menuitem', { name: 'Move' })).toHaveFocus())
 

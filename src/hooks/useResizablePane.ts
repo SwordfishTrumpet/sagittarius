@@ -46,6 +46,9 @@ export function useResizablePane({
     rafId: 0,
     latestWidth: 0,
   })
+  
+  // Separate ref for cleanup function to avoid mutating dragState structure
+  const cleanupRef = useRef<(() => void) | null>(null)
 
   // Persist width to localStorage whenever it changes (debounced via drag end)
   const persistWidth = useCallback((w: number) => {
@@ -144,8 +147,8 @@ export function useResizablePane({
         target.removeEventListener('pointercancel', onPointerCancel)
       }
     }
-    // Attach cleanup to dragState for access during component unmount
-    ;(dragState.current as any).cleanup = cleanup
+    // Store cleanup in separate ref for access during component unmount
+    cleanupRef.current = cleanup
   }, [width, minWidth, maxWidth, persistWidth, setWidth])
 
   // Safety cleanup: remove body class if component unmounts during drag
@@ -154,8 +157,10 @@ export function useResizablePane({
       document.body.classList.remove('is-resizing')
       cancelAnimationFrame(dragState.current.rafId)
       // Clean up any orphaned pointer event listeners
-      const cleanup = (dragState.current as any).cleanup
-      if (cleanup) cleanup()
+      if (cleanupRef.current) {
+        cleanupRef.current()
+        cleanupRef.current = null
+      }
     }
   }, [])
 

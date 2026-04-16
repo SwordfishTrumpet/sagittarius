@@ -197,7 +197,7 @@ export function IdentitySettings() {
         </div>
       ) : (
         <div className="space-y-2">
-          {(identities as any[]).map((identity) => (
+          {identities.map((identity) => (
             <div key={identity.id}>
               {editingId === identity.id ? (
                 <IdentityForm

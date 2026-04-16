@@ -28,6 +28,13 @@ export function ContextMenu({ items, x, y, onClose }: ContextMenuProps) {
   const [adjustedPos, setAdjustedPos] = useState({ x, y });
   const [activeIndex, setActiveIndex] = useState(-1);
   const [activeSubmenuIndex, setActiveSubmenuIndex] = useState(-1);
+  // Track if menu was opened by touch to handle touch/mouse event coordination
+  const touchOpenedRef = useRef(false);
+  const ignoreNextMouseEventRef = useRef(false);
+  // Track when menu opened to prevent immediate close from same touch event
+  const openTimeRef = useRef(Date.now());
+  // Delay before outside-click detection is enabled (ms)
+  const OUTSIDE_CLICK_DELAY = 100;
 
   const enabledItems = items.filter((item) => !item.disabled);
 
@@ -130,9 +137,36 @@ export function ContextMenu({ items, x, y, onClose }: ContextMenuProps) {
     closeSubmenu();
   };
 
-  // Handle click outside
+  // Handle click/touch outside
   useEffect(() => {
+    // Reset open time when menu first opens (when x or y changes)
+    openTimeRef.current = Date.now();
+  }, [x, y]);
+
+  useEffect(() => {
+    // Detect if this menu was opened by touch (check for recent touch event)
+    const handleTouchStart = (e: TouchEvent) => {
+      // Ignore touches that happen immediately after opening (same touch event)
+      if (Date.now() - openTimeRef.current < OUTSIDE_CLICK_DELAY) {
+        return;
+      }
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        touchOpenedRef.current = true;
+        ignoreNextMouseEventRef.current = true;
+        onClose();
+      }
+    };
+
     const handleClickOutside = (e: MouseEvent) => {
+      // Ignore clicks that happen immediately after opening
+      if (Date.now() - openTimeRef.current < OUTSIDE_CLICK_DELAY) {
+        return;
+      }
+      // If we need to ignore this mouse event (because it follows a touch), skip it
+      if (ignoreNextMouseEventRef.current) {
+        ignoreNextMouseEventRef.current = false;
+        return;
+      }
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         onClose();
       }
@@ -143,21 +177,27 @@ export function ContextMenu({ items, x, y, onClose }: ContextMenuProps) {
       if (e.key === 'Escape') {
         if (activeSubmenu) {
           closeSubmenu();
-          focusMainItem(activeIndex);
+          // Use a stable reference to avoid dependency on activeIndex
+          window.requestAnimationFrame(() => {
+            const target = itemRefs.current[activeIndex];
+            if (target) target.focus();
+          });
           return;
         }
         onClose();
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleTouchStart, { passive: true, capture: true });
+    document.addEventListener('mousedown', handleClickOutside, { capture: true });
     document.addEventListener('keydown', handleKeyDown);
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleTouchStart, { capture: true });
+      document.removeEventListener('mousedown', handleClickOutside, { capture: true });
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [activeIndex, activeSubmenu, onClose]);
+  }, [activeSubmenu, activeIndex, onClose]);
 
   const handleMenuKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (enabledItems.length === 0) return;
