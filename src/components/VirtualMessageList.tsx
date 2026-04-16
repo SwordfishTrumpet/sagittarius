@@ -18,6 +18,7 @@ interface VirtualMessageListProps {
   selectedEmailIds: Set<string>;
   mailboxes: Mailbox[];
   onToggleSelection: (emailId: string, ctrlKey: boolean, shiftKey: boolean) => void;
+  onSelectEmail?: (emailId: string, threadId: string | null) => void; // For mobile navigation
   onToggleFlag: (emailId: string, flagged: boolean) => void;
   formatMessageDate: (date: string) => string;
   removingEmailIds?: Set<string>;
@@ -45,6 +46,7 @@ export function VirtualMessageList({
   selectedEmailIds,
   mailboxes,
   onToggleSelection,
+  onSelectEmail,
   onToggleFlag,
   formatMessageDate,
   removingEmailIds: externalRemovingIds,
@@ -123,12 +125,12 @@ export function VirtualMessageList({
   // Handle context menu open from message item
   const handleContextMenu = useCallback(
     (emailId: string, e: React.MouseEvent<HTMLDivElement> | { clientX: number; clientY: number; preventDefault: () => void }) => {
-      e.preventDefault();
-      // Auto-select the email that was right-clicked / long-pressed
-      onToggleSelection(emailId, false, false);
+      e.preventDefault?.();
+      // Don't auto-select on mobile long-press to avoid navigation issues
+      // Just set the context menu position
       setContextMenu({ x: e.clientX, y: e.clientY, emailId });
     },
-    [onToggleSelection]
+    []
   );
 
   // Get the sent mailbox to determine if message is sent
@@ -159,9 +161,15 @@ export function VirtualMessageList({
     (email: Email, e: React.MouseEvent<HTMLDivElement>) => {
       const ctrlKey = e.ctrlKey || e.metaKey;
       const shiftKey = e.shiftKey;
-      onToggleSelection(email.id, ctrlKey, shiftKey);
+      
+      // On mobile, use onSelectEmail for navigation; otherwise just toggle selection
+      if (isMobile && onSelectEmail && !ctrlKey && !shiftKey) {
+        onSelectEmail(email.id, email.threadId || null);
+      } else {
+        onToggleSelection(email.id, ctrlKey, shiftKey);
+      }
     },
-    [onToggleSelection]
+    [onToggleSelection, onSelectEmail, isMobile]
   );
 
   // Handle double-click to open drafts

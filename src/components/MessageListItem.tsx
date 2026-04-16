@@ -50,6 +50,7 @@ function MessageListItemComponent({
   // Long-press detection for touch devices
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressTriggered = useRef(false);
+  const longPressTimestamp = useRef(0);
   const touchStartPos = useRef({ x: 0, y: 0 });
 
   // Cleanup long-press timer on unmount to prevent memory leaks
@@ -62,11 +63,14 @@ function MessageListItemComponent({
   }, []);
 
   const handleTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+    // Reset flags at the start of each touch
     longPressTriggered.current = false;
+    longPressTimestamp.current = 0;
     const touch = e.touches[0];
     touchStartPos.current = { x: touch.clientX, y: touch.clientY };
     longPressTimer.current = setTimeout(() => {
       longPressTriggered.current = true;
+      longPressTimestamp.current = Date.now();
       // Trigger haptic feedback if available
       if (navigator.vibrate) navigator.vibrate(10);
       onContextMenu?.({
@@ -97,11 +101,18 @@ function MessageListItemComponent({
   }, []);
 
   const handleClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    // Suppress click if long-press was just triggered
-    if (longPressTriggered.current) {
+    // Check if this is a simulated mouse event from a touch (indicated by zero clientX/clientY in some browsers)
+    // or if it's within the suppression window after a long-press
+    const timeSinceLongPress = Date.now() - longPressTimestamp.current;
+    
+    // Suppress click if long-press was triggered (within last 500ms)
+    if (longPressTriggered.current || timeSinceLongPress < 500) {
       longPressTriggered.current = false;
+      e.preventDefault();
+      e.stopPropagation();
       return;
     }
+    
     onClick(e);
   }, [onClick]);
 

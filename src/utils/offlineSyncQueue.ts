@@ -9,6 +9,22 @@ import type {
 
 const OFFLINE_SYNC_QUEUE_CHANGED_EVENT = 'sagittarius-offline-sync-queue-changed'
 
+// Type guards for JMAP error handling
+interface JMAPError {
+  type: string
+  description?: string
+}
+
+interface JMAPMethodResult {
+  notCreated?: Record<string, JMAPError>
+  notUpdated?: Record<string, JMAPError>
+  notDestroyed?: Record<string, JMAPError>
+}
+
+interface JMAPResponse {
+  methodResponses: Array<[string, JMAPMethodResult | JMAPError, string]>
+}
+
 class OfflineSyncQueueDB extends Dexie {
   mutations!: Table<DeferredMutation, string>
 
@@ -103,25 +119,31 @@ function toResult(record: DeferredMutation): DeferredMutationResult {
   }
 }
 
-function assertSuccessfulJmapResponse(response: any) {
-  const methodResponses = Array.isArray(response?.methodResponses) ? response.methodResponses : []
+function assertSuccessfulJmapResponse(response: unknown) {
+  const methodResponses = 
+    response && typeof response === 'object' && 'methodResponses' in response
+      ? (response as JMAPResponse).methodResponses 
+      : []
+      
   for (const [method, result] of methodResponses) {
     if (method === 'error') {
-      throw new Error(result?.description || result?.type || 'JMAP error')
+      const errorResult = result as JMAPError
+      throw new Error(errorResult?.description || errorResult?.type || 'JMAP error')
     }
 
-    if (result?.notCreated && Object.keys(result.notCreated).length > 0) {
-      const firstError = Object.values(result.notCreated)[0] as any
+    const methodResult = result as JMAPMethodResult
+    if (methodResult?.notCreated && Object.keys(methodResult.notCreated).length > 0) {
+      const firstError = Object.values(methodResult.notCreated)[0] as JMAPError
       throw new Error(firstError?.description || firstError?.type || 'JMAP create failed')
     }
 
-    if (result?.notUpdated && Object.keys(result.notUpdated).length > 0) {
-      const firstError = Object.values(result.notUpdated)[0] as any
+    if (methodResult?.notUpdated && Object.keys(methodResult.notUpdated).length > 0) {
+      const firstError = Object.values(methodResult.notUpdated)[0] as JMAPError
       throw new Error(firstError?.description || firstError?.type || 'JMAP update failed')
     }
 
-    if (result?.notDestroyed && Object.keys(result.notDestroyed).length > 0) {
-      const firstError = Object.values(result.notDestroyed)[0] as any
+    if (methodResult?.notDestroyed && Object.keys(methodResult.notDestroyed).length > 0) {
+      const firstError = Object.values(methodResult.notDestroyed)[0] as JMAPError
       throw new Error(firstError?.description || firstError?.type || 'JMAP destroy failed')
     }
   }

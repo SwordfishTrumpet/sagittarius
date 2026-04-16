@@ -180,7 +180,6 @@ function App() {
   const sendMDN = useSendMDN()
 
   // Offline sync
-  const delayedMoveTimersRef = useRef<Set<number>>(new Set())
   const { isOffline } = useNetworkStatus()
   const { pendingCount, isReplaying, replayQueue } = useOfflineSyncQueue()
 
@@ -515,6 +514,7 @@ function App() {
             selectedEmailIds={selectedEmailIds}
             mailboxes={mailboxes || []}
             onToggleSelection={toggleEmailSelection}
+            onSelectEmail={handleSelectEmail}
             onToggleFlag={handleToggleSelectedFlag}
             formatMessageDate={formatMessageDate}
             removingEmailIds={removingEmailIds}
