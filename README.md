@@ -13,16 +13,6 @@ A high-performance, server-agnostic JMAP web client with a modern interface insp
 [![Vitest](https://img.shields.io/badge/Tests-601%20passing-6E9F18?style=flat-square&logo=vitest&logoColor=white)](package.json)
 [![License MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
----
-
-<p align="center">
-  <img src="screenshots/inbox-three-pane.png" alt="Sagittarius Three-Pane Interface" width="800">
-  <br>
-  <em>Three-pane layout with glassmorphic sidebar, message list, and reading pane</em>
-</p>
-
----
-
 ## ✨ Why Sagittarius?
 
 Sagittarius is a **frontend-only JMAP client** designed to work with any RFC 8620/8621-compliant mail server. Unlike proprietary webmail interfaces that lock you into a specific backend, Sagittarius gives you full control over your mail infrastructure while providing a polished, responsive user experience.
