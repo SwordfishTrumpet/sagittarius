@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { jmapClient } from '../api/jmap'
 import { logger } from '../utils/logger'
+import { getCsrfToken, getCsrfHeaderName } from '../utils/csrf'
 
 interface EmailBodyFrameProps {
   html: string
@@ -243,7 +244,10 @@ export function EmailBodyFrame({ html }: EmailBodyFrameProps) {
         img.style.opacity = '0.5'
 
         fetch(downloadUrl, {
-          headers: { Authorization: authHeader },
+          headers: { 
+            Authorization: authHeader,
+            [getCsrfHeaderName()]: getCsrfToken(), // CSRF protection (VULN-006)
+          },
         })
           .then(res => {
             if (!res.ok) throw new Error(`HTTP ${res.status}`)
