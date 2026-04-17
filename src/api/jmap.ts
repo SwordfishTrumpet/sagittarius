@@ -1,4 +1,4 @@
-import { logger } from '../utils/logger';
+import { logger, redactUrl } from '../utils/logger';
 import { eventSourceManager } from './eventSource';
 import { webSocketManager } from './websocket';
 import { stateManager } from './stateManager';
@@ -324,11 +324,25 @@ class JMAPClient {
       headers: {
         'Authorization': this.authHeader,
         'Content-Type': file.type,
+        [getCsrfHeaderName()]: getCsrfToken(), // CSRF protection (VULN-006)
       },
       body: file,
     });
 
-    if (!response.ok) throw new Error('Upload failed');
+    if (!response.ok) {
+      const errorText = await response.text();
+      logger.error('[JMAP Blob Upload Error]', {
+        status: response.status,
+        statusText: response.statusText,
+        url: redactUrl(url),
+        fileName: file.name,
+        fileType: file.type,
+        fileSize: file.size,
+        responseHeaders: Object.fromEntries(response.headers.entries()),
+        errorBody: errorText.substring(0, 1000),
+      });
+      throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
+    }
     return response.json();
   }
 
