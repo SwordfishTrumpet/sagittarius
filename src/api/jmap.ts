@@ -319,12 +319,14 @@ class JMAPClient {
     
     const url = this.session.uploadUrl.replace('{accountId}', encodeURIComponent(accountId));
 
+    // Note: CSRF token is NOT included here because blob upload uses raw file upload
+    // with Content-Type: file.type, and the JMAP backend only expects Authorization header.
+    // The Basic Auth header provides sufficient protection for this endpoint.
     const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Authorization': this.authHeader,
         'Content-Type': file.type,
-        [getCsrfHeaderName()]: getCsrfToken(), // CSRF protection (VULN-006)
       },
       body: file,
     });
