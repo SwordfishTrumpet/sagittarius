@@ -278,6 +278,10 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
           toastOperationError('attachment.empty', file.name);
           continue;
         }
+        // Warn about large files (nginx default limit is often 1MB)
+        if (file.size > 10 * 1024 * 1024) {
+          toast.warning(`Large file: ${file.name} (${(file.size / 1024 / 1024).toFixed(1)} MB). Upload may fail if server limit is exceeded.`);
+        }
         const res = await jmapClient.uploadBlob(file);
         setAttachments(prev => [...prev, {
           blobId: res.blobId,
@@ -287,8 +291,13 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
         }]);
       }
       toast.success('Files attached');
-    } catch (err) {
-      toastOperationError('attachment.upload');
+    } catch (err: any) {
+      // Check for 413 Payload Too Large
+      if (err.message?.includes('413') || err.message?.toLowerCase().includes('too large')) {
+        toast.error('File too large. Maximum upload size may be limited by your server configuration.');
+      } else {
+        toastOperationError('attachment.upload');
+      }
     } finally {
       setIsUploading(false);
     }
