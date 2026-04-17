@@ -84,7 +84,6 @@ See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for detailed instructions.
 | File | Audience | Purpose |
 |------|----------|---------|
 | `AGENTS.md` | AI/ML agents | Instructions for code agents working on Sagittarius |
-| `TODO.md` | Maintainers | Development roadmap and known issues |
 | `docs/patterns-and-utilities.md` | Developers | Reusable code patterns and utilities |
 
 ---
@@ -123,7 +122,6 @@ Key security-related files:
 These files are development-only and not included in production builds:
 
 - `AGENTS.md` — AI agent instructions
-- `TODO.md` — Development tracking
 - `docs/DEVELOPMENT.md` — Contributor guide
 - `docs/accessibility.md` — Internal accessibility docs
 - `docs/patterns-and-utilities.md` — Code patterns reference
@@ -163,13 +161,9 @@ The production build does **not** include:
 - `.env.example` — Template showing required environment variables (committed to repo)
 - `.env` — Your actual local configuration (ignored by git, never committed)
 
-### Can I delete AGENTS.md and TODO.md?
+### Can I delete AGENTS.md?
 
-Yes, they're not required for running Sagittarius. However:
-- `AGENTS.md` helps AI assistants understand the codebase
-- `TODO.md` tracks known issues and planned improvements
-
-Consider keeping them if you plan to contribute back or have others work on the code.
+`AGENTS.md` helps AI assistants understand the codebase. Keep it if you plan to have others work on the code.
 
 ---
 
@@ -187,5 +181,4 @@ Consider keeping them if you plan to contribute back or have others work on the 
 
 **To contribute:**
 1. Read `CONTRIBUTING.md`
-2. Check `TODO.md` for open issues
-3. Follow patterns in `docs/patterns-and-utilities.md`
+2. Follow patterns in `docs/patterns-and-utilities.md`

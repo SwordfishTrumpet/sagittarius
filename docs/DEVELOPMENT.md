@@ -395,7 +395,6 @@ await act(async () => {
 
 - Review [CONTRIBUTING.md](../CONTRIBUTING.md) for contribution guidelines
 - Read [patterns-and-utilities.md](./patterns-and-utilities.md) for reusable patterns
-- Check [TODO.md](../TODO.md) for open tasks
 - Explore the codebase starting with `src/App.tsx`
 
 Happy coding! 🚀
