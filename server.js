@@ -176,6 +176,11 @@ const jmapProxy = createProxyMiddleware({
       // that into a proper Authorization header for the JMAP backend.
       attachBasicAuthFromAccessToken(proxyReq, req.url);
 
+      // Debug: Log upload requests
+      if (req.url?.includes('/upload')) {
+        logInfo('[proxy] Upload request:', req.url, 'Auth header present:', !!proxyReq.getHeader('authorization'));
+      }
+
       if (req.url?.includes('/eventsource')) {
         logInfo('[proxy] EventSource request:', req.url);
       }
