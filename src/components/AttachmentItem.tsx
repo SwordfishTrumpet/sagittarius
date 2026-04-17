@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, memo } from 'react'
 import { Download, ExternalLink, FileIcon } from 'lucide-react'
 import { jmapClient } from '../api/jmap'
 import { logger } from '../utils/logger'
+import { getCsrfToken, getCsrfHeaderName } from '../utils/csrf'
 
 function AttachmentItemComponent({ attachment }: { attachment: any }) {
   const downloadUrl = jmapClient.getBlobUrl(attachment.blobId, attachment.type, attachment.name);
@@ -25,7 +26,10 @@ function AttachmentItemComponent({ attachment }: { attachment: any }) {
     let objectUrl: string | null = null;
     const authHeader = jmapClient.getAuthHeader();
     fetch(downloadUrl, {
-      headers: authHeader ? { 'Authorization': authHeader } : {},
+      headers: authHeader ? { 
+        'Authorization': authHeader,
+        [getCsrfHeaderName()]: getCsrfToken(), // CSRF protection (VULN-006)
+      } : {},
     })
       .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.blob(); })
       .then(blob => {
@@ -45,7 +49,10 @@ function AttachmentItemComponent({ attachment }: { attachment: any }) {
   const fetchBlob = async (action: 'open' | 'download') => {
     const authHeader = jmapClient.getAuthHeader();
     const response = await fetch(downloadUrl, {
-      headers: authHeader ? { 'Authorization': authHeader } : {},
+      headers: authHeader ? { 
+        'Authorization': authHeader,
+        [getCsrfHeaderName()]: getCsrfToken(), // CSRF protection (VULN-006)
+      } : {},
     });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const blob = await response.blob();
