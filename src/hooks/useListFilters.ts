@@ -1,10 +1,11 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
+import type { EmailFilter, EmailFilterCondition } from '../types/jmap'
 
 export interface ListFilter {
   id: string
   label: string
-  jmapCondition: Record<string, any>
+  jmapCondition: EmailFilterCondition
 }
 
 interface UseListFiltersOptions {
@@ -14,7 +15,7 @@ interface UseListFiltersOptions {
 interface UseListFiltersReturn {
   activeListFilters: Set<string>
   showFilterBar: boolean
-  quickJMAPFilter: Record<string, any> | undefined
+  quickJMAPFilter: EmailFilter | undefined
   toggleFilter: (filterId: string) => void
   setShowFilterBar: (show: boolean) => void
   toggleFilterBar: () => void
@@ -88,7 +89,7 @@ export function useListFilters({ userEmail }: UseListFiltersOptions): UseListFil
   const quickJMAPFilter = useMemo(() => {
     if (activeListFilters.size === 0) return undefined
 
-    const conditions: Record<string, any>[] = []
+    const conditions: EmailFilterCondition[] = []
 
     if (activeListFilters.has('unread')) {
       conditions.push({ notHasKeyword: '$seen' })

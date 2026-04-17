@@ -97,6 +97,7 @@ describe('Privacy Utility — External Image Blocking', () => {
       const html = '<img src="cid:body-inline">';
       const email = {
         bodyStructure: {
+          type: 'multipart/related',
           subParts: [
             { cid: '<body-inline>', blobId: 'blob-2', type: 'image/jpeg', name: 'photo.jpg' },
           ],

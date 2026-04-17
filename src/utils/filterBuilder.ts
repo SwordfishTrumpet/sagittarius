@@ -4,6 +4,7 @@
  */
 
 import { SearchFilter } from '../types/search';
+import type { EmailFilter, EmailFilterCondition } from '../types/jmap';
 
 /**
  * Build a JMAP-compliant Email/query filter from SearchFilter
@@ -12,8 +13,8 @@ import { SearchFilter } from '../types/search';
 export function buildJMAPFilter(
   filter: SearchFilter,
   userEmail?: string
-): Record<string, any> {
-  const jmapFilter: Record<string, any> = {};
+): EmailFilter {
+  const jmapFilter: EmailFilterCondition = {};
 
   // Free-text search
   if (filter.text) {
@@ -85,8 +86,8 @@ export function buildJMAPFilter(
  * This is useful for combining mailbox filters with advanced search filters
  */
 export function mergeFiltersAND(
-  ...filters: Record<string, any>[]
-): Record<string, any> {
+  ...filters: EmailFilter[]
+): EmailFilter {
   // Filter out empty filters
   const validFilters = filters.filter((f) => Object.keys(f).length > 0);
 
@@ -102,8 +103,8 @@ export function mergeFiltersAND(
  * Merge multiple filters with OR logic (any condition can match)
  */
 export function mergeFiltersOR(
-  ...filters: Record<string, any>[]
-): Record<string, any> {
+  ...filters: EmailFilter[]
+): EmailFilter {
   const validFilters = filters.filter((f) => Object.keys(f).length > 0);
 
   if (validFilters.length === 0) return {};
@@ -118,7 +119,7 @@ export function mergeFiltersOR(
  * Negate a filter (NOT logic) — RFC 8620 §5.5 FilterOperator
  * Returns { operator: 'NOT', conditions: [filter] } structure per JMAP spec
  */
-export function negateFilter(filter: Record<string, any>): Record<string, any> {
+export function negateFilter(filter: EmailFilter): EmailFilter {
   return {
     operator: 'NOT',
     conditions: [filter],

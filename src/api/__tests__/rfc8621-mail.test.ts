@@ -15,10 +15,16 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import type { EmailFilterCondition } from '../../types/jmap';
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+/** Helper to assert filter is a condition type */
+function asCondition(filter: unknown): EmailFilterCondition {
+  return filter as EmailFilterCondition;
+}
 
 const mockSessionStorage: Record<string, string> = {};
 const sessionStorageMock = {
@@ -674,10 +680,10 @@ describe('RFC 8621 — JMAP Mail Protocol', () => {
       // base filter with non-keyword conditions, followed by individual
       // hasKeyword conditions.
       expect(filter).toHaveProperty('allOf');
-      expect(Array.isArray(filter.allOf)).toBe(true);
+      expect(Array.isArray((filter as { allOf: EmailFilterCondition[] }).allOf)).toBe(true);
 
       // The base filter (first element) contains the non-keyword conditions
-      const base = filter.allOf[0];
+      const base = (filter as { allOf: EmailFilterCondition[] }).allOf[0];
       expect(base.from).toBe('alice@example.com');
       expect(base.to).toBe('bob@example.com');
       expect(base.cc).toBe('carol@example.com');
@@ -687,7 +693,7 @@ describe('RFC 8621 — JMAP Mail Protocol', () => {
       expect(base.notHasKeyword).toBe('$seen');
 
       // The remaining elements are individual hasKeyword conditions
-      const keywords = filter.allOf.slice(1).map((c: any) => c.hasKeyword);
+      const keywords = (filter as { allOf: EmailFilterCondition[] }).allOf.slice(1).map((c: any) => c.hasKeyword);
       expect(keywords).toContain('$flagged');
       expect(keywords).toContain('$draft');
       expect(keywords).toContain('$answered');
@@ -697,7 +703,7 @@ describe('RFC 8621 — JMAP Mail Protocol', () => {
       const { buildJMAPFilter } = await import('../../utils/filterBuilder');
 
       const filter = buildJMAPFilter({ from: 'me' }, 'user@example.com');
-      expect(filter.from).toBe('user@example.com');
+      expect(asCondition(filter).from).toBe('user@example.com');
     });
 
     it('should format date filters as ISO 8601 UTCDate strings (§4.4.1)', async () => {
@@ -708,11 +714,11 @@ describe('RFC 8621 — JMAP Mail Protocol', () => {
       const filter = buildJMAPFilter({ after, before });
 
       // RFC 8621 §4.4.1: after and before are UTCDate (ISO 8601 format)
-      expect(filter.after).toBe(after.toISOString());
-      expect(filter.before).toBe(before.toISOString());
+      expect(asCondition(filter).after).toBe(after.toISOString());
+      expect(asCondition(filter).before).toBe(before.toISOString());
       // Verify they are valid dates
-      expect(new Date(filter.after).toISOString()).toBe(filter.after);
-      expect(new Date(filter.before).toISOString()).toBe(filter.before);
+      expect(new Date(asCondition(filter).after!).toISOString()).toBe(asCondition(filter).after);
+      expect(new Date(asCondition(filter).before!).toISOString()).toBe(asCondition(filter).before);
     });
 
     it('should wrap multiple hasKeyword conditions in allOf when isFlagged and isDraft both true', async () => {
@@ -723,7 +729,7 @@ describe('RFC 8621 — JMAP Mail Protocol', () => {
       const filter = buildJMAPFilter({ isFlagged: true, isDraft: true });
 
       expect(filter).toHaveProperty('allOf');
-      const keywords = filter.allOf
+      const keywords = (filter as { allOf: EmailFilterCondition[] }).allOf
         .filter((c: any) => c.hasKeyword)
         .map((c: any) => c.hasKeyword);
       expect(keywords).toContain('$flagged');

@@ -145,6 +145,8 @@ export function countExternalImages(html: string): number {
   return findExternalImages(html).length;
 }
 
+import type { EmailBodyPart } from '../types/jmap';
+
 /**
  * Resolve CID (Content-ID) image references in HTML to blob download URLs.
  *
@@ -159,7 +161,7 @@ export function countExternalImages(html: string): number {
  */
 export function resolveCidImages(
   html: string,
-  email: { attachments?: any[]; bodyStructure?: any },
+  email: { attachments?: EmailBodyPart[]; bodyStructure?: EmailBodyPart | null },
   getBlobUrl: (blobId: string, type: string, name: string) => string,
 ): string {
   if (!html) return html;
@@ -168,7 +170,7 @@ export function resolveCidImages(
   // Check both attachments and bodyStructure (inline images may only appear in the latter)
   const cidMap = new Map<string, { blobId: string; type: string; name: string }>();
 
-  const addToCidMap = (part: any) => {
+  const addToCidMap = (part: EmailBodyPart | undefined | null) => {
     if (!part) return;
     if (part.cid && part.blobId) {
       const cid = part.cid.replace(/^<|>$/g, '');
@@ -214,6 +216,6 @@ export function resolveCidImages(
 /**
  * Check if an attachment is an inline CID image (should not appear in attachment list).
  */
-export function isInlineAttachment(attachment: any): boolean {
+export function isInlineAttachment(attachment: EmailBodyPart): boolean {
   return !!attachment.cid && attachment.type?.startsWith('image/');
 }

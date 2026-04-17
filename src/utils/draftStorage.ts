@@ -20,9 +20,18 @@ export interface ComposerDraft {
   isQuoteCollapsed: boolean;
 }
 
+/** Context for reply/forward operations */
+interface ReplyContext {
+  id?: string;
+  threadId?: string;
+  _draft?: boolean;
+  _forward?: boolean;
+  _replyAll?: boolean;
+}
+
 const STORAGE_PREFIX = 'sagittarius_composer_draft';
 
-function normalizeReplyContext(replyTo?: any): string {
+function normalizeReplyContext(replyTo?: ReplyContext): string {
   if (!replyTo) return 'new';
 
   const suffix = replyTo.id || replyTo.threadId || 'message';
@@ -32,7 +41,7 @@ function normalizeReplyContext(replyTo?: any): string {
   return `reply:${suffix}`;
 }
 
-export function getComposerDraftKey(accountId: string | null | undefined, replyTo?: any): string {
+export function getComposerDraftKey(accountId: string | null | undefined, replyTo?: ReplyContext): string {
   return `${STORAGE_PREFIX}:${accountId || 'default'}:${normalizeReplyContext(replyTo)}`;
 }
 

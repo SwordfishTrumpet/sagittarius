@@ -311,7 +311,7 @@ class JMAPClient {
       .replace('{type}', encodeURIComponent(type));
   }
 
-  async uploadBlob(file: File): Promise<any> {
+  async uploadBlob(file: File): Promise<{ blobId: string; id: string; type: string; size: number }> {
     if (!this.session || !this.authHeader) throw new Error('No session');
 
     const accountId = this.getPrimaryAccount();

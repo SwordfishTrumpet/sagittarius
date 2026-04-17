@@ -15,6 +15,12 @@ import {
   COMMON_FILTERS,
 } from '../../utils/filterBuilder';
 import type { SearchFilter } from '../../types/search';
+import type { EmailFilterCondition } from '../../types/jmap';
+
+/** Helper to assert filter is a condition type */
+function asCondition(filter: unknown): EmailFilterCondition {
+  return filter as EmailFilterCondition;
+}
 
 describe('filterBuilder — RFC 8621 §4.4.1 Compliance', () => {
   // =========================================================================
@@ -32,27 +38,27 @@ describe('filterBuilder — RFC 8621 §4.4.1 Compliance', () => {
 
     it('should map from field to "from" property (§4.4.1)', () => {
       const filter = buildJMAPFilter({ from: 'alice@example.com' });
-      expect(filter.from).toBe('alice@example.com');
+      expect(asCondition(filter).from).toBe('alice@example.com');
     });
 
     it('should map to field to "to" property (§4.4.1)', () => {
       const filter = buildJMAPFilter({ to: 'bob@example.com' });
-      expect(filter.to).toBe('bob@example.com');
+      expect(asCondition(filter).to).toBe('bob@example.com');
     });
 
     it('should map cc field to "cc" property (§4.4.1)', () => {
       const filter = buildJMAPFilter({ cc: 'carol@example.com' });
-      expect(filter.cc).toBe('carol@example.com');
+      expect(asCondition(filter).cc).toBe('carol@example.com');
     });
 
     it('should map subject field to "subject" property (§4.4.1)', () => {
       const filter = buildJMAPFilter({ subject: 'meeting notes' });
-      expect(filter.subject).toBe('meeting notes');
+      expect(asCondition(filter).subject).toBe('meeting notes');
     });
 
     it('should map hasAttachment to boolean (§4.4.1)', () => {
       const filter = buildJMAPFilter({ hasAttachment: true });
-      expect(filter.hasAttachment).toBe(true);
+      expect(asCondition(filter).hasAttachment).toBe(true);
     });
 
     it('should not include hasAttachment when false', () => {
@@ -62,44 +68,44 @@ describe('filterBuilder — RFC 8621 §4.4.1 Compliance', () => {
 
     it('should map isUnread to notHasKeyword: "$seen" (§4.4.1)', () => {
       const filter = buildJMAPFilter({ isUnread: true });
-      expect(filter.notHasKeyword).toBe('$seen');
+      expect(asCondition(filter).notHasKeyword).toBe('$seen');
     });
 
     it('should map isFlagged to hasKeyword: "$flagged" (§4.4.1)', () => {
       const filter = buildJMAPFilter({ isFlagged: true });
-      expect(filter.hasKeyword).toBe('$flagged');
+      expect(asCondition(filter).hasKeyword).toBe('$flagged');
     });
 
     it('should map isDraft to hasKeyword: "$draft" (§4.4.1)', () => {
       const filter = buildJMAPFilter({ isDraft: true });
-      expect(filter.hasKeyword).toBe('$draft');
+      expect(asCondition(filter).hasKeyword).toBe('$draft');
     });
 
     it('should map isAnswered to hasKeyword: "$answered" (§4.4.1)', () => {
       const filter = buildJMAPFilter({ isAnswered: true });
-      expect(filter.hasKeyword).toBe('$answered');
+      expect(asCondition(filter).hasKeyword).toBe('$answered');
     });
 
     it('should convert "from: me" to user email address', () => {
       const filter = buildJMAPFilter({ from: 'me' }, 'user@example.com');
-      expect(filter.from).toBe('user@example.com');
+      expect(asCondition(filter).from).toBe('user@example.com');
     });
 
     it('should keep "from: me" as-is when no user email provided', () => {
       const filter = buildJMAPFilter({ from: 'me' });
-      expect(filter.from).toBe('me');
+      expect(asCondition(filter).from).toBe('me');
     });
 
     it('should format after date as ISO 8601 UTCDate (§4.4.1)', () => {
       const date = new Date('2024-06-15T00:00:00Z');
       const filter = buildJMAPFilter({ after: date });
-      expect(filter.after).toBe('2024-06-15T00:00:00.000Z');
+      expect(asCondition(filter).after).toBe('2024-06-15T00:00:00.000Z');
     });
 
     it('should format before date as ISO 8601 UTCDate (§4.4.1)', () => {
       const date = new Date('2024-12-31T23:59:59Z');
       const filter = buildJMAPFilter({ before: date });
-      expect(filter.before).toBe('2024-12-31T23:59:59.000Z');
+      expect(asCondition(filter).before).toBe('2024-12-31T23:59:59.000Z');
     });
 
     it('should combine multiple conditions in a single object', () => {
@@ -122,8 +128,8 @@ describe('filterBuilder — RFC 8621 §4.4.1 Compliance', () => {
 
       // Should produce allOf wrapping separate hasKeyword conditions
       expect(filter).toHaveProperty('allOf');
-      expect(Array.isArray(filter.allOf)).toBe(true);
-      const keywords = filter.allOf
+      expect(Array.isArray((filter as { allOf: unknown[] }).allOf)).toBe(true);
+      const keywords = (filter as { allOf: unknown[] }).allOf
         .filter((c: any) => c.hasKeyword)
         .map((c: any) => c.hasKeyword);
       expect(keywords).toContain('$flagged');
@@ -187,7 +193,7 @@ describe('filterBuilder — RFC 8621 §4.4.1 Compliance', () => {
 
     it('should create single-element conditions array', () => {
       const result = negateFilter({ hasAttachment: true });
-      expect(result.conditions).toHaveLength(1);
+      expect((result as { conditions: unknown[] }).conditions).toHaveLength(1);
     });
   });
 
