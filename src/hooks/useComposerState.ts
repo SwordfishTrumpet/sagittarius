@@ -53,7 +53,7 @@ export function useComposerState(): UseComposerStateReturn {
   const openComposer = useCallback(() => {
     // Clear any lingering localStorage draft for new messages
     const accountId = jmapClient.getPrimaryAccount?.() ?? null
-    const draftKey = getComposerDraftKey(accountId, null)
+    const draftKey = getComposerDraftKey(accountId, undefined)
     clearComposerDraft(draftKey)
     
     setReplyToEmail(null)

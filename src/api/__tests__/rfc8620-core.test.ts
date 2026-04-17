@@ -10,6 +10,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import type { EmailFilter, EmailFilterCondition, EmailFilterOperator } from '../../types/jmap';
 
 // ---------------------------------------------------------------------------
 // We test the JMAPClient class by importing a fresh module per test group.
@@ -513,8 +514,8 @@ describe('RFC 8620 — JMAP Core Protocol', () => {
       // RFC 8620 §5.5 FilterOperator: operator: "NOT", conditions: [...]
       expect(result).toHaveProperty('operator', 'NOT');
       expect(result).toHaveProperty('conditions');
-      expect(Array.isArray(result.conditions)).toBe(true);
-      expect(result.conditions).toHaveLength(1);
+      expect(Array.isArray((result as { conditions: unknown[] }).conditions)).toBe(true);
+      expect((result as { conditions: unknown[] }).conditions).toHaveLength(1);
     });
 
     it('should skip empty filters when merging', async () => {

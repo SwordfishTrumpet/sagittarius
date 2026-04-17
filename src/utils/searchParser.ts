@@ -3,7 +3,7 @@
  * Parses special search syntax like "from:alice@example.com has:attachment after:2024-01-01"
  */
 
-import { SearchFilter, ParsedQuery } from '../types/search';
+import { SearchFilter, ParsedQuery, SearchPill } from '../types/search';
 
 /**
  * Parse a search query string with special syntax
@@ -103,8 +103,8 @@ export function parseSearchQuery(query: string): ParsedQuery {
 /**
  * Convert SearchFilter to array of SearchPill for UI display
  */
-export function filterToPills(filters: SearchFilter): any[] {
-  const pills: any[] = [];
+export function filterToPills(filters: SearchFilter): SearchPill[] {
+  const pills: SearchPill[] = [];
 
   if (filters.from) {
     pills.push({
