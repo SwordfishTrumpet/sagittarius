@@ -83,14 +83,6 @@ docker run -p 8081:8081 -e JMAP_SERVER=https://mail.example.com ghcr.io/swordfis
 
 ---
 
-## Screenshots
-
-<p align="center">
-  <img src="../screenshots/inbox-three-pane.png" alt="Main Interface" width="80%">
-</p>
-
----
-
 ## Tech Stack
 
 <p align="center">

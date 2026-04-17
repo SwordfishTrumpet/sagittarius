@@ -119,9 +119,8 @@ npm run typecheck
 
 ## 🐛 Finding Something to Work On
 
-1. Check [TODO.md](../TODO.md) for known issues
-2. Look at open issues with `good first issue` label
-3. Try using Sagittarius yourself — what feels missing?
+1. Look at open issues with `good first issue` label
+2. Try using Sagittarius yourself — what feels missing?
 
 ## 💬 Need Help?
 
