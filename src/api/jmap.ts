@@ -312,12 +312,24 @@ class JMAPClient {
   }
 
   async uploadBlob(file: File): Promise<{ blobId: string; id: string; type: string; size: number }> {
-    if (!this.session || !this.authHeader) throw new Error('No session');
+    if (!this.session || !this.authHeader) {
+      logger.error('[uploadBlob] No session or auth header available');
+      throw new Error('No session');
+    }
 
     const accountId = this.getPrimaryAccount();
-    if (!accountId) throw new Error('No primary account available');
+    if (!accountId) {
+      logger.error('[uploadBlob] No account ID found. Session state:', {
+        hasSession: !!this.session,
+        primaryAccounts: this.session?.primaryAccounts,
+        accounts: this.session?.accounts,
+        accountKeys: this.session?.accounts ? Object.keys(this.session.accounts) : null,
+      });
+      throw new Error('No primary account available');
+    }
     
     const url = this.session.uploadUrl.replace('{accountId}', encodeURIComponent(accountId));
+    logger.debug('[uploadBlob] Uploading to:', redactUrl(url), 'file:', file.name, 'size:', file.size);
 
     // Note: CSRF token is NOT included here because blob upload uses raw file upload
     // with Content-Type: file.type, and the JMAP backend only expects Authorization header.
@@ -345,6 +357,7 @@ class JMAPClient {
       });
       throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
     }
+    logger.debug('[uploadBlob] Success:', file.name, '→ blobId:', (await response.clone().json()).blobId);
     return response.json();
   }
 
