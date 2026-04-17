@@ -76,6 +76,13 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Get JMAP server max upload size for display (default 50MB per RFC 8620)
+  const maxUploadSizeMB = useMemo(() => {
+    const coreCapabilities = jmapClient.getCapabilityConfig('urn:ietf:params:jmap:core') as { maxSizeUpload?: number } | null;
+    const maxBytes = coreCapabilities?.maxSizeUpload ?? 50_000_000;
+    return Math.floor(maxBytes / 1024 / 1024);
+  }, []);
+
   const { data: identities } = useIdentities();
   const [selectedIdentityId, setSelectedIdentityId] = useState<string | null>(() => restoredDraft ? restoredDraft.selectedIdentityId : null);
   const selectedIdentity = identities?.find((i) => i.id === selectedIdentityId) || identities?.[0];
@@ -269,6 +276,11 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
     const files = e.target.files;
     if (!files) return;
 
+    // Get JMAP server upload limit from capabilities (default 50MB per RFC 8620)
+    const coreCapabilities = jmapClient.getCapabilityConfig('urn:ietf:params:jmap:core') as { maxSizeUpload?: number } | null;
+    const maxUploadBytes = coreCapabilities?.maxSizeUpload ?? 50_000_000; // Default 50MB
+    const maxUploadMB = Math.floor(maxUploadBytes / 1024 / 1024);
+
     setIsUploading(true);
     try {
       for (let i = 0; i < files.length; i++) {
@@ -278,9 +290,14 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
           toastOperationError('attachment.empty', file.name);
           continue;
         }
-        // Warn about large files (nginx default limit is often 1MB)
-        if (file.size > 10 * 1024 * 1024) {
-          toast.warning(`Large file: ${file.name} (${(file.size / 1024 / 1024).toFixed(1)} MB). Upload may fail if server limit is exceeded.`);
+        // Reject files larger than JMAP server limit
+        if (file.size > maxUploadBytes) {
+          toast.error(`File too large: ${file.name} (${(file.size / 1024 / 1024).toFixed(1)} MB). Maximum allowed: ${maxUploadMB} MB`);
+          continue;
+        }
+        // Warn about files approaching the limit
+        if (file.size > maxUploadBytes * 0.8) {
+          toast.warning(`Large file: ${file.name} (${(file.size / 1024 / 1024).toFixed(1)} MB). Approaching server limit of ${maxUploadMB} MB.`);
         }
         const res = await jmapClient.uploadBlob(file);
         setAttachments(prev => [...prev, {
@@ -294,7 +311,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
     } catch (err: any) {
       // Check for 413 Payload Too Large
       if (err.message?.includes('413') || err.message?.toLowerCase().includes('too large')) {
-        toast.error('File too large. Maximum upload size may be limited by your server configuration.');
+        toast.error(`Upload failed: File too large. Check that your reverse proxy (nginx/Apache) allows uploads up to ${maxUploadMB} MB. See deployment documentation.`);
       } else {
         toastOperationError('attachment.upload');
       }
@@ -718,7 +735,8 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploading}
-                aria-label="Attach file"
+                aria-label={`Attach file (max ${maxUploadSizeMB} MB)`}
+                title={`Attach file (max ${maxUploadSizeMB} MB per file)`}
                 className="p-1.5 hover:bg-black/5 rounded text-[#8E8E93] cursor-pointer transition-colors disabled:opacity-50"
               >
                 <Paperclip className={`w-3.5 h-3.5 ${isUploading ? 'animate-pulse' : ''}`} strokeWidth={1.5} />
