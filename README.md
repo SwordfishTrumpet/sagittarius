@@ -124,6 +124,31 @@ docker build -t sagittarius .
 docker run -p 8081:8081 -e JMAP_SERVER=https://mail.example.com sagittarius
 ```
 
+### Nginx Reverse Proxy (HTTPS)
+
+If using nginx as a reverse proxy for HTTPS, increase the upload size limit:
+
+```nginx
+server {
+    listen 443 ssl;
+    server_name mail.example.com;
+    
+    # Required for attachments (default nginx limit is 1MB)
+    client_max_body_size 50M;
+    
+    location / {
+        proxy_pass http://localhost:8081;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for complete configuration examples.
+
 ---
 
 ## 📋 Features

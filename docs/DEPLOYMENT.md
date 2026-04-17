@@ -374,6 +374,34 @@ proxy_set_header Range $http_range;
 proxy_set_header If-Range $http_if_range;
 ```
 
+### Attachment Uploads Fail (413 Request Entity Too Large)
+
+If you see **"413 Request Entity Too Large"** when attaching files, nginx's default upload limit (1MB) is blocking larger files.
+
+**Solution:** Increase `client_max_body_size` in your nginx config to match your JMAP server's limit (usually 50MB):
+
+```nginx
+server {
+    listen 443 ssl;
+    server_name mail.example.com;
+    
+    # Increase max upload size (default is 1MB)
+    client_max_body_size 50M;
+    
+    location / {
+        proxy_pass http://localhost:8081;
+        # ... other proxy settings
+    }
+}
+```
+
+Then reload nginx:
+```bash
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+**Note:** The JMAP protocol (RFC 8620) supports up to 50MB uploads by default (`maxSizeUpload` capability). Ensure both nginx and your JMAP server are configured to accept your desired maximum file size.
+
 ---
 
 ## Security Checklist
