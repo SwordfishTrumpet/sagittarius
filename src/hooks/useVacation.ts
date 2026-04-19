@@ -5,6 +5,17 @@ import type { VacationResponse } from '../types/jmap';
 
 const VACATION_CAP = 'urn:ietf:params:jmap:vacationresponse';
 
+// ============ Capability Check ============
+
+export function hasVacationCapability(): boolean {
+  return jmapClient.hasCapability(VACATION_CAP);
+}
+
+export function useHasVacationCapability(): boolean {
+  const accountId = jmapClient.getPrimaryAccount();
+  return hasVacationCapability() && !!accountId;
+}
+
 // Use the singleton hook factory for the VacationResponse/get query
 export const useVacation = createJMAPSingletonHook<VacationResponse>(
   'VacationResponse/get',

@@ -9,7 +9,7 @@ import { Composer } from './components/Composer'
 import { VirtualMessageList } from './components/VirtualMessageList'
 import { jmapClient } from './api/jmap'
 import { useMailboxes } from './hooks/jmap/useMailboxes'
-import { useEmailDetail, useThreads } from './hooks/jmap/useEmailQueries'
+import { useEmailDetail, useThreads, fetchEmailWithBody } from './hooks/jmap/useEmailQueries'
 import { useEmailActions } from './hooks/jmap/useEmailMutations'
 import { useIdentities } from './hooks/jmap/useIdentities'
 import { useEmailBulkActions } from './hooks/useEmailBulkActions'
@@ -117,7 +117,7 @@ function App() {
     selectedThreadId || undefined
   )
 
-  const { updateKeywords } = useEmailActions()
+  const { updateKeywords, destroyEmail } = useEmailActions()
 
   // Memoized handlers to prevent unnecessary re-renders
   const handleToggleFlag = useCallback((emailId: string, flagged: boolean) => {
@@ -206,11 +206,86 @@ function App() {
     resetSelection,
   })
 
+  // Context menu action handlers that accept emailId
+  // Fetch full email body first since list emails only have preview
+  const handleReplyFromId = useCallback(async (emailId: string) => {
+    const listEmail = emails?.find((e) => e.id === emailId)
+    if (!listEmail) return
+    
+    // Fetch full email with body content for quoting
+    const fullEmail = await fetchEmailWithBody(emailId)
+    if (fullEmail) {
+      handleReply(fullEmail)
+    } else {
+      // Fallback to list email if fetch fails (no quoting)
+      handleReply(listEmail)
+    }
+  }, [emails, handleReply])
+
+  const handleReplyAllFromId = useCallback(async (emailId: string) => {
+    const listEmail = emails?.find((e) => e.id === emailId)
+    if (!listEmail) return
+    
+    const fullEmail = await fetchEmailWithBody(emailId)
+    if (fullEmail) {
+      handleReplyAll(fullEmail)
+    } else {
+      handleReplyAll(listEmail)
+    }
+  }, [emails, handleReplyAll])
+
+  const handleForwardFromId = useCallback(async (emailId: string) => {
+    const listEmail = emails?.find((e) => e.id === emailId)
+    if (!listEmail) return
+    
+    const fullEmail = await fetchEmailWithBody(emailId)
+    if (fullEmail) {
+      handleForward(fullEmail)
+    } else {
+      handleForward(listEmail)
+    }
+  }, [emails, handleForward])
+
+  const handleArchiveFromId = useCallback((emailId: string) => {
+    setSelectedEmailId(emailId)
+    // Use timeout to ensure state update before archive action
+    setTimeout(() => handleArchive(), 0)
+  }, [handleArchive, setSelectedEmailId])
+
+  const handleDeleteFromId = useCallback((emailId: string) => {
+    setSelectedEmailId(emailId)
+    // Use timeout to ensure state update before delete action
+    setTimeout(() => handleDelete(), 0)
+  }, [handleDelete, setSelectedEmailId])
+
   // Animated email moves
   const { removingEmailIds, moveEmailsToFolder } = useAnimatedEmailMoves({
     onMove: moveEmail.mutate,
     onMoveBulk: moveEmailBulk.mutate,
   })
+
+  // Mobile swipe handlers - work directly with emailId, not selectedEmailId
+  const handleSwipeArchive = useCallback((emailId: string) => {
+    if (!mailboxes) return
+    const archiveBox = mailboxes.find((m: Mailbox) => m.role === 'archive' || m.name.toLowerCase() === 'archive')
+    if (archiveBox) {
+      moveEmailsToFolder([emailId], archiveBox.id, 'Archive')
+    }
+  }, [mailboxes, moveEmailsToFolder])
+
+  const handleSwipeDelete = useCallback((emailId: string) => {
+    if (!mailboxes) return
+    const trashBox = mailboxes.find((m: Mailbox) => 
+      m.role === 'trash' || m.name.toLowerCase() === 'trash' || m.name.toLowerCase() === 'deleted items'
+    )
+    if (trashBox) {
+      // Move to trash (soft delete)
+      moveEmailsToFolder([emailId], trashBox.id, 'Trash')
+    } else {
+      // Permanent delete if no trash folder
+      destroyEmail.mutate({ emailId })
+    }
+  }, [mailboxes, moveEmailsToFolder, destroyEmail])
 
   // Select mailbox helper
   const selectMailbox = useCallback((mailboxId: string) => {
@@ -291,9 +366,33 @@ function App() {
       if (direction === 'next') navigateToNext()
       else navigateToPrevious()
     },
-    onReply: () => { if (selectedEmail) handleReply(selectedEmail) },
-    onReplyAll: () => { if (selectedEmail) handleReplyAll(selectedEmail) },
-    onForward: () => { if (selectedEmail) handleForward(selectedEmail) },
+    onReply: async () => { 
+      if (!selectedEmailId) return
+      try {
+        const fullEmail = await fetchEmailWithBody(selectedEmailId)
+        if (fullEmail) handleReply(fullEmail)
+      } catch (error) {
+        toast.error(`Failed to load email: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      }
+    },
+    onReplyAll: async () => { 
+      if (!selectedEmailId) return
+      try {
+        const fullEmail = await fetchEmailWithBody(selectedEmailId)
+        if (fullEmail) handleReplyAll(fullEmail)
+      } catch (error) {
+        toast.error(`Failed to load email: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      }
+    },
+    onForward: async () => { 
+      if (!selectedEmailId) return
+      try {
+        const fullEmail = await fetchEmailWithBody(selectedEmailId)
+        if (fullEmail) handleForward(fullEmail)
+      } catch (error) {
+        toast.error(`Failed to load email: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      }
+    },
     onToggleFlag: handleToggleFlag,
     onArchive: handleArchive,
     onDelete: handleDelete,
@@ -520,10 +619,15 @@ function App() {
             removingEmailIds={removingEmailIds}
             scrollToEmailId={scrollToEmailId}
             isMobile={isMobile}
-            onSwipeArchive={(emailId) => handleArchive()}
-            onSwipeDelete={(emailId) => handleDelete()}
+            onSwipeArchive={handleSwipeArchive}
+            onSwipeDelete={handleSwipeDelete}
             onOpenDraft={handleOpenDraft}
             onRefresh={refetchEmails}
+            onReply={handleReplyFromId}
+            onReplyAll={handleReplyAllFromId}
+            onForward={handleForwardFromId}
+            onArchive={handleArchiveFromId}
+            onDelete={handleDeleteFromId}
           />
         </main>
         {!isMobile && (

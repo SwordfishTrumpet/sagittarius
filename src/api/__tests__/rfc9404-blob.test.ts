@@ -87,7 +87,6 @@ describe('RFC 9404 — Blob Management Extension', () => {
     fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
     vi.stubGlobal('sessionStorage', sessionStorageMock);
-    vi.stubGlobal('location', { replace: vi.fn(), href: '' });
   });
 
   afterEach(() => {

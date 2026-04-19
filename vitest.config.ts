@@ -7,17 +7,15 @@ const cpuCount = cpus().length
 export default defineConfig({
   plugins: [react()],
   test: {
-    // Thread-based parallel execution for speed
-    pool: 'threads',
+    // Use vmThreads for better performance with many test files
+    pool: 'vmThreads',
     poolOptions: {
-      threads: {
-        // Use multiple threads (not single thread)
+      vmThreads: {
+        // Use multiple threads for parallel execution
         singleThread: false,
-        // Let Vitest determine optimal thread count based on CPU cores
-        maxThreads: Math.min(4, cpuCount),
+        // Let Vitest determine optimal thread count
+        maxThreads: Math.min(8, cpuCount),
         minThreads: 2,
-        // Isolate tests in each thread for reliability
-        isolate: true,
       },
     },
     // Run test files in parallel
@@ -28,6 +26,12 @@ export default defineConfig({
     environment: 'jsdom',
     // Setup files
     setupFiles: ['./src/test/setup.ts'],
+    // Faster teardown - don't wait for hanging handles
+    teardownTimeout: 5000,
+    // Hook timeout for long-running operations
+    hookTimeout: 10000,
+    // Test timeout
+    testTimeout: 10000,
     // Coverage configuration
     coverage: {
       provider: 'v8',
@@ -42,6 +46,11 @@ export default defineConfig({
     },
     // Reporters - use dot reporter in CI for less noise
     reporters: process.env.CI ? ['dot'] : ['default'],
+
+    // Clear mocks between tests automatically
+    clearMocks: true,
+    // Restore mocks after each test
+    restoreMocks: true,
   },
   resolve: {
     alias: {

@@ -4,6 +4,17 @@ import { createJMAPListHook } from './jmap/jmapHookFactory';
 
 const SIEVE_CAP = 'urn:ietf:params:jmap:sieve';
 
+// ============ Capability Check ============
+
+export function hasSieveCapability(): boolean {
+  return jmapClient.hasCapability(SIEVE_CAP);
+}
+
+export function useHasSieveCapability(): boolean {
+  const accountId = jmapClient.getPrimaryAccount();
+  return hasSieveCapability() && !!accountId;
+}
+
 export interface SieveScript {
   id: string;
   name: string;

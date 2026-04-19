@@ -80,7 +80,6 @@ describe('RFC 8887 — JMAP over WebSocket', () => {
     capturedWs = null;
     Object.keys(mockSessionStorage).forEach((k) => delete mockSessionStorage[k]);
     vi.stubGlobal('sessionStorage', sessionStorageMock);
-    vi.stubGlobal('location', { replace: vi.fn(), href: '' });
     vi.stubGlobal('WebSocket', class extends MockWebSocket {
       constructor(url: string, protocols?: string | string[]) {
         super(url, protocols);

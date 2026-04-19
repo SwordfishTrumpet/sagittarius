@@ -81,8 +81,6 @@ describe('RFC 8620 — JMAP Core Protocol', () => {
     fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
     vi.stubGlobal('sessionStorage', sessionStorageMock);
-    // Stub window.location.replace to prevent jsdom errors
-    vi.stubGlobal('location', { replace: vi.fn(), href: '' });
   });
 
   afterEach(() => {
