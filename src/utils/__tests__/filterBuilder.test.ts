@@ -186,14 +186,16 @@ describe('filterBuilder — RFC 8621 §4.4.1 Compliance', () => {
     it('should wrap filter in NOT operator (RFC 8620 §5.5)', () => {
       const result = negateFilter({ from: 'spammer@evil.com' });
       expect(result).toEqual({
-        operator: 'NOT',
-        conditions: [{ from: 'spammer@evil.com' }],
+        not: { from: 'spammer@evil.com' },
       });
     });
 
-    it('should create single-element conditions array', () => {
+    it('should use RFC-compliant not field instead of deprecated operator', () => {
       const result = negateFilter({ hasAttachment: true });
-      expect((result as { conditions: unknown[] }).conditions).toHaveLength(1);
+      expect(result).toHaveProperty('not');
+      expect(result).not.toHaveProperty('operator');
+      expect(result).not.toHaveProperty('conditions');
+      expect((result as { not: unknown }).not).toEqual({ hasAttachment: true });
     });
   });
 

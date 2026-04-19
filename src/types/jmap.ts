@@ -771,3 +771,23 @@ export interface UpdateTemplatePayload {
   cc?: string;
   bcc?: string;
 }
+
+// ============ Type Casting Helpers ============
+
+/**
+ * Helper interface for Mailbox/get response
+ * Used for safely casting JMAP response data
+ */
+export interface MailboxGetResult {
+  list: Mailbox[];
+}
+
+/**
+ * Type guard/cast helper for Mailbox/get response data
+ * Use this instead of inline `as MailboxGetResult` assertions for consistency
+ * @param data - Unknown data from JMAP response
+ * @returns Typed MailboxGetResult (unsafe cast — validate data first)
+ */
+export function asMailboxGet(data: unknown): MailboxGetResult {
+  return data as MailboxGetResult;
+}

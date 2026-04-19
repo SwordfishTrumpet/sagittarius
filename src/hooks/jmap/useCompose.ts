@@ -8,16 +8,7 @@ import {
   jmapRequest,
   suppressNewMailNotification,
 } from './queryCacheUtils'
-import type { Mailbox } from '../../types/jmap'
-
-// Type helper for mailbox list response
-interface MailboxGetResult {
-  list: Mailbox[];
-}
-
-function asMailboxGet(data: unknown): MailboxGetResult {
-  return data as MailboxGetResult;
-}
+import { asMailboxGet, type Mailbox } from '../../types/jmap'
 
 export function useCompose() {
   const accountId = jmapClient.getPrimaryAccount()
