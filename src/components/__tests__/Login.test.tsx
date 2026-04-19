@@ -54,7 +54,15 @@ describe('Login', () => {
   });
 
   it('should call authenticate on submit', async () => {
-    vi.mocked(jmapClient.authenticate).mockResolvedValueOnce(undefined);
+    const mockSession = {
+      apiUrl: 'https://mail.example.com/jmap/',
+      downloadUrl: 'https://mail.example.com/jmap/download/{accountId}/{blobId}/{name}',
+      uploadUrl: 'https://mail.example.com/jmap/upload/{accountId}/',
+      capabilities: {},
+      primaryAccounts: {},
+      accounts: {},
+    };
+    vi.mocked(jmapClient.authenticate).mockResolvedValueOnce(mockSession);
     render(<Login onLoginSuccess={mockOnLoginSuccess} />);
 
     fireEvent.change(screen.getByLabelText('Email or username'), {
@@ -71,7 +79,15 @@ describe('Login', () => {
   });
 
   it('should call onLoginSuccess on successful login', async () => {
-    vi.mocked(jmapClient.authenticate).mockResolvedValueOnce(undefined);
+    const mockSession = {
+      apiUrl: 'https://mail.example.com/jmap/',
+      downloadUrl: 'https://mail.example.com/jmap/download/{accountId}/{blobId}/{name}',
+      uploadUrl: 'https://mail.example.com/jmap/upload/{accountId}/',
+      capabilities: {},
+      primaryAccounts: {},
+      accounts: {},
+    };
+    vi.mocked(jmapClient.authenticate).mockResolvedValueOnce(mockSession);
     render(<Login onLoginSuccess={mockOnLoginSuccess} />);
 
     fireEvent.change(screen.getByLabelText('Email or username'), {
