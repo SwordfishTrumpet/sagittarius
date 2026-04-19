@@ -516,11 +516,11 @@ describe('RFC 8620 — JMAP Core Protocol', () => {
       const { negateFilter } = await import('../../utils/filterBuilder');
 
       const result = negateFilter({ from: 'alice' });
-      // RFC 8620 §5.5 FilterOperator: operator: "NOT", conditions: [...]
-      expect(result).toHaveProperty('operator', 'NOT');
-      expect(result).toHaveProperty('conditions');
-      expect(Array.isArray((result as { conditions: unknown[] }).conditions)).toBe(true);
-      expect((result as { conditions: unknown[] }).conditions).toHaveLength(1);
+      // RFC 8620 §5.5 FilterOperator: not: filter
+      expect(result).toHaveProperty('not');
+      expect(result).not.toHaveProperty('operator');
+      expect(result).not.toHaveProperty('conditions');
+      expect((result as { not: unknown }).not).toEqual({ from: 'alice' });
     });
 
     it('should skip empty filters when merging', async () => {

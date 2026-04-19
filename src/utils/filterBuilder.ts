@@ -117,12 +117,11 @@ export function mergeFiltersOR(
 
 /**
  * Negate a filter (NOT logic) — RFC 8620 §5.5 FilterOperator
- * Returns { operator: 'NOT', conditions: [filter] } structure per JMAP spec
+ * Returns { not: filter } structure per RFC 8620 §5.5
  */
 export function negateFilter(filter: EmailFilter): EmailFilter {
   return {
-    operator: 'NOT',
-    conditions: [filter],
+    not: filter,
   };
 }
 

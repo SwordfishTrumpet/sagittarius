@@ -1,9 +1,52 @@
 import { jmapClient } from '../api/jmap';
 
+// ============ Generic Capability Helper ============
+
 /**
- * JMAP Core Capability Limits (RFC 8620 §2)
- * These limits control how many objects can be processed in a single request
+ * Generic helper to get account capability configuration with fallback defaults
+ * Handles the common try/catch pattern used across capability getters
+ * @param urn - The capability URN to retrieve
+ * @param defaults - Default values to use if capability not available
+ * @returns Merged capability config with defaults
  */
+function getAccountCapabilityWithFallback<T>(urn: string, defaults: T): T {
+  let capabilities: Partial<T> | null = null;
+  try {
+    capabilities = jmapClient.getAccountCapability?.(urn) as Partial<T> | null;
+  } catch {
+    // Client methods may not be available during tests
+    capabilities = null;
+  }
+
+  return {
+    ...defaults,
+    ...capabilities,
+  } as T;
+}
+
+/**
+ * Generic helper to get global capability configuration with fallback defaults
+ * Uses getCapabilityConfig instead of getAccountCapability for core capabilities
+ * @param urn - The capability URN to retrieve
+ * @param defaults - Default values to use if capability not available
+ * @returns Merged capability config with defaults
+ */
+function getCapabilityConfigWithFallback<T>(urn: string, defaults: T): T {
+  let capabilities: Partial<T> | null = null;
+  try {
+    capabilities = jmapClient.getCapabilityConfig?.(urn) as Partial<T> | null;
+  } catch {
+    // Client methods may not be available during tests
+    capabilities = null;
+  }
+
+  return {
+    ...defaults,
+    ...capabilities,
+  } as T;
+}
+
+// ============ JMAP Core Capability Limits (RFC 8620 §2) ============
 export interface CoreCapabilityLimits {
   /** Maximum size of a single upload in bytes */
   maxSizeUpload: number;
@@ -34,22 +77,10 @@ const DEFAULT_CORE_LIMITS: CoreCapabilityLimits = {
  * Falls back to RFC 8620 defaults if not specified
  */
 export function getCoreCapabilityLimits(): CoreCapabilityLimits {
-  let coreCapabilities: Partial<CoreCapabilityLimits> | null = null;
-  try {
-    coreCapabilities = jmapClient.getCapabilityConfig?.('urn:ietf:params:jmap:core') as Partial<CoreCapabilityLimits> | null;
-  } catch {
-    // Client methods may not be available during tests
-    coreCapabilities = null;
-  }
-
-  return {
-    maxSizeUpload: coreCapabilities?.maxSizeUpload ?? DEFAULT_CORE_LIMITS.maxSizeUpload,
-    maxConcurrentUpload: coreCapabilities?.maxConcurrentUpload ?? DEFAULT_CORE_LIMITS.maxConcurrentUpload,
-    maxConcurrentRequests: coreCapabilities?.maxConcurrentRequests ?? DEFAULT_CORE_LIMITS.maxConcurrentRequests,
-    maxCallsInRequest: coreCapabilities?.maxCallsInRequest ?? DEFAULT_CORE_LIMITS.maxCallsInRequest,
-    maxObjectsInGet: coreCapabilities?.maxObjectsInGet ?? DEFAULT_CORE_LIMITS.maxObjectsInGet,
-    maxObjectsInSet: coreCapabilities?.maxObjectsInSet ?? DEFAULT_CORE_LIMITS.maxObjectsInSet,
-  };
+  return getCapabilityConfigWithFallback(
+    'urn:ietf:params:jmap:core',
+    DEFAULT_CORE_LIMITS
+  );
 }
 
 /**
@@ -84,22 +115,10 @@ const DEFAULT_MAIL_LIMITS: MailCapabilityLimits = {
  * Get JMAP Mail capability limits for the primary account
  */
 export function getMailCapabilityLimits(): MailCapabilityLimits {
-  let mailCapabilities: Partial<MailCapabilityLimits> | null = null;
-  try {
-    mailCapabilities = jmapClient.getAccountCapability?.('urn:ietf:params:jmap:mail') as Partial<MailCapabilityLimits> | null;
-  } catch {
-    // Client methods may not be available during tests
-    mailCapabilities = null;
-  }
-
-  return {
-    maxSizeAttachmentsPerEmail: mailCapabilities?.maxSizeAttachmentsPerEmail ?? DEFAULT_MAIL_LIMITS.maxSizeAttachmentsPerEmail,
-    mayCreateTopLevelMailbox: mailCapabilities?.mayCreateTopLevelMailbox ?? DEFAULT_MAIL_LIMITS.mayCreateTopLevelMailbox,
-    maxMailboxDepth: mailCapabilities?.maxMailboxDepth ?? DEFAULT_MAIL_LIMITS.maxMailboxDepth,
-    maxMailboxesPerEmail: mailCapabilities?.maxMailboxesPerEmail ?? DEFAULT_MAIL_LIMITS.maxMailboxesPerEmail,
-    maxSizeMailboxName: mailCapabilities?.maxSizeMailboxName ?? DEFAULT_MAIL_LIMITS.maxSizeMailboxName,
-    emailQuerySortOptions: mailCapabilities?.emailQuerySortOptions ?? DEFAULT_MAIL_LIMITS.emailQuerySortOptions,
-  };
+  return getAccountCapabilityWithFallback(
+    'urn:ietf:params:jmap:mail',
+    DEFAULT_MAIL_LIMITS
+  );
 }
 
 /**
@@ -122,17 +141,10 @@ const DEFAULT_SIEVE_LIMITS: SieveCapabilityLimits = {
  * Get JMAP Sieve capability limits for the primary account
  */
 export function getSieveCapabilityLimits(): SieveCapabilityLimits {
-  let sieveCapabilities: Partial<SieveCapabilityLimits> | null = null;
-  try {
-    sieveCapabilities = jmapClient.getAccountCapability?.('urn:ietf:params:jmap:sieve') as Partial<SieveCapabilityLimits> | null;
-  } catch {
-    sieveCapabilities = null;
-  }
-
-  return {
-    maxNumberScripts: sieveCapabilities?.maxNumberScripts ?? DEFAULT_SIEVE_LIMITS.maxNumberScripts,
-    maxSizeScript: sieveCapabilities?.maxSizeScript ?? DEFAULT_SIEVE_LIMITS.maxSizeScript,
-  };
+  return getAccountCapabilityWithFallback(
+    'urn:ietf:params:jmap:sieve',
+    DEFAULT_SIEVE_LIMITS
+  );
 }
 
 /**
@@ -158,18 +170,10 @@ const DEFAULT_CALENDAR_LIMITS: CalendarCapabilityLimits = {
  * Get JMAP Calendar capability limits for the primary account
  */
 export function getCalendarCapabilityLimits(): CalendarCapabilityLimits {
-  let calendarCapabilities: Partial<CalendarCapabilityLimits> | null = null;
-  try {
-    calendarCapabilities = jmapClient.getAccountCapability?.('urn:ietf:params:jmap:calendars') as Partial<CalendarCapabilityLimits> | null;
-  } catch {
-    calendarCapabilities = null;
-  }
-
-  return {
-    maxParticipantsPerEvent: calendarCapabilities?.maxParticipantsPerEvent ?? DEFAULT_CALENDAR_LIMITS.maxParticipantsPerEvent,
-    maxCalendarsPerEvent: calendarCapabilities?.maxCalendarsPerEvent ?? DEFAULT_CALENDAR_LIMITS.maxCalendarsPerEvent,
-    mayCreateCalendar: calendarCapabilities?.mayCreateCalendar ?? DEFAULT_CALENDAR_LIMITS.mayCreateCalendar,
-  };
+  return getAccountCapabilityWithFallback(
+    'urn:ietf:params:jmap:calendars',
+    DEFAULT_CALENDAR_LIMITS
+  );
 }
 
 /**
@@ -192,17 +196,10 @@ const DEFAULT_BLOB_LIMITS: BlobCapabilityLimits = {
  * Get JMAP Blob capability limits for the primary account
  */
 export function getBlobCapabilityLimits(): BlobCapabilityLimits {
-  let blobCapabilities: Partial<BlobCapabilityLimits> | null = null;
-  try {
-    blobCapabilities = jmapClient.getAccountCapability?.('urn:ietf:params:jmap:blob') as Partial<BlobCapabilityLimits> | null;
-  } catch {
-    blobCapabilities = null;
-  }
-
-  return {
-    maxSizeBlobSet: blobCapabilities?.maxSizeBlobSet ?? DEFAULT_BLOB_LIMITS.maxSizeBlobSet,
-    maxDataSources: blobCapabilities?.maxDataSources ?? DEFAULT_BLOB_LIMITS.maxDataSources,
-  };
+  return getAccountCapabilityWithFallback(
+    'urn:ietf:params:jmap:blob',
+    DEFAULT_BLOB_LIMITS
+  );
 }
 
 /**
@@ -222,16 +219,10 @@ const DEFAULT_CONTACTS_LIMITS: ContactsCapabilityLimits = {
  * Get JMAP Contacts capability limits for the primary account
  */
 export function getContactsCapabilityLimits(): ContactsCapabilityLimits {
-  let contactsCapabilities: Partial<ContactsCapabilityLimits> | null = null;
-  try {
-    contactsCapabilities = jmapClient.getAccountCapability?.('urn:ietf:params:jmap:contacts') as Partial<ContactsCapabilityLimits> | null;
-  } catch {
-    contactsCapabilities = null;
-  }
-
-  return {
-    mayCreateAddressBook: contactsCapabilities?.mayCreateAddressBook ?? DEFAULT_CONTACTS_LIMITS.mayCreateAddressBook,
-  };
+  return getAccountCapabilityWithFallback(
+    'urn:ietf:params:jmap:contacts',
+    DEFAULT_CONTACTS_LIMITS
+  );
 }
 
 /**
