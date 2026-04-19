@@ -5,6 +5,9 @@ import { IdentitySettings } from './settings/IdentitySettings';
 import { SieveSettings } from './settings/SieveSettings';
 import { IOSToggle } from './ui/IOSToggle';
 import { useFocusTrap } from '../hooks/useFocusTrap';
+import { useHasVacationCapability } from '../hooks/useVacation';
+import { useHasSieveCapability } from '../hooks/useSieve';
+import { useHasIdentityCapability } from '../hooks/jmap/useIdentities';
 import {
   isNotificationSoundEnabled,
   getNotificationVolume,
@@ -112,9 +115,22 @@ export function Settings({ isOpen, onClose, isMobile = false }: SettingsProps) {
   const [selected, setSelected] = useState<Category>('general');
   const dialogRef = useRef<HTMLDivElement>(null);
 
+  // Capability checks to conditionally show settings sections
+  const hasVacation = useHasVacationCapability();
+  const hasIdentities = useHasIdentityCapability();
+  const hasSieve = useHasSieveCapability();
+
+  // Filter categories based on server capabilities
+  const availableCategories = CATEGORIES.filter((cat) => {
+    if (cat.id === 'vacation' && !hasVacation) return false;
+    if (cat.id === 'identities' && !hasIdentities) return false;
+    if (cat.id === 'filters' && !hasSieve) return false;
+    return true;
+  });
+
   useFocusTrap(dialogRef, { isActive: isOpen });
 
-  const selectedIndex = CATEGORIES.findIndex(({ id }) => id === selected);
+  const selectedIndex = availableCategories.findIndex(({ id }) => id === selected);
 
   const handleTabKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
     if (!['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
@@ -125,14 +141,14 @@ export function Settings({ isOpen, onClose, isMobile = false }: SettingsProps) {
 
     let nextIndex = index;
     if (event.key === 'Home') nextIndex = 0;
-    else if (event.key === 'End') nextIndex = CATEGORIES.length - 1;
-    else if (event.key === 'ArrowDown' || event.key === 'ArrowRight') nextIndex = (index + 1) % CATEGORIES.length;
-    else if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') nextIndex = (index - 1 + CATEGORIES.length) % CATEGORIES.length;
+    else if (event.key === 'End') nextIndex = availableCategories.length - 1;
+    else if (event.key === 'ArrowDown' || event.key === 'ArrowRight') nextIndex = (index + 1) % availableCategories.length;
+    else if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') nextIndex = (index - 1 + availableCategories.length) % availableCategories.length;
 
-    setSelected(CATEGORIES[nextIndex].id);
+    setSelected(availableCategories[nextIndex].id);
 
     window.requestAnimationFrame(() => {
-      document.getElementById(`settings-tab-${CATEGORIES[nextIndex].id}`)?.focus();
+      document.getElementById(`settings-tab-${availableCategories[nextIndex].id}`)?.focus();
     });
   };
 
@@ -192,7 +208,7 @@ export function Settings({ isOpen, onClose, isMobile = false }: SettingsProps) {
             </button>
           </div>
           <div role="tablist" aria-orientation={isMobile ? 'horizontal' : 'vertical'} className={isMobile ? 'flex gap-1 px-2 overflow-x-auto' : ''}>
-            {CATEGORIES.map(({ id, label, Icon }, index) => (
+            {availableCategories.map(({ id, label, Icon }, index) => (
               <button
                 key={id}
                 id={`settings-tab-${id}`}
@@ -224,9 +240,9 @@ export function Settings({ isOpen, onClose, isMobile = false }: SettingsProps) {
 
         {/* Right content area */}
         <div
-          id={`settings-panel-${CATEGORIES[selectedIndex].id}`}
+          id={`settings-panel-${availableCategories[selectedIndex]?.id ?? 'general'}`}
           role="tabpanel"
-          aria-labelledby={`settings-tab-${CATEGORIES[selectedIndex].id}`}
+          aria-labelledby={`settings-tab-${availableCategories[selectedIndex]?.id ?? 'general'}`}
           className="flex-1 overflow-y-auto"
         >
           {selected === 'general' && <GeneralSettings />}

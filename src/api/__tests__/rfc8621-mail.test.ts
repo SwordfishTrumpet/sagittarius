@@ -101,7 +101,6 @@ describe('RFC 8621 — JMAP Mail Protocol', () => {
     fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
     vi.stubGlobal('sessionStorage', sessionStorageMock);
-    vi.stubGlobal('location', { replace: vi.fn(), href: '' });
   });
 
   afterEach(() => {

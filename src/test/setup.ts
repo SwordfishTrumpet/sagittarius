@@ -5,13 +5,47 @@
  * required by the JMAP client and related modules.
  */
 import '@testing-library/jest-dom';
-import { afterEach } from 'vitest';
+import { afterEach, vi } from 'vitest';
 
 afterEach(() => {
   document.body.innerHTML = '';
 });
 
-// Provide a minimal matchMedia stub for responsive hooks
+// Mock location for navigation-related tests
+// We need to intercept location access to prevent jsdom errors
+if (typeof window !== 'undefined') {
+  const mockLocation = {
+    href: 'http://localhost:8081/',
+    protocol: 'http:',
+    host: 'localhost:8081',
+    hostname: 'localhost',
+    port: '8081',
+    pathname: '/',
+    search: '',
+    hash: '',
+    origin: 'http://localhost:8081',
+    replace: vi.fn(),
+    assign: vi.fn(),
+    reload: vi.fn(),
+    toString: () => 'http://localhost:8081/',
+  };
+  
+  // Override the location getter on the window prototype
+  const windowProto = Object.getPrototypeOf(window);
+  const originalDescriptor = Object.getOwnPropertyDescriptor(windowProto, 'location');
+  
+  if (originalDescriptor) {
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      get: () => mockLocation,
+      set: (val: string | Location) => {
+        if (typeof val === 'string') {
+          mockLocation.href = val;
+        }
+      },
+    });
+  }
+}
 if (typeof window !== 'undefined' && typeof window.matchMedia === 'undefined') {
   Object.defineProperty(window, 'matchMedia', {
     writable: true,

@@ -105,9 +105,9 @@ export function Toolbar({
          </button>
          {moreMenuOpen && selectedEmail && (
           <div role="menu" aria-label="More options" className="absolute right-0 top-full mt-1 bg-white border border-[#E5E5E5] rounded-xl shadow-2xl py-1 z-50 min-w-[180px]">
-            <button
+              <button
               onClick={() => {
-                onViewSource(selectedEmail.blobId || selectedEmail.id);
+                onViewSource(selectedEmail?.blobId || selectedEmail?.id || '');
                 onCloseMoreMenu();
               }}
               role="menuitem"

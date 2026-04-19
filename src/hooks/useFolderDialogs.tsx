@@ -35,28 +35,40 @@ export function useFolderDialogs({ selectedMailboxId, setSelectedMailboxId }: Us
     setContextMenu({ x: e.clientX, y: e.clientY })
   }
 
-  const handleCreateFolder = (folderName: string) => {
-    createMailbox.mutate({ name: folderName })
-    setCreateFolderOpen(false)
-    toast.success(`Folder "${folderName}" created`)
-  }
-
-  const handleRenameFolder = (newName: string) => {
-    if (selectedFolderId) {
-      renameMailbox.mutate({ mailboxId: selectedFolderId, newName })
-      setRenameFolderOpen(false)
-      toast.success(`Folder renamed to "${newName}"`)
+  const handleCreateFolder = async (folderName: string) => {
+    try {
+      await createMailbox.mutateAsync({ name: folderName })
+      setCreateFolderOpen(false)
+      toast.success(`Folder "${folderName}" created`)
+    } catch (error) {
+      toast.error(`Failed to create folder: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 
-  const handleDeleteFolder = () => {
+  const handleRenameFolder = async (newName: string) => {
     if (selectedFolderId) {
-      deleteMailbox.mutate({ mailboxId: selectedFolderId })
-      setDeleteFolderOpen(false)
-      if (selectedMailboxId === selectedFolderId) {
-        setSelectedMailboxId(null)
+      try {
+        await renameMailbox.mutateAsync({ mailboxId: selectedFolderId, newName })
+        setRenameFolderOpen(false)
+        toast.success(`Folder renamed to "${newName}"`)
+      } catch (error) {
+        toast.error(`Failed to rename folder: ${error instanceof Error ? error.message : 'Unknown error'}`)
       }
-      toast.success(`Folder deleted`)
+    }
+  }
+
+  const handleDeleteFolder = async () => {
+    if (selectedFolderId) {
+      try {
+        await deleteMailbox.mutateAsync({ mailboxId: selectedFolderId })
+        setDeleteFolderOpen(false)
+        if (selectedMailboxId === selectedFolderId) {
+          setSelectedMailboxId(null)
+        }
+        toast.success(`Folder deleted`)
+      } catch (error) {
+        toast.error(`Failed to delete folder: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      }
     }
   }
 
