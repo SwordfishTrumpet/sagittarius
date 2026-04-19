@@ -10,7 +10,7 @@ A high-performance, server-agnostic JMAP web client with a modern interface insp
 [![TypeScript Strict](https://img.shields.io/badge/TypeScript-Strict-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React 18](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![Vitest](https://img.shields.io/badge/Tests-601%20passing-6E9F18?style=flat-square&logo=vitest&logoColor=white)](package.json)
+[![Vitest](https://img.shields.io/badge/Tests-668%20passing-6E9F18?style=flat-square&logo=vitest&logoColor=white)](package.json)
 [![License MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
 ## ✨ Why Sagittarius?
@@ -191,6 +191,26 @@ See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for complete configuration examples.
 | **Sieve Filters** | Visual rule editor and raw script mode |
 | **Identity Management** | Multiple sending addresses per account |
 | **Delivery Status** | Track email submission status |
+| **RFC-Compliant Limits** | Respects server limits (max attachment size, folder depth, etc.) |
+
+### 🎯 JMAP Capability Awareness
+
+Sagittarius intelligently respects your server's JMAP capability limits for a better user experience:
+
+| Capability | Limits Enforced |
+|------------|-----------------|
+| **Core (RFC 8620)** | `maxObjectsInGet/Set` — Chunked batch operations, `maxSizeUpload` — Per-file upload limit |
+| **Mail (RFC 8621)** | `maxSizeAttachmentsPerEmail` — Total attachment size with live indicator, `maxMailboxDepth` — Folder nesting validation, `mayCreateTopLevelMailbox` — Controls root folder creation |
+| **Sieve (RFC 9266)** | `maxNumberScripts` — Warns at filter limit, `maxSizeScript` — Rejects oversized scripts |
+| **Calendar (RFC 8984)** | `maxParticipantsPerEvent` — Attendee limit warnings, `mayCreateCalendar` — Controls calendar creation |
+| **Contacts (RFC 9610)** | `mayCreateAddressBook` — Controls address book creation |
+| **Blob (RFC 9404)** | `maxDataSources` — Validates blob upload data sources |
+
+**Benefits:**
+- Prevents operations that would fail server-side
+- Shows real-time feedback (e.g., "Attachments: 12.5 MB of 50 MB")
+- Automatically chunks bulk operations (e.g., moving 1000+ emails in batches)
+- Gracefully disables features when server doesn't support them
 
 ---
 
@@ -306,7 +326,7 @@ npm run typecheck
 
 ## 📊 Stats
 
-- **601+ Tests** passing across 66 test files
+- **668+ Tests** passing across 68 test files
 - **TypeScript Strict Mode** — Zero `any` types
 - **Full RFC Compliance** — JMAP 8620/8621, 8887, 9404, 9553, 9610
 - **WCAG 2.1 AA** accessibility compliant
