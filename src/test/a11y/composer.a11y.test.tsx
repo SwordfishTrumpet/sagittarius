@@ -28,6 +28,7 @@ vi.mock('../../hooks/jmap/useIdentities', () => ({
 vi.mock('../../api/jmap', () => ({
   jmapClient: {
     getAccountCapability: () => ({ maxDelayedSend: 3600 }),
+    getCapabilityConfig: () => ({ maxSizeUpload: 50_000_000 }),
     uploadBlob: vi.fn(),
     getPrimaryAccount: () => 'account-1',
   },

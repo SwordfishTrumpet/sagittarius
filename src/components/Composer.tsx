@@ -18,6 +18,7 @@ import { useFocusTrap } from '../hooks/useFocusTrap';
 import { clearComposerDraft, getComposerDraftKey, loadComposerDraft, saveComposerDraft, type ComposerDraft } from '../utils/draftStorage';
 import { isDeferredMutationResult } from '../utils/offlineSyncQueue';
 import { useSaveDraft } from '../hooks/jmap/useSaveDraft';
+import { useAttachmentLimits } from '../hooks/useCapabilityLimits';
 import { toastOperationError } from '../utils/toastHelpers';
 import type { Email, Identity, EmailAddress, Attachment, EmailTemplate } from '../types/jmap';
 import type { ReplyContext } from '../hooks/useComposerState';
@@ -82,6 +83,9 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
     const maxBytes = coreCapabilities?.maxSizeUpload ?? 50_000_000;
     return Math.floor(maxBytes / 1024 / 1024);
   }, []);
+
+  // Use capability-aware attachment limits (checks maxSizeAttachmentsPerEmail)
+  const { maxTotalSizeMB: maxAttachmentsSizeMB, validateAttachments, canAddAttachment } = useAttachmentLimits();
 
   const { data: identities } = useIdentities();
   const [selectedIdentityId, setSelectedIdentityId] = useState<string | null>(() => restoredDraft ? restoredDraft.selectedIdentityId : null);
@@ -282,23 +286,49 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
     const maxUploadMB = Math.floor(maxUploadBytes / 1024 / 1024);
 
     setIsUploading(true);
+    let uploadedCount = 0;
+    let rejectedCount = 0;
+
     try {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
+
         // Validate file size - reject zero-byte files as some mail servers reject them
         if (file.size === 0) {
           toastOperationError('attachment.empty', file.name);
+          rejectedCount++;
           continue;
         }
+
+        // Check if adding this file would exceed the total attachment size limit
+        if (!canAddAttachment(attachments, file.size)) {
+          toast.error(
+            `Cannot add ${file.name}: Total attachment size would exceed server limit of ${maxAttachmentsSizeMB} MB. ` +
+            `Current: ${((attachments.reduce((sum, a) => sum + a.size, 0)) / 1024 / 1024).toFixed(1)} MB`
+          );
+          rejectedCount++;
+          continue;
+        }
+
         // Reject files larger than JMAP server limit
         if (file.size > maxUploadBytes) {
           toast.error(`File too large: ${file.name} (${(file.size / 1024 / 1024).toFixed(1)} MB). Maximum allowed: ${maxUploadMB} MB`);
+          rejectedCount++;
           continue;
         }
-        // Warn about files approaching the limit
+
+        // Warn about files approaching the individual limit
         if (file.size > maxUploadBytes * 0.8) {
-          toast.warning(`Large file: ${file.name} (${(file.size / 1024 / 1024).toFixed(1)} MB). Approaching server limit of ${maxUploadMB} MB.`);
+          toast.warning(`Large file: ${file.name} (${(file.size / 1024 / 1024).toFixed(1)} MB). Approaching server upload limit of ${maxUploadMB} MB.`);
         }
+
+        // Warn about files approaching the total attachment limit
+        const currentTotal = attachments.reduce((sum, a) => sum + a.size, 0);
+        const projectedTotal = currentTotal + file.size;
+        if (projectedTotal > maxAttachmentsSizeMB * 1024 * 1024 * 0.8) {
+          toast.warning(`Attachments are ${(projectedTotal / 1024 / 1024).toFixed(1)} MB of ${maxAttachmentsSizeMB} MB limit`);
+        }
+
         const res = await jmapClient.uploadBlob(file);
         setAttachments(prev => [...prev, {
           blobId: res.blobId,
@@ -306,8 +336,22 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
           type: file.type,
           size: file.size
         }]);
+        uploadedCount++;
       }
-      toast.success('Files attached');
+
+      if (uploadedCount > 0 && rejectedCount === 0) {
+        toast.success(`${uploadedCount} file${uploadedCount === 1 ? '' : 's'} attached`);
+      } else if (uploadedCount > 0 && rejectedCount > 0) {
+        toast.warning(`${uploadedCount} file${uploadedCount === 1 ? '' : 's'} attached, ${rejectedCount} rejected`);
+      } else if (rejectedCount > 0) {
+        toast.error(`No files attached. ${rejectedCount} file${rejectedCount === 1 ? '' : 's'} rejected due to size limits.`);
+      }
+
+      // Validate total size after upload
+      const validation = validateAttachments(attachments);
+      if (!validation.isValid) {
+        toast.error(validation.error);
+      }
     } catch (err: any) {
       // Check for 413 Payload Too Large
       if (err.message?.includes('413') || err.message?.toLowerCase().includes('too large')) {
@@ -735,8 +779,8 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploading}
-                aria-label={`Attach file (max ${maxUploadSizeMB} MB)`}
-                title={`Attach file (max ${maxUploadSizeMB} MB per file)`}
+                aria-label={`Attach file (max ${maxUploadSizeMB} MB per file, ${maxAttachmentsSizeMB} MB total)`}
+                title={`Attach file (max ${maxUploadSizeMB} MB per file, ${maxAttachmentsSizeMB} MB total)`}
                 className="p-1.5 hover:bg-black/5 rounded text-[#8E8E93] cursor-pointer transition-colors disabled:opacity-50"
               >
                 <Paperclip className={`w-3.5 h-3.5 ${isUploading ? 'animate-pulse' : ''}`} strokeWidth={1.5} />
@@ -792,17 +836,31 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
 
           {/* Attachments area */}
           {attachments.length > 0 && (
-            <div className="px-5 py-2.5 border-b border-[#E5E5EA] flex flex-wrap gap-2 max-h-28 overflow-y-auto">
-              {attachments.map(a => (
-                <div key={a.blobId} className="flex items-center gap-1.5 px-2.5 py-1 bg-[#007AFF]/[0.08] border border-[#007AFF]/[0.15] rounded-full text-[12px] font-medium text-[#007AFF] animate-in zoom-in-95 duration-200">
-                  <Paperclip className="w-3 h-3" strokeWidth={1.5} />
-                  <span className="max-w-[120px] truncate">{a.name}</span>
-                  <span className="text-[#005FCC] text-[11px]">{(a.size / 1024).toFixed(0)}K</span>
-                  <button aria-label={`Remove attachment ${a.name}`} onClick={() => removeAttachment(a.blobId)} className="p-0.5 hover:bg-[#007AFF]/[0.15] rounded-full transition-colors">
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              ))}
+            <div className="px-5 py-2.5 border-b border-[#E5E5EA]">
+              {/* Attachment pills */}
+              <div className="flex flex-wrap gap-2 max-h-24 overflow-y-auto">
+                {attachments.map(a => (
+                  <div key={a.blobId} className="flex items-center gap-1.5 px-2.5 py-1 bg-[#007AFF]/[0.08] border border-[#007AFF]/[0.15] rounded-full text-[12px] font-medium text-[#007AFF] animate-in zoom-in-95 duration-200">
+                    <Paperclip className="w-3 h-3" strokeWidth={1.5} />
+                    <span className="max-w-[120px] truncate">{a.name}</span>
+                    <span className="text-[#005FCC] text-[11px]">{(a.size / 1024).toFixed(0)}K</span>
+                    <button aria-label={`Remove attachment ${a.name}`} onClick={() => removeAttachment(a.blobId)} className="p-0.5 hover:bg-[#007AFF]/[0.15] rounded-full transition-colors">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              {/* Total size indicator */}
+              {(() => {
+                const totalSize = attachments.reduce((sum, a) => sum + a.size, 0);
+                const isNearLimit = totalSize > maxAttachmentsSizeMB * 1024 * 1024 * 0.8;
+                return (
+                  <div className={`mt-2 text-[11px] ${isNearLimit ? 'text-[#FF9500] font-medium' : 'text-[#8E8E93]'}`}>
+                    Total: {(totalSize / 1024 / 1024).toFixed(1)} MB of {maxAttachmentsSizeMB} MB
+                    {isNearLimit && ' (approaching limit)'}
+                  </div>
+                );
+              })()}
             </div>
           )}
 

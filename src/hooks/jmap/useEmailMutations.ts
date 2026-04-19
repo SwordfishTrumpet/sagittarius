@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { jmapClient } from '../../api/jmap'
 import { stateManager } from '../../api/stateManager'
 import { isDeferredMutationResult, runDeferredAwareMutation } from '../../utils/offlineSyncQueue'
+import { chunkForSet } from '../../utils/capabilityUtils'
 import type { Email } from '../../types/jmap'
 import {
   invalidateEmailQueries,
@@ -12,12 +13,48 @@ import {
   type QuerySnapshot,
 } from './queryCacheUtils'
 
-export function useEmailActions() {
+import type { UseMutateFunction, UseMutateAsyncFunction } from '@tanstack/react-query'
+
+interface EmailActionsReturn {
+  updateKeywords: {
+    mutate: UseMutateFunction<unknown, Error, { emailId: string; keywords: Record<string, boolean> }, unknown>
+    mutateAsync: UseMutateAsyncFunction<unknown, Error, { emailId: string; keywords: Record<string, boolean> }, unknown>
+    isPending: boolean
+  }
+  updateKeywordsBulk: {
+    mutate: UseMutateFunction<unknown, Error, { emailIds: string[]; keywords: Record<string, boolean> }, unknown>
+    mutateAsync: UseMutateAsyncFunction<unknown, Error, { emailIds: string[]; keywords: Record<string, boolean> }, unknown>
+    isPending: boolean
+  }
+  moveEmail: {
+    mutate: UseMutateFunction<unknown, Error, { emailId: string; mailboxIds: Record<string, boolean> }, unknown>
+    mutateAsync: UseMutateAsyncFunction<unknown, Error, { emailId: string; mailboxIds: Record<string, boolean> }, unknown>
+    isPending: boolean
+  }
+  moveEmailBulk: {
+    mutate: UseMutateFunction<unknown, Error, { emailIds: string[]; mailboxIds: Record<string, boolean> }, unknown>
+    mutateAsync: UseMutateAsyncFunction<unknown, Error, { emailIds: string[]; mailboxIds: Record<string, boolean> }, unknown>
+    isPending: boolean
+  }
+  destroyEmail: {
+    mutate: UseMutateFunction<unknown, Error, { emailId: string }, unknown>
+    mutateAsync: UseMutateAsyncFunction<unknown, Error, { emailId: string }, unknown>
+    isPending: boolean
+  }
+  destroyEmailBulk: {
+    mutate: UseMutateFunction<unknown, Error, { emailIds: string[] }, unknown>
+    mutateAsync: UseMutateAsyncFunction<unknown, Error, { emailIds: string[] }, unknown>
+    isPending: boolean
+  }
+}
+
+export function useEmailActions(): EmailActionsReturn {
   const accountId = jmapClient.getPrimaryAccount()
   const queryClient = useQueryClient()
 
   const updateKeywords = useMutation({
     mutationFn: async ({ emailId, keywords }: { emailId: string, keywords: Record<string, boolean> }) => {
+      if (!accountId) throw new Error('No account available')
       const patch: Record<string, boolean | null> = {}
       for (const [key, value] of Object.entries(keywords)) {
         patch[`keywords/${key}`] = value ? true : null
@@ -96,33 +133,46 @@ export function useEmailActions() {
 
   const updateKeywordsBulk = useMutation({
     mutationFn: async ({ emailIds, keywords }: { emailIds: string[], keywords: Record<string, boolean> }) => {
+      if (!accountId) throw new Error('No account available')
       const patch: Record<string, boolean | null> = {}
       for (const [key, value] of Object.entries(keywords)) {
         patch[`keywords/${key}`] = value ? true : null
       }
-      const updates: Record<string, Record<string, boolean | null>> = {}
-      emailIds.forEach((id: string) => {
-        updates[id] = patch
-      })
-      // Include ifInState for conflict detection per RFC 8620
-      const emailState = stateManager.getState('Email')
-      const requests = [
-        jmapMethodCall('Email/set', {
-          accountId,
-          ifInState: emailState || undefined,
-          update: updates,
-        }, '0'),
-      ]
 
-      return runDeferredAwareMutation({
-        accountId,
-        operation: 'updateKeywordsBulk',
-        payload: {
-          description: `Toggle keywords for ${emailIds.length} emails`,
-          requests,
-        },
-        execute: () => jmapRequest(requests),
-      })
+      // Chunk email IDs to respect maxObjectsInSet server limit (RFC 8620)
+      const chunks = chunkForSet(emailIds)
+      const emailState = stateManager.getState('Email')
+
+      // Execute each chunk as a separate request
+      const results = []
+      for (const chunk of chunks) {
+        const updates: Record<string, Record<string, boolean | null>> = {}
+        chunk.forEach((id: string) => {
+          updates[id] = patch
+        })
+
+        const requests = [
+          jmapMethodCall('Email/set', {
+            accountId,
+            ifInState: emailState || undefined,
+            update: updates,
+          }, '0'),
+        ]
+
+        const result = await runDeferredAwareMutation({
+          accountId,
+          operation: 'updateKeywordsBulk',
+          payload: {
+            description: `Toggle keywords for ${chunk.length} emails`,
+            requests,
+          },
+          execute: () => jmapRequest(requests),
+        })
+
+        results.push(result)
+      }
+
+      return results
     },
     onMutate: async ({ emailIds, keywords }) => {
       suppressNewMailNotification()
@@ -164,14 +214,17 @@ export function useEmailActions() {
       rollbackQueries(queryClient, context?.previousThreads)
       rollbackQueries(queryClient, context?.previousEmails)
     },
-    onSuccess: (result) => {
-      if (isDeferredMutationResult(result)) return
+    onSuccess: (results) => {
+      // Check if any result is deferred
+      const hasDeferred = Array.isArray(results) && results.some(r => isDeferredMutationResult(r))
+      if (hasDeferred) return
       invalidateEmailQueries(queryClient)
     },
   })
 
   const moveEmail = useMutation({
     mutationFn: async ({ emailId, mailboxIds }: { emailId: string, mailboxIds: Record<string, boolean> }) => {
+      if (!accountId) throw new Error('No account available')
       // Include ifInState for conflict detection per RFC 8620
       const emailState = stateManager.getState('Email')
       const requests = [
@@ -244,29 +297,41 @@ export function useEmailActions() {
 
   const moveEmailBulk = useMutation({
     mutationFn: async ({ emailIds, mailboxIds }: { emailIds: string[], mailboxIds: Record<string, boolean> }) => {
-      const updates: Record<string, { mailboxIds: Record<string, boolean> }> = {}
-      emailIds.forEach((id: string) => {
-        updates[id] = { mailboxIds }
-      })
-      // Include ifInState for conflict detection per RFC 8620
+      if (!accountId) throw new Error('No account available')
+      // Chunk email IDs to respect maxObjectsInSet server limit (RFC 8620)
+      const chunks = chunkForSet(emailIds)
       const emailState = stateManager.getState('Email')
-      const requests = [
-        jmapMethodCall('Email/set', {
-          accountId,
-          ifInState: emailState || undefined,
-          update: updates,
-        }, '0'),
-      ]
 
-      return runDeferredAwareMutation({
-        accountId,
-        operation: 'moveEmailBulk',
-        payload: {
-          description: `Move ${emailIds.length} emails`,
-          requests,
-        },
-        execute: () => jmapRequest(requests),
-      })
+      // Execute each chunk as a separate request
+      const results = []
+      for (const chunk of chunks) {
+        const updates: Record<string, { mailboxIds: Record<string, boolean> }> = {}
+        chunk.forEach((id: string) => {
+          updates[id] = { mailboxIds }
+        })
+
+        const requests = [
+          jmapMethodCall('Email/set', {
+            accountId,
+            ifInState: emailState || undefined,
+            update: updates,
+          }, '0'),
+        ]
+
+        const result = await runDeferredAwareMutation({
+          accountId,
+          operation: 'moveEmailBulk',
+          payload: {
+            description: `Move ${chunk.length} emails`,
+            requests,
+          },
+          execute: () => jmapRequest(requests),
+        })
+
+        results.push(result)
+      }
+
+      return results
     },
     onMutate: async ({ emailIds, mailboxIds }) => {
       suppressNewMailNotification()
@@ -303,14 +368,17 @@ export function useEmailActions() {
       rollbackQueries(queryClient, context?.previousThreads)
       rollbackQueries(queryClient, context?.previousEmails)
     },
-    onSuccess: (result) => {
-      if (isDeferredMutationResult(result)) return
+    onSuccess: (results) => {
+      // Check if any result is deferred
+      const hasDeferred = Array.isArray(results) && results.some(r => isDeferredMutationResult(r))
+      if (hasDeferred) return
       invalidateEmailQueries(queryClient)
     },
   })
 
   const destroyEmail = useMutation({
     mutationFn: async ({ emailId }: { emailId: string }) => {
+      if (!accountId) throw new Error('No account available')
       // Include ifInState for conflict detection per RFC 8620
       const emailState = stateManager.getState('Email')
       const requests = [
@@ -365,25 +433,36 @@ export function useEmailActions() {
 
   const destroyEmailBulk = useMutation({
     mutationFn: async ({ emailIds }: { emailIds: string[] }) => {
-      // Include ifInState for conflict detection per RFC 8620
+      if (!accountId) throw new Error('No account available')
+      // Chunk email IDs to respect maxObjectsInSet server limit (RFC 8620)
+      const chunks = chunkForSet(emailIds)
       const emailState = stateManager.getState('Email')
-      const requests = [
-        jmapMethodCall('Email/set', {
-          accountId,
-          ifInState: emailState || undefined,
-          destroy: emailIds,
-        }, '0'),
-      ]
 
-      return runDeferredAwareMutation({
-        accountId,
-        operation: 'destroyEmailBulk',
-        payload: {
-          description: `Permanently delete ${emailIds.length} emails`,
-          requests,
-        },
-        execute: () => jmapRequest(requests),
-      })
+      // Execute each chunk as a separate request
+      const results = []
+      for (const chunk of chunks) {
+        const requests = [
+          jmapMethodCall('Email/set', {
+            accountId,
+            ifInState: emailState || undefined,
+            destroy: chunk,
+          }, '0'),
+        ]
+
+        const result = await runDeferredAwareMutation({
+          accountId,
+          operation: 'destroyEmailBulk',
+          payload: {
+            description: `Permanently delete ${chunk.length} emails`,
+            requests,
+          },
+          execute: () => jmapRequest(requests),
+        })
+
+        results.push(result)
+      }
+
+      return results
     },
     onMutate: async ({ emailIds }) => {
       suppressNewMailNotification()
@@ -412,8 +491,10 @@ export function useEmailActions() {
       rollbackQueries(queryClient, context?.previousThreads)
       rollbackQueries(queryClient, context?.previousEmails)
     },
-    onSuccess: (result) => {
-      if (isDeferredMutationResult(result)) return
+    onSuccess: (results) => {
+      // Check if any result is deferred
+      const hasDeferred = Array.isArray(results) && results.some(r => isDeferredMutationResult(r))
+      if (hasDeferred) return
       invalidateEmailQueries(queryClient)
     },
   })

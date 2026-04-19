@@ -457,9 +457,14 @@ describe('RFC 8620 — JMAP Core Protocol', () => {
 
     it('should upload blob with correct Content-Type (§6.1)', async () => {
       const session = makeSession();
+      const uploadResponse = { 
+        ok: true, 
+        json: async () => ({ accountId: 'account-001', blobId: 'blob-new', type: 'image/png', size: 1024 }),
+        clone: function() { return this; }
+      };
       fetchMock
         .mockResolvedValueOnce({ ok: true, json: async () => session, text: async () => JSON.stringify(session) })
-        .mockResolvedValueOnce({ ok: true, json: async () => ({ accountId: 'account-001', blobId: 'blob-new', type: 'image/png', size: 1024 }) });
+        .mockResolvedValueOnce(uploadResponse);
 
       const { jmapClient } = await import('../jmap');
       await jmapClient.authenticate('user@example.com', 'password');
