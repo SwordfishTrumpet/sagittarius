@@ -121,19 +121,19 @@ export function Sidebar({
     <aside
       aria-label="Mailbox navigation"
       aria-hidden={isSidebarCollapsed && !isMobile}
-      className={`flex flex-col bg-white/70 backdrop-blur-xl border-r border-[#E5E5E5] h-full overflow-hidden shrink-0 select-none ${isAnyPaneResizing ? '' : 'transition-all duration-300'} ${isMobile ? (mobileVisible ? 'fixed inset-0 z-[200] w-full' : 'hidden') : ''}`}
+      className={`flex flex-col bg-[#F2F2F7]/70 dark:bg-[#1C1C1E]/70 backdrop-blur-xl border-r border-[#E5E5EA] dark:border-[#38383A] h-full overflow-hidden shrink-0 select-none ${isAnyPaneResizing ? '' : 'transition-all duration-300'} ${isMobile ? (mobileVisible ? 'fixed inset-0 z-[200] w-full bg-[#F2F2F7] dark:bg-[#1C1C1E]' : 'hidden') : ''}`}
       style={{ width: isMobile ? '100%' : (isSidebarCollapsed ? 0 : sidebarWidth) }}
     >
       {!isSidebarCollapsed && (
       <>
       <header className="px-5 py-4 flex items-center justify-between">
-        <h1 className="text-xl font-bold tracking-tight flex items-center leading-none">
+        <h1 className="text-xl font-bold tracking-tight flex items-center leading-none text-[#1C1C1E] dark:text-white">
           sagittarius
         </h1>
         <div className="flex items-center gap-2">
           <button 
             onClick={onToggleSidebarCollapsed}
-            className="p-1.5 hover:bg-black/5 rounded-md transition-colors"
+            className="p-1.5 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors"
             title={isSidebarCollapsed ? 'Show Sidebar' : 'Hide Sidebar'}
             aria-label={isSidebarCollapsed ? 'Show sidebar' : 'Hide sidebar'}
           >
@@ -141,10 +141,10 @@ export function Sidebar({
           </button>
           <button 
             onClick={onCompose}
-            className="p-1.5 hover:bg-black/5 rounded-md transition-colors"
+            className="p-1.5 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors"
             aria-label="Compose message"
           >
-            <Plus className="w-5 h-5 text-[#007AFF]" strokeWidth={2} />
+            <Plus className="w-5 h-5 text-[#007AFF] dark:text-[#0A84FF]" strokeWidth={2} />
           </button>
         </div>
       </header>
@@ -152,7 +152,7 @@ export function Sidebar({
       <nav aria-label="Mailboxes" className="flex-1 overflow-y-auto px-3 space-y-3 py-2">
         {mailboxesLoading ? (
           <div className="flex items-center justify-center py-10 opacity-30">
-            <div className="w-5 h-5 border-2 border-[#007AFF] border-t-transparent rounded-full animate-spin" />
+            <div className="w-5 h-5 border-2 border-[#007AFF] dark:border-[#0A84FF] border-t-transparent rounded-full animate-spin" />
           </div>
         ) : !mailboxes || mailboxes.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
@@ -160,7 +160,7 @@ export function Sidebar({
             <p className="text-[12px] text-[#8E8E93] font-medium">No folders loaded</p>
             <button 
               onClick={() => refetchMailboxes()} 
-              className="mt-2 text-[12px] text-[#007AFF] font-medium hover:underline"
+              className="mt-2 text-[12px] text-[#007AFF] dark:text-[#0A84FF] font-medium hover:underline"
             >
               Retry
             </button>
@@ -247,7 +247,7 @@ export function Sidebar({
             {customMailboxes.length === 0 && systemMailboxes.length > 0 && (
               <button
                 onClick={onCreateFolder}
-                className="flex items-center justify-center gap-2 px-3 py-2 text-[13px] font-medium text-[#007AFF] hover:bg-[#007AFF]/10 rounded-lg transition-colors mt-2"
+                className="flex items-center justify-center gap-2 px-3 py-2 text-[13px] font-medium text-[#007AFF] dark:text-[#0A84FF] hover:bg-[#007AFF]/10 dark:hover:bg-[#0A84FF]/10 rounded-lg transition-colors mt-2"
               >
                 <Plus className="w-4 h-4" strokeWidth={2} />
                 Create Folder
@@ -255,7 +255,7 @@ export function Sidebar({
             )}
             
             {/* Smart Mailboxes Section */}
-            <div className="pt-2 border-t border-[#E5E5E5]">
+            <div className="pt-2 border-t border-[#E5E5EA] dark:border-[#38383A]">
               <div className="pt-3 pb-2 px-3 text-[10px] font-bold text-[#8E8E93] uppercase tracking-wider opacity-60">Smart Mailboxes</div>
               <div role="tree" aria-label="Smart mailboxes" className="space-y-0.5">
                 <SidebarItem 
@@ -274,7 +274,7 @@ export function Sidebar({
             </div>
 
             {/* Apps Section */}
-            <div className="pt-2 border-t border-[#E5E5E5]">
+            <div className="pt-2 border-t border-[#E5E5EA] dark:border-[#38383A]">
               <div className="pt-3 pb-2 px-3 text-[10px] font-bold text-[#8E8E93] uppercase tracking-wider opacity-60">Apps</div>
               <div role="tree" aria-label="Apps" className="space-y-0.5">
                 <SidebarItem 
@@ -295,32 +295,32 @@ export function Sidebar({
         )}
       </nav>
 
-      <div className="p-4 border-t border-[#E5E5E5] text-[11px] text-[#8E8E93] bg-white/30 space-y-2">
+      <div className="p-4 border-t border-[#E5E5EA] dark:border-[#38383A] text-[11px] text-[#8E8E93] bg-white/30 dark:bg-black/30 space-y-2">
          {quota && quota.hardLimit && quota.hardLimit > 0 && (
            <QuotaBar used={quota.used || 0} total={quota.hardLimit || 0} />
          )}
          <div className="flex items-center justify-between">
            <div className="flex items-center gap-2">
-              <span className="truncate max-w-[100px] font-medium">{userLabel || 'User'}</span>
-              {isOffline ? (
-                <>
-                  <WifiOff className="w-3 h-3 text-[#FF9500]" strokeWidth={2} />
-                  <span className="text-[#FF9500] font-medium">Offline cache</span>
-                </>
-              ) : esConnected ? (
-                <Wifi className="w-3 h-3 text-green-500" strokeWidth={2} />
-              ) : (
-                <WifiOff className="w-3 h-3 text-[#8E8E93]" strokeWidth={2} />
-              )}
-            </div>
-           <div className="flex items-center gap-2">
-              <button onClick={onOpenSettings} className="p-1 hover:bg-black/5 rounded transition-colors" title="Settings" aria-label="Settings">
-                <SettingsIcon className="w-3.5 h-3.5 text-[#8E8E93]" strokeWidth={1.5} />
-              </button>
-             <button onClick={() => jmapClient.logout()} className="text-[#007AFF] font-medium hover:underline">Sign Out</button>
+             <span className="truncate max-w-[100px] font-medium text-[#1C1C1E] dark:text-white">{userLabel || 'User'}</span>
+             {isOffline ? (
+               <>
+                 <WifiOff className="w-3 h-3 text-[#FF9500]" strokeWidth={2} />
+                 <span className="text-[#FF9500] font-medium">Offline cache</span>
+               </>
+             ) : esConnected ? (
+               <Wifi className="w-3 h-3 text-[#30D158]" strokeWidth={2} />
+             ) : (
+               <WifiOff className="w-3 h-3 text-[#8E8E93]" strokeWidth={2} />
+             )}
            </div>
+          <div className="flex items-center gap-2">
+             <button onClick={onOpenSettings} className="p-1 hover:bg-black/5 dark:hover:bg-white/10 rounded transition-colors" title="Settings" aria-label="Settings">
+               <SettingsIcon className="w-3.5 h-3.5 text-[#8E8E93]" strokeWidth={1.5} />
+             </button>
+            <button onClick={() => jmapClient.logout()} className="text-[#007AFF] dark:text-[#0A84FF] font-medium hover:underline">Sign Out</button>
           </div>
-        </div>
+         </div>
+       </div>
       </>
       )}
      </aside>
