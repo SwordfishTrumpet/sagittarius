@@ -48,7 +48,7 @@ export function getContactsCapability() {
  */
 export function useHasContactsCapability(): boolean {
   const accountId = jmapClient.getPrimaryAccount();
-  return hasContactsCapability() && !!accountId;
+  return !!(hasContactsCapability() && accountId);
 }
 
 // ============ AddressBook Hooks ============

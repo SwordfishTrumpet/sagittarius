@@ -13,7 +13,7 @@ export function hasVacationCapability(): boolean {
 
 export function useHasVacationCapability(): boolean {
   const accountId = jmapClient.getPrimaryAccount();
-  return hasVacationCapability() && !!accountId;
+  return !!(hasVacationCapability() && accountId);
 }
 
 // Use the singleton hook factory for the VacationResponse/get query

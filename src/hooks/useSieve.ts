@@ -12,7 +12,7 @@ export function hasSieveCapability(): boolean {
 
 export function useHasSieveCapability(): boolean {
   const accountId = jmapClient.getPrimaryAccount();
-  return hasSieveCapability() && !!accountId;
+  return !!(hasSieveCapability() && accountId);
 }
 
 export interface SieveScript {
