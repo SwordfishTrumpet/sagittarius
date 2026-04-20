@@ -22,6 +22,10 @@ vi.mock('../../utils/notificationSound', () => ({
   setNotificationSoundEnabled: vi.fn(),
   setNotificationVolume: vi.fn(),
   previewNotificationSound: vi.fn(),
+  isNotificationAPISupported: () => true,
+  getNotificationPermission: () => 'default',
+  requestNotificationPermission: vi.fn().mockResolvedValue(true),
+  canShowNotifications: () => false,
 }))
 
 // Mock the vacation hook
@@ -39,10 +43,11 @@ vi.mock('../../hooks/useVacation', () => ({
     updateVacation: vi.fn(),
     isPending: false,
   }),
+  useHasVacationCapability: () => true,
 }))
 
 // Mock the identities hook
-vi.mock('../../hooks/useIdentities', () => ({
+vi.mock('../../hooks/jmap/useIdentities', () => ({
   useIdentities: () => ({
     data: [],
     isLoading: false,
@@ -53,6 +58,7 @@ vi.mock('../../hooks/useIdentities', () => ({
     deleteIdentity: vi.fn(),
     isPending: false,
   }),
+  useHasIdentityCapability: () => true,
 }))
 
 // Mock the sieve hook
@@ -69,6 +75,7 @@ vi.mock('../../hooks/useSieve', () => ({
     validateScript: vi.fn(),
     isPending: false,
   }),
+  useHasSieveCapability: () => true,
 }))
 
 describe('Settings', () => {
@@ -129,5 +136,11 @@ describe('Settings', () => {
     render(<Settings {...defaultProps} />, { wrapper: Wrapper })
 
     expect(screen.getByText('New mail sound')).toBeInTheDocument()
+  })
+
+  it('shows desktop notifications section', () => {
+    render(<Settings {...defaultProps} />, { wrapper: Wrapper })
+
+    expect(screen.getByText('Desktop notifications')).toBeInTheDocument()
   })
 })

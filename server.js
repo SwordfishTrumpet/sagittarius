@@ -127,9 +127,57 @@ app.use((req, res, next) => {
   next();
 });
 
+// ── Memory tracking ─────────────────────────────────────────────────
+const memoryHistory = [];
+const MAX_HISTORY = 100; // Keep last 100 readings
+const MB = 1024 * 1024;
+
+function recordMemory() {
+  const usage = process.memoryUsage();
+  const snapshot = {
+    timestamp: Date.now(),
+    rss: Math.round(usage.rss / MB),
+    heapTotal: Math.round(usage.heapTotal / MB),
+    heapUsed: Math.round(usage.heapUsed / MB),
+    external: Math.round(usage.external / MB),
+    arrayBuffers: Math.round((usage.arrayBuffers || 0) / MB),
+  };
+  
+  memoryHistory.push(snapshot);
+  if (memoryHistory.length > MAX_HISTORY) {
+    memoryHistory.shift();
+  }
+  
+  return snapshot;
+}
+
+// Record memory every 30 seconds
+setInterval(recordMemory, 30000);
+
 // ── Health check (useful for monitoring / load balancers) ────────────
 app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', uptime: process.uptime() });
+  const current = recordMemory();
+  const uptime = process.uptime();
+  
+  // Calculate trend if we have enough history
+  let trend = 'stable';
+  if (memoryHistory.length >= 2) {
+    const oldest = memoryHistory[0];
+    const diff = current.rss - oldest.rss;
+    if (diff > 50) trend = 'increasing';
+    else if (diff < -50) trend = 'decreasing';
+  }
+  
+  res.json({
+    status: 'ok',
+    uptime: Math.floor(uptime),
+    uptimeHuman: `${Math.floor(uptime / 86400)}d ${Math.floor((uptime % 86400) / 3600)}h ${Math.floor((uptime % 3600) / 60)}m`,
+    memory: current,
+    memoryTrend: trend,
+    memoryHistoryLength: memoryHistory.length,
+    nodeVersion: process.version,
+    pid: process.pid,
+  });
 });
 
 // ── EventSource (SSE) proxy ─────────────────────────────────────────

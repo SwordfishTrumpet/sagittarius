@@ -693,13 +693,14 @@ function App() {
                 onClose={closeComposer}
                 replyTo={replyToEmail ?? undefined}
                 draftEmail={draftEmail ?? undefined}
+                isMobile={isMobile}
               />
             )}
           </AnimatePresence>
         </ErrorBoundary>
         <FolderDialogsUI />
         <ErrorBoundary>
-          <Settings isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+          <Settings isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} isMobile={isMobile} />
         </ErrorBoundary>
         <ErrorBoundary>
           <CalendarView isOpen={isCalendarOpen} onClose={() => setIsCalendarOpen(false)} />

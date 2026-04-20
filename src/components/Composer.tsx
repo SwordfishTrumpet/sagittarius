@@ -551,7 +551,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 40, opacity: 0 }}
         transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-        className="fixed bottom-0 right-6 w-[280px] bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-[#38383A] rounded-t-xl shadow-[0_-4px_20px_rgba(0,0,0,0.08)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.30)] flex items-center justify-between px-4 py-2.5 cursor-pointer z-[200]"
+        className="fixed bottom-0 right-6 w-[280px] bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-[#38383A] rounded-t-xl shadow-[0_-4px_20px_rgba(0,0,0,0.08)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.30)] flex items-center justify-between px-4 py-2.5 cursor-pointer z-[300]"
         onClick={() => setIsMinimized(false)}
         role="button"
         tabIndex={0}
@@ -585,7 +585,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
       role="dialog"
       aria-modal="true"
       aria-labelledby="composer-title"
-      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/30 backdrop-blur-[2px]"
+      className="fixed inset-0 z-[300] flex items-center justify-center bg-black/30 backdrop-blur-[2px]"
       onClick={handleBackdropClick}
     >
       <motion.div

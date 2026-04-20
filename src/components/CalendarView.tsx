@@ -8,7 +8,7 @@
  * - iCloud-style glassmorphic design
  */
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
@@ -425,8 +425,8 @@ function EventFormDialog({
 }) {
   const [form, setForm] = useState<EventFormData>(DEFAULT_EVENT_FORM);
 
-  // Initialize form when event changes
-  useMemo(() => {
+  // Initialize form when event changes - use useEffect for side effects
+  useEffect(() => {
     if (event && event.id) {
       // Editing existing event
       const location = event.locations ? Object.values(event.locations)[0]?.name : '';

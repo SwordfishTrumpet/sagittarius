@@ -203,7 +203,7 @@ export function RawEmailViewer({ blobId, onClose }: RawEmailViewerProps) {
   return (
     /* Overlay */
     <div
-      className="fixed inset-0 z-[70] bg-black/40 backdrop-blur-sm flex items-center justify-center p-0 sm:p-6"
+      className="fixed inset-0 z-[300] bg-black/40 backdrop-blur-sm flex items-center justify-center p-0 sm:p-6"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}

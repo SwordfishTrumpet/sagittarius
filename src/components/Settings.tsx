@@ -262,7 +262,7 @@ export function Settings({ isOpen, onClose, isMobile = false }: SettingsProps) {
   return (
     /* Overlay */
     <div
-      className={`fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-start justify-center overflow-y-auto ${isMobile ? 'py-0' : 'py-8'}`}
+      className={`fixed inset-0 z-[300] bg-black/30 backdrop-blur-sm flex items-start justify-center overflow-y-auto ${isMobile ? 'py-0' : 'py-8'}`}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
