@@ -58,11 +58,13 @@ function hasMeaningfulContentBefore(container: HTMLDivElement, referenceNode: El
 }
 
 export function upsertIdentitySignature(bodyHtml: string, identity?: SignatureIdentity | null): string {
-  if (typeof document === 'undefined') {
+  // Use globalThis.document to get the current value (not cached at module load)
+  const doc = globalThis.document
+  if (!doc) {
     return bodyHtml
   }
 
-  const documentForParsing = document.implementation.createHTMLDocument('signature')
+  const documentForParsing = doc.implementation.createHTMLDocument('signature')
   const container = documentForParsing.createElement('div')
   container.innerHTML = bodyHtml || ''
 

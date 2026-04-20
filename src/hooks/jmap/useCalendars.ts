@@ -58,7 +58,7 @@ export function getCalendarCapability() {
  */
 export function useHasCalendarCapability(): boolean {
   const accountId = jmapClient.getPrimaryAccount();
-  return hasCalendarCapability() && !!accountId;
+  return !!(hasCalendarCapability() && accountId);
 }
 
 /**
@@ -66,7 +66,7 @@ export function useHasCalendarCapability(): boolean {
  */
 export function useHasCalendarEventCapability(): boolean {
   const accountId = jmapClient.getPrimaryAccount();
-  return hasCalendarEventCapability() && !!accountId;
+  return !!(hasCalendarEventCapability() && accountId);
 }
 
 // ============ Calendar Hooks ============

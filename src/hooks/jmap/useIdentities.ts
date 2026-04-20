@@ -13,7 +13,7 @@ export function hasIdentityCapability(): boolean {
 
 export function useHasIdentityCapability(): boolean {
   const accountId = jmapClient.getPrimaryAccount();
-  return hasIdentityCapability() && !!accountId;
+  return !!(hasIdentityCapability() && accountId);
 }
 
 export function useIdentities() {
