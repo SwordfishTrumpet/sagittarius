@@ -551,7 +551,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 40, opacity: 0 }}
         transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-        className="fixed bottom-0 right-6 w-[280px] bg-white border border-[#E5E5EA] rounded-t-xl shadow-[0_-4px_20px_rgba(0,0,0,0.08)] flex items-center justify-between px-4 py-2.5 cursor-pointer z-[200]"
+        className="fixed bottom-0 right-6 w-[280px] bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] dark:border-[#38383A] rounded-t-xl shadow-[0_-4px_20px_rgba(0,0,0,0.08)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.30)] flex items-center justify-between px-4 py-2.5 cursor-pointer z-[200]"
         onClick={() => setIsMinimized(false)}
         role="button"
         tabIndex={0}
@@ -563,12 +563,12 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
           }
         }}
       >
-        <span className="font-semibold text-[13px] text-[#1C1C1E] truncate">{subject || 'New Message'}</span>
+        <span className="font-semibold text-[13px] text-[#1C1C1E] dark:text-white truncate">{subject || 'New Message'}</span>
         <div className="flex gap-2 items-center">
-          <button aria-label="Expand composer" onClick={(e) => { e.stopPropagation(); setIsMinimized(false); }} className="p-0.5 hover:bg-black/5 rounded text-[#6C6C70] transition-colors">
+          <button aria-label="Expand composer" onClick={(e) => { e.stopPropagation(); setIsMinimized(false); }} className="p-0.5 hover:bg-black/5 dark:hover:bg-white/10 rounded text-[#6C6C70] dark:text-[#8E8E93] transition-colors">
             <Maximize2 className="w-3.5 h-3.5" strokeWidth={1.5} />
           </button>
-          <button aria-label="Close and save draft" onClick={handleCloseButtonClick} className="p-0.5 hover:bg-black/5 rounded text-[#6C6C70] transition-colors">
+          <button aria-label="Close and save draft" onClick={handleCloseButtonClick} className="p-0.5 hover:bg-black/5 dark:hover:bg-white/10 rounded text-[#6C6C70] dark:text-[#8E8E93] transition-colors">
             <X className="w-3.5 h-3.5" strokeWidth={1.5} />
           </button>
         </div>
@@ -594,26 +594,26 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.97, y: 5 }}
         transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-        className={`bg-white flex flex-col overflow-hidden ${
+        className={`bg-white dark:bg-[#1C1C1E] flex flex-col overflow-hidden ${
           isMobile 
-            ? 'w-full h-full rounded-none' 
-            : 'rounded-xl shadow-[0_25px_60px_rgba(0,0,0,0.15),0_10px_20px_rgba(0,0,0,0.08)] border border-[#E5E5EA] w-[640px] max-w-[calc(100vw-48px)] h-[70vh] max-h-[720px] min-h-[480px]'
+            ? 'w-full h-full rounded-none dark:bg-black' 
+            : 'rounded-xl shadow-[0_25px_60px_rgba(0,0,0,0.15),0_10px_20px_rgba(0,0,0,0.08)] dark:shadow-[0_25px_60px_rgba(0,0,0,0.40)] border border-[#E5E5EA] dark:border-[#38383A] w-[640px] max-w-[calc(100vw-48px)] h-[70vh] max-h-[720px] min-h-[480px]'
         }`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <header className="px-4 py-3 border-b border-[#E5E5EA] flex items-center gap-2 bg-white rounded-t-xl shrink-0">
+        <header className="px-4 py-3 border-b border-[#E5E5EA] dark:border-[#38383A] flex items-center gap-2 bg-white dark:bg-[#1C1C1E] rounded-t-xl shrink-0">
           {/* Close button */}
           <button
             onClick={handleCloseWithSave}
             aria-label="Close and save draft"
-            className="w-7 h-7 rounded-full bg-[#E5E5EA] hover:bg-[#D1D1D6] flex items-center justify-center transition-colors"
+            className="w-7 h-7 rounded-full bg-[#E5E5EA] dark:bg-[#3A3A3C] hover:bg-[#D1D1D6] dark:hover:bg-[#48484A] flex items-center justify-center transition-colors"
           >
-            <X size={12} strokeWidth={2.5} className="text-[#636366]" />
+            <X size={12} strokeWidth={2.5} className="text-[#636366] dark:text-[#8E8E93]" />
           </button>
 
           {/* Title */}
-          <h2 id="composer-title" className="flex-1 text-center text-[15px] font-semibold text-[#1C1C1E] truncate">
+          <h2 id="composer-title" className="flex-1 text-center text-[15px] font-semibold text-[#1C1C1E] dark:text-white truncate">
             {subject || 'New Message'}
           </h2>
 
@@ -622,7 +622,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
             <button
               onClick={() => setIsMinimized(true)}
               aria-label="Minimize composer"
-              className="p-1.5 hover:bg-black/5 rounded-md text-[#6C6C70] transition-colors"
+              className="p-1.5 hover:bg-black/5 dark:hover:bg-white/10 rounded-md text-[#6C6C70] dark:text-[#8E8E93] transition-colors"
             >
               <Minimize2 className="w-4 h-4" strokeWidth={1.5} />
             </button>
@@ -630,7 +630,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
             <button 
               onClick={() => handleSend()}
               disabled={composeMutation.isPending || !to || !selectedIdentity}
-              className="flex items-center gap-1.5 px-4 py-1.5 bg-[#007AFF] text-white rounded-full font-semibold text-[13px] hover:bg-[#0062CC] transition-colors disabled:opacity-40"
+              className="flex items-center gap-1.5 px-4 py-1.5 bg-[#007AFF] dark:bg-[#0A84FF] text-white rounded-full font-semibold text-[13px] hover:bg-[#0062CC] dark:hover:bg-[#0070E0] transition-colors disabled:opacity-40"
             >
               {composeMutation.isPending ? (
                 <span className="flex items-center gap-1.5">
@@ -656,7 +656,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
                   aria-label={showSchedulePicker ? 'Hide schedule send options' : 'Show schedule send options'}
                   aria-expanded={showSchedulePicker}
                   aria-haspopup="dialog"
-                  className="p-1.5 bg-[#007AFF] text-white rounded-full hover:bg-[#0062CC] transition-colors disabled:opacity-40"
+                  className="p-1.5 bg-[#007AFF] dark:bg-[#0A84FF] text-white rounded-full hover:bg-[#0062CC] dark:hover:bg-[#0070E0] transition-colors disabled:opacity-40"
                 >
                   <Clock className="w-3.5 h-3.5" strokeWidth={2} />
                 </button>
@@ -680,13 +680,13 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
         <div role="form" aria-label="Compose email" className="flex-1 flex flex-col overflow-hidden">
           {/* From identity selector */}
           {identities && identities.length > 1 && (
-            <div className="px-5 py-2 border-b border-[#E5E5EA] flex items-center gap-2 shrink-0">
-                <label htmlFor="composer-from" className="text-[#6C6C70] w-14 font-medium text-[13px]">From:</label>
+            <div className="px-5 py-2 border-b border-[#E5E5EA] dark:border-[#38383A] flex items-center gap-2 shrink-0">
+                <label htmlFor="composer-from" className="text-[#6C6C70] dark:text-[#8E8E93] w-14 font-medium text-[13px]">From:</label>
               <select
                 id="composer-from"
                 value={selectedIdentity?.id || ''}
                 onChange={(e) => setSelectedIdentityId(e.target.value)}
-                className="flex-1 border-none focus:ring-0 focus:outline-none text-[14px] py-1 bg-transparent cursor-pointer appearance-none"
+                className="flex-1 border-none focus:ring-0 focus:outline-none text-[14px] py-1 bg-transparent cursor-pointer appearance-none text-[#1C1C1E] dark:text-white"
               >
                 {identities.map((identity: any) => (
                   <option key={identity.id} value={identity.id}>
@@ -699,8 +699,8 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
           )}
 
           {/* To field */}
-          <div className="px-5 py-2 border-b border-[#E5E5EA] flex items-center gap-2 shrink-0">
-            <label htmlFor="composer-to" className="text-[#6C6C70] w-14 font-medium text-[13px]">
+          <div className="px-5 py-2 border-b border-[#E5E5EA] dark:border-[#38383A] flex items-center gap-2 shrink-0">
+            <label htmlFor="composer-to" className="text-[#6C6C70] dark:text-[#8E8E93] w-14 font-medium text-[13px]">
               <span aria-hidden="true">To:</span>
               <span className="sr-only">Recipients (required)</span>
             </label>
@@ -708,7 +708,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
               id="composer-to"
               value={to} 
               onChange={e => setTo(e.target.value)} 
-              className="flex-1 border-none focus:ring-0 focus:outline-none text-[14px] py-1 bg-transparent" 
+              className="flex-1 border-none focus:ring-0 focus:outline-none text-[14px] py-1 bg-transparent text-[#1C1C1E] dark:text-white placeholder:text-[#8E8E93] dark:placeholder:text-[#636366]" 
               placeholder="Recipients"
               aria-required="true"
               autoFocus 
@@ -718,7 +718,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
                 onClick={() => setShowCcBcc(true)}
                 aria-expanded="false"
                 aria-controls="cc-bcc-fields"
-                className="text-[#007AFF] text-[12px] font-semibold hover:underline transition-opacity"
+                className="text-[#007AFF] dark:text-[#0A84FF] text-[12px] font-semibold hover:underline transition-opacity"
               >
                 Cc/Bcc
               </button>
@@ -729,22 +729,22 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
           <div id="cc-bcc-fields" role="group" aria-label="Cc and Bcc recipients">
             {showCcBcc && (
               <>
-                <div className="px-5 py-2 border-b border-[#E5E5EA] flex items-center gap-2 animate-in fade-in duration-200 shrink-0">
-                  <label htmlFor="composer-cc" className="text-[#6C6C70] w-14 font-medium text-[13px]">Cc:</label>
+                <div className="px-5 py-2 border-b border-[#E5E5EA] dark:border-[#38383A] flex items-center gap-2 animate-in fade-in duration-200 shrink-0">
+                  <label htmlFor="composer-cc" className="text-[#6C6C70] dark:text-[#8E8E93] w-14 font-medium text-[13px]">Cc:</label>
                   <input 
                     id="composer-cc"
                     value={cc} 
                     onChange={e => setCc(e.target.value)} 
-                    className="flex-1 border-none focus:ring-0 focus:outline-none text-[14px] py-1 bg-transparent" 
+                    className="flex-1 border-none focus:ring-0 focus:outline-none text-[14px] py-1 bg-transparent text-[#1C1C1E] dark:text-white" 
                   />
                 </div>
-                <div className="px-5 py-2 border-b border-[#E5E5EA] flex items-center gap-2 animate-in fade-in duration-200 shrink-0">
-                  <label htmlFor="composer-bcc" className="text-[#6C6C70] w-14 font-medium text-[13px]">Bcc:</label>
+                <div className="px-5 py-2 border-b border-[#E5E5EA] dark:border-[#38383A] flex items-center gap-2 animate-in fade-in duration-200 shrink-0">
+                  <label htmlFor="composer-bcc" className="text-[#6C6C70] dark:text-[#8E8E93] w-14 font-medium text-[13px]">Bcc:</label>
                   <input 
                     id="composer-bcc"
                     value={bcc} 
                     onChange={e => setBcc(e.target.value)} 
-                    className="flex-1 border-none focus:ring-0 focus:outline-none text-[14px] py-1 bg-transparent" 
+                    className="flex-1 border-none focus:ring-0 focus:outline-none text-[14px] py-1 bg-transparent text-[#1C1C1E] dark:text-white" 
                   />
                 </div>
               </>
@@ -752,20 +752,20 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
           </div>
 
           {/* Subject field */}
-          <div className="px-5 py-2 border-b border-[#E5E5EA] flex items-center gap-2 shrink-0">
-            <label htmlFor="composer-subject" className="text-[#6C6C70] w-14 font-medium text-[13px]">Subject:</label>
+          <div className="px-5 py-2 border-b border-[#E5E5EA] dark:border-[#38383A] flex items-center gap-2 shrink-0">
+            <label htmlFor="composer-subject" className="text-[#6C6C70] dark:text-[#8E8E93] w-14 font-medium text-[13px]">Subject:</label>
             <input 
               id="composer-subject"
               value={subject} 
               onChange={e => setSubject(e.target.value)} 
-              className="flex-1 border-none focus:ring-0 focus:outline-none text-[14px] py-1 font-semibold bg-transparent" 
+              className="flex-1 border-none focus:ring-0 focus:outline-none text-[14px] py-1 font-semibold bg-transparent text-[#1C1C1E] dark:text-white" 
               aria-required="true"
             />
           </div>
 
           {/* Formatting toolbar — always visible */}
           {editor && (
-            <div role="toolbar" aria-orientation="horizontal" aria-label="Text formatting" className="px-5 py-1.5 border-b border-[#E5E5EA] flex items-center gap-1 shrink-0 bg-[#FAFAFA]">
+            <div role="toolbar" aria-orientation="horizontal" aria-label="Text formatting" className="px-5 py-1.5 border-b border-[#E5E5EA] dark:border-[#38383A] flex items-center gap-1 shrink-0 bg-[#FAFAFA] dark:bg-[#2C2C2E]">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -781,11 +781,11 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
                 disabled={isUploading}
                 aria-label={`Attach file (max ${maxUploadSizeMB} MB per file, ${maxAttachmentsSizeMB} MB total)`}
                 title={`Attach file (max ${maxUploadSizeMB} MB per file, ${maxAttachmentsSizeMB} MB total)`}
-                className="p-1.5 hover:bg-black/5 rounded text-[#8E8E93] cursor-pointer transition-colors disabled:opacity-50"
+                className="p-1.5 hover:bg-black/5 dark:hover:bg-white/10 rounded text-[#8E8E93] dark:text-[#8E8E93] cursor-pointer transition-colors disabled:opacity-50"
               >
                 <Paperclip className={`w-3.5 h-3.5 ${isUploading ? 'animate-pulse' : ''}`} strokeWidth={1.5} />
               </button>
-              <div aria-hidden="true" className="w-[1px] h-4 bg-[#E5E5EA] mx-1" />
+              <div aria-hidden="true" className="w-[1px] h-4 bg-[#E5E5EA] dark:bg-[#48484A] mx-1" />
               <ToolbarButton 
                 onClick={() => editor.chain().focus().toggleBold().run()} 
                 active={editor.isActive('bold')}
@@ -804,7 +804,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
                 icon={<Underline className="w-3.5 h-3.5" />} 
                 label="Underline"
               />
-              <div aria-hidden="true" className="w-[1px] h-4 bg-[#E5E5EA] mx-1" />
+              <div aria-hidden="true" className="w-[1px] h-4 bg-[#E5E5EA] dark:bg-[#48484A] mx-1" />
               <ToolbarButton 
                 onClick={() => editor.chain().focus().toggleBulletList().run()} 
                 active={editor.isActive('bulletList')}
@@ -817,14 +817,14 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
                 icon={<ListOrdered className="w-3.5 h-3.5" />} 
                 label="Numbered list"
               />
-              <div aria-hidden="true" className="w-[1px] h-4 bg-[#E5E5EA] mx-1" />
+              <div aria-hidden="true" className="w-[1px] h-4 bg-[#E5E5EA] dark:bg-[#48484A] mx-1" />
               <ToolbarButton 
                 onClick={setLink} 
                 active={editor.isActive('link')}
                 icon={<Link className="w-3.5 h-3.5" />} 
                 label="Insert link"
               />
-              <div aria-hidden="true" className="w-[1px] h-4 bg-[#E5E5EA] mx-1" />
+              <div aria-hidden="true" className="w-[1px] h-4 bg-[#E5E5EA] dark:bg-[#48484A] mx-1" />
               <ToolbarButton 
                 onClick={() => setShowTemplatesDialog(true)} 
                 active={false}
@@ -836,15 +836,15 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
 
           {/* Attachments area */}
           {attachments.length > 0 && (
-            <div className="px-5 py-2.5 border-b border-[#E5E5EA]">
+            <div className="px-5 py-2.5 border-b border-[#E5E5EA] dark:border-[#38383A]">
               {/* Attachment pills */}
               <div className="flex flex-wrap gap-2 max-h-24 overflow-y-auto">
                 {attachments.map(a => (
-                  <div key={a.blobId} className="flex items-center gap-1.5 px-2.5 py-1 bg-[#007AFF]/[0.08] border border-[#007AFF]/[0.15] rounded-full text-[12px] font-medium text-[#007AFF] animate-in zoom-in-95 duration-200">
+                  <div key={a.blobId} className="flex items-center gap-1.5 px-2.5 py-1 bg-[#007AFF]/[0.08] dark:bg-[#0A84FF]/[0.15] border border-[#007AFF]/[0.15] dark:border-[#0A84FF]/[0.20] rounded-full text-[12px] font-medium text-[#007AFF] dark:text-[#0A84FF] animate-in zoom-in-95 duration-200">
                     <Paperclip className="w-3 h-3" strokeWidth={1.5} />
                     <span className="max-w-[120px] truncate">{a.name}</span>
-                    <span className="text-[#005FCC] text-[11px]">{(a.size / 1024).toFixed(0)}K</span>
-                    <button aria-label={`Remove attachment ${a.name}`} onClick={() => removeAttachment(a.blobId)} className="p-0.5 hover:bg-[#007AFF]/[0.15] rounded-full transition-colors">
+                    <span className="text-[#005FCC] dark:text-[#64B5FF] text-[11px]">{(a.size / 1024).toFixed(0)}K</span>
+                    <button aria-label={`Remove attachment ${a.name}`} onClick={() => removeAttachment(a.blobId)} className="p-0.5 hover:bg-[#007AFF]/[0.15] dark:hover:bg-[#0A84FF]/[0.20] rounded-full transition-colors">
                       <X className="w-3 h-3" />
                     </button>
                   </div>
@@ -855,7 +855,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
                 const totalSize = attachments.reduce((sum, a) => sum + a.size, 0);
                 const isNearLimit = totalSize > maxAttachmentsSizeMB * 1024 * 1024 * 0.8;
                 return (
-                  <div className={`mt-2 text-[11px] ${isNearLimit ? 'text-[#FF9500] font-medium' : 'text-[#8E8E93]'}`}>
+                  <div className={`mt-2 text-[11px] ${isNearLimit ? 'text-[#FF9500] dark:text-[#FF9F0A] font-medium' : 'text-[#8E8E93] dark:text-[#636366]'}`}>
                     Total: {(totalSize / 1024 / 1024).toFixed(1)} MB of {maxAttachmentsSizeMB} MB
                     {isNearLimit && ' (approaching limit)'}
                   </div>
@@ -871,7 +871,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
 
           {/* Quoted text toggle */}
           {replyTo && initialReplyContent && (
-            <div className="px-5 border-t border-[#E5E5EA] shrink-0">
+            <div className="px-5 border-t border-[#E5E5EA] dark:border-[#38383A] shrink-0">
               <button
                 onClick={() => {
                   const next = !isQuoteCollapsed;
@@ -879,7 +879,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
                   const el = document.querySelector('.ProseMirror #quoted-content') as HTMLElement;
                   if (el) el.style.display = next ? 'none' : '';
                 }}
-                className="py-1.5 text-[12px] text-[#007AFF] font-medium hover:underline transition-colors flex items-center gap-1"
+                className="py-1.5 text-[12px] text-[#007AFF] dark:text-[#0A84FF] font-medium hover:underline transition-colors flex items-center gap-1"
               >
                 <ChevronDown className={`w-3 h-3 transition-transform ${isQuoteCollapsed ? '' : 'rotate-180'}`} strokeWidth={2} />
                 <span>{isQuoteCollapsed ? 'Show' : 'Hide'} Quoted Text</span>
@@ -889,11 +889,11 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
         </div>
 
         {/* Footer */}
-        <footer className="px-5 py-2.5 border-t border-[#E5E5EA] flex items-center justify-between bg-white shrink-0">
-          <button onClick={handleDiscardDraft} aria-label="Discard draft" className="p-1.5 hover:bg-[#FF3B30]/10 rounded-lg text-[#6C6C70] hover:text-[#FF3B30] transition-colors" title="Discard draft">
+        <footer className="px-5 py-2.5 border-t border-[#E5E5EA] dark:border-[#38383A] flex items-center justify-between bg-white dark:bg-[#1C1C1E] shrink-0">
+          <button onClick={handleDiscardDraft} aria-label="Discard draft" className="p-1.5 hover:bg-[#FF3B30]/10 rounded-lg text-[#6C6C70] dark:text-[#8E8E93] hover:text-[#FF3B30] dark:hover:text-[#FF453A] transition-colors" title="Discard draft">
             <Trash2 className="w-4 h-4" strokeWidth={1.5} />
           </button>
-          <span className="text-[11px] text-[#C7C7CC] font-medium">
+          <span className="text-[11px] text-[#C7C7CC] dark:text-[#636366] font-medium">
             Draft
           </span>
           <div className="w-7" />
@@ -924,7 +924,7 @@ function ToolbarButton({ onClick, active, icon, label }: ToolbarButtonProps) {
       onClick={onClick}
       aria-label={label}
       aria-pressed={active}
-      className={`p-1.5 rounded transition-colors ${active ? 'text-[#007AFF] bg-[#007AFF]/10' : 'hover:bg-black/5 text-[#6C6C70]'}`}
+      className={`p-1.5 rounded transition-colors ${active ? 'text-[#007AFF] dark:text-[#0A84FF] bg-[#007AFF]/10 dark:bg-[#0A84FF]/15' : 'hover:bg-black/5 dark:hover:bg-white/10 text-[#6C6C70] dark:text-[#8E8E93]'}`}
     >
       {icon}
     </button>

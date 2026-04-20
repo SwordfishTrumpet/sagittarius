@@ -194,7 +194,7 @@ export function VirtualMessageList({
   if (isLoading && !isRefetching) {
     return (
       <div className="flex items-center justify-center py-20 opacity-30 flex-1" role="status" aria-live="polite">
-        <div className="w-6 h-6 border-2 border-[#007AFF] border-t-transparent rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-[#007AFF] dark:border-[#0A84FF] border-t-transparent rounded-full animate-spin" />
         <span className="sr-only">Loading messages</span>
       </div>
     );
@@ -202,7 +202,7 @@ export function VirtualMessageList({
 
   if (!emails || emails.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-[#8E8E93] p-10 text-center opacity-40">
+      <div className="flex flex-col items-center justify-center h-full text-[#8E8E93] dark:text-[#636366] p-10 text-center opacity-40">
         <Inbox className="w-10 h-10 mb-3 stroke-1" />
         <p className="text-sm">No messages</p>
       </div>
@@ -215,7 +215,7 @@ export function VirtualMessageList({
       <Virtuoso
         ref={virtuosoRef}
         data={emailsWithMeta}
-        className="flex-1 bg-[#F9F9F9] overflow-hidden"
+        className="flex-1 bg-[#F9F9F9] dark:bg-black overflow-hidden"
         role="listbox"
         aria-label="Email list"
         aria-setsize={emailsWithMeta.length}

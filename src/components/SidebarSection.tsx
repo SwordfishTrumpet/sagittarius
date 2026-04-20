@@ -39,7 +39,7 @@ export function SidebarSection({
           aria-controls={contentId}
           className="flex items-center gap-1.5 flex-1 hover:opacity-70 transition-opacity"
         >
-          <span className="text-[#8E8E93] hover:text-[#1C1C1E] transition-colors">
+          <span className="text-[#8E8E93] hover:text-[#1C1C1E] dark:hover:text-white transition-colors">
             {isExpanded ? (
               <ChevronDown className="w-3.5 h-3.5" strokeWidth={2.5} />
             ) : (
@@ -55,7 +55,7 @@ export function SidebarSection({
         {actionButton && (
           <button
             onClick={actionButton.onClick}
-            className="p-1 text-[#007AFF] hover:bg-black/[0.05] rounded transition-colors opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 min-w-[32px] min-h-[32px] flex items-center justify-center"
+            className="p-1 text-[#007AFF] dark:text-[#0A84FF] hover:bg-black/[0.05] dark:hover:bg-white/[0.10] rounded transition-colors opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 min-w-[32px] min-h-[32px] flex items-center justify-center"
             title={actionButton.label}
             aria-label={actionButton.label}
           >

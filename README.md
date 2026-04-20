@@ -183,6 +183,14 @@ See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for complete configuration examples.
 | **Read Receipts** | MDN support per RFC 8098 |
 | **No Telemetry** | Zero analytics or tracking — your data stays local |
 
+### 🎨 Appearance
+
+| Feature | Description |
+|---------|-------------|
+| **Light/Dark/Auto Theme** | Manual or system-preference-based theme selection |
+| **OLED-Optimized Dark Mode** | Pure black background for power-efficient displays |
+| **Glassmorphic UI** | Translucent effects in both light and dark modes |
+
 ### ⚙️ Server Integration
 
 | Feature | Description |

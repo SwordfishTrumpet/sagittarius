@@ -7,7 +7,7 @@
 }
 
 body {
-  @apply bg-[#F2F2F7] text-[#1C1C1E] overflow-hidden;
+  @apply bg-[#F2F2F7] text-[#1C1C1E] dark:bg-black dark:text-white overflow-hidden;
   height: 100vh;
   width: 100vw;
   /* Safe area insets for mobile devices */
@@ -19,11 +19,11 @@ body {
 }
 
 .glass {
-  @apply bg-white/70 backdrop-blur-md;
+  @apply bg-white/70 backdrop-blur-md dark:bg-[#1C1C1E]/70;
 }
 
 .sidebar-item-active {
-  @apply bg-[#007AFF] text-white;
+  @apply bg-[#007AFF] text-white dark:bg-[#0A84FF];
 }
 
 /* Custom scrollbar to match macOS */
@@ -45,6 +45,26 @@ body {
   background: #A8A8A8;
 }
 
+/* Dark mode scrollbar */
+.dark ::-webkit-scrollbar-thumb {
+  background: #48484A;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #636366;
+}
+
+/* Selection colors */
+::selection {
+  background: #007AFF;
+  color: white;
+}
+
+.dark ::selection {
+  background: #0A84FF;
+  color: white;
+}
+
 /* Quoted content in composer */
 .ProseMirror blockquote {
   margin: 0;
@@ -53,12 +73,25 @@ body {
   color: #3A3A3C;
 }
 
+.dark .ProseMirror blockquote {
+  border-left-color: #0A84FF;
+  color: #A1A1A6;
+}
+
 .ProseMirror blockquote blockquote {
   border-left-color: #8E8E93;
 }
 
+.dark .ProseMirror blockquote blockquote {
+  border-left-color: #636366;
+}
+
 .ProseMirror blockquote blockquote blockquote {
   border-left-color: #C7C7CC;
+}
+
+.dark .ProseMirror blockquote blockquote blockquote {
+  border-left-color: #48484A;
 }
 
 /* Resize handle styles */
@@ -87,9 +120,17 @@ body {
   background: #D1D1D6;
 }
 
+.dark .resize-handle:hover .resize-handle-line {
+  background: #48484A;
+}
+
 .resize-handle[data-dragging] .resize-handle-line {
   background: #007AFF;
   width: 2px;
+}
+
+.dark .resize-handle[data-dragging] .resize-handle-line {
+  background: #0A84FF;
 }
 
 /* Prevent text selection and set cursor globally during resize drag */

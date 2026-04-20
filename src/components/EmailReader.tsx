@@ -167,17 +167,17 @@ export function EmailReader({
 
   if (isEmailDetailError) {
     return (
-      <article className="flex-1 overflow-y-auto bg-white select-text">
+      <article className="flex-1 overflow-y-auto bg-white dark:bg-black select-text">
         <div className="flex flex-col items-center justify-center h-full text-center px-10" role="alert">
-          <p className="text-lg font-medium text-[#FF3B30]">Failed to load message</p>
-          <p className="text-sm text-[#8E8E93] mt-2 max-w-md">{emailDetailError?.message || 'An unexpected error occurred while loading the email.'}</p>
+          <p className="text-lg font-medium text-[#FF3B30] dark:text-[#FF453A]">Failed to load message</p>
+          <p className="text-sm text-[#8E8E93] dark:text-[#8E8E93] mt-2 max-w-md">{emailDetailError?.message || 'An unexpected error occurred while loading the email.'}</p>
           <button
             onClick={() => window.location.reload()}
-            className="mt-6 px-4 py-2 bg-[#007AFF] text-white rounded-lg text-sm font-medium hover:bg-[#0056CC] transition-colors"
+            className="mt-6 px-4 py-2 bg-[#007AFF] dark:bg-[#0A84FF] text-white rounded-lg text-sm font-medium hover:bg-[#0056CC] dark:hover:bg-[#0070E0] transition-colors"
           >
             Retry
           </button>
-          <p className="text-xs text-[#C7C7CC] mt-4">
+          <p className="text-xs text-[#C7C7CC] dark:text-[#636366] mt-4">
             If the problem persists, check your connection or contact support.
           </p>
         </div>
@@ -187,9 +187,9 @@ export function EmailReader({
 
   if (emailLoading) {
     return (
-      <article className="flex-1 overflow-y-auto bg-white select-text">
+      <article className="flex-1 overflow-y-auto bg-white dark:bg-black select-text">
         <div className="flex items-center justify-center py-20 opacity-30 h-full" role="status" aria-live="polite">
-          <div className="w-10 h-10 border-3 border-[#007AFF] border-t-transparent rounded-full animate-spin" />
+          <div className="w-10 h-10 border-3 border-[#007AFF] dark:border-[#0A84FF] border-t-transparent rounded-full animate-spin" />
           <span className="sr-only">Loading email</span>
         </div>
       </article>
@@ -198,8 +198,8 @@ export function EmailReader({
 
   if (!threadEmails || threadEmails.length === 0) {
     return (
-      <article className="flex-1 overflow-y-auto bg-white select-text">
-        <div className="flex flex-col items-center justify-center h-full text-[#8E8E93] text-center opacity-30 px-10">
+      <article className="flex-1 overflow-y-auto bg-white dark:bg-black select-text">
+        <div className="flex flex-col items-center justify-center h-full text-[#8E8E93] dark:text-[#636366] text-center opacity-30 px-10">
           <Mail className="w-20 h-20 mb-5 stroke-1" />
           <h3 className="text-xl font-medium tracking-tight">No Message Selected</h3>
         </div>
@@ -208,33 +208,33 @@ export function EmailReader({
   }
 
   return (
-    <article className="flex-1 overflow-y-auto bg-white select-text">
+    <article className="flex-1 overflow-y-auto bg-white dark:bg-black select-text">
       <div className="max-w-[850px] mx-auto w-full p-8 md:p-12 animate-in fade-in duration-300">
         {processedEmails.map(({ email, emailImageState, processedHtml }, index: number) => {
           const blockedImageCount = processedHtml?.blockedImageCount || 0;
           const isImageBannerDismissed = emailImageState?.showRemoteImages || emailImageState?.bannerDismissed || false;
           
           return (
-            <div key={email.id} className={`${index > 0 ? 'pt-8 border-t border-[#F2F2F7]' : ''}`}>
-              <header className="mb-6 pb-4 border-b border-[#F2F2F7]">
+            <div key={email.id} className={`${index > 0 ? 'pt-8 border-t border-[#F2F2F7] dark:border-[#38383A]' : ''}`}>
+              <header className="mb-6 pb-4 border-b border-[#F2F2F7] dark:border-[#38383A]">
                 <div className="flex items-start justify-between mb-6 gap-4">
-                    <h1 className="text-[22px] font-bold text-[#1C1C1E] leading-snug tracking-tight">{email.subject || '(No Subject)'}</h1>
-                    <time className="text-[13px] text-[#8E8E93] font-medium pt-1 shrink-0">
+                    <h1 className="text-[22px] font-bold text-[#1C1C1E] dark:text-white leading-snug tracking-tight">{email.subject || '(No Subject)'}</h1>
+                    <time className="text-[13px] text-[#8E8E93] dark:text-[#8E8E93] font-medium pt-1 shrink-0">
                       {formatReceivedAt(email.receivedAt)}
                     </time>
                 </div>
                 <div className="flex items-center gap-4">
-                    <div role="img" aria-label={`Avatar for ${email.from?.[0]?.name || email.from?.[0]?.email || 'unknown sender'}`} className="w-11 h-11 rounded-full bg-[#007AFF] shadow-sm flex items-center justify-center text-white font-bold text-[18px] shrink-0 uppercase">
+                    <div role="img" aria-label={`Avatar for ${email.from?.[0]?.name || email.from?.[0]?.email || 'unknown sender'}`} className="w-11 h-11 rounded-full bg-[#007AFF] dark:bg-[#0A84FF] shadow-sm flex items-center justify-center text-white font-bold text-[18px] shrink-0 uppercase">
                       {email.from?.[0]?.name?.charAt(0) || email.from?.[0]?.email?.charAt(0) || '?'}
                     </div>
                     <div className="overflow-hidden flex-1">
-                      <div className="font-bold text-[15px] truncate text-[#1C1C1E]">
+                      <div className="font-bold text-[15px] truncate text-[#1C1C1E] dark:text-white">
                         {email.from?.[0]?.name || email.from?.[0]?.email} 
-                        <span className="font-normal text-[#8E8E93] ml-2 tracking-tight">
+                        <span className="font-normal text-[#8E8E93] dark:text-[#8E8E93] ml-2 tracking-tight">
                           &lt;{email.from?.[0]?.email}&gt;
                         </span>
                       </div>
-                      <div className="text-[13px] text-[#8E8E93] truncate font-medium mt-0.5 flex items-center gap-2">
+                      <div className="text-[13px] text-[#8E8E93] dark:text-[#8E8E93] truncate font-medium mt-0.5 flex items-center gap-2">
                         <span>To: {email.to?.map((t: { name?: string | null; email: string }) => t.name || t.email).join(', ')}</span>
                         {/* Delivery status for sent emails */}
                         {(() => {
@@ -297,8 +297,8 @@ export function EmailReader({
               {(() => {
                 const visibleAttachments = (email.attachments?.filter((a) => !isInlineAttachment(a)) || []) as EmailBodyPart[];
                 return visibleAttachments.length > 0 && (
-                <div className="mt-12 pt-10 border-t border-[#F2F2F7]">
-                  <div className="flex items-center gap-2 mb-6 text-[#8E8E93] font-bold text-[11px] uppercase tracking-wider">
+                <div className="mt-12 pt-10 border-t border-[#F2F2F7] dark:border-[#38383A]">
+                  <div className="flex items-center gap-2 mb-6 text-[#8E8E93] dark:text-[#8E8E93] font-bold text-[11px] uppercase tracking-wider">
                     <Paperclip className="w-3.5 h-3.5" strokeWidth={2} />
                     {visibleAttachments.length} {visibleAttachments.length === 1 ? 'Attachment' : 'Attachments'}
                   </div>
