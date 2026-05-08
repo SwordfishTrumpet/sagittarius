@@ -131,6 +131,9 @@ class JMAPClient {
 
       logger.debug(`[JMAP Auth Request] Trying username: variant`);
       const response = await fetch('/jmap/session', {
+        // Prevent browser from showing native auth dialog on 401 (§3.6.1)
+        // We handle authentication entirely through our own login UI
+        credentials: 'omit',
         headers: {
           'Authorization': authHeader,
           'Accept': 'application/json',
@@ -219,6 +222,8 @@ class JMAPClient {
     try {
       const response = await fetch(this.session.apiUrl, {
         method: 'POST',
+        // Prevent browser from showing native auth dialog on 401
+        credentials: 'omit',
         headers: {
           'Authorization': this.authHeader,
           'Content-Type': 'application/json',
@@ -336,6 +341,8 @@ class JMAPClient {
     // The Basic Auth header provides sufficient protection for this endpoint.
     const response = await fetch(url, {
       method: 'POST',
+      // Prevent browser from showing native auth dialog on 401
+      credentials: 'omit',
       headers: {
         'Authorization': this.authHeader,
         'Content-Type': file.type,

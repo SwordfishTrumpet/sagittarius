@@ -4,6 +4,7 @@ import { logger } from '../utils/logger'
 
 interface EmailBodyFrameProps {
   html: string
+  darkMode?: boolean
 }
 
 const structuralTags = new Set([
@@ -120,11 +121,52 @@ export function normalizeDisplayHtml(html: string): string {
   return doc.body.innerHTML
 }
 
-export function buildSrcDoc(html: string): string {
+export function buildSrcDoc(html: string, darkMode = false): string {
   const displayHtml = normalizeDisplayHtml(html)
 
+  // Dark mode CSS: force light text colors and ensure readability
+  // Emails often have inline styles with hardcoded colors like "color: black"
+  // We use CSS variables and !important overrides to ensure readability
+  const darkModeStyles = darkMode ? `
+      /* Dark mode: ensure text is readable */
+      color-scheme: dark;
+      color: #FFFFFF !important;
+      background: transparent !important;
+
+      /* Force all text elements to use light colors */
+      *, *::before, *::after {
+        color: inherit !important;
+        background-color: transparent !important;
+      }
+
+      /* Preserve link colors */
+      a, a:link, a:visited {
+        color: #0A84FF !important;
+      }
+
+      a:hover {
+        color: #64B5FF !important;
+      }
+
+      /* Preserve code/pre backgrounds but ensure text is light */
+      pre, code {
+        background-color: #2C2C2E !important;
+        color: #FFFFFF !important;
+      }
+
+      /* Preserve blockquote styling */
+      blockquote {
+        border-left-color: #48484A !important;
+        color: #E5E5EA !important;
+      }
+  ` : ''
+
+  const baseBodyStyles = darkMode
+    ? `color: #FFFFFF;`
+    : `color: #1C1C1E;`
+
   return `<!doctype html>
-<html>
+<html${darkMode ? ' class="dark"' : ''}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -137,12 +179,13 @@ export function buildSrcDoc(html: string): string {
       }
 
       body {
-        color: #1C1C1E;
+        ${baseBodyStyles}
         font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
         font-size: 15px;
         line-height: 1.625;
         overflow-wrap: anywhere;
         word-break: break-word;
+        ${darkModeStyles}
       }
     </style>
   </head>
@@ -176,9 +219,9 @@ export function isTrustedJmapDownloadUrl(downloadUrl: string): boolean {
   }
 }
 
-export function EmailBodyFrame({ html }: EmailBodyFrameProps) {
+export function EmailBodyFrame({ html, darkMode = false }: EmailBodyFrameProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
-  const srcDoc = useMemo(() => buildSrcDoc(html), [html])
+  const srcDoc = useMemo(() => buildSrcDoc(html, darkMode), [html, darkMode])
 
   useEffect(() => {
     const iframe = iframeRef.current

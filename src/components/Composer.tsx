@@ -590,6 +590,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
     >
       <motion.div
         ref={dialogRef}
+        id="composer-dialog"
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.97, y: 5 }}
@@ -601,6 +602,18 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
         }`}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Autofill background override - prevents yellow browser autofill color */}
+        <style>{`
+          #composer-dialog input:-webkit-autofill,
+          #composer-dialog input:-webkit-autofill:hover,
+          #composer-dialog input:-webkit-autofill:focus,
+          #composer-dialog input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px transparent inset !important;
+            -webkit-text-fill-color: inherit !important;
+            transition: background-color 5000s ease-in-out 0s;
+          }
+        `}</style>
+
         {/* Header */}
         <header className="px-4 py-3 border-b border-[#E5E5EA] dark:border-[#38383A] flex items-center gap-2 bg-white dark:bg-[#1C1C1E] rounded-t-xl shrink-0">
           {/* Close button */}
