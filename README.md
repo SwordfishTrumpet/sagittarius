@@ -52,41 +52,6 @@ Open `http://localhost:8081` and authenticate with your JMAP credentials.
 
 ---
 
-## 📸 Screenshots
-
-> **Note:** Screenshots are captured placeholders. Run the app and replace these with your own.
-
-<table>
-  <tr>
-    <td width="50%">
-      <img src="screenshots/compose-rich-text.png" alt="Rich Text Composer" width="100%">
-      <br>
-      <sub><strong>Rich Text Composer</strong> — Tiptap-powered with formatting, attachments, and identity selection</sub>
-    </td>
-    <td width="50%">
-      <img src="screenshots/thread-conversation.png" alt="Threaded Conversations" width="100%">
-      <br>
-      <sub><strong>Threaded Conversations</strong> — Collapsible message stacks with per-message actions</sub>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%">
-      <img src="screenshots/settings-filters.png" alt="Sieve Filters" width="100%">
-      <br>
-      <sub><strong>Sieve Filters</strong> — Visual rule editor with raw script mode</sub>
-    </td>
-    <td width="50%">
-      <img src="screenshots/mobile-responsive.png" alt="Mobile View" width="100%">
-      <br>
-      <sub><strong>Mobile Responsive</strong> — Collapsible sidebar for smaller screens</sub>
-    </td>
-  </tr>
-</table>
-
-**See [`screenshots/README.md`](screenshots/README.md)** for capture guidelines and required images.
-
----
-
 ## 🛠️ Deployment
 
 ### Option 1: Built-in Production Server
