@@ -26,6 +26,27 @@ describe('EmailBodyFrame helpers', () => {
     expect(srcDoc).toContain('<body><p>Hello</p></body>')
   })
 
+  it('builds dark mode iframe document with forced light colors', () => {
+    const srcDoc = buildSrcDoc('<p style="color: black">Hello</p>', true)
+    expect(srcDoc).toContain('<!doctype html>')
+    expect(srcDoc).toContain('<html class="dark">')
+    expect(srcDoc).toContain('color-scheme: dark')
+    expect(srcDoc).toContain('color: #FFFFFF !important')
+    // Check that dark mode CSS forces all elements to inherit light colors
+    expect(srcDoc).toContain('*, *::before, *::after')
+    expect(srcDoc).toContain('color: inherit !important')
+    // Verify link colors are preserved
+    expect(srcDoc).toContain('a, a:link, a:visited')
+    expect(srcDoc).toContain('color: #0A84FF !important')
+  })
+
+  it('builds light mode iframe document with dark text', () => {
+    const srcDoc = buildSrcDoc('<p>Hello</p>', false)
+    expect(srcDoc).toContain('color: #1C1C1E')
+    expect(srcDoc).not.toContain('color-scheme: dark')
+    expect(srcDoc).not.toContain('<html class="dark">')
+  })
+
   it('normalizes spacer-heavy html before building srcdoc', () => {
     const html = normalizeDisplayHtml('<br><br><div><br><p style="margin:0">Hi</p><br><p style="margin:0"><br></p><br><p style="margin:0">Thanks</p><br></div><br><table><tr><td>Footer</td></tr></table>')
 

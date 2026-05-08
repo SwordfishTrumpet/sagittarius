@@ -10,6 +10,7 @@ import { ReadReceiptBanner } from './ReadReceiptBanner'
 import { DeliveryStatus } from './DeliveryStatus'
 import { AttachmentItem } from './AttachmentItem'
 import { EmailBodyFrame } from './EmailBodyFrame'
+import { useTheme } from '../hooks/useTheme'
 import { logger } from '../utils/logger'
 import { toastOperationError } from '../utils/toastHelpers'
 import type { Email, Mailbox, Identity, EmailBodyPart } from '../types/jmap'
@@ -47,6 +48,7 @@ export function EmailReader({
   sendMDN,
   updateKeywords,
 }: EmailReaderProps) {
+  const { isDark } = useTheme()
   const [remoteImageState, setRemoteImageState] = useState<Record<string, { showRemoteImages?: boolean; bannerDismissed?: boolean }>>({})
 
   const formatReceivedAt = (value: string | undefined): string => {
@@ -291,7 +293,7 @@ export function EmailReader({
               )}
 
               <div className="email-content select-text cursor-text">
-                <EmailBodyFrame html={processedHtml?.displayHtml || ''} />
+                <EmailBodyFrame html={processedHtml?.displayHtml || ''} darkMode={isDark} />
               </div>
 
               {(() => {
