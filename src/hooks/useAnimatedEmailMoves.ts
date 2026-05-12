@@ -2,8 +2,8 @@ import { useState, useCallback, useRef, useEffect } from 'react'
 import { toast } from 'sonner'
 
 interface UseAnimatedEmailMovesOptions {
-  onMove: (variables: { emailId: string; mailboxIds: Record<string, boolean> }) => void
-  onMoveBulk: (variables: { emailIds: string[]; mailboxIds: Record<string, boolean> }) => void
+  onMoveAsync: (variables: { emailId: string; mailboxIds: Record<string, boolean> }) => Promise<unknown>
+  onMoveBulkAsync: (variables: { emailIds: string[]; mailboxIds: Record<string, boolean> }) => Promise<unknown>
 }
 
 interface UseAnimatedEmailMovesReturn {
@@ -15,14 +15,17 @@ interface UseAnimatedEmailMovesReturn {
 /**
  * Hook for managing animated email moves.
  * Adds a visual delay before actually moving emails, with cleanup support.
+ * Uses mutateAsync so removingEmailIds is only cleared after the mutation
+ * fully completes (optimistic cache update + server round-trip).
  */
 export function useAnimatedEmailMoves({
-  onMove,
-  onMoveBulk,
+  onMoveAsync,
+  onMoveBulkAsync,
 }: UseAnimatedEmailMovesOptions): UseAnimatedEmailMovesReturn {
   const [removingEmailIds, setRemovingEmailIds] = useState<Set<string>>(new Set())
   const pendingTimersRef = useRef<Set<number>>(new Set())
   const operationCounterRef = useRef(0)
+  const isExecutingRef = useRef(false)
 
   // Cleanup pending timers on unmount to prevent memory leaks
   useEffect(() => {
@@ -55,7 +58,7 @@ export function useAnimatedEmailMoves({
     })
 
     // Schedule the actual move
-    const timerId = window.setTimeout(() => {
+    const timerId = window.setTimeout(async () => {
       // Only execute if this is still the most recent operation
       if (operationCounterRef.current !== currentOperation) {
         pendingTimersRef.current.delete(timerId)
@@ -64,24 +67,37 @@ export function useAnimatedEmailMoves({
       
       pendingTimersRef.current.delete(timerId)
 
-      if (emailIds.length === 1) {
-        onMove({ emailId: emailIds[0], mailboxIds: { [mailboxId]: true } })
-      } else {
-        onMoveBulk({ emailIds, mailboxIds: { [mailboxId]: true } })
+      // Prevent multiple concurrent executions
+      if (isExecutingRef.current) return
+      isExecutingRef.current = true
+
+      try {
+        if (emailIds.length === 1) {
+          await onMoveAsync({ emailId: emailIds[0], mailboxIds: { [mailboxId]: true } })
+        } else {
+          await onMoveBulkAsync({ emailIds, mailboxIds: { [mailboxId]: true } })
+        }
+
+        toast.success(`Moved ${emailIds.length > 1 ? emailIds.length + ' messages' : '1 message'} to ${folderName}`)
+      } catch {
+        // Mutation failed — the mutation's onError already rolled back the cache.
+        // No toast needed here; the mutation hooks handle their own error reporting.
+      } finally {
+        isExecutingRef.current = false
+
+        // Remove from removing set, but only if this was the most recent operation
+        if (operationCounterRef.current === currentOperation) {
+          setRemovingEmailIds(prev => {
+            const next = new Set(prev)
+            emailIds.forEach(id => next.delete(id))
+            return next
+          })
+        }
       }
-
-      toast.success(`Moved ${emailIds.length > 1 ? emailIds.length + ' messages' : '1 message'} to ${folderName}`)
-
-      // Remove from removing set
-      setRemovingEmailIds(prev => {
-        const next = new Set(prev)
-        emailIds.forEach(id => next.delete(id))
-        return next
-      })
     }, 300)
 
     pendingTimersRef.current.add(timerId)
-  }, [onMove, onMoveBulk])
+  }, [onMoveAsync, onMoveBulkAsync])
 
   const cancelPendingMoves = useCallback(() => {
     pendingTimersRef.current.forEach(timerId => {
