@@ -1,8 +1,10 @@
+import React from 'react'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Settings } from '../Settings'
+import { ThemeProvider } from '../../context/ThemeProvider'
 
 const createTestQueryClient = () => new QueryClient({
   defaultOptions: {
@@ -12,7 +14,9 @@ const createTestQueryClient = () => new QueryClient({
 })
 
 const Wrapper = ({ children }: { children: React.ReactNode }) => (
-  <QueryClientProvider client={createTestQueryClient()}>{children}</QueryClientProvider>
+  <QueryClientProvider client={createTestQueryClient()}>
+    <ThemeProvider>{children}</ThemeProvider>
+  </QueryClientProvider>
 )
 
 // Mock the notification sound utilities

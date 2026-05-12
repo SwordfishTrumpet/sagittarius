@@ -10,7 +10,7 @@ A high-performance, server-agnostic JMAP web client with a modern interface insp
 [![TypeScript Strict](https://img.shields.io/badge/TypeScript-Strict-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React 18](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![Vitest](https://img.shields.io/badge/Tests-668%20passing-6E9F18?style=flat-square&logo=vitest&logoColor=white)](package.json)
+[![Vitest](https://img.shields.io/badge/Tests-989%20passing-6E9F18?style=flat-square&logo=vitest&logoColor=white)](package.json)
 [![License MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
 ## ✨ Why Sagittarius?
@@ -153,6 +153,7 @@ See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for complete configuration examples.
 | Feature | Description |
 |---------|-------------|
 | **Light/Dark/Auto Theme** | Manual or system-preference-based theme selection |
+| **Monospaced Font Selection** | Choose from 6 coding fonts (Fira Code, JetBrains Mono, etc.) |
 | **OLED-Optimized Dark Mode** | Pure black background for power-efficient displays |
 | **Glassmorphic UI** | Translucent effects in both light and dark modes |
 
@@ -299,7 +300,7 @@ npm run typecheck
 
 ## 📊 Stats
 
-- **668+ Tests** passing across 68 test files
+- **989+ Tests** passing across 96 test files
 - **TypeScript Strict Mode** — Zero `any` types
 - **Full RFC Compliance** — JMAP 8620/8621, 8887, 9404, 9553, 9610
 - **WCAG 2.1 AA** accessibility compliant

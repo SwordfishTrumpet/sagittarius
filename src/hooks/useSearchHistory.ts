@@ -31,7 +31,7 @@ export function useSearchHistory() {
    */
   const addToHistory = (query: string, filters: SearchFilter) => {
     const newEntry: RecentSearch = {
-      id: Date.now().toString(),
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       query,
       filters,
       timestamp: Date.now(),

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { jmapClient } from '../api/jmap'
 import { logger } from '../utils/logger'
+import { useFontPreference } from '../hooks/useFontPreference'
 
 interface EmailBodyFrameProps {
   html: string
@@ -121,7 +122,11 @@ export function normalizeDisplayHtml(html: string): string {
   return doc.body.innerHTML
 }
 
-export function buildSrcDoc(html: string, darkMode = false): string {
+export function buildSrcDoc(
+  html: string,
+  darkMode = false,
+  monospaceFontFamily?: string
+): string {
   const displayHtml = normalizeDisplayHtml(html)
 
   // Dark mode CSS: force light text colors and ensure readability
@@ -161,6 +166,8 @@ export function buildSrcDoc(html: string, darkMode = false): string {
       }
   ` : ''
 
+  const monoFont = monospaceFontFamily || 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace'
+
   const baseBodyStyles = darkMode
     ? `color: #FFFFFF;`
     : `color: #1C1C1E;`
@@ -186,6 +193,10 @@ export function buildSrcDoc(html: string, darkMode = false): string {
         overflow-wrap: anywhere;
         word-break: break-word;
         ${darkModeStyles}
+      }
+
+      pre, code {
+        font-family: ${monoFont} !important;
       }
     </style>
   </head>
@@ -221,7 +232,8 @@ export function isTrustedJmapDownloadUrl(downloadUrl: string): boolean {
 
 export function EmailBodyFrame({ html, darkMode = false }: EmailBodyFrameProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
-  const srcDoc = useMemo(() => buildSrcDoc(html, darkMode), [html, darkMode])
+  const { font } = useFontPreference()
+  const srcDoc = useMemo(() => buildSrcDoc(html, darkMode, font.family), [html, darkMode, font.family])
 
   useEffect(() => {
     const iframe = iframeRef.current
