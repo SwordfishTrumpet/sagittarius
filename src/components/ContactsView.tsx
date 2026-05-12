@@ -415,7 +415,7 @@ function ContactFormDialog({
           <select
             value={form.addressBookId}
             onChange={(e) => setForm({ ...form, addressBookId: e.target.value })}
-            className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] dark:border-[#38383A] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007AFF] bg-white"
+            className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] dark:border-[#38383A] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007AFF] bg-white dark:bg-[#2C2C2E]"
             required
           >
             {addressBooks.map((ab) => (
@@ -776,7 +776,7 @@ export function ContactsView({ isOpen, onClose }: ContactsViewProps) {
       </div>
 
       {/* Contact detail */}
-      <main className="flex-1 flex flex-col overflow-hidden bg-white">
+      <main className="flex-1 flex flex-col overflow-hidden bg-white dark:bg-[#1C1C1E]">
         {selectedContact ? (
           <ContactDetail
             contact={selectedContact}

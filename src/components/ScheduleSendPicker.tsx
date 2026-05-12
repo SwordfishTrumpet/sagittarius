@@ -133,8 +133,8 @@ export function ScheduleSendPicker({ onSchedule, onCancel, maxDelaySeconds }: Sc
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-[#F2F2F7] dark:border-[#38383A]">
-        <div className="flex items-center gap-2 text-[#1C1C1E]">
-          <Clock size={14} strokeWidth={1.5} className="text-[#8E8E93]" />
+        <div className="flex items-center gap-2 text-[#1C1C1E] dark:text-white">
+          <Clock size={14} strokeWidth={1.5} className="text-[#8E8E93] dark:text-[#A1A1A6]" />
           <span className="text-[14px] font-semibold">Schedule Send</span>
         </div>
         <button
@@ -159,8 +159,8 @@ export function ScheduleSendPicker({ onSchedule, onCancel, maxDelaySeconds }: Sc
               className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-[#F2F2F7] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               <div className="text-left">
-                <p className="text-[14px] font-medium text-[#1C1C1E]">{opt.label}</p>
-                <p className="text-[12px] text-[#8E8E93]">
+                <p className="text-[14px] font-medium text-[#1C1C1E] dark:text-white">{opt.label}</p>
+                <p className="text-[12px] text-[#8E8E93] dark:text-[#A1A1A6]">
                   {typeof opt.sublabel === 'function' ? opt.sublabel() : opt.sublabel}
                 </p>
               </div>
@@ -175,7 +175,7 @@ export function ScheduleSendPicker({ onSchedule, onCancel, maxDelaySeconds }: Sc
 
       {/* Custom picker */}
       <div className="px-4 py-3 space-y-2">
-        <label className="flex items-center gap-1.5 text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wide">
+        <label className="flex items-center gap-1.5 text-[11px] font-semibold text-[#8E8E93] dark:text-[#A1A1A6] uppercase tracking-wide">
           <Calendar size={11} strokeWidth={1.5} />
           Custom Date &amp; Time
         </label>
@@ -186,7 +186,7 @@ export function ScheduleSendPicker({ onSchedule, onCancel, maxDelaySeconds }: Sc
           min={toLocalDatetimeValue(minDate)}
           max={toLocalDatetimeValue(maxDate)}
           onChange={(e) => { setCustomValue(e.target.value); setError(''); }}
-          className="w-full px-3 py-2 text-[14px] text-[#1C1C1E] bg-[#F2F2F7] rounded-xl border border-transparent focus:border-[#007AFF] focus:bg-white dark:focus:bg-[#1C1C1E] focus:outline-none transition-colors"
+          className="w-full px-3 py-2 text-[14px] text-[#1C1C1E] dark:text-white bg-[#F2F2F7] dark:bg-[#2C2C2E] rounded-xl border border-transparent focus:border-[#007AFF] dark:focus:border-[#0A84FF] focus:bg-white dark:focus:bg-[#1C1C1E] focus:outline-none transition-colors"
         />
 
         {error && (

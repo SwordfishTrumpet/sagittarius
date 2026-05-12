@@ -46,7 +46,7 @@ function IdentityForm({ initial = EMPTY_FORM, onSave, onCancel, isSaving }: Iden
   return (
     <div className="bg-[#F2F2F7] dark:bg-[#1C1C1E]/50 rounded-2xl border border-[#E5E5EA] dark:border-[#38383A] overflow-hidden">
       {/* Display Name */}
-      <div className="bg-white dark:bg-[#1C1C1E] border-b border-[#E5E5EA] dark:border-[#38383A]">
+      <div className="bg-white dark:bg-[#1C1C1E] dark:bg-[#1C1C1E] border-b border-[#E5E5EA] dark:border-[#38383A]">
         <label className="block px-4 pt-3 text-[11px] font-semibold text-[#8E8E93] dark:text-[#A1A1A6] uppercase tracking-wide">
           Display Name
         </label>
@@ -60,7 +60,7 @@ function IdentityForm({ initial = EMPTY_FORM, onSave, onCancel, isSaving }: Iden
       </div>
 
       {/* Email */}
-      <div className="bg-white dark:bg-[#1C1C1E] border-b border-[#E5E5EA] dark:border-[#38383A]">
+      <div className="bg-white dark:bg-[#1C1C1E] dark:bg-[#1C1C1E] border-b border-[#E5E5EA] dark:border-[#38383A]">
         <label className="block px-4 pt-3 text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wide">
           Email Address
         </label>
@@ -74,7 +74,7 @@ function IdentityForm({ initial = EMPTY_FORM, onSave, onCancel, isSaving }: Iden
       </div>
 
       {/* Reply-To */}
-      <div className="bg-white dark:bg-[#1C1C1E] border-b border-[#E5E5EA] dark:border-[#38383A]">
+      <div className="bg-white dark:bg-[#1C1C1E] dark:bg-[#1C1C1E] border-b border-[#E5E5EA] dark:border-[#38383A]">
         <label className="block px-4 pt-3 text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wide">
           Reply-To (optional)
         </label>
@@ -88,7 +88,7 @@ function IdentityForm({ initial = EMPTY_FORM, onSave, onCancel, isSaving }: Iden
       </div>
 
       {/* Signature */}
-      <div className="bg-white">
+      <div className="bg-white dark:bg-[#1C1C1E]">
         <label className="block px-4 pt-3 text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wide">
           Signature
         </label>
@@ -105,7 +105,7 @@ function IdentityForm({ initial = EMPTY_FORM, onSave, onCancel, isSaving }: Iden
       <div className="flex items-center justify-end gap-2 px-4 py-3 bg-[#F2F2F7]">
         <button
           onClick={onCancel}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white border border-[#E5E5EA] text-[14px] text-[#1C1C1E] hover:bg-[#F2F2F7] transition-colors"
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] text-[14px] text-[#1C1C1E] hover:bg-[#F2F2F7] transition-colors"
         >
           <X size={13} strokeWidth={1.5} />
           Cancel
@@ -212,7 +212,7 @@ export function IdentitySettings() {
                   isSaving={updateIdentity.isPending}
                 />
               ) : (
-                <div className="bg-white rounded-2xl border border-[#E5E5EA] px-4 py-3 flex items-center justify-between gap-3">
+                <div className="bg-white dark:bg-[#1C1C1E] rounded-2xl border border-[#E5E5EA] px-4 py-3 flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <p className="text-[15px] font-medium text-[#1C1C1E] truncate">{identity.name}</p>
                     <p className="text-[13px] text-[#8E8E93] truncate">{identity.email}</p>
