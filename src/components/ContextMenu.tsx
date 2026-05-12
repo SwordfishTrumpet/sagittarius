@@ -317,11 +317,11 @@ export function ContextMenu({ items, x, y, onClose }: ContextMenuProps) {
         left: `${adjustedPos.x}px`,
       }}
     >
-      <div className="bg-white/95 backdrop-blur-xl border border-[#E5E5E5] rounded-lg shadow-lg overflow-hidden" role="menu" aria-label="Context menu" onKeyDown={handleMenuKeyDown}>
+      <div className="bg-white/95 dark:bg-[#1C1C1E]/95 backdrop-blur-xl border border-[#E5E5E5] dark:border-[#38383A] rounded-lg shadow-lg overflow-hidden" role="menu" aria-label="Context menu" onKeyDown={handleMenuKeyDown}>
         {items.map((item, index) => (
           <div key={item.id}>
             {item.divider && index > 0 && (
-              <div className="h-[1px] bg-[#E5E5E5] my-1" role="separator" />
+              <div className="h-[1px] bg-[#E5E5E5] dark:bg-[#38383A] my-1" role="separator" />
             )}
             <button
               ref={(element) => { itemRefs.current[index] = element; }}
@@ -335,7 +335,7 @@ export function ContextMenu({ items, x, y, onClose }: ContextMenuProps) {
               className={`w-full flex items-center gap-3 px-4 py-2.5 text-[13px] font-medium transition-colors relative ${
                 item.variant === 'destructive'
                   ? 'text-[#FF3B30] hover:bg-[#FF3B30]/10 disabled:text-[#FF3B30]/40'
-                  : 'text-[#1C1C1E] hover:bg-[#007AFF]/10 disabled:text-[#8E8E93]'
+                  : 'text-[#1C1C1E] dark:text-white hover:bg-[#007AFF]/10 disabled:text-[#8E8E93] dark:disabled:text-[#636366]'
               } ${item.disabled ? 'cursor-not-allowed' : 'cursor-default'}`}
             >
               {item.icon && (
@@ -352,7 +352,7 @@ export function ContextMenu({ items, x, y, onClose }: ContextMenuProps) {
             {/* Submenu */}
             {activeSubmenu === item.id && item.submenu && item.submenu.length > 0 && (
               <div
-                className="fixed bg-white/95 backdrop-blur-xl border border-[#E5E5E5] rounded-lg shadow-lg overflow-hidden py-1"
+                className="fixed bg-white/95 dark:bg-[#1C1C1E]/95 backdrop-blur-xl border border-[#E5E5E5] dark:border-[#38383A] rounded-lg shadow-lg overflow-hidden py-1"
                 style={{
                   top: `${adjustedPos.y + submenuPos.top}px`,
                   left: `${adjustedPos.x + submenuPos.left + 4}px`,

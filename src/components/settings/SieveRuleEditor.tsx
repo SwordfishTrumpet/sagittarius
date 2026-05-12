@@ -136,7 +136,7 @@ export function SieveRuleEditor({
   return (
     <div className="bg-white rounded-2xl border border-[#E5E5EA] overflow-hidden shadow-sm">
       {/* Header */}
-      <div className="px-5 py-4 border-b border-[#E5E5EA] bg-[#F2F2F7]/50">
+      <div className="px-5 py-4 border-b border-[#E5E5EA] dark:border-[#38383A] bg-[#F2F2F7]/50 dark:bg-[#2C2C2E]">
         <h3 className="text-[15px] font-semibold text-[#1C1C1E]">
           {rule ? 'Edit Rule' : 'New Rule'}
         </h3>
@@ -183,7 +183,7 @@ export function SieveRuleEditor({
                 className={`px-3 py-1 transition-colors ${
                   conditionOperator === 'allOf'
                     ? 'bg-[#007AFF] text-white'
-                    : 'bg-white text-[#8E8E93] hover:bg-[#F2F2F7]'
+                    : 'bg-white dark:bg-[#2C2C2E] text-[#8E8E93] dark:text-[#A1A1A6] hover:bg-[#F2F2F7] dark:hover:bg-white/10'
                 }`}
               >
                 All of
@@ -194,7 +194,7 @@ export function SieveRuleEditor({
                 className={`px-3 py-1 transition-colors ${
                   conditionOperator === 'anyOf'
                     ? 'bg-[#007AFF] text-white'
-                    : 'bg-white text-[#8E8E93] hover:bg-[#F2F2F7]'
+                    : 'bg-white dark:bg-[#2C2C2E] text-[#8E8E93] dark:text-[#A1A1A6] hover:bg-[#F2F2F7] dark:hover:bg-white/10'
                 }`}
               >
                 Any of
@@ -358,7 +358,7 @@ export function SieveRuleEditor({
       </div>
 
       {/* Footer actions */}
-      <div className="px-5 py-4 border-t border-[#E5E5EA] bg-[#F2F2F7]/40 flex items-center justify-end gap-3">
+      <div className="px-5 py-4 border-t border-[#E5E5EA] dark:border-[#38383A] bg-[#F2F2F7]/40 dark:bg-[#2C2C2E] flex items-center justify-end gap-3">
         <button
           type="button"
           onClick={onCancel}

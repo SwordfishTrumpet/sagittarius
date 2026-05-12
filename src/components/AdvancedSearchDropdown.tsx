@@ -25,7 +25,7 @@ export function AdvancedSearchDropdown({
       {/* Unread */}
       <button
         onClick={() => onFilterApply({ isUnread: true })}
-        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-[#F2F2F7] rounded-lg text-[13px] font-medium text-[#1C1C1E] transition-colors"
+        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-[#F2F2F7] dark:hover:bg-white/5 rounded-lg text-[13px] font-medium text-[#1C1C1E] transition-colors"
       >
         <Mail className="w-4 h-4 text-[#007AFF]" strokeWidth={1.5} />
         <span>Unread</span>
@@ -34,7 +34,7 @@ export function AdvancedSearchDropdown({
       {/* Flagged */}
       <button
         onClick={() => onFilterApply({ isFlagged: true })}
-        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-[#F2F2F7] rounded-lg text-[13px] font-medium text-[#1C1C1E] transition-colors"
+        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-[#F2F2F7] dark:hover:bg-white/5 rounded-lg text-[13px] font-medium text-[#1C1C1E] transition-colors"
       >
         <AlertCircle className="w-4 h-4 text-[#FF9500]" strokeWidth={1.5} />
         <span>Flagged</span>
@@ -43,7 +43,7 @@ export function AdvancedSearchDropdown({
       {/* Has Attachments */}
       <button
         onClick={() => onFilterApply({ hasAttachment: true })}
-        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-[#F2F2F7] rounded-lg text-[13px] font-medium text-[#1C1C1E] transition-colors"
+        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-[#F2F2F7] dark:hover:bg-white/5 rounded-lg text-[13px] font-medium text-[#1C1C1E] transition-colors"
       >
         <Paperclip className="w-4 h-4 text-[#34C759]" strokeWidth={1.5} />
         <span>Has Attachments</span>
@@ -63,7 +63,7 @@ export function AdvancedSearchDropdown({
           today.setHours(0, 0, 0, 0);
           onFilterApply({ after: today });
         }}
-        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-[#F2F2F7] rounded-lg text-[13px] font-medium text-[#1C1C1E] transition-colors"
+        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-[#F2F2F7] dark:hover:bg-white/5 rounded-lg text-[13px] font-medium text-[#1C1C1E] transition-colors"
       >
         <Calendar className="w-4 h-4 text-[#5AC8FA]" strokeWidth={1.5} />
         <span>Today</span>
@@ -77,7 +77,7 @@ export function AdvancedSearchDropdown({
           weekAgo.setHours(0, 0, 0, 0);
           onFilterApply({ after: weekAgo });
         }}
-        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-[#F2F2F7] rounded-lg text-[13px] font-medium text-[#1C1C1E] transition-colors"
+        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-[#F2F2F7] dark:hover:bg-white/5 rounded-lg text-[13px] font-medium text-[#1C1C1E] transition-colors"
       >
         <Calendar className="w-4 h-4 text-[#5AC8FA]" strokeWidth={1.5} />
         <span>This Week</span>
@@ -91,7 +91,7 @@ export function AdvancedSearchDropdown({
           monthAgo.setHours(0, 0, 0, 0);
           onFilterApply({ after: monthAgo });
         }}
-        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-[#F2F2F7] rounded-lg text-[13px] font-medium text-[#1C1C1E] transition-colors"
+        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-[#F2F2F7] dark:hover:bg-white/5 rounded-lg text-[13px] font-medium text-[#1C1C1E] transition-colors"
       >
         <Calendar className="w-4 h-4 text-[#5AC8FA]" strokeWidth={1.5} />
         <span>This Month</span>
@@ -102,7 +102,7 @@ export function AdvancedSearchDropdown({
       {/* Advanced Search */}
       <button
         onClick={onOpenModal}
-        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-[#F2F2F7] rounded-lg text-[13px] font-medium text-[#007AFF] transition-colors"
+        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-[#F2F2F7] dark:hover:bg-white/5 rounded-lg text-[13px] font-medium text-[#007AFF] transition-colors"
       >
         <Search className="w-4 h-4" strokeWidth={1.5} />
         <span>Advanced Search...</span>

@@ -138,7 +138,7 @@ function CalendarSidebar({
             type="checkbox"
             checked={visibleCalendarIds.has(cal.id)}
             onChange={() => onToggleCalendar(cal.id)}
-            className="w-4 h-4 rounded border-gray-300 text-[#007AFF] focus:ring-[#007AFF]"
+            className="w-4 h-4 rounded border-gray-300 dark:border-[#38383A] text-[#007AFF] focus:ring-[#007AFF]"
           />
           <span
             className="w-3 h-3 rounded-full shrink-0"
@@ -247,7 +247,7 @@ function MonthView({
   return (
     <div className="flex-1 overflow-auto">
       {/* Day headers */}
-      <div className="grid grid-cols-7 border-b border-[#E5E5EA]">
+      <div className="grid grid-cols-7 border-b border-[#E5E5EA] dark:border-[#38383A]">
         {DAYS.map((day) => (
           <div
             key={day}
@@ -268,8 +268,8 @@ function MonthView({
           return (
             <div
               key={idx}
-              className={`min-h-[100px] border-b border-r border-[#E5E5EA] p-1 cursor-pointer hover:bg-[#F2F2F7] transition-colors ${
-                !isCurrentMonth ? 'bg-[#F9F9F9]' : ''
+              className={`min-h-[100px] border-b border-r border-[#E5E5EA] dark:border-[#38383A] p-1 cursor-pointer hover:bg-[#F2F2F7] dark:hover:bg-white/5 transition-colors ${
+                !isCurrentMonth ? 'bg-[#F9F9F9] dark:bg-[#1C1C1E]/50' : ''
               }`}
               onClick={() => onSelectDate(day)}
               role="button"
@@ -484,7 +484,7 @@ function EventFormDialog({
             type="text"
             value={form.title}
             onChange={(e) => setForm({ ...form, title: e.target.value })}
-            className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
+            className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] dark:border-[#38383A] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
             placeholder="Event title"
             required
           />
@@ -497,7 +497,7 @@ function EventFormDialog({
           <select
             value={form.calendarId}
             onChange={(e) => setForm({ ...form, calendarId: e.target.value })}
-            className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007AFF] bg-white"
+            className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] dark:border-[#38383A] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007AFF] bg-white"
             required
           >
             {calendars.map((cal) => (
@@ -514,7 +514,7 @@ function EventFormDialog({
             id="isAllDay"
             checked={form.isAllDay}
             onChange={(e) => setForm({ ...form, isAllDay: e.target.checked })}
-            className="w-4 h-4 rounded border-gray-300 text-[#007AFF] focus:ring-[#007AFF]"
+            className="w-4 h-4 rounded border-gray-300 dark:border-[#38383A] text-[#007AFF] focus:ring-[#007AFF]"
           />
           <label htmlFor="isAllDay" className="text-[14px] text-[#1C1C1E]">
             All-day event
@@ -530,7 +530,7 @@ function EventFormDialog({
               type={form.isAllDay ? 'date' : 'datetime-local'}
               value={form.isAllDay ? form.start.slice(0, 10) : form.start}
               onChange={(e) => setForm({ ...form, start: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] text-[14px] focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
+              className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] dark:border-[#38383A] text-[14px] focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
               required
             />
           </div>
@@ -542,7 +542,7 @@ function EventFormDialog({
               type={form.isAllDay ? 'date' : 'datetime-local'}
               value={form.isAllDay ? form.end.slice(0, 10) : form.end}
               onChange={(e) => setForm({ ...form, end: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] text-[14px] focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
+              className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] dark:border-[#38383A] text-[14px] focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
               required
             />
           </div>
@@ -556,7 +556,7 @@ function EventFormDialog({
             type="text"
             value={form.location}
             onChange={(e) => setForm({ ...form, location: e.target.value })}
-            className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
+            className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] dark:border-[#38383A] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
             placeholder="Add location"
           />
         </div>
@@ -568,7 +568,7 @@ function EventFormDialog({
           <textarea
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
-            className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007AFF] resize-none"
+            className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] dark:border-[#38383A] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007AFF] resize-none"
             rows={3}
             placeholder="Add notes"
           />
@@ -736,7 +736,7 @@ export function CalendarView({ isOpen, onClose }: CalendarViewProps) {
   if (!hasCapability) {
     return (
       <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/30 backdrop-blur-sm">
-        <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-[#E5E5E5] max-w-md w-full mx-4 p-8 text-center">
+        <div className="bg-white/95 dark:bg-[#1C1C1E]/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-[#E5E5E5] dark:border-[#38383A] max-w-md w-full mx-4 p-8 text-center">
           <AlertCircle className="w-12 h-12 text-[#FF9500] mx-auto mb-4" strokeWidth={1.5} />
           <h2 className="text-[17px] font-bold text-[#1C1C1E] mb-2">Calendar Not Available</h2>
           <p className="text-[14px] text-[#8E8E93] mb-6">
@@ -759,7 +759,7 @@ export function CalendarView({ isOpen, onClose }: CalendarViewProps) {
   return (
     <div className="fixed inset-0 z-[10000] flex bg-[#F2F2F7]">
       {/* Sidebar */}
-      <aside className="w-64 bg-white/70 backdrop-blur-xl border-r border-[#E5E5E5] flex flex-col">
+      <aside className="w-64 bg-white/70 dark:bg-[#1C1C1E]/70 backdrop-blur-xl border-r border-[#E5E5E5] flex flex-col">
         <header className="px-4 py-4 border-b border-[#E5E5E5] flex items-center justify-between">
           <h1 className="text-[17px] font-bold text-[#1C1C1E]">Calendar</h1>
           <button
@@ -824,7 +824,7 @@ export function CalendarView({ isOpen, onClose }: CalendarViewProps) {
       {/* Main content */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="px-6 py-4 bg-white/70 backdrop-blur-xl border-b border-[#E5E5E5] flex items-center justify-between">
+        <header className="px-6 py-4 bg-white/70 dark:bg-[#1C1C1E]/70 backdrop-blur-xl border-b border-[#E5E5E5] flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1">
               <button
@@ -860,7 +860,7 @@ export function CalendarView({ isOpen, onClose }: CalendarViewProps) {
                 onClick={() => setViewMode(mode)}
                 className={`px-3 py-1.5 text-[13px] font-medium rounded-md transition-colors ${
                   viewMode === mode
-                    ? 'bg-white text-[#007AFF] shadow-sm'
+                    ? 'bg-white dark:bg-[#1C1C1E] text-[#007AFF] shadow-sm'
                     : 'text-[#8E8E93] hover:text-[#1C1C1E]'
                 }`}
               >

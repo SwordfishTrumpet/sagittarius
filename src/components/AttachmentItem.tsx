@@ -88,11 +88,11 @@ function AttachmentItemComponent({ attachment }: { attachment: any }) {
   
   return (
     <div 
-      className="flex items-center gap-4 p-3 bg-[#F2F2F7]/50 rounded-xl border border-[#E5E5E5] group hover:bg-white hover:shadow-sm transition-all duration-200 cursor-pointer"
+      className="flex items-center gap-4 p-3 bg-[#F2F2F7]/50 dark:bg-[#1C1C1E]/50 rounded-xl border border-[#E5E5E5] dark:border-[#38383A] group hover:bg-white dark:hover:bg-[#2C2C2E] hover:shadow-sm transition-all duration-200 cursor-pointer"
       onDoubleClick={handleOpen}
       title="Double-click to open"
     >
-      <div className="w-10 h-10 rounded-lg bg-white border border-[#E5E5E5] flex items-center justify-center text-[#007AFF] shrink-0 overflow-hidden shadow-sm">
+      <div className="w-10 h-10 rounded-lg bg-white dark:bg-[#2C2C2E] border border-[#E5E5E5] dark:border-[#38383A] flex items-center justify-center text-[#007AFF] dark:text-[#0A84FF] shrink-0 overflow-hidden shadow-sm">
         {isImage && thumbnailUrl ? (
           <img src={thumbnailUrl} alt={attachment.name} className="w-full h-full object-cover" />
         ) : (

@@ -76,7 +76,7 @@ export function DeliveryStatus({ emailId }: DeliveryStatusProps) {
 
   if (isLoading) {
     return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#F2F2F7] text-[#6C6C70]">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#F2F2F7] dark:bg-[#2C2C2E] text-[#6C6C70] dark:text-[#A1A1A6]">
           <span className="w-2 h-2 rounded-full bg-[#8E8E93] animate-pulse" />
           Checking…
         </span>

@@ -164,8 +164,8 @@ function DeduplicationOverview({
       </Card>
 
       {/* Duplicate List */}
-      <div className="bg-[#F2F2F7] rounded-2xl border border-[#E5E5EA] overflow-hidden">
-        <div className="px-4 py-3 border-b border-[#E5E5EA]">
+      <div className="bg-[#F2F2F7] dark:bg-[#2C2C2E] rounded-2xl border border-[#E5E5EA] overflow-hidden">
+        <div className="px-4 py-3 border-b border-[#E5E5EA] dark:border-[#38383A]">
           <h4 className="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wide">
             {dedupResult.duplicateCount} Duplicate Attachments
           </h4>
@@ -197,9 +197,9 @@ function DuplicateItem({ group, onClick }: DuplicateItemProps) {
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center gap-3 p-3 bg-white rounded-xl border border-[#E5E5E5] hover:border-[#007AFF]/30 hover:shadow-sm transition-all text-left group"
+      className="w-full flex items-center gap-3 p-3 bg-white dark:bg-[#1C1C1E] rounded-xl border border-[#E5E5E5] hover:border-[#007AFF]/30 hover:shadow-sm transition-all text-left group"
     >
-      <div className="w-10 h-10 rounded-lg bg-[#F2F2F7] flex items-center justify-center shrink-0">
+      <div className="w-10 h-10 rounded-lg bg-[#F2F2F7] dark:bg-[#2C2C2E] flex items-center justify-center shrink-0">
         <FileIcon className="w-5 h-5 text-[#007AFF]" strokeWidth={1.5} />
       </div>
 
@@ -249,7 +249,7 @@ function DuplicateDetailView({ group, onBack }: DuplicateDetailViewProps) {
       {/* Attachment Info */}
       <Card padding="medium" className="mb-4">
         <div className="flex items-start gap-3">
-          <div className="w-12 h-12 rounded-xl bg-[#F2F2F7] flex items-center justify-center shrink-0">
+          <div className="w-12 h-12 rounded-xl bg-[#F2F2F7] dark:bg-[#2C2C2E] flex items-center justify-center shrink-0">
             <FileIcon className="w-6 h-6 text-[#007AFF]" strokeWidth={1.5} />
           </div>
           <div className="flex-1 min-w-0">
@@ -259,7 +259,7 @@ function DuplicateDetailView({ group, onBack }: DuplicateDetailViewProps) {
             <div className="text-[13px] text-[#6C6C70] space-y-0.5">
               <p>Type: {attachment.type || 'Unknown'}</p>
               <p>Size: {formatBytes(group.size)}</p>
-              <p>Blob ID: <code className="text-[11px] bg-[#F2F2F7] px-1.5 py-0.5 rounded">{group.blobId.slice(0, 16)}...</code></p>
+              <p>Blob ID: <code className="text-[11px] bg-[#F2F2F7] dark:bg-[#2C2C2E] px-1.5 py-0.5 rounded">{group.blobId.slice(0, 16)}...</code></p>
             </div>
           </div>
         </div>
@@ -284,8 +284,8 @@ function DuplicateDetailView({ group, onBack }: DuplicateDetailViewProps) {
       </Card>
 
       {/* Referencing Emails */}
-      <div className="bg-[#F2F2F7] rounded-2xl border border-[#E5E5EA] overflow-hidden">
-        <div className="px-4 py-3 border-b border-[#E5E5EA]">
+      <div className="bg-[#F2F2F7] dark:bg-[#2C2C2E] rounded-2xl border border-[#E5E5EA] overflow-hidden">
+        <div className="px-4 py-3 border-b border-[#E5E5EA] dark:border-[#38383A]">
           <h4 className="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wide">
             Referenced in {group.referenceCount} Emails
           </h4>
@@ -322,8 +322,8 @@ function EmailListItem({ email }: EmailListItemProps) {
   const date = new Date(email.receivedAt).toLocaleDateString();
 
   return (
-    <div className="flex items-start gap-3 p-3 bg-[#F2F2F7]/50 rounded-xl">
-      <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shrink-0">
+    <div className="flex items-start gap-3 p-3 bg-[#F2F2F7] dark:bg-[#2C2C2E]/50 rounded-xl">
+      <div className="w-8 h-8 rounded-lg bg-white dark:bg-[#1C1C1E] flex items-center justify-center shrink-0">
         <Mail className="w-4 h-4 text-[#007AFF]" strokeWidth={1.5} />
       </div>
       <div className="flex-1 min-w-0">

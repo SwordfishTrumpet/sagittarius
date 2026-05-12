@@ -44,10 +44,10 @@ function IdentityForm({ initial = EMPTY_FORM, onSave, onCancel, isSaving }: Iden
     setForm((f) => ({ ...f, [key]: e.target.value }));
 
   return (
-    <div className="bg-[#F2F2F7] rounded-2xl border border-[#E5E5EA] overflow-hidden">
+    <div className="bg-[#F2F2F7] dark:bg-[#1C1C1E]/50 rounded-2xl border border-[#E5E5EA] dark:border-[#38383A] overflow-hidden">
       {/* Display Name */}
-      <div className="bg-white border-b border-[#E5E5EA]">
-        <label className="block px-4 pt-3 text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wide">
+      <div className="bg-white dark:bg-[#1C1C1E] border-b border-[#E5E5EA] dark:border-[#38383A]">
+        <label className="block px-4 pt-3 text-[11px] font-semibold text-[#8E8E93] dark:text-[#A1A1A6] uppercase tracking-wide">
           Display Name
         </label>
         <input
@@ -55,12 +55,12 @@ function IdentityForm({ initial = EMPTY_FORM, onSave, onCancel, isSaving }: Iden
           value={form.name}
           onChange={set('name')}
           placeholder="Your Name"
-          className="w-full px-4 pb-3 pt-1 text-[15px] text-[#1C1C1E] placeholder:text-[#C7C7CC] bg-transparent focus:outline-none"
+          className="w-full px-4 pb-3 pt-1 text-[15px] text-[#1C1C1E] dark:text-white placeholder:text-[#C7C7CC] dark:placeholder:text-[#636366] bg-transparent focus:outline-none"
         />
       </div>
 
       {/* Email */}
-      <div className="bg-white border-b border-[#E5E5EA]">
+      <div className="bg-white dark:bg-[#1C1C1E] border-b border-[#E5E5EA] dark:border-[#38383A]">
         <label className="block px-4 pt-3 text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wide">
           Email Address
         </label>
@@ -69,12 +69,12 @@ function IdentityForm({ initial = EMPTY_FORM, onSave, onCancel, isSaving }: Iden
           value={form.email}
           onChange={set('email')}
           placeholder="you@example.com"
-          className="w-full px-4 pb-3 pt-1 text-[15px] text-[#1C1C1E] placeholder:text-[#C7C7CC] bg-transparent focus:outline-none"
+          className="w-full px-4 pb-3 pt-1 text-[15px] text-[#1C1C1E] dark:text-white placeholder:text-[#C7C7CC] dark:placeholder:text-[#636366] bg-transparent focus:outline-none"
         />
       </div>
 
       {/* Reply-To */}
-      <div className="bg-white border-b border-[#E5E5EA]">
+      <div className="bg-white dark:bg-[#1C1C1E] border-b border-[#E5E5EA] dark:border-[#38383A]">
         <label className="block px-4 pt-3 text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wide">
           Reply-To (optional)
         </label>
@@ -83,7 +83,7 @@ function IdentityForm({ initial = EMPTY_FORM, onSave, onCancel, isSaving }: Iden
           value={form.replyTo}
           onChange={set('replyTo')}
           placeholder="replies@example.com"
-          className="w-full px-4 pb-3 pt-1 text-[15px] text-[#1C1C1E] placeholder:text-[#C7C7CC] bg-transparent focus:outline-none"
+          className="w-full px-4 pb-3 pt-1 text-[15px] text-[#1C1C1E] dark:text-white placeholder:text-[#C7C7CC] dark:placeholder:text-[#636366] bg-transparent focus:outline-none"
         />
       </div>
 
@@ -97,7 +97,7 @@ function IdentityForm({ initial = EMPTY_FORM, onSave, onCancel, isSaving }: Iden
           onChange={set('textSignature')}
           rows={4}
           placeholder="-- &#10;Your signature"
-          className="w-full px-4 pb-3 pt-1 text-[15px] text-[#1C1C1E] placeholder:text-[#C7C7CC] bg-transparent focus:outline-none resize-none font-mono text-[13px]"
+          className="w-full px-4 pb-3 pt-1 text-[15px] text-[#1C1C1E] dark:text-white placeholder:text-[#C7C7CC] dark:placeholder:text-[#636366] bg-transparent focus:outline-none resize-none font-mono text-[13px]"
         />
       </div>
 

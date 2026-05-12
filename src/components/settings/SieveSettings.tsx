@@ -43,9 +43,9 @@ export function SieveSettings() {
     return (
       <div className="p-6">
         <h2 className="text-[17px] font-semibold text-[#1C1C1E] mb-4">Filters</h2>
-        <div className="bg-[#F2F2F7] rounded-2xl px-5 py-8 text-center">
-          <Filter size={32} strokeWidth={1.5} className="mx-auto mb-3 text-[#C7C7CC]" />
-          <p className="text-[15px] text-[#8E8E93]">Sieve filters are not supported</p>
+        <div className="bg-[#F2F2F7] dark:bg-[#1C1C1E]/50 rounded-2xl px-5 py-8 text-center">
+          <Filter size={32} strokeWidth={1.5} className="mx-auto mb-3 text-[#C7C7CC] dark:text-[#636366]" />
+          <p className="text-[15px] text-[#8E8E93] dark:text-[#A1A1A6]">Sieve filters are not supported</p>
           <p className="text-[13px] text-[#C7C7CC] mt-1">
             Your server does not advertise the JMAP Sieve capability.
           </p>
@@ -172,7 +172,7 @@ export function SieveSettings() {
           {scripts.map((script) => (
             <div
               key={script.id}
-              className="flex items-center justify-between px-4 py-3.5 hover:bg-[#F2F2F7]/50 transition-colors group"
+              className="flex items-center justify-between px-4 py-3.5 hover:bg-[#F2F2F7]/50 dark:hover:bg-white/5 transition-colors group"
             >
               {/* Name + status */}
               <div className="flex items-center gap-3 min-w-0">

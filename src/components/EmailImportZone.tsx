@@ -116,15 +116,15 @@ export function EmailImportZone({ mailboxId }: EmailImportZoneProps) {
 
   return (
     <div
-      className="fixed inset-0 z-[60] bg-white/80 backdrop-blur-xl flex flex-col items-center justify-center pointer-events-none"
+      className="fixed inset-0 z-[60] bg-white/80 dark:bg-black/80 backdrop-blur-xl flex flex-col items-center justify-center pointer-events-none"
       aria-hidden="true"
     >
       {/* Dashed border drop area */}
       <div
         className={`flex flex-col items-center justify-center gap-5 w-80 h-56 rounded-3xl border-2 border-dashed transition-all duration-200 ${
           isDragOver
-            ? 'border-[#007AFF] bg-[#007AFF]/8 scale-105'
-            : 'border-[#C7C7CC] bg-white/40'
+            ? 'border-[#007AFF] dark:border-[#0A84FF] bg-[#007AFF]/8'
+            : 'border-[#C7C7CC] dark:border-[#636366] bg-white/40 dark:bg-[#1C1C1E]/40'
         }`}
       >
         <div

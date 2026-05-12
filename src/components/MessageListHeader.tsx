@@ -40,7 +40,7 @@ export function MessageListHeader({
   const allSelected = emailCount > 0 && selectedEmailIds.size === emailCount;
 
   return (
-    <header className="px-4 py-3 border-b border-[#E5E5E5] flex flex-col gap-3">
+    <header className="px-4 py-3 border-b border-[#E5E5E5] dark:border-[#38383A] flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           {isMobile ? (

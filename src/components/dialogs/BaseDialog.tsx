@@ -37,15 +37,15 @@ export function BaseDialog({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-[#E5E5E5] max-w-md w-full mx-4"
+        className="bg-white/95 dark:bg-[#1C1C1E]/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-[#E5E5E5] dark:border-[#38383A] max-w-md w-full mx-4"
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#E5E5E5]">
-          <h2 id={titleId} className="text-[17px] font-bold text-[#1C1C1E]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#E5E5E5] dark:border-[#38383A]">
+          <h2 id={titleId} className="text-[17px] font-bold text-[#1C1C1E] dark:text-white">
             {title}
           </h2>
           <button
             onClick={onClose}
-            className="p-1 text-[#8E8E93] hover:bg-black/5 rounded-full transition-colors"
+            className="p-1 text-[#8E8E93] dark:text-[#A1A1A6] hover:bg-black/5 dark:hover:bg-white/10 rounded-full transition-colors"
             aria-label="Close"
           >
             <X className="w-5 h-5" strokeWidth={2} />

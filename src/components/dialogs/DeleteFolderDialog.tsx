@@ -45,7 +45,7 @@ export function DeleteFolderDialog({
           <button
             onClick={onClose}
             disabled={isLoading}
-            className="flex-1 px-4 py-2 bg-[#F2F2F7] text-[#1C1C1E] rounded-lg font-medium text-[13px] hover:bg-[#E5E5E5] transition-colors disabled:opacity-50"
+            className="flex-1 px-4 py-2 bg-[#F2F2F7] dark:bg-[#2C2C2E] text-[#1C1C1E] dark:text-white rounded-lg font-medium text-[13px] hover:bg-[#E5E5E5] dark:hover:bg-[#38383A] transition-colors disabled:opacity-50"
           >
             Cancel
           </button>

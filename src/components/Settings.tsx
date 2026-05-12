@@ -183,10 +183,10 @@ function GeneralSettings() {
               onTouchEnd={handleVolumeCommit}
               className="flex-1 h-1 accent-[#007AFF] dark:accent-[#0A84FF] rounded-full appearance-none bg-[#E5E5EA] dark:bg-[#3A3A3C] cursor-pointer
                 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4
-                [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-md
+                [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white dark:[&::-webkit-slider-thumb]:bg-[#E5E5E5] [&::-webkit-slider-thumb]:shadow-md
                 [&::-webkit-slider-thumb]:border [&::-webkit-slider-thumb]:border-[#E5E5EA] dark:[&::-webkit-slider-thumb]:border-[#38383A]
                 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full
-                [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:shadow-md [&::-moz-range-thumb]:border
+                [&::-moz-range-thumb]:bg-white dark:[&::-moz-range-thumb]:bg-[#E5E5E5] [&::-moz-range-thumb]:shadow-md [&::-moz-range-thumb]:border
                 [&::-moz-range-thumb]:border-[#E5E5EA] dark:[&::-moz-range-thumb]:border-[#38383A]"
             />
             <span className="text-[13px] text-[#6C6C70] dark:text-[#8E8E93] w-10 text-right">{Math.round(volume * 100)}%</span>

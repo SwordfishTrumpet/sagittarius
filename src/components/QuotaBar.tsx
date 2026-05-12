@@ -22,7 +22,7 @@ export function QuotaBar({ used, total }: QuotaBarProps) {
     <div className="px-3 py-2 space-y-1.5">
       {/* Track */}
       <div
-        className="h-[3px] w-full rounded-full bg-[#E5E5EA] overflow-hidden"
+        className="h-[3px] w-full rounded-full bg-[#E5E5EA] dark:bg-[#38383A] overflow-hidden"
         role="progressbar"
         aria-label={`Storage quota: ${formatBytes(used)} of ${formatBytes(total)} used`}
         aria-valuemin={0}
