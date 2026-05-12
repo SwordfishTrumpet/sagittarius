@@ -93,24 +93,24 @@ export function SwipeableRow({ children, onSwipeLeft, onSwipeRight, enabled = tr
 
     if (currentX.current > SWIPE_THRESHOLD && onSwipeRight) {
       // Swipe right confirmed — archive
+      // Animate fully offscreen, then trigger action.
+      // Do NOT snap back — the parent will unmount this row when the data updates.
       setOffsetX(300);
-      setTimeout(() => {
+      timeoutRef.current = setTimeout(() => {
         onSwipeRight();
-        setOffsetX(0);
         setIsAnimating(false);
       }, 200);
     } else if (currentX.current < -SWIPE_THRESHOLD && onSwipeLeft) {
       // Swipe left confirmed — delete
       setOffsetX(-300);
-      setTimeout(() => {
+      timeoutRef.current = setTimeout(() => {
         onSwipeLeft();
-        setOffsetX(0);
         setIsAnimating(false);
       }, 200);
     } else {
       // Snap back
       setOffsetX(0);
-      setTimeout(() => setIsAnimating(false), 200);
+      timeoutRef.current = setTimeout(() => setIsAnimating(false), 200);
     }
   }, [enabled, onSwipeLeft, onSwipeRight]);
 

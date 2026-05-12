@@ -260,8 +260,8 @@ function App() {
 
   // Animated email moves
   const { removingEmailIds, moveEmailsToFolder } = useAnimatedEmailMoves({
-    onMove: moveEmail.mutate,
-    onMoveBulk: moveEmailBulk.mutate,
+    onMoveAsync: moveEmail.mutateAsync,
+    onMoveBulkAsync: moveEmailBulk.mutateAsync,
   })
 
   // Mobile swipe handlers - work directly with emailId, not selectedEmailId
