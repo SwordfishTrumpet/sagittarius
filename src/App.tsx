@@ -479,7 +479,7 @@ function App() {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className={`relative flex h-full w-full bg-[#F2F2F7] text-[13px] ${isMobile ? 'overflow-hidden' : ''}`}>
+      <div className={`relative flex h-full w-full bg-[#F2F2F7] dark:bg-black text-[13px] dark:text-white ${isMobile ? 'overflow-hidden' : ''}`}>
         <LiveRegion message={liveAnnouncement} />
         {(isOffline || pendingCount > 0) && (
           <div
