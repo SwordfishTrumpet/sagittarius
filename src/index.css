@@ -4,6 +4,7 @@
 
 :root {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 body {
@@ -131,6 +132,18 @@ body {
 
 .dark .resize-handle[data-dragging] .resize-handle-line {
   background: #0A84FF;
+}
+
+/* Monospace font override — applied to all monospace elements and Tailwind font-mono class */
+.font-mono,
+code, pre, samp, kbd {
+  font-family: var(--font-mono) !important;
+}
+
+/* Composer code blocks */
+.ProseMirror code,
+.ProseMirror pre {
+  font-family: var(--font-mono) !important;
 }
 
 /* Prevent text selection and set cursor globally during resize drag */

@@ -4,6 +4,7 @@ import { VacationSettings } from './settings/VacationSettings';
 import { IdentitySettings } from './settings/IdentitySettings';
 import { SieveSettings } from './settings/SieveSettings';
 import { ThemeToggle } from './settings/ThemeToggle';
+import { FontSelector } from './settings/FontSelector';
 import { IOSToggle } from './ui/IOSToggle';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import { useHasVacationCapability } from '../hooks/useVacation';
@@ -98,8 +99,10 @@ function GeneralSettings() {
       </div>
 
       <h3 className="text-[15px] font-semibold text-[#1C1C1E] dark:text-white mt-6 mb-3">Appearance</h3>
-      <div className="bg-white dark:bg-[#1C1C1E] rounded-2xl border border-[#E5E5EA] dark:border-[#38383A] p-4">
+      <div className="bg-white dark:bg-[#1C1C1E] rounded-2xl border border-[#E5E5EA] dark:border-[#38383A] p-4 space-y-6">
         <ThemeToggle />
+        <div className="border-t border-[#E5E5EA] dark:border-[#38383A]" />
+        <FontSelector />
       </div>
 
       <h3 className="text-[15px] font-semibold text-[#1C1C1E] dark:text-white mt-6 mb-3">Notifications</h3>

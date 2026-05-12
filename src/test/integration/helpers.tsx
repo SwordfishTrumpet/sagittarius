@@ -5,6 +5,7 @@ import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import App from '../../App'
 import { jmapClient, type JMAPSession } from '../../api/jmap'
+import { ThemeProvider } from '../../context/ThemeProvider'
 
 type FetchCall = {
   input: RequestInfo | URL
@@ -282,7 +283,9 @@ export function renderApp() {
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <App />
+        <ThemeProvider>
+          <App />
+        </ThemeProvider>
       </QueryClientProvider>,
     ),
     queryClient,

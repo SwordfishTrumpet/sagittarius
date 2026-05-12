@@ -16,12 +16,13 @@ vi.mock('../../utils/logger', () => ({
   },
 }));
 
-vi.mock('../../utils/rateLimit', () => ({
-  checkRateLimit: vi.fn(),
-  recordFailedAttempt: vi.fn(),
-  resetRateLimit: vi.fn(),
-  getRateLimitStatus: vi.fn().mockReturnValue({ isLocked: false, remainingAttempts: 5, lockoutSeconds: null }),
-}));
+vi.mock('../../utils/rateLimit', () => {
+  const checkRateLimit = vi.fn();
+  const recordFailedAttempt = vi.fn();
+  const resetRateLimit = vi.fn();
+  const getRateLimitStatus = vi.fn(() => ({ isLocked: false, remainingAttempts: 5, lockoutSeconds: null }));
+  return { checkRateLimit, recordFailedAttempt, resetRateLimit, getRateLimitStatus };
+});
 
 describe('Login', () => {
   const mockOnLoginSuccess = vi.fn();
