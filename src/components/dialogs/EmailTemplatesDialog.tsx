@@ -150,7 +150,7 @@ export function EmailTemplatesDialog({
       >
         <div className="flex flex-col h-[500px]">
           {/* Search and New button */}
-          <div className="flex items-center gap-2 px-4 py-3 border-b border-[#E5E5EA]">
+          <div className="flex items-center gap-2 px-4 py-3 border-b border-[#E5E5EA] dark:border-[#38383A]">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8E8E93]" strokeWidth={1.5} />
               <input
@@ -158,7 +158,7 @@ export function EmailTemplatesDialog({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search templates..."
-                className="w-full pl-9 pr-3 py-2 bg-[#F2F2F7] rounded-lg text-[13px] text-[#1C1C1E] placeholder:text-[#8E8E93] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/30"
+                className="w-full pl-9 pr-3 py-2 bg-[#F2F2F7] dark:bg-[#2C2C2E] rounded-lg text-[13px] text-[#1C1C1E] placeholder:text-[#8E8E93] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/30"
               />
             </div>
             {!selectionMode && (
@@ -177,7 +177,7 @@ export function EmailTemplatesDialog({
             {isLoading ? (
               <div className="space-y-2 animate-pulse">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-16 bg-[#E5E5EA] rounded-xl" />
+                  <div key={i} className="h-16 bg-[#E5E5EA] dark:bg-[#2C2C2E] rounded-xl" />
                 ))}
               </div>
             ) : filteredTemplates.length === 0 ? (
@@ -201,8 +201,8 @@ export function EmailTemplatesDialog({
                   <div
                     key={template.id}
                     onClick={() => selectionMode && handleSelect(template)}
-                    className={`group bg-white rounded-xl border border-[#E5E5EA] overflow-hidden transition-all hover:border-[#007AFF]/30 ${
-                      selectionMode ? 'cursor-pointer hover:bg-[#F2F2F7]' : ''
+                    className={`group bg-white dark:bg-[#1C1C1E] rounded-xl border border-[#E5E5EA] overflow-hidden transition-all hover:border-[#007AFF]/30 ${
+                      selectionMode ? 'cursor-pointer hover:bg-[#F2F2F7] dark:bg-[#2C2C2E] dark:hover:bg-white/5' : ''
                     }`}
                   >
                     <div className="p-3">
@@ -227,7 +227,7 @@ export function EmailTemplatesDialog({
                                 e.stopPropagation();
                                 handleEdit(template);
                               }}
-                              className="p-1.5 text-[#8E8E93] hover:bg-[#F2F2F7] rounded-lg transition-colors"
+                              className="p-1.5 text-[#8E8E93] hover:bg-[#F2F2F7] dark:bg-[#2C2C2E] dark:hover:bg-white/5 rounded-lg transition-colors"
                               aria-label="Edit template"
                             >
                               <Edit2 className="w-4 h-4" strokeWidth={1.5} />
@@ -237,7 +237,7 @@ export function EmailTemplatesDialog({
                                 e.stopPropagation();
                                 handleDuplicate(template.id);
                               }}
-                              className="p-1.5 text-[#8E8E93] hover:bg-[#F2F2F7] rounded-lg transition-colors"
+                              className="p-1.5 text-[#8E8E93] hover:bg-[#F2F2F7] dark:bg-[#2C2C2E] dark:hover:bg-white/5 rounded-lg transition-colors"
                               aria-label="Duplicate template"
                             >
                               <Copy className="w-4 h-4" strokeWidth={1.5} />
@@ -264,10 +264,10 @@ export function EmailTemplatesDialog({
 
           {/* Footer */}
           {selectionMode && (
-            <div className="px-4 py-3 border-t border-[#E5E5EA]">
+            <div className="px-4 py-3 border-t border-[#E5E5EA] dark:border-[#38383A]">
               <button
                 onClick={handleClose}
-                className="w-full px-4 py-2 bg-[#F2F2F7] text-[#1C1C1E] rounded-lg text-[13px] font-medium hover:bg-[#E5E5E5] transition-colors"
+                className="w-full px-4 py-2 bg-[#F2F2F7] dark:bg-[#2C2C2E] text-[#1C1C1E] rounded-lg text-[13px] font-medium hover:bg-[#E5E5E5] dark:hover:bg-[#38383A] transition-colors"
               >
                 Cancel
               </button>
@@ -292,7 +292,7 @@ export function EmailTemplatesDialog({
     >
       <div className="flex flex-col h-[500px]">
         {/* Back button */}
-        <div className="flex items-center gap-2 px-4 py-2 border-b border-[#E5E5EA]">
+        <div className="flex items-center gap-2 px-4 py-2 border-b border-[#E5E5EA] dark:border-[#38383A]">
           <button
             onClick={() => {
               setViewMode('list');
@@ -388,14 +388,14 @@ export function EmailTemplatesDialog({
         </div>
 
         {/* Footer actions */}
-        <div className="flex gap-3 px-4 py-4 border-t border-[#E5E5EA]">
+        <div className="flex gap-3 px-4 py-4 border-t border-[#E5E5EA] dark:border-[#38383A]">
           <button
             onClick={() => {
               setViewMode('list');
               resetForm();
             }}
             disabled={isSaving}
-            className="flex-1 px-4 py-2 bg-[#F2F2F7] text-[#1C1C1E] rounded-lg font-medium text-[13px] hover:bg-[#E5E5E5] transition-colors disabled:opacity-50"
+            className="flex-1 px-4 py-2 bg-[#F2F2F7] dark:bg-[#2C2C2E] text-[#1C1C1E] rounded-lg font-medium text-[13px] hover:bg-[#E5E5E5] dark:hover:bg-[#38383A] transition-colors disabled:opacity-50"
           >
             Cancel
           </button>

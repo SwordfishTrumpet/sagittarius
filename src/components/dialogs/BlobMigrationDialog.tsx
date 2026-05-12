@@ -128,7 +128,7 @@ export function BlobMigrationDialog({
                   <select
                     value={selectedSourceAccount}
                     onChange={(e) => setSelectedSourceAccount(e.target.value)}
-                    className="w-full px-3 py-2 bg-[#F2F2F7] rounded-lg text-[15px] text-[#1C1C1E] border border-[#E5E5EA] focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
+                    className="w-full px-3 py-2 bg-[#F2F2F7] dark:bg-[#2C2C2E] rounded-lg text-[15px] text-[#1C1C1E] border border-[#E5E5EA] focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
                     disabled={isMigrating || !!sourceAccountId}
                   >
                     <option value="">Select source account...</option>
@@ -144,7 +144,7 @@ export function BlobMigrationDialog({
                   <select
                     value={selectedTargetAccount}
                     onChange={(e) => setSelectedTargetAccount(e.target.value)}
-                    className="w-full px-3 py-2 bg-[#F2F2F7] rounded-lg text-[15px] text-[#1C1C1E] border border-[#E5E5EA] focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
+                    className="w-full px-3 py-2 bg-[#F2F2F7] dark:bg-[#2C2C2E] rounded-lg text-[15px] text-[#1C1C1E] border border-[#E5E5EA] focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
                     disabled={isMigrating}
                   >
                     <option value="">Select target account...</option>
@@ -202,7 +202,7 @@ export function BlobMigrationDialog({
                 <>
                   <button
                     onClick={handleClose}
-                    className="flex-1 px-4 py-3 bg-[#F2F2F7] hover:bg-[#E5E5EA] rounded-xl text-[15px] font-medium text-[#1C1C1E] transition-colors"
+                    className="flex-1 px-4 py-3 bg-[#F2F2F7] dark:bg-[#2C2C2E] hover:bg-[#E5E5EA] dark:bg-[#2C2C2E] rounded-xl text-[15px] font-medium text-[#1C1C1E] transition-colors"
                     disabled={isMigrating}
                   >
                     Cancel
@@ -278,7 +278,7 @@ function MigrationProgress({ progress, completed, total, failed }: MigrationProg
         </div>
         
         {/* Progress Bar */}
-        <div className="h-2 bg-[#F2F2F7] rounded-full overflow-hidden">
+        <div className="h-2 bg-[#F2F2F7] dark:bg-[#2C2C2E] rounded-full overflow-hidden">
           <div 
             className="h-full bg-[#007AFF] rounded-full transition-all duration-300"
             style={{ width: `${progress}%` }}
@@ -342,7 +342,7 @@ function MigrationResults({ results, expanded, onToggleExpand }: MigrationResult
 
         {/* Expandable Details */}
         {results.length > 0 && (
-          <div className="border-t border-[#E5E5EA] pt-3">
+          <div className="border-t border-[#E5E5EA] dark:border-[#38383A] pt-3">
             <button
               onClick={onToggleExpand}
               className="flex items-center gap-1 text-[13px] text-[#007AFF] hover:opacity-80 transition-opacity"

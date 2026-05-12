@@ -98,7 +98,7 @@ export function ConnectionStatusBadge(props: ConnectionStatusBadgeProps) {
       {icon}
       <span>{label}</span>
       {count ? (
-        <span className="min-w-[16px] rounded-full bg-white/70 px-1.5 py-px text-center text-[10px] font-bold leading-none text-current">
+        <span className="min-w-[16px] rounded-full bg-white/70 dark:bg-white/20 px-1.5 py-px text-center text-[10px] font-bold leading-none text-current">
           {count}
         </span>
       ) : null}

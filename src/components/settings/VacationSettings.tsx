@@ -72,9 +72,9 @@ export function VacationSettings() {
   if (isLoading) {
     return (
       <div className="p-6 space-y-3 animate-pulse">
-        <div className="h-5 w-40 bg-[#E5E5EA] rounded-lg" />
-        <div className="h-16 bg-[#E5E5EA] rounded-2xl" />
-        <div className="h-28 bg-[#E5E5EA] rounded-2xl" />
+        <div className="h-5 w-40 bg-[#E5E5EA] dark:bg-[#2C2C2E] rounded-lg" />
+        <div className="h-16 bg-[#E5E5EA] dark:bg-[#2C2C2E] rounded-2xl" />
+        <div className="h-28 bg-[#E5E5EA] dark:bg-[#2C2C2E] rounded-2xl" />
       </div>
     );
   }
@@ -137,7 +137,7 @@ export function VacationSettings() {
           </div>
 
           {/* Date range */}
-          <div className="bg-white rounded-2xl border border-[#E5E5EA] divide-y divide-[#E5E5EA]">
+          <div className="bg-white rounded-2xl border border-[#E5E5EA] divide-y divide-[#E5E5EA] dark:divide-[#38383A]">
             <div className="px-4 py-3 flex items-center justify-between gap-4">
               <label className="text-[15px] text-[#1C1C1E] shrink-0">Start Date</label>
               <input

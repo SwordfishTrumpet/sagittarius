@@ -45,7 +45,7 @@ export function CreateFolderDialog({
             value={folderName}
             onChange={(e) => setFolderName(e.target.value)}
             placeholder="Enter folder name"
-            className="w-full px-3 py-2 bg-[#F2F2F7] border border-[#E5E5E5] rounded-lg text-[13px] focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:bg-white transition-colors"
+            className="w-full px-3 py-2 bg-[#F2F2F7] dark:bg-[#2C2C2E] border border-[#E5E5E5] dark:border-[#38383A] rounded-lg text-[13px] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#007AFF] dark:focus:ring-[#0A84FF] focus:bg-white dark:focus:bg-[#1C1C1E] transition-colors"
             disabled={isLoading}
           />
         </div>
@@ -55,7 +55,7 @@ export function CreateFolderDialog({
             type="button"
             onClick={onClose}
             disabled={isLoading}
-            className="flex-1 px-4 py-2 bg-[#F2F2F7] text-[#1C1C1E] rounded-lg font-medium text-[13px] hover:bg-[#E5E5E5] transition-colors disabled:opacity-50"
+            className="flex-1 px-4 py-2 bg-[#F2F2F7] dark:bg-[#2C2C2E] text-[#1C1C1E] dark:text-white rounded-lg font-medium text-[13px] hover:bg-[#E5E5E5] dark:hover:bg-[#38383A] transition-colors disabled:opacity-50"
           >
             Cancel
           </button>

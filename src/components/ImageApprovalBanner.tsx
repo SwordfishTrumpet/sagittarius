@@ -26,7 +26,7 @@ export function ImageApprovalBanner({
   }
 
   return (
-    <div className="mx-8 mt-8 mb-6 p-4 rounded-xl bg-white/60 backdrop-blur-md border border-[#E5E5E5] shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
+    <div className="mx-8 mt-8 mb-6 p-4 rounded-xl bg-white/60 dark:bg-[#1C1C1E]/60 backdrop-blur-md border border-[#E5E5E5] dark:border-[#38383A] shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
           <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-lg bg-[#007AFF]/10">

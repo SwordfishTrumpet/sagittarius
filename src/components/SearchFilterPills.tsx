@@ -15,7 +15,7 @@ export function SearchFilterPills({ pills, onRemove }: SearchFilterPillsProps) {
   if (pills.length === 0) return null;
 
   return (
-    <div aria-label="Active search filters" className="flex flex-wrap gap-2 px-4 py-2 bg-[#F2F2F7]/50 border-b border-[#E5E5E5] animate-in fade-in duration-200">
+    <div aria-label="Active search filters" className="flex flex-wrap gap-2 px-4 py-2 bg-[#F2F2F7]/50 dark:bg-[#1C1C1E]/50 border-b border-[#E5E5E5] dark:border-[#38383A] animate-in fade-in duration-200">
       {pills.map((pill) => (
         <div
           key={pill.id}

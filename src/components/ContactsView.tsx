@@ -196,7 +196,7 @@ function ContactDetail({
   return (
     <div className="flex-1 overflow-auto">
       {/* Header */}
-      <div className="text-center p-8 border-b border-[#E5E5EA]">
+      <div className="text-center p-8 border-b border-[#E5E5EA] dark:border-[#38383A]">
         <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#007AFF] to-[#5856D6] flex items-center justify-center text-[32px] font-bold text-white mx-auto mb-4 shadow-lg">
           {initials}
         </div>
@@ -390,7 +390,7 @@ function ContactFormDialog({
               type="text"
               value={form.givenName}
               onChange={(e) => setForm({ ...form, givenName: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
+              className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] dark:border-[#38383A] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
               placeholder="John"
             />
           </div>
@@ -402,7 +402,7 @@ function ContactFormDialog({
               type="text"
               value={form.surname}
               onChange={(e) => setForm({ ...form, surname: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
+              className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] dark:border-[#38383A] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
               placeholder="Appleseed"
             />
           </div>
@@ -415,7 +415,7 @@ function ContactFormDialog({
           <select
             value={form.addressBookId}
             onChange={(e) => setForm({ ...form, addressBookId: e.target.value })}
-            className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007AFF] bg-white"
+            className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] dark:border-[#38383A] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007AFF] bg-white"
             required
           >
             {addressBooks.map((ab) => (
@@ -434,7 +434,7 @@ function ContactFormDialog({
             type="email"
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
-            className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
+            className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] dark:border-[#38383A] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
             placeholder="john@example.com"
           />
         </div>
@@ -447,7 +447,7 @@ function ContactFormDialog({
             type="tel"
             value={form.phone}
             onChange={(e) => setForm({ ...form, phone: e.target.value })}
-            className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
+            className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] dark:border-[#38383A] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
             placeholder="+1 (555) 123-4567"
           />
         </div>
@@ -460,7 +460,7 @@ function ContactFormDialog({
             type="text"
             value={form.organization}
             onChange={(e) => setForm({ ...form, organization: e.target.value })}
-            className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
+            className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] dark:border-[#38383A] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
             placeholder="Acme Inc."
           />
         </div>
@@ -472,7 +472,7 @@ function ContactFormDialog({
           <textarea
             value={form.address}
             onChange={(e) => setForm({ ...form, address: e.target.value })}
-            className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007AFF] resize-none"
+            className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] dark:border-[#38383A] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007AFF] resize-none"
             rows={2}
             placeholder="123 Main St, City, State"
           />
@@ -485,7 +485,7 @@ function ContactFormDialog({
           <textarea
             value={form.notes}
             onChange={(e) => setForm({ ...form, notes: e.target.value })}
-            className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007AFF] resize-none"
+            className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] dark:border-[#38383A] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007AFF] resize-none"
             rows={3}
             placeholder="Additional notes..."
           />
@@ -638,7 +638,7 @@ export function ContactsView({ isOpen, onClose }: ContactsViewProps) {
   if (!hasCapability) {
     return (
       <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/30 backdrop-blur-sm">
-        <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-[#E5E5E5] max-w-md w-full mx-4 p-8 text-center">
+        <div className="bg-white/95 dark:bg-[#1C1C1E]/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-[#E5E5E5] dark:border-[#38383A] max-w-md w-full mx-4 p-8 text-center">
           <AlertCircle className="w-12 h-12 text-[#FF9500] mx-auto mb-4" strokeWidth={1.5} />
           <h2 className="text-[17px] font-bold text-[#1C1C1E] mb-2">Contacts Not Available</h2>
           <p className="text-[14px] text-[#8E8E93] mb-6">
@@ -661,7 +661,7 @@ export function ContactsView({ isOpen, onClose }: ContactsViewProps) {
   return (
     <div className="fixed inset-0 z-[10000] flex bg-[#F2F2F7]">
       {/* Sidebar */}
-      <aside className="w-64 bg-white/70 backdrop-blur-xl border-r border-[#E5E5E5] flex flex-col">
+      <aside className="w-64 bg-white/70 dark:bg-[#1C1C1E]/70 backdrop-blur-xl border-r border-[#E5E5E5] flex flex-col">
         <header className="px-4 py-4 border-b border-[#E5E5E5] flex items-center justify-between">
           <h1 className="text-[17px] font-bold text-[#1C1C1E]">Contacts</h1>
           <button
@@ -702,7 +702,7 @@ export function ContactsView({ isOpen, onClose }: ContactsViewProps) {
       </aside>
 
       {/* Contact list */}
-      <div className="w-80 bg-white/50 backdrop-blur-xl border-r border-[#E5E5E5] flex flex-col">
+      <div className="w-80 bg-white/50 dark:bg-[#1C1C1E]/50 backdrop-blur-xl border-r border-[#E5E5E5] flex flex-col">
         {/* Search */}
         <div className="p-3 border-b border-[#E5E5E5]">
           <div className="relative">

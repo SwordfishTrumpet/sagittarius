@@ -48,6 +48,7 @@ import { useListFilters } from './hooks/useListFilters'
 import { useEmailNavigation } from './hooks/useEmailNavigation'
 import { useAnimatedEmailMoves } from './hooks/useAnimatedEmailMoves'
 import { useAppSidebar } from './hooks/useAppSidebar'
+import { useTheme } from './hooks/useTheme'
 
 function App() {
   const queryClient = useQueryClient()
@@ -68,6 +69,9 @@ function App() {
   // Mobile detection and navigation
   const isMobile = useIsMobile()
   const [mobileView, setMobileView] = useState<'mailboxes' | 'list' | 'reader'>('mailboxes')
+
+  // Theme
+  const { isDark } = useTheme()
 
   // Data fetching hooks
   const { data: mailboxes, isLoading: mailboxesLoading, refetch: refetchMailboxes } = useMailboxes()
@@ -505,7 +509,7 @@ function App() {
         )}
         <a
           href="#main-content"
-          className="sr-only absolute left-4 top-4 z-[400] rounded-md bg-white px-3 py-2 text-[13px] font-medium text-[#007AFF] shadow-lg focus:not-sr-only focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
+          className="sr-only absolute left-4 top-4 z-[400] rounded-md bg-white dark:bg-[#2C2C2E] px-3 py-2 text-[13px] font-medium text-[#007AFF] dark:text-[#0A84FF] shadow-lg focus:not-sr-only focus:outline-none focus:ring-2 focus:ring-[#007AFF] dark:focus:ring-[#0A84FF]"
         >
           Skip to main content
         </a>
@@ -516,12 +520,12 @@ function App() {
           toastOptions={{
             closeButtonAriaLabel: 'Dismiss notification',
             style: {
-              background: 'rgba(255, 255, 255, 0.8)',
+              background: isDark ? 'rgba(30, 30, 32, 0.85)' : 'rgba(255, 255, 255, 0.8)',
               backdropFilter: 'blur(20px)',
-              border: '1px solid rgba(0, 0, 0, 0.1)',
+              border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.1)',
               borderRadius: '12px',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
-              color: '#1C1C1E',
+              boxShadow: isDark ? '0 8px 32px rgba(0, 0, 0, 0.5)' : '0 8px 32px rgba(0, 0, 0, 0.12)',
+              color: isDark ? '#FFFFFF' : '#1C1C1E',
               fontSize: '14px',
               fontWeight: 500,
             },
@@ -581,7 +585,7 @@ function App() {
         <main
           id="main-content"
           aria-label="Message list"
-          className={`flex flex-col bg-white border-r border-[#E5E5E5] h-full overflow-hidden shrink-0 select-none ${isAnyPaneResizing ? '' : 'transition-all duration-300'} ${isMobile ? (mobileView === 'list' ? 'fixed inset-0 z-[200] w-full' : 'hidden') : ''}`}
+          className={`flex flex-col bg-white dark:bg-black border-r border-[#E5E5E5] dark:border-[#38383A] h-full overflow-hidden shrink-0 select-none ${isAnyPaneResizing ? '' : 'transition-all duration-300'} ${isMobile ? (mobileView === 'list' ? 'fixed inset-0 z-[200] w-full' : 'hidden') : ''}`}
           style={{ width: isMobile ? '100%' : messageListResize.width }}
         >
           <MessageListHeader
@@ -644,7 +648,7 @@ function App() {
         <ErrorBoundary>
           <section 
             aria-label="Email reading pane" 
-            className={`flex-1 flex flex-col bg-white h-full overflow-hidden relative select-none ${isMobile ? (mobileView === 'reader' ? 'fixed inset-0 z-[200] w-full' : 'hidden') : ''}`}
+            className={`flex-1 flex flex-col bg-white dark:bg-black h-full overflow-hidden relative select-none ${isMobile ? (mobileView === 'reader' ? 'fixed inset-0 z-[200] w-full' : 'hidden') : ''}`}
           >
             <Toolbar
               selectedEmailId={selectedEmailId}

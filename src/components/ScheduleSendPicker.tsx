@@ -125,21 +125,21 @@ export function ScheduleSendPicker({ onSchedule, onCancel, maxDelaySeconds }: Sc
   return (
     <div
       ref={containerRef}
-      className="bg-white rounded-xl shadow-2xl border border-[#E5E5EA] w-[300px] overflow-hidden"
+      className="bg-white dark:bg-[#1C1C1E] rounded-xl shadow-2xl border border-[#E5E5EA] dark:border-[#38383A] w-[300px] overflow-hidden"
       role="dialog"
       aria-label="Schedule send"
       aria-modal="true"
       tabIndex={-1}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[#F2F2F7]">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-[#F2F2F7] dark:border-[#38383A]">
         <div className="flex items-center gap-2 text-[#1C1C1E]">
           <Clock size={14} strokeWidth={1.5} className="text-[#8E8E93]" />
           <span className="text-[14px] font-semibold">Schedule Send</span>
         </div>
         <button
           onClick={onCancel}
-          className="w-6 h-6 rounded-full bg-[#E5E5EA] hover:bg-[#D1D1D6] flex items-center justify-center transition-colors"
+          className="w-6 h-6 rounded-full bg-[#E5E5EA] dark:bg-[#2C2C2E] hover:bg-[#D1D1D6] dark:hover:bg-[#38383A] dark:hover:bg-[#38383A] flex items-center justify-center transition-colors"
           aria-label="Close schedule picker"
         >
           <X size={11} strokeWidth={2} className="text-[#636366]" />
@@ -171,7 +171,7 @@ export function ScheduleSendPicker({ onSchedule, onCancel, maxDelaySeconds }: Sc
       </div>
 
       {/* Divider */}
-      <div className="h-px bg-[#F2F2F7] mx-4" />
+      <div className="h-px bg-[#F2F2F7] dark:bg-[#38383A] mx-4" />
 
       {/* Custom picker */}
       <div className="px-4 py-3 space-y-2">
@@ -186,7 +186,7 @@ export function ScheduleSendPicker({ onSchedule, onCancel, maxDelaySeconds }: Sc
           min={toLocalDatetimeValue(minDate)}
           max={toLocalDatetimeValue(maxDate)}
           onChange={(e) => { setCustomValue(e.target.value); setError(''); }}
-          className="w-full px-3 py-2 text-[14px] text-[#1C1C1E] bg-[#F2F2F7] rounded-xl border border-transparent focus:border-[#007AFF] focus:bg-white focus:outline-none transition-colors"
+          className="w-full px-3 py-2 text-[14px] text-[#1C1C1E] bg-[#F2F2F7] rounded-xl border border-transparent focus:border-[#007AFF] focus:bg-white dark:focus:bg-[#1C1C1E] focus:outline-none transition-colors"
         />
 
         {error && (
