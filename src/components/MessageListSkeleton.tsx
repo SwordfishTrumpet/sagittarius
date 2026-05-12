@@ -1,6 +1,6 @@
 export function MessageListSkeleton() {
   return (
-    <div className="px-5 py-3.5 border-b border-[#E5E5E5] bg-white animate-pulse">
+    <div className="px-5 py-3.5 border-b border-[#E5E5E5] dark:border-[#38383A] bg-white dark:bg-[#1C1C1E] animate-pulse">
       <div className="flex justify-between items-baseline mb-1">
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <div className="w-[15px] h-[15px] bg-[#E5E5E5] rounded shrink-0" />

@@ -330,7 +330,7 @@ export function RecursiveSidebarItem({
               onBlur={handleSaveRename}
               className={`text-[14px] leading-none font-medium flex-1 min-w-0 px-1 rounded border-0 outline-none ${
                 active
-                  ? 'bg-white/20 text-white placeholder-white/60'
+                  ? 'bg-white/20 dark:bg-white/10 text-white dark:text-white placeholder-white/60'
                   : 'bg-white/10 text-[#1C1C1E] placeholder-[#1C1C1E]/40'
               }`}
               onClick={(e) => e.stopPropagation()}
@@ -351,7 +351,7 @@ export function RecursiveSidebarItem({
           <span
             className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ${
               active && !showDropInside
-                ? 'bg-white/20 text-white'
+                ? 'bg-white/20 dark:bg-white/10 text-white dark:text-white'
                 : 'bg-[#E5E5EA] text-[#8E8E93]'
             }`}
           >

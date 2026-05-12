@@ -93,7 +93,7 @@ export function VacationSettings() {
       </div>
 
       {/* Enable toggle card */}
-      <div className="bg-white rounded-2xl border border-[#E5E5EA] px-4 py-3 flex items-center justify-between">
+      <div className="bg-white dark:bg-[#1C1C1E] rounded-2xl border border-[#E5E5EA] dark:border-[#38383A] px-4 py-3 flex items-center justify-between">
         <div>
           <p className="text-[15px] font-medium text-[#1C1C1E]">Enable Vacation Response</p>
           <p className="text-[13px] text-[#8E8E93] mt-0.5">Auto-reply to incoming messages</p>
@@ -109,7 +109,7 @@ export function VacationSettings() {
       {isEnabled && (
         <div className="space-y-3">
           {/* Subject */}
-          <div className="bg-white rounded-2xl border border-[#E5E5EA] overflow-hidden">
+          <div className="bg-white dark:bg-[#1C1C1E] rounded-2xl border border-[#E5E5EA] dark:border-[#38383A] overflow-hidden">
             <label className="block px-4 pt-3 text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wide">
               Subject
             </label>
@@ -123,7 +123,7 @@ export function VacationSettings() {
           </div>
 
           {/* Body */}
-          <div className="bg-white rounded-2xl border border-[#E5E5EA] overflow-hidden">
+          <div className="bg-white dark:bg-[#1C1C1E] rounded-2xl border border-[#E5E5EA] dark:border-[#38383A] overflow-hidden">
             <label className="block px-4 pt-3 text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wide">
               Message
             </label>
@@ -137,7 +137,7 @@ export function VacationSettings() {
           </div>
 
           {/* Date range */}
-          <div className="bg-white rounded-2xl border border-[#E5E5EA] divide-y divide-[#E5E5EA] dark:divide-[#38383A]">
+          <div className="bg-white dark:bg-[#1C1C1E] rounded-2xl border border-[#E5E5EA] dark:border-[#38383A] divide-y divide-[#E5E5EA] dark:divide-[#38383A]">
             <div className="px-4 py-3 flex items-center justify-between gap-4">
               <label className="text-[15px] text-[#1C1C1E] shrink-0">Start Date</label>
               <input

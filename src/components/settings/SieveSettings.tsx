@@ -168,11 +168,11 @@ export function SieveSettings() {
           </p>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-[#E5E5EA] divide-y divide-[#E5E5EA] overflow-hidden">
+        <div className="bg-white dark:bg-[#1C1C1E] rounded-2xl border border-[#E5E5EA] dark:border-[#38383A] divide-y divide-[#E5E5EA] dark:divide-[#38383A] overflow-hidden">
           {scripts.map((script) => (
             <div
               key={script.id}
-              className="flex items-center justify-between px-4 py-3.5 hover:bg-[#F2F2F7]/50 dark:hover:bg-white/5 transition-colors group"
+              className="flex items-center justify-between px-4 py-3.5 hover:bg-[#F2F2F7]/50 dark:hover:bg-white/5 dark:hover:bg-white/5 transition-colors group"
             >
               {/* Name + status */}
               <div className="flex items-center gap-3 min-w-0">

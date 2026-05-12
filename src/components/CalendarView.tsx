@@ -144,7 +144,7 @@ function CalendarSidebar({
             className="w-3 h-3 rounded-full shrink-0"
             style={{ backgroundColor: cal.color || '#007AFF' }}
           />
-          <span className="text-[13px] text-[#1C1C1E] truncate">{cal.name}</span>
+          <span className="text-[13px] text-[#1C1C1E] dark:text-white truncate">{cal.name}</span>
         </label>
       ))}
     </div>
@@ -183,14 +183,14 @@ function EventItem({
         style={{ backgroundColor: calendar?.color || '#007AFF' }}
       />
       <div className="flex-1 min-w-0">
-        <p className="text-[14px] font-medium text-[#1C1C1E] truncate">{event.title}</p>
+        <p className="text-[14px] font-medium text-[#1C1C1E] dark:text-white truncate">{event.title}</p>
         <div className="flex items-center gap-3 mt-0.5">
-          <span className="text-[12px] text-[#8E8E93] flex items-center gap-1">
+          <span className="text-[12px] text-[#8E8E93] dark:text-[#A1A1A6] flex items-center gap-1">
             <Clock className="w-3 h-3" strokeWidth={1.5} />
             {event.isAllDay ? 'All day' : startTime}
           </span>
           {location && (
-            <span className="text-[12px] text-[#8E8E93] flex items-center gap-1 truncate">
+            <span className="text-[12px] text-[#8E8E93] dark:text-[#A1A1A6] flex items-center gap-1 truncate">
               <MapPin className="w-3 h-3" strokeWidth={1.5} />
               {location}
             </span>
@@ -251,7 +251,7 @@ function MonthView({
         {DAYS.map((day) => (
           <div
             key={day}
-            className="px-2 py-2 text-center text-[11px] font-semibold text-[#8E8E93] uppercase"
+            className="px-2 py-2 text-center text-[11px] font-semibold text-[#8E8E93] dark:text-[#A1A1A6] uppercase"
           >
             {day}
           </div>
@@ -321,7 +321,7 @@ function MonthView({
                   );
                 })}
                 {dayEvents.length > 3 && (
-                  <div className="text-[10px] text-[#8E8E93] px-1">
+                  <div className="text-[10px] text-[#8E8E93] dark:text-[#A1A1A6] px-1">
                     +{dayEvents.length - 3} more
                   </div>
                 )}
@@ -370,7 +370,7 @@ function ListView({
     return (
       <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
         <CalendarIcon className="w-12 h-12 text-[#C7C7CC] mb-3" strokeWidth={1} />
-        <p className="text-[15px] text-[#8E8E93]">No events to display</p>
+        <p className="text-[15px] text-[#8E8E93] dark:text-[#A1A1A6]">No events to display</p>
         <p className="text-[13px] text-[#C7C7CC] mt-1">
           Create an event or select different calendars
         </p>
@@ -382,7 +382,7 @@ function ListView({
     <div className="flex-1 overflow-auto p-4 space-y-4">
       {Object.entries(groupedEvents).map(([dateKey, dayEvents]) => (
         <div key={dateKey}>
-          <h3 className="text-[13px] font-semibold text-[#8E8E93] uppercase tracking-wide px-3 mb-2">
+          <h3 className="text-[13px] font-semibold text-[#8E8E93] dark:text-[#A1A1A6] uppercase tracking-wide px-3 mb-2">
             {new Date(dateKey).toLocaleDateString(undefined, {
               weekday: 'long',
               month: 'long',
@@ -477,7 +477,7 @@ function EventFormDialog({
     >
       <form onSubmit={handleSubmit} className="p-4 space-y-4">
         <div>
-          <label className="block text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wide mb-1">
+          <label className="block text-[11px] font-semibold text-[#8E8E93] dark:text-[#A1A1A6] uppercase tracking-wide mb-1">
             Title
           </label>
           <input
@@ -491,13 +491,13 @@ function EventFormDialog({
         </div>
 
         <div>
-          <label className="block text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wide mb-1">
+          <label className="block text-[11px] font-semibold text-[#8E8E93] dark:text-[#A1A1A6] uppercase tracking-wide mb-1">
             Calendar
           </label>
           <select
             value={form.calendarId}
             onChange={(e) => setForm({ ...form, calendarId: e.target.value })}
-            className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] dark:border-[#38383A] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007AFF] bg-white"
+            className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] dark:border-[#38383A] text-[15px] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#007AFF] dark:focus:ring-[#0A84FF] bg-white dark:bg-[#2C2C2E]"
             required
           >
             {calendars.map((cal) => (
@@ -516,14 +516,14 @@ function EventFormDialog({
             onChange={(e) => setForm({ ...form, isAllDay: e.target.checked })}
             className="w-4 h-4 rounded border-gray-300 dark:border-[#38383A] text-[#007AFF] focus:ring-[#007AFF]"
           />
-          <label htmlFor="isAllDay" className="text-[14px] text-[#1C1C1E]">
+          <label htmlFor="isAllDay" className="text-[14px] text-[#1C1C1E] dark:text-white">
             All-day event
           </label>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wide mb-1">
+            <label className="block text-[11px] font-semibold text-[#8E8E93] dark:text-[#A1A1A6] uppercase tracking-wide mb-1">
               Start
             </label>
             <input
@@ -535,7 +535,7 @@ function EventFormDialog({
             />
           </div>
           <div>
-            <label className="block text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wide mb-1">
+            <label className="block text-[11px] font-semibold text-[#8E8E93] dark:text-[#A1A1A6] uppercase tracking-wide mb-1">
               End
             </label>
             <input
@@ -549,7 +549,7 @@ function EventFormDialog({
         </div>
 
         <div>
-          <label className="block text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wide mb-1">
+          <label className="block text-[11px] font-semibold text-[#8E8E93] dark:text-[#A1A1A6] uppercase tracking-wide mb-1">
             Location
           </label>
           <input
@@ -562,7 +562,7 @@ function EventFormDialog({
         </div>
 
         <div>
-          <label className="block text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wide mb-1">
+          <label className="block text-[11px] font-semibold text-[#8E8E93] dark:text-[#A1A1A6] uppercase tracking-wide mb-1">
             Description
           </label>
           <textarea
@@ -589,7 +589,7 @@ function EventFormDialog({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-[14px] font-medium text-[#8E8E93] hover:bg-black/5 rounded-lg transition-colors"
+              className="px-4 py-2 text-[14px] font-medium text-[#8E8E93] dark:text-[#A1A1A6] hover:bg-black/5 rounded-lg transition-colors"
               disabled={isPending}
             >
               Cancel
@@ -738,8 +738,8 @@ export function CalendarView({ isOpen, onClose }: CalendarViewProps) {
       <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/30 backdrop-blur-sm">
         <div className="bg-white/95 dark:bg-[#1C1C1E]/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-[#E5E5E5] dark:border-[#38383A] max-w-md w-full mx-4 p-8 text-center">
           <AlertCircle className="w-12 h-12 text-[#FF9500] mx-auto mb-4" strokeWidth={1.5} />
-          <h2 className="text-[17px] font-bold text-[#1C1C1E] mb-2">Calendar Not Available</h2>
-          <p className="text-[14px] text-[#8E8E93] mb-6">
+          <h2 className="text-[17px] font-bold text-[#1C1C1E] dark:text-white mb-2">Calendar Not Available</h2>
+          <p className="text-[14px] text-[#8E8E93] dark:text-[#A1A1A6] mb-6">
             Your JMAP server does not support the Calendar capability (RFC 8984).
             Contact your server administrator for more information.
           </p>
@@ -761,34 +761,34 @@ export function CalendarView({ isOpen, onClose }: CalendarViewProps) {
       {/* Sidebar */}
       <aside className="w-64 bg-white/70 dark:bg-[#1C1C1E]/70 backdrop-blur-xl border-r border-[#E5E5E5] flex flex-col">
         <header className="px-4 py-4 border-b border-[#E5E5E5] flex items-center justify-between">
-          <h1 className="text-[17px] font-bold text-[#1C1C1E]">Calendar</h1>
+          <h1 className="text-[17px] font-bold text-[#1C1C1E] dark:text-white">Calendar</h1>
           <button
             onClick={onClose}
             className="p-1.5 hover:bg-black/5 rounded-lg transition-colors"
             aria-label="Close calendar"
           >
-            <X className="w-5 h-5 text-[#8E8E93]" strokeWidth={1.5} />
+            <X className="w-5 h-5 text-[#8E8E93] dark:text-[#A1A1A6]" strokeWidth={1.5} />
           </button>
         </header>
 
         {/* Today's events */}
         {todaysEvents.length > 0 && (
           <div className="px-4 py-3 border-b border-[#E5E5E5]">
-            <h2 className="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wide mb-2">
+            <h2 className="text-[11px] font-semibold text-[#8E8E93] dark:text-[#A1A1A6] uppercase tracking-wide mb-2">
               Today
             </h2>
             <div className="space-y-1">
               {todaysEvents.slice(0, 3).map((event) => (
                 <div
                   key={event.id}
-                  className="text-[12px] text-[#1C1C1E] truncate cursor-pointer hover:text-[#007AFF]"
+                  className="text-[12px] text-[#1C1C1E] dark:text-white truncate cursor-pointer hover:text-[#007AFF]"
                   onClick={() => handleEditEvent(event)}
                 >
                   {formatTime(event.start)} - {event.title}
                 </div>
               ))}
               {todaysEvents.length > 3 && (
-                <div className="text-[11px] text-[#8E8E93]">
+                <div className="text-[11px] text-[#8E8E93] dark:text-[#A1A1A6]">
                   +{todaysEvents.length - 3} more events
                 </div>
               )}
@@ -798,7 +798,7 @@ export function CalendarView({ isOpen, onClose }: CalendarViewProps) {
 
         {/* Calendars list */}
         <div className="flex-1 overflow-auto p-4">
-          <h2 className="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wide mb-2">
+          <h2 className="text-[11px] font-semibold text-[#8E8E93] dark:text-[#A1A1A6] uppercase tracking-wide mb-2">
             My Calendars
           </h2>
           <CalendarSidebar
@@ -832,17 +832,17 @@ export function CalendarView({ isOpen, onClose }: CalendarViewProps) {
                 className="p-2 hover:bg-black/5 rounded-lg transition-colors"
                 aria-label="Previous month"
               >
-                <ChevronLeft className="w-5 h-5 text-[#8E8E93]" strokeWidth={1.5} />
+                <ChevronLeft className="w-5 h-5 text-[#8E8E93] dark:text-[#A1A1A6]" strokeWidth={1.5} />
               </button>
               <button
                 onClick={() => navigateMonth(1)}
                 className="p-2 hover:bg-black/5 rounded-lg transition-colors"
                 aria-label="Next month"
               >
-                <ChevronRight className="w-5 h-5 text-[#8E8E93]" strokeWidth={1.5} />
+                <ChevronRight className="w-5 h-5 text-[#8E8E93] dark:text-[#A1A1A6]" strokeWidth={1.5} />
               </button>
             </div>
-            <h2 className="text-[20px] font-semibold text-[#1C1C1E]">
+            <h2 className="text-[20px] font-semibold text-[#1C1C1E] dark:text-white">
               {MONTHS[currentDate.getMonth()]} {currentDate.getFullYear()}
             </h2>
             <button
