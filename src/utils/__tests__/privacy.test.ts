@@ -81,7 +81,7 @@ describe('Privacy Utility — External Image Blocking', () => {
   });
 
   describe('resolveCidImages', () => {
-    it('should replace cid image sources with JMAP blob URLs', () => {
+    it('should replace cid image sources with transparent placeholder and store URL in data-cid-src', () => {
       const html = '<p>Hello</p><img src="cid:inline-1">';
       const email = {
         attachments: [{ cid: 'inline-1', blobId: 'blob-1', type: 'image/png', name: 'image.png' }],
@@ -89,8 +89,8 @@ describe('Privacy Utility — External Image Blocking', () => {
 
       const resolved = resolveCidImages(html, email, (blobId, type, name) => `https://mail.test/${blobId}/${type}/${name}`);
 
-      expect(resolved).toContain('src="https://mail.test/blob-1/image/png/image.png"');
-      expect(resolved).toContain('data-cid-src="inline-1"');
+      expect(resolved).toContain('src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"');
+      expect(resolved).toContain('data-cid-src="https://mail.test/blob-1/image/png/image.png"');
     });
 
     it('should resolve cid images from bodyStructure subparts', () => {
@@ -106,8 +106,8 @@ describe('Privacy Utility — External Image Blocking', () => {
 
       const resolved = resolveCidImages(html, email, (blobId) => `https://mail.test/${blobId}`);
 
-      expect(resolved).toContain('src="https://mail.test/blob-2"');
-      expect(resolved).toContain('data-cid-src="body-inline"');
+      expect(resolved).toContain('src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"');
+      expect(resolved).toContain('data-cid-src="https://mail.test/blob-2"');
     });
 
     it('should leave unknown cid references unchanged', () => {

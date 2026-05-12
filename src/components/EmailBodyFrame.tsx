@@ -292,7 +292,7 @@ export function EmailBodyFrame({ html, darkMode = false }: EmailBodyFrameProps) 
 
       const cidImages = Array.from(doc.querySelectorAll<HTMLImageElement>('img[data-cid-src]'))
       cidImages.forEach(img => {
-        const downloadUrl = img.getAttribute('src')
+        const downloadUrl = img.getAttribute('data-cid-src')
         if (!downloadUrl || downloadUrl.startsWith('blob:') || !isTrustedJmapDownloadUrl(downloadUrl)) return
 
         img.style.opacity = '0.5'

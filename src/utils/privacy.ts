@@ -196,7 +196,11 @@ export function resolveCidImages(
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
 
-  // Process images using DOM API instead of regex
+  // Process images using DOM API instead of regex.
+  // Store the download URL in data-cid-src and use a transparent placeholder
+  // for src. This prevents the browser from making an unauthenticated request
+  // (which would 401) before the iframe hydration code can fetch with auth.
+  const TRANSPARENT_PLACEHOLDER = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
   const images = doc.querySelectorAll('img[src^="cid:"]');
   images.forEach(img => {
     const src = img.getAttribute('src');
@@ -205,8 +209,8 @@ export function resolveCidImages(
     const info = cidMap.get(cid);
     if (info) {
       const url = getBlobUrl(info.blobId, info.type, info.name);
-      img.setAttribute('src', url);
-      img.setAttribute('data-cid-src', cid);
+      img.setAttribute('src', TRANSPARENT_PLACEHOLDER);
+      img.setAttribute('data-cid-src', url);
     }
   });
 

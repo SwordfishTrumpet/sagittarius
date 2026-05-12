@@ -145,7 +145,7 @@ describe('EmailReader', () => {
     expect(getBlobUrl).toHaveBeenCalledWith('blob-1', 'image/png', 'image.png')
     const html = screen.getByTestId('email-frame').getAttribute('data-html') || ''
     expect(html).toContain('https://mail.test/download/blob-1/image.png')
-    expect(html).toContain('data-cid-src="inline-1"')
+    expect(html).toContain('data-cid-src="https://mail.test/download/blob-1/image.png"')
   })
 
   it('shows a safe fallback for invalid dates', () => {
