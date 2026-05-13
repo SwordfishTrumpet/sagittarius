@@ -28,7 +28,7 @@ interface ParsedBodyPart extends EmailBodyPart {
 function renderHeaders(headers: { name: string; value: string }[] | undefined) {
   if (!headers || headers.length === 0) {
     return (
-      <p className="text-[13px] text-[#8E8E93] italic px-4 py-6 text-center">
+      <p className="text-[13px] text-icloud-text-secondary italic px-4 py-6 text-center">
         No headers available
       </p>
     );
@@ -40,9 +40,9 @@ function renderHeaders(headers: { name: string; value: string }[] | undefined) {
         {headers.map((h, i) => (
           <tr
             key={i}
-            className={i % 2 === 0 ? 'bg-white dark:bg-[#2C2C2E]' : 'bg-[#F9F9FB] dark:bg-[#1C1C1E]'}
+            className={i % 2 === 0 ? 'bg-icloud-card' : 'bg-[#F9F9FB] bg-icloud-bg-primary'}
           >
-            <td className="px-3 sm:px-4 py-2 font-semibold text-[#1C1C1E] align-top whitespace-nowrap w-28 sm:w-52 border-r border-[#E5E5EA] dark:border-[#38383A]">
+            <td className="px-3 sm:px-4 py-2 font-semibold text-icloud-text-primary align-top whitespace-nowrap w-28 sm:w-52 border-r border-icloud-border">
               {h.name}
             </td>
             <td className="px-4 py-2 text-[#3A3A3C] break-all font-mono">
@@ -89,12 +89,12 @@ function MimeNode({
         onClick={hasChildren ? handleToggle : undefined}
         onKeyDown={hasChildren ? handleKeyDown : undefined}
         className={`flex items-start gap-1 py-1 px-2 rounded ${
-          hasChildren ? 'cursor-pointer hover:bg-[#F2F2F7] dark:hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-[#007AFF]/50' : ''
+          hasChildren ? 'cursor-pointer hover:bg-icloud-bg-layer1 dark:hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-icloud-accent/50' : ''
         }`}
       >
         {hasChildren && (
           <ChevronRight
-            className={`w-3.5 h-3.5 text-[#8E8E93] mt-0.5 transition-transform ${
+            className={`w-3.5 h-3.5 text-icloud-text-secondary mt-0.5 transition-transform ${
               open ? 'rotate-90' : ''
             }`}
             strokeWidth={1.5}
@@ -104,11 +104,11 @@ function MimeNode({
           <span className="w-3.5 shrink-0" />
         )}
         <div className="min-w-0">
-          <span className="text-[#007AFF] font-semibold">
+          <span className="text-icloud-accent font-semibold">
             {part.type ?? 'unknown'}
           </span>
           {part.charset && (
-            <span className="text-[#8E8E93] ml-2">charset={part.charset}</span>
+            <span className="text-icloud-text-secondary ml-2">charset={part.charset}</span>
           )}
           {part.name && (
             <span className="text-[#636366] ml-2">&quot;{part.name}&quot;</span>
@@ -119,7 +119,7 @@ function MimeNode({
             </span>
           )}
           {part.blobId && (
-            <span className="text-[#34C759] ml-2 text-[11px]">
+            <span className="text-icloud-green ml-2 text-[11px]">
               blob:{part.blobId.slice(0, 12)}…
             </span>
           )}
@@ -209,23 +209,23 @@ export function RawEmailViewer({ blobId, onClose }: RawEmailViewerProps) {
       }}
     >
       {/* Modal */}
-      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="raw-email-title" tabIndex={-1} className="bg-white dark:bg-[#1C1C1E] sm:rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col overflow-hidden h-full sm:h-auto"
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="raw-email-title" tabIndex={-1} className="bg-icloud-bg-layer2 sm:rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col overflow-hidden h-full sm:h-auto"
         style={{ maxHeight: typeof window !== 'undefined' && window.innerWidth < 640 ? '100%' : 'calc(100vh - 80px)' }}
       >
         {/* Title bar */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[#E5E5EA] dark:border-[#38383A] bg-[#F2F2F7]/60 dark:bg-[#2C2C2E] shrink-0">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-icloud-border bg-icloud-bg-layer1/60 bg-icloud-card shrink-0">
           <div>
-            <h2 id="raw-email-title" className="text-[15px] font-semibold text-[#1C1C1E]">
+            <h2 id="raw-email-title" className="text-[15px] font-semibold text-icloud-text-primary">
               Raw Email
             </h2>
-            <p className="text-[11px] text-[#8E8E93] font-mono mt-0.5 truncate max-w-[60vw] sm:max-w-xs">
+            <p className="text-[11px] text-icloud-text-secondary font-mono mt-0.5 truncate max-w-[60vw] sm:max-w-xs">
               {blobId}
             </p>
           </div>
           <button
             ref={closeButtonRef}
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-[#E5E5EA] dark:bg-[#2C2C2E] hover:bg-[#D1D1D6] dark:hover:bg-[#38383A] dark:hover:bg-[#38383A] flex items-center justify-center transition-colors"
+            className="w-8 h-8 rounded-full bg-icloud-border bg-icloud-card hover:bg-icloud-divider   flex items-center justify-center transition-colors"
             aria-label="Close"
           >
             <X size={14} strokeWidth={2} className="text-[#636366]" />
@@ -233,7 +233,7 @@ export function RawEmailViewer({ blobId, onClose }: RawEmailViewerProps) {
         </div>
 
         {/* Tab bar */}
-        <div className="flex items-center gap-1 px-4 py-2 border-b border-[#E5E5EA] dark:border-[#38383A] bg-white dark:bg-[#1C1C1E] shrink-0 overflow-x-auto" role="tablist" aria-label="Raw email sections">
+        <div className="flex items-center gap-1 px-4 py-2 border-b border-icloud-border bg-icloud-bg-layer2 shrink-0 overflow-x-auto" role="tablist" aria-label="Raw email sections">
           {TABS.map((tab, index) => (
             <button
               key={tab.id}
@@ -246,8 +246,8 @@ export function RawEmailViewer({ blobId, onClose }: RawEmailViewerProps) {
               onKeyDown={(event) => handleTabKeyDown(event, index)}
               className={`px-3.5 py-1.5 text-[13px] font-medium rounded-lg transition-colors ${
                 activeTab === tab.id
-                  ? 'bg-[#007AFF] text-white shadow-sm'
-                  : 'text-[#636366] hover:bg-[#F2F2F7] dark:hover:bg-white/5'
+                  ? 'bg-icloud-accent text-white shadow-sm'
+                  : 'text-[#636366] hover:bg-icloud-bg-layer1 dark:hover:bg-white/5'
               }`}
             >
               {tab.label}
@@ -256,20 +256,20 @@ export function RawEmailViewer({ blobId, onClose }: RawEmailViewerProps) {
         </div>
 
         {/* Content area */}
-        <div className="flex-1 overflow-y-auto bg-white dark:bg-[#1C1C1E]" id={`raw-email-panel-${activeTab}`} role="tabpanel" aria-labelledby={`raw-email-tab-${activeTab}`}>
+        <div className="flex-1 overflow-y-auto bg-icloud-bg-layer2" id={`raw-email-panel-${activeTab}`} role="tabpanel" aria-labelledby={`raw-email-tab-${activeTab}`}>
           {isLoading && (
             <div className="flex items-center justify-center h-full" role="status" aria-live="polite">
-              <div className="w-6 h-6 border-2 border-[#007AFF] border-t-transparent rounded-full animate-spin" />
+              <div className="w-6 h-6 border-2 border-icloud-accent border-t-transparent rounded-full animate-spin" />
               <span className="sr-only">Loading raw email</span>
             </div>
           )}
 
           {!isLoading && error && (
             <div className="flex flex-col items-center justify-center h-full gap-2 text-center px-8" role="alert">
-              <p className="text-[15px] font-medium text-[#FF3B30]">
+              <p className="text-[15px] font-medium text-icloud-red">
                 Failed to parse message
               </p>
-              <p className="text-[13px] text-[#8E8E93]">
+              <p className="text-[13px] text-icloud-text-secondary">
                 {(error as Error).message}
               </p>
             </div>
@@ -284,11 +284,11 @@ export function RawEmailViewer({ blobId, onClose }: RawEmailViewerProps) {
               {activeTab === 'text' && (
                 <div className="p-4">
                   {textBody ? (
-                    <pre className="text-[13px] font-mono text-[#1C1C1E] whitespace-pre-wrap break-words leading-relaxed">
+                    <pre className="text-[13px] font-mono text-icloud-text-primary whitespace-pre-wrap break-words leading-relaxed">
                       {textBody}
                     </pre>
                   ) : (
-                    <p className="text-[13px] text-[#8E8E93] italic text-center py-10">
+                    <p className="text-[13px] text-icloud-text-secondary italic text-center py-10">
                       No text body available
                     </p>
                   )}
@@ -299,11 +299,11 @@ export function RawEmailViewer({ blobId, onClose }: RawEmailViewerProps) {
               {activeTab === 'html' && (
                 <div className="p-4">
                   {htmlSource ? (
-                    <pre className="text-[13px] font-mono text-[#1C1C1E] whitespace-pre-wrap break-words leading-relaxed">
+                    <pre className="text-[13px] font-mono text-icloud-text-primary whitespace-pre-wrap break-words leading-relaxed">
                       {htmlSource}
                     </pre>
                   ) : (
-                    <p className="text-[13px] text-[#8E8E93] italic text-center py-10">
+                    <p className="text-[13px] text-icloud-text-secondary italic text-center py-10">
                       No HTML body available
                     </p>
                   )}
@@ -329,7 +329,7 @@ export function RawEmailViewer({ blobId, onClose }: RawEmailViewerProps) {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-[13px] text-[#8E8E93] italic text-center py-10">
+                    <p className="text-[13px] text-icloud-text-secondary italic text-center py-10">
                       No MIME structure available
                     </p>
                   )}
@@ -339,7 +339,7 @@ export function RawEmailViewer({ blobId, onClose }: RawEmailViewerProps) {
           )}
 
           {!isLoading && !error && !email && (
-            <p className="text-[13px] text-[#8E8E93] italic text-center py-10">
+            <p className="text-[13px] text-icloud-text-secondary italic text-center py-10">
               No data returned for this blob.
             </p>
           )}

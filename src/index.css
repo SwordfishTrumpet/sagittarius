@@ -2,13 +2,106 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── iCloud Mail Design System CSS Variables ── */
+
 :root {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  color-scheme: light dark;
+
+  /* Typography */
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* ── Light Mode ── */
+  --icloud-bg-primary: #ffffff;
+  --icloud-bg-sidebar: #fbfbfd;
+  --icloud-bg-layer1: #f2f2f7;
+  --icloud-bg-layer2: #ffffff;
+  --icloud-card: #ffffff;
+
+  /* Text (Apple label hierarchy) */
+  --icloud-text-primary: rgba(0, 0, 0, 0.88);
+  --icloud-text-secondary: rgba(0, 0, 0, 0.56);
+  --icloud-text-tertiary: rgba(0, 0, 0, 0.48);
+
+  /* Accent — Mail app blue */
+  --icloud-accent: #0071e3;
+  --icloud-accent-hover: #0056cc;
+
+  /* Borders & dividers */
+  --icloud-border: #d1d1d6;
+  --icloud-divider: #d1d1d6;
+
+  /* Semantic */
+  --icloud-red: #e30000;
+  --icloud-orange: #ff9500;
+  --icloud-yellow: #ffcc00;
+  --icloud-green: #03a10e;
+
+  /* Grayscale */
+  --icloud-gray1: hsl(240, 2.3%, 56.7%);
+  --icloud-gray2: #aeaeb2;
+  --icloud-gray3: hsl(240, 4.7%, 79.0%);
+  --icloud-gray4: hsl(240, 5.7%, 82.9%);
+  --icloud-gray5: hsl(240, 10.6%, 90.8%);
+  --icloud-gray6: #f2f2f7;
+
+  /* Shadow */
+  --icloud-shadow-color: rgba(0, 0, 0, 0.16);
+  --icloud-shadow-standard: 0 11px 34px rgba(0, 0, 0, 0.16);
+
+  /* Scrollbar */
+  --icloud-scrollbar-thumb: #c1c1c1;
+  --icloud-scrollbar-thumb-hover: #a8a8a8;
+
+  /* Selection */
+  --icloud-selection-bg: #0071e3;
+  --icloud-selection-text: #ffffff;
 }
 
+/* ── Dark Mode ── */
+.dark {
+  --icloud-bg-primary: #1c1c1e;
+  --icloud-bg-sidebar: #202023;
+  --icloud-bg-layer1: #323236;
+  --icloud-bg-layer2: #434349;
+  --icloud-card: #2c2c2e;
+
+  --icloud-text-primary: rgba(255, 255, 255, 0.98);
+  --icloud-text-secondary: rgba(255, 255, 255, 0.66);
+  --icloud-text-tertiary: rgba(255, 255, 255, 0.50);
+
+  --icloud-accent: #009aff;
+  --icloud-accent-hover: #007ae3;
+
+  --icloud-border: #343436;
+  --icloud-divider: #343436;
+
+  --icloud-red: #ff2d55;
+  --icloud-orange: #ff9f0a;
+  --icloud-yellow: #ffd60a;
+  --icloud-green: #32d158;
+
+  --icloud-gray1: hsl(240, 2.3%, 56.7%);
+  --icloud-gray2: #636366;
+  --icloud-gray3: hsl(240, 1.4%, 29.0%);
+  --icloud-gray4: hsl(240, 1.6%, 23.9%);
+  --icloud-gray5: hsl(240, 1.9%, 20.8%);
+  --icloud-gray6: #2c2c2e;
+
+  --icloud-shadow-color: rgba(0, 0, 0, 0.65);
+  --icloud-shadow-standard: 0 11px 34px rgba(0, 0, 0, 0.65);
+
+  --icloud-scrollbar-thumb: #48484a;
+  --icloud-scrollbar-thumb-hover: #636366;
+
+  --icloud-selection-bg: #009aff;
+  --icloud-selection-text: #ffffff;
+}
+
+/* ── Base Styles ── */
+
 body {
-  @apply bg-[#F2F2F7] text-[#1C1C1E] dark:bg-black dark:text-white overflow-hidden;
+  @apply bg-icloud-bg-primary text-icloud-text-primary overflow-hidden antialiased;
   height: 100vh;
   width: 100vw;
   /* Safe area insets for mobile devices */
@@ -17,14 +110,6 @@ body {
 
 #root {
   height: 100%;
-}
-
-.glass {
-  @apply bg-white/70 backdrop-blur-md dark:bg-[#1C1C1E]/70;
-}
-
-.sidebar-item-active {
-  @apply bg-[#007AFF] text-white dark:bg-[#0A84FF];
 }
 
 /* Custom scrollbar to match macOS */
@@ -38,49 +123,40 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #C1C1C1;
+  background: var(--icloud-scrollbar-thumb);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #A8A8A8;
-}
-
-/* Dark mode scrollbar */
-.dark ::-webkit-scrollbar-thumb {
-  background: #48484A;
-}
-
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: #636366;
+  background: var(--icloud-scrollbar-thumb-hover);
 }
 
 /* Selection colors */
 ::selection {
-  background: #007AFF;
-  color: white;
+  background: var(--icloud-selection-bg);
+  color: var(--icloud-selection-text);
 }
 
-.dark ::selection {
-  background: #0A84FF;
-  color: white;
+/* Sidebar active item — accent background, white text */
+.sidebar-item-active {
+  @apply bg-icloud-accent text-white;
 }
 
 /* Quoted content in composer */
 .ProseMirror blockquote {
   margin: 0;
   padding: 0 0 0 12px;
-  border-left: 2px solid #007AFF;
-  color: #3A3A3C;
+  border-left: 2px solid var(--icloud-accent);
+  color: #3a3a3c;
 }
 
 .dark .ProseMirror blockquote {
-  border-left-color: #0A84FF;
-  color: #A1A1A6;
+  border-left-color: var(--icloud-accent);
+  color: #a1a1a6;
 }
 
 .ProseMirror blockquote blockquote {
-  border-left-color: #8E8E93;
+  border-left-color: #8e8e93;
 }
 
 .dark .ProseMirror blockquote blockquote {
@@ -88,11 +164,11 @@ body {
 }
 
 .ProseMirror blockquote blockquote blockquote {
-  border-left-color: #C7C7CC;
+  border-left-color: #c7c7cc;
 }
 
 .dark .ProseMirror blockquote blockquote blockquote {
-  border-left-color: #48484A;
+  border-left-color: #48484a;
 }
 
 /* Resize handle styles */
@@ -118,23 +194,15 @@ body {
 }
 
 .resize-handle:hover .resize-handle-line {
-  background: #D1D1D6;
-}
-
-.dark .resize-handle:hover .resize-handle-line {
-  background: #48484A;
+  background: var(--icloud-divider);
 }
 
 .resize-handle[data-dragging] .resize-handle-line {
-  background: #007AFF;
+  background: var(--icloud-accent);
   width: 2px;
 }
 
-.dark .resize-handle[data-dragging] .resize-handle-line {
-  background: #0A84FF;
-}
-
-/* Monospace font override — applied to all monospace elements and Tailwind font-mono class */
+/* Monospace font override */
 .font-mono,
 code, pre, samp, kbd {
   font-family: var(--font-mono) !important;

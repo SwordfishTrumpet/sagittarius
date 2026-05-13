@@ -259,10 +259,15 @@ export function Sidebar({ selectedMailboxId, onSelectMailbox }: SidebarProps) {
 
 | Token | Value | Usage |
 |-------|-------|-------|
-| `bg-apple-blue` | `#007AFF` | Primary buttons, links |
-| `bg-apple-gray` | `#F2F2F7` | Sidebar background |
-| `text-apple-blue` | `#007AFF` | Active states |
-| `border-apple-gray` | `#E5E5EA` | Borders, dividers |
+| `bg-icloud-accent` / `text-icloud-accent` | `#0071e3` / `#009aff` (dark) | Primary buttons, links, active states |
+| `bg-icloud-bg-sidebar` | `#fbfbfd` / `#202023` (dark) | Sidebar background |
+| `bg-icloud-bg-layer1` | `#f2f2f7` / `#323236` (dark) | Message list background |
+| `bg-icloud-bg-layer2` | `#ffffff` / `#434349` (dark) | Reading pane, cards |
+| `border-icloud-border` | `#d1d1d6` / `#343436` (dark) | Borders, dividers |
+| `text-icloud-text-primary` | `rgba(0,0,0,0.88)` / `rgba(255,255,255,0.98)` (dark) | Primary text |
+| `text-icloud-text-secondary` | `rgba(0,0,0,0.56)` / `rgba(255,255,255,0.66)` (dark) | Secondary text |
+
+All colors auto-switch between light/dark via CSS custom properties. See `src/index.css` for full variable definitions.
 
 ### Icons
 

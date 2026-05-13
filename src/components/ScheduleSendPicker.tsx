@@ -125,21 +125,21 @@ export function ScheduleSendPicker({ onSchedule, onCancel, maxDelaySeconds }: Sc
   return (
     <div
       ref={containerRef}
-      className="bg-white dark:bg-[#1C1C1E] rounded-xl shadow-2xl border border-[#E5E5EA] dark:border-[#38383A] w-[300px] overflow-hidden"
+      className="bg-icloud-bg-layer2 rounded-xl shadow-2xl border border-icloud-border w-[300px] overflow-hidden"
       role="dialog"
       aria-label="Schedule send"
       aria-modal="true"
       tabIndex={-1}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[#F2F2F7] dark:border-[#38383A]">
-        <div className="flex items-center gap-2 text-[#1C1C1E] dark:text-white">
-          <Clock size={14} strokeWidth={1.5} className="text-[#8E8E93] dark:text-[#A1A1A6]" />
+      <div className="flex items-center justify-between px-4 py-3 border-b border-icloud-border">
+        <div className="flex items-center gap-2 text-icloud-text-primary">
+          <Clock size={14} strokeWidth={1.5} className="text-icloud-text-secondary " />
           <span className="text-[14px] font-semibold">Schedule Send</span>
         </div>
         <button
           onClick={onCancel}
-          className="w-6 h-6 rounded-full bg-[#E5E5EA] dark:bg-[#2C2C2E] hover:bg-[#D1D1D6] dark:hover:bg-[#38383A] dark:hover:bg-[#38383A] flex items-center justify-center transition-colors"
+          className="w-6 h-6 rounded-full bg-icloud-border bg-icloud-card hover:bg-icloud-divider   flex items-center justify-center transition-colors"
           aria-label="Close schedule picker"
         >
           <X size={11} strokeWidth={2} className="text-[#636366]" />
@@ -156,11 +156,11 @@ export function ScheduleSendPicker({ onSchedule, onCancel, maxDelaySeconds }: Sc
               key={opt.label}
               disabled={isDisabled}
               onClick={() => handleQuick(date)}
-              className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-[#F2F2F7] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-icloud-bg-layer1 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               <div className="text-left">
-                <p className="text-[14px] font-medium text-[#1C1C1E] dark:text-white">{opt.label}</p>
-                <p className="text-[12px] text-[#8E8E93] dark:text-[#A1A1A6]">
+                <p className="text-[14px] font-medium text-icloud-text-primary">{opt.label}</p>
+                <p className="text-[12px] text-icloud-text-secondary ">
                   {typeof opt.sublabel === 'function' ? opt.sublabel() : opt.sublabel}
                 </p>
               </div>
@@ -171,11 +171,11 @@ export function ScheduleSendPicker({ onSchedule, onCancel, maxDelaySeconds }: Sc
       </div>
 
       {/* Divider */}
-      <div className="h-px bg-[#F2F2F7] dark:bg-[#38383A] mx-4" />
+      <div className="h-px bg-icloud-bg-layer1  mx-4" />
 
       {/* Custom picker */}
       <div className="px-4 py-3 space-y-2">
-        <label className="flex items-center gap-1.5 text-[11px] font-semibold text-[#8E8E93] dark:text-[#A1A1A6] uppercase tracking-wide">
+        <label className="flex items-center gap-1.5 text-[11px] font-semibold text-icloud-text-secondary  uppercase tracking-wide">
           <Calendar size={11} strokeWidth={1.5} />
           Custom Date &amp; Time
         </label>
@@ -186,17 +186,17 @@ export function ScheduleSendPicker({ onSchedule, onCancel, maxDelaySeconds }: Sc
           min={toLocalDatetimeValue(minDate)}
           max={toLocalDatetimeValue(maxDate)}
           onChange={(e) => { setCustomValue(e.target.value); setError(''); }}
-          className="w-full px-3 py-2 text-[14px] text-[#1C1C1E] dark:text-white bg-[#F2F2F7] dark:bg-[#2C2C2E] rounded-xl border border-transparent focus:border-[#007AFF] dark:focus:border-[#0A84FF] focus:bg-white dark:focus:bg-[#1C1C1E] focus:outline-none transition-colors"
+          className="w-full px-3 py-2 text-[14px] text-icloud-text-primary bg-icloud-bg-layer1 rounded-xl border border-transparent focus:border-icloud-accent dark:focus:border-icloud-accent focus:bg-white dark:focus:bg-icloud-bg-primary focus:outline-none transition-colors"
         />
 
         {error && (
-          <p role="alert" className="text-[12px] text-[#FF3B30]">{error}</p>
+          <p role="alert" className="text-[12px] text-icloud-red">{error}</p>
         )}
 
         <button
           onClick={handleCustom}
           disabled={!customValue}
-          className="w-full py-2 rounded-xl bg-[#007AFF] hover:bg-[#0066CC] disabled:opacity-40 disabled:cursor-not-allowed text-white text-[14px] font-medium transition-colors"
+          className="w-full py-2 rounded-xl bg-icloud-accent hover:bg-icloud-accent-hover disabled:opacity-40 disabled:cursor-not-allowed text-white text-[14px] font-medium transition-colors"
         >
           Schedule
         </button>

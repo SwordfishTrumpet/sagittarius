@@ -47,12 +47,12 @@ export function IOSToggle({
       role="switch"
       aria-checked={checked}
       aria-label={ariaLabel || label}
-      className={`relative w-[51px] h-[31px] rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#007AFF]/50 ${
-        checked ? 'bg-[#34C759]' : 'bg-[#E5E5EA]'
+      className={`relative w-[51px] h-[31px] rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-icloud-accent/50 ${
+        checked ? 'bg-icloud-green' : 'bg-icloud-border'
       } ${className}`}
     >
       <span
-        className={`absolute left-0 top-[2px] w-[27px] h-[27px] bg-white dark:bg-[#E5E5E5] rounded-full shadow-sm transition-transform duration-200 ${
+        className={`absolute left-0 top-[2px] w-[27px] h-[27px] bg-white dark:bg-icloud-border rounded-full shadow-sm transition-transform duration-200 ${
           checked ? 'translate-x-[22px]' : 'translate-x-[2px]'
         }`}
       />

@@ -15,11 +15,11 @@ export function SearchFilterPills({ pills, onRemove }: SearchFilterPillsProps) {
   if (pills.length === 0) return null;
 
   return (
-    <div aria-label="Active search filters" className="flex flex-wrap gap-2 px-4 py-2 bg-[#F2F2F7]/50 dark:bg-[#1C1C1E]/50 border-b border-[#E5E5E5] dark:border-[#38383A] animate-in fade-in duration-200">
+    <div aria-label="Active search filters" className="flex flex-wrap gap-2 px-4 py-2 bg-icloud-bg-layer1/50 bg-icloud-bg-primary/50 border-b border-icloud-border animate-in fade-in duration-200">
       {pills.map((pill) => (
         <div
           key={pill.id}
-          className="inline-flex items-center gap-2 bg-[#007AFF]/10 text-[#007AFF] px-3 py-1 rounded-full text-[12px] font-medium border border-[#007AFF]/20 hover:bg-[#007AFF]/15 transition-colors"
+          className="inline-flex items-center gap-2 bg-icloud-accent/10 text-icloud-accent px-3 py-1 rounded-full text-[12px] font-medium border border-icloud-accent/20 hover:bg-icloud-accent/15 transition-colors"
         >
           <span className="truncate max-w-[150px]">{pill.label}</span>
           <button

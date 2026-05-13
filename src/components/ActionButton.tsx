@@ -13,7 +13,7 @@ export function ActionButton({ icon, label, disabled = false, pressed, onClick }
       aria-label={label}
       aria-pressed={pressed}
       aria-disabled={disabled}
-      className="flex flex-col items-center justify-center gap-1 min-w-[44px] min-h-[44px] text-[#007AFF] dark:text-[#0A84FF] hover:opacity-70 disabled:opacity-20 disabled:grayscale transition-all focus:outline-none focus:ring-2 focus:ring-[#007AFF]/50 dark:focus:ring-[#0A84FF]/50 rounded-md" 
+      className="flex flex-col items-center justify-center gap-1 min-w-[44px] min-h-[44px] text-icloud-accent hover:opacity-70 disabled:opacity-20 disabled:grayscale transition-all focus:outline-none focus:ring-2 focus:ring-icloud-accent/50 focus:ring-icloud-accent/50 rounded-md" 
       disabled={disabled}
     >
       <span aria-hidden="true">{icon}</span>

@@ -22,7 +22,7 @@ export function QuotaBar({ used, total }: QuotaBarProps) {
     <div className="px-3 py-2 space-y-1.5">
       {/* Track */}
       <div
-        className="h-[3px] w-full rounded-full bg-[#E5E5EA] dark:bg-[#38383A] overflow-hidden"
+        className="h-[3px] w-full rounded-full bg-icloud-border  overflow-hidden"
         role="progressbar"
         aria-label={`Storage quota: ${formatBytes(used)} of ${formatBytes(total)} used`}
         aria-valuemin={0}
@@ -33,18 +33,18 @@ export function QuotaBar({ used, total }: QuotaBarProps) {
           className="h-full rounded-full transition-all duration-500"
           style={{
             width: `${pct}%`,
-            backgroundColor: critical ? '#FF3B30' : '#007AFF',
+            backgroundColor: critical ? 'var(--icloud-red)' : 'var(--icloud-accent)',
           }}
         />
       </div>
 
       {/* Label */}
-      <p className="text-[10px] text-[#6C6C70] leading-none">
+      <p className="text-[10px]  leading-none">
         {formatBytes(used)}{' '}
-        <span className="text-[#6C6C70]">of</span>{' '}
+        <span className="">of</span>{' '}
         {formatBytes(total)} used
         {critical && (
-          <span className="ml-1 text-[#FF3B30] font-medium">— Almost full</span>
+          <span className="ml-1 text-icloud-red font-medium">— Almost full</span>
         )}
       </p>
     </div>

@@ -70,14 +70,14 @@ describe('IOSToggle', () => {
     const { container } = render(<IOSToggle checked={true} onChange={vi.fn()} />);
 
     const switchButton = container.firstChild as HTMLElement;
-    expect(switchButton.className).toContain('bg-[#34C759]');
+    expect(switchButton.className).toContain('bg-icloud-green');
   });
 
   it('applies unchecked styling', () => {
     const { container } = render(<IOSToggle checked={false} onChange={vi.fn()} />);
 
     const switchButton = container.firstChild as HTMLElement;
-    expect(switchButton.className).toContain('bg-[#E5E5EA]');
+    expect(switchButton.className).toContain('bg-icloud-border');
   });
 
   it('applies custom className', () => {

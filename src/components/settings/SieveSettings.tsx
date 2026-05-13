@@ -42,10 +42,10 @@ export function SieveSettings() {
   if (scripts === null) {
     return (
       <div className="p-6">
-        <h2 className="text-[17px] font-semibold text-[#1C1C1E] mb-4">Filters</h2>
-        <div className="bg-[#F2F2F7] dark:bg-[#1C1C1E]/50 rounded-2xl px-5 py-8 text-center">
+        <h2 className="text-[17px] font-semibold text-icloud-text-primary mb-4">Filters</h2>
+        <div className="bg-icloud-bg-layer1 bg-icloud-bg-primary/50 rounded-2xl px-5 py-8 text-center">
           <Filter size={32} strokeWidth={1.5} className="mx-auto mb-3 text-[#C7C7CC] dark:text-[#636366]" />
-          <p className="text-[15px] text-[#8E8E93] dark:text-[#A1A1A6]">Sieve filters are not supported</p>
+          <p className="text-[15px] text-icloud-text-secondary ">Sieve filters are not supported</p>
           <p className="text-[13px] text-[#C7C7CC] mt-1">
             Your server does not advertise the JMAP Sieve capability.
           </p>
@@ -57,7 +57,7 @@ export function SieveSettings() {
   if (isLoading) {
     return (
       <div className="p-6 flex items-center justify-center py-16">
-        <div className="w-6 h-6 border-2 border-[#007AFF] border-t-transparent rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-icloud-accent border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -65,9 +65,9 @@ export function SieveSettings() {
   if (error) {
     return (
       <div className="p-6">
-        <div className="bg-[#FF3B30]/5 border border-[#FF3B30]/20 rounded-xl px-4 py-3 flex items-center gap-3">
-          <AlertCircle className="w-5 h-5 text-[#FF3B30] shrink-0" strokeWidth={1.5} />
-          <p className="text-[13px] text-[#FF3B30]">Failed to load filters</p>
+        <div className="bg-icloud-red/5 border border-[icloud-red]/20 rounded-xl px-4 py-3 flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 text-icloud-red shrink-0" strokeWidth={1.5} />
+          <p className="text-[13px] text-icloud-red">Failed to load filters</p>
         </div>
       </div>
     );
@@ -135,11 +135,11 @@ export function SieveSettings() {
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-5">
-        <h2 className="text-[17px] font-semibold text-[#1C1C1E]">Filters</h2>
+        <h2 className="text-[17px] font-semibold text-icloud-text-primary">Filters</h2>
         {editingId === null && (
           <button
             onClick={() => setEditingId('new')}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#007AFF] text-white text-[13px] font-semibold rounded-xl hover:bg-[#0051D5] transition-colors shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-icloud-accent text-white text-[13px] font-semibold rounded-xl hover:bg-[#0051D5] transition-colors shadow-sm"
           >
             <Plus className="w-3.5 h-3.5" strokeWidth={2.5} />
             Create Rule
@@ -160,32 +160,32 @@ export function SieveSettings() {
 
       {/* Script list */}
       {!scripts || scripts.length === 0 ? (
-        <div className="bg-[#F2F2F7] rounded-2xl px-5 py-10 text-center">
+        <div className="bg-icloud-bg-layer1 rounded-2xl px-5 py-10 text-center">
           <Filter size={32} strokeWidth={1.5} className="mx-auto mb-3 text-[#C7C7CC]" />
-          <p className="text-[15px] text-[#8E8E93] font-medium">No filter rules yet</p>
+          <p className="text-[15px] text-icloud-text-secondary font-medium">No filter rules yet</p>
           <p className="text-[13px] text-[#C7C7CC] mt-1">
             Create a rule to automatically sort, flag, or redirect messages.
           </p>
         </div>
       ) : (
-        <div className="bg-white dark:bg-[#1C1C1E] rounded-2xl border border-[#E5E5EA] dark:border-[#38383A] divide-y divide-[#E5E5EA] dark:divide-[#38383A] overflow-hidden">
+        <div className="bg-icloud-bg-layer2 rounded-2xl border border-icloud-border divide-y divide-[#E5E5EA] divide-icloud-border overflow-hidden">
           {scripts.map((script) => (
             <div
               key={script.id}
-              className="flex items-center justify-between px-4 py-3.5 hover:bg-[#F2F2F7]/50 dark:hover:bg-white/5 dark:hover:bg-white/5 transition-colors group"
+              className="flex items-center justify-between px-4 py-3.5 hover:bg-icloud-bg-layer1/50 dark:hover:bg-white/5 dark:hover:bg-white/5 transition-colors group"
             >
               {/* Name + status */}
               <div className="flex items-center gap-3 min-w-0">
                 <div
                   className={`w-2 h-2 rounded-full shrink-0 ${
-                    script.isActive ? 'bg-[#34C759]' : 'bg-[#C7C7CC]'
+                    script.isActive ? 'bg-icloud-green' : 'bg-[#C7C7CC]'
                   }`}
                 />
                 <div className="min-w-0">
-                  <p className="text-[14px] font-medium text-[#1C1C1E] truncate">
+                  <p className="text-[14px] font-medium text-icloud-text-primary truncate">
                     {script.name}
                   </p>
-                  <p className="text-[12px] text-[#8E8E93]">
+                  <p className="text-[12px] text-icloud-text-secondary">
                     {script.isActive ? 'Active' : 'Inactive'}
                   </p>
                 </div>
@@ -198,18 +198,18 @@ export function SieveSettings() {
                   onClick={() =>
                     handleToggleActive(script.id, script.name, script.isActive)
                   }
-                  className="p-2 rounded-lg hover:bg-[#007AFF]/10 transition-colors"
+                  className="p-2 rounded-lg hover:bg-icloud-accent/10 transition-colors"
                   title={script.isActive ? 'Deactivate' : 'Activate'}
                   aria-label={script.isActive ? `Deactivate rule ${script.name}` : `Activate rule ${script.name}`}
                 >
                   {script.isActive ? (
                     <ToggleRight
-                      className="w-4 h-4 text-[#007AFF]"
+                      className="w-4 h-4 text-icloud-accent"
                       strokeWidth={1.5}
                     />
                   ) : (
                     <ToggleLeft
-                      className="w-4 h-4 text-[#8E8E93]"
+                      className="w-4 h-4 text-icloud-text-secondary"
                       strokeWidth={1.5}
                     />
                   )}
@@ -218,7 +218,7 @@ export function SieveSettings() {
                 {/* Delete */}
                 <button
                   onClick={() => handleDelete(script.id, script.name)}
-                  className="p-2 rounded-lg hover:bg-[#FF3B30]/10 text-[#FF3B30] transition-colors"
+                  className="p-2 rounded-lg hover:bg-icloud-red/10 text-icloud-red transition-colors"
                   title="Delete rule"
                   aria-label={`Delete rule ${script.name}`}
                 >

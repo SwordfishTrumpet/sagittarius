@@ -146,23 +146,23 @@ export function buildSrcDoc(
 
       /* Preserve link colors */
       a, a:link, a:visited {
-        color: #0A84FF !important;
+        color: #009aff !important;
       }
 
       a:hover {
-        color: #64B5FF !important;
+        color: #4da6ff !important;
       }
 
       /* Preserve code/pre backgrounds but ensure text is light */
       pre, code {
-        background-color: #2C2C2E !important;
-        color: #FFFFFF !important;
+        background-color: #2c2c2e !important;
+        color: #ffffff !important;
       }
 
       /* Preserve blockquote styling */
       blockquote {
-        border-left-color: #48484A !important;
-        color: #E5E5EA !important;
+        border-left-color: #343436 !important;
+        color: #d1d1d6 !important;
       }
   ` : ''
 

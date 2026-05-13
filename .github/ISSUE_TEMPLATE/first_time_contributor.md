@@ -86,10 +86,11 @@ If your PR changes the UI:
 
 1. **Screenshots are required** — Add before/after images to your PR description
 2. **Follow the iCloud aesthetic:**
-   - Blue: `#007AFF` (Apple Blue)
-   - Sidebar: `#F2F2F7` (light gray)
+   - Blue: `#0071e3` (iCloud Mail accent, CSS var `--icloud-accent`)
+   - Sidebar: `#fbfbfd` (CSS var `--icloud-bg-sidebar`)
+   - Text: `rgba(0,0,0,0.88)` primary, `rgba(0,0,0,0.56)` secondary
    - Icons: Lucide with `strokeWidth={1.25}`
-   - Glassmorphism: `backdrop-blur` + translucent backgrounds
+   - All colors via `text-icloud-*` / `bg-icloud-*` / `border-icloud-*` Tailwind classes
 
 ### Example Screenshot Format
 
