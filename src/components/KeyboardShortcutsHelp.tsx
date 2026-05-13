@@ -66,7 +66,7 @@ export function KeyboardShortcutsHelp({ isOpen, onClose, isMobile = false }: Key
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.15 }}
-          className="fixed inset-0 z-[300] flex items-center justify-center bg-black/30 backdrop-blur-[2px]"
+          className="fixed inset-0 z-[300] flex items-center justify-center bg-icloud-bg-primary/30 backdrop-blur-[2px]"
           onClick={onClose}
         >
           <motion.div
@@ -75,7 +75,7 @@ export function KeyboardShortcutsHelp({ isOpen, onClose, isMobile = false }: Key
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: 5 }}
             transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-            className="bg-white dark:bg-[#1C1C1E] rounded-2xl border border-[#E5E5EA] dark:border-[#38383A] max-w-[560px] w-full max-h-[80vh] overflow-y-auto p-5 sm:p-8 mx-4 sm:mx-0"
+            className="bg-icloud-bg-layer2 rounded-2xl border border-icloud-border max-w-[560px] w-full max-h-[80vh] overflow-y-auto p-5 sm:p-8 mx-4 sm:mx-0"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
@@ -84,10 +84,10 @@ export function KeyboardShortcutsHelp({ isOpen, onClose, isMobile = false }: Key
           >
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
-              <h2 id="keyboard-shortcuts-title" className="text-[20px] font-bold text-[#1C1C1E]">Keyboard Shortcuts</h2>
+              <h2 id="keyboard-shortcuts-title" className="text-[20px] font-bold text-icloud-text-primary">Keyboard Shortcuts</h2>
               <button
                 onClick={onClose}
-                className="w-7 h-7 rounded-full bg-[#E5E5EA] dark:bg-[#2C2C2E] hover:bg-[#D1D1D6] dark:hover:bg-[#38383A] dark:hover:bg-[#38383A] flex items-center justify-center transition-colors"
+                className="w-7 h-7 rounded-full bg-icloud-border bg-icloud-card hover:bg-icloud-divider   flex items-center justify-center transition-colors"
                 aria-label="Close keyboard shortcuts"
               >
                 <X size={12} strokeWidth={2.5} className="text-[#636366]" />
@@ -96,8 +96,8 @@ export function KeyboardShortcutsHelp({ isOpen, onClose, isMobile = false }: Key
 
             {/* Mobile notice */}
             {isMobile && (
-              <div className="mb-6 p-3 bg-[#F2F2F7] dark:bg-[#2C2C2E] rounded-lg flex items-start gap-3">
-                <Smartphone className="w-5 h-5 text-[#007AFF] shrink-0 mt-0.5" />
+              <div className="mb-6 p-3 bg-icloud-bg-layer1 rounded-lg flex items-start gap-3">
+                <Smartphone className="w-5 h-5 text-icloud-accent shrink-0 mt-0.5" />
                 <p className="text-[13px] text-[#636366]">
                   These shortcuts work when using an external keyboard with your mobile device. 
                   Tap on screen elements for touch-based navigation.
@@ -109,7 +109,7 @@ export function KeyboardShortcutsHelp({ isOpen, onClose, isMobile = false }: Key
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
               {SHORTCUT_GROUPS.map((group) => (
                 <div key={group.title}>
-                  <h3 className="text-[11px] font-bold text-[#8E8E93] uppercase tracking-wider mb-3">
+                  <h3 className="text-[11px] font-bold text-icloud-text-secondary uppercase tracking-wider mb-3">
                     {group.title}
                   </h3>
                   <div className="space-y-2">
@@ -120,7 +120,7 @@ export function KeyboardShortcutsHelp({ isOpen, onClose, isMobile = false }: Key
                           {shortcut.keys.map((key, ki) => (
                             <kbd
                               key={ki}
-                              className="inline-flex items-center justify-center min-w-[24px] h-6 px-1.5 bg-[#F2F2F7] dark:bg-[#2C2C2E] border border-[#E5E5E5] dark:border-[#38383A] text-[#1C1C1E] dark:text-white shadow-sm"
+                              className="inline-flex items-center justify-center min-w-[24px] h-6 px-1.5 bg-icloud-bg-layer1 border border-icloud-border text-icloud-text-primary shadow-sm"
                             >
                               {key}
                             </kbd>

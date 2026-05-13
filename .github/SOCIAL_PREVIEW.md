@@ -17,7 +17,7 @@ GitHub displays a social preview image (1280×640px) when the repository is shar
 
 The social preview should:
 - Feature the Sagittarius logo or wordmark prominently
-- Use the iCloud-inspired blue (#007AFF) as an accent color
+- Use the iCloud Mail accent blue (#0071e3) as an accent color
 - Include a brief tagline: "JMAP Web Client" or "Modern Email, Any Server"
 - Show a subtle screenshot or UI element (optional)
 - Have clean, readable text at small sizes

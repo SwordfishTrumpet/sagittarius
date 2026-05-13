@@ -123,7 +123,7 @@ export function SwipeableRow({ children, onSwipeLeft, onSwipeRight, enabled = tr
       {/* Right-swipe background (Archive) */}
       {offsetX > 0 && (
         <div 
-          className="absolute inset-y-0 left-0 flex items-center justify-start pl-5 bg-[#007AFF]"
+          className="absolute inset-y-0 left-0 flex items-center justify-start pl-5 bg-icloud-accent"
           style={{ width: Math.max(offsetX, ACTION_WIDTH) }}
         >
           <Archive 
@@ -136,7 +136,7 @@ export function SwipeableRow({ children, onSwipeLeft, onSwipeRight, enabled = tr
       {/* Left-swipe background (Trash) */}
       {offsetX < 0 && (
         <div 
-          className="absolute inset-y-0 right-0 flex items-center justify-end pr-5 bg-[#FF3B30]"
+          className="absolute inset-y-0 right-0 flex items-center justify-end pr-5 bg-icloud-red"
           style={{ width: Math.max(Math.abs(offsetX), ACTION_WIDTH) }}
         >
           <Trash2 

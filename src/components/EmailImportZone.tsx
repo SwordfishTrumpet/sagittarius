@@ -116,38 +116,38 @@ export function EmailImportZone({ mailboxId }: EmailImportZoneProps) {
 
   return (
     <div
-      className="fixed inset-0 z-[60] bg-white/80 dark:bg-black/80 backdrop-blur-xl flex flex-col items-center justify-center pointer-events-none"
+      className="fixed inset-0 z-[60] bg-white/80 bg-icloud-bg-primary/80 backdrop-blur-xl flex flex-col items-center justify-center pointer-events-none"
       aria-hidden="true"
     >
       {/* Dashed border drop area */}
       <div
         className={`flex flex-col items-center justify-center gap-5 w-80 h-56 rounded-3xl border-2 border-dashed transition-all duration-200 ${
           isDragOver
-            ? 'border-[#007AFF] dark:border-[#0A84FF] bg-[#007AFF]/8'
-            : 'border-[#C7C7CC] dark:border-[#636366] bg-white/40 dark:bg-[#1C1C1E]/40'
+            ? 'border-icloud-accent dark:border-icloud-accent bg-icloud-accent/8'
+            : 'border-[#C7C7CC] dark:border-[#636366] bg-white/40 bg-icloud-bg-primary/40'
         }`}
       >
         <div
           className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-md transition-colors ${
-            isDragOver ? 'bg-[#007AFF]' : 'bg-[#F2F2F7]'
+            isDragOver ? 'bg-icloud-accent' : 'bg-icloud-bg-layer1'
           }`}
         >
           {isDragOver ? (
             <Upload className="w-8 h-8 text-white" strokeWidth={1.5} />
           ) : (
-            <FileText className="w-8 h-8 text-[#8E8E93]" strokeWidth={1.5} />
+            <FileText className="w-8 h-8 text-icloud-text-secondary" strokeWidth={1.5} />
           )}
         </div>
 
         <div className="text-center px-4">
           <p
             className={`text-[17px] font-semibold tracking-tight ${
-              isDragOver ? 'text-[#007AFF]' : 'text-[#1C1C1E]'
+              isDragOver ? 'text-icloud-accent' : 'text-icloud-text-primary'
             }`}
           >
             Drop .eml file to import
           </p>
-          <p className="text-[13px] text-[#8E8E93] mt-1">
+          <p className="text-[13px] text-icloud-text-secondary mt-1">
             The message will be added to this mailbox
           </p>
         </div>

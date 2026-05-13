@@ -29,13 +29,13 @@ export function DeleteFolderDialog({
       <div className="p-6">
         <div className="flex items-start gap-4 mb-6">
           <div className="flex-shrink-0 mt-0.5">
-            <AlertTriangle className="w-6 h-6 text-[#FF3B30]" strokeWidth={1.5} />
+            <AlertTriangle className="w-6 h-6 text-icloud-red" strokeWidth={1.5} />
           </div>
           <div className="flex-1">
-            <p className="text-[13px] font-medium text-[#1C1C1E]">
+            <p className="text-[13px] font-medium text-icloud-text-primary">
               Are you sure you want to delete <span className="font-bold">"{folderName}"</span>?
             </p>
-            <p className="text-[12px] text-[#8E8E93] mt-2">
+            <p className="text-[12px] text-icloud-text-secondary mt-2">
               This action cannot be undone. All emails in this folder will be moved to Trash.
             </p>
           </div>
@@ -45,14 +45,14 @@ export function DeleteFolderDialog({
           <button
             onClick={onClose}
             disabled={isLoading}
-            className="flex-1 px-4 py-2 bg-[#F2F2F7] dark:bg-[#2C2C2E] text-[#1C1C1E] dark:text-white rounded-lg font-medium text-[13px] hover:bg-[#E5E5E5] dark:hover:bg-[#38383A] transition-colors disabled:opacity-50"
+            className="flex-1 px-4 py-2 bg-icloud-bg-layer1 text-icloud-text-primary rounded-lg font-medium text-[13px] hover:bg-icloud-border  transition-colors disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
             disabled={isLoading}
-            className="flex-1 px-4 py-2 bg-[#FF3B30] text-white rounded-lg font-medium text-[13px] hover:bg-[#E61D0A] transition-colors disabled:opacity-50"
+            className="flex-1 px-4 py-2 bg-icloud-red text-white rounded-lg font-medium text-[13px] hover:bg-[#E61D0A] transition-colors disabled:opacity-50"
           >
             {isLoading ? 'Deleting...' : 'Delete'}
           </button>

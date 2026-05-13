@@ -134,10 +134,10 @@ export function SieveRuleEditor({
   };
 
   return (
-    <div className="bg-white dark:bg-[#1C1C1E] rounded-2xl border border-[#E5E5EA] dark:border-[#38383A] overflow-hidden shadow-sm">
+    <div className="bg-icloud-bg-layer2 rounded-2xl border border-icloud-border overflow-hidden shadow-sm">
       {/* Header */}
-      <div className="px-5 py-4 border-b border-[#E5E5EA] dark:border-[#38383A] bg-[#F2F2F7]/50 dark:bg-[#2C2C2E]">
-        <h3 className="text-[15px] font-semibold text-[#1C1C1E] dark:text-white">
+      <div className="px-5 py-4 border-b border-icloud-border bg-icloud-bg-layer1/50 bg-icloud-card">
+        <h3 className="text-[15px] font-semibold text-icloud-text-primary">
           {rule ? 'Edit Rule' : 'New Rule'}
         </h3>
       </div>
@@ -147,7 +147,7 @@ export function SieveRuleEditor({
         <div className="space-y-1.5">
           <label
             htmlFor={`${baseId}-name`}
-            className="block text-[12px] font-semibold text-[#8E8E93] dark:text-[#A1A1A6] uppercase tracking-wide"
+            className="block text-[12px] font-semibold text-icloud-text-secondary  uppercase tracking-wide"
           >
             Rule Name
           </label>
@@ -160,30 +160,30 @@ export function SieveRuleEditor({
               if (e.target.value.trim()) setNameError('');
             }}
             placeholder="My rule"
-            className={`w-full px-3 py-2 rounded-xl border text-[14px] bg-white dark:bg-[#2C2C2E] placeholder-[#C7C7CC] dark:placeholder-[#636366] dark:placeholder-[#636366] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/40 transition ${
-              nameError ? 'border-[#FF3B30]' : 'border-[#E5E5EA]'
+            className={`w-full px-3 py-2 rounded-xl border text-[14px] bg-icloud-card placeholder-[#C7C7CC]   focus:outline-none focus:ring-2 focus:ring-icloud-accent/40 transition ${
+              nameError ? 'border-[icloud-red]' : 'border-icloud-border'
             }`}
           />
           {nameError && (
-            <p className="text-[12px] text-[#FF3B30]">{nameError}</p>
+            <p className="text-[12px] text-icloud-red">{nameError}</p>
           )}
         </div>
 
         {/* Conditions */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-[12px] font-semibold text-[#8E8E93] dark:text-[#A1A1A6] uppercase tracking-wide">
+            <span className="text-[12px] font-semibold text-icloud-text-secondary  uppercase tracking-wide">
               Conditions
             </span>
             {/* allOf / anyOf toggle */}
-            <div className="flex rounded-lg overflow-hidden border border-[#E5E5EA] dark:border-[#38383A] text-[12px] font-medium">
+            <div className="flex rounded-lg overflow-hidden border border-icloud-border text-[12px] font-medium">
               <button
                 type="button"
                 onClick={() => setConditionOperator('allOf')}
                 className={`px-3 py-1 transition-colors ${
                   conditionOperator === 'allOf'
-                    ? 'bg-[#007AFF] text-white'
-                    : 'bg-white dark:bg-[#2C2C2E] text-[#8E8E93] dark:text-[#A1A1A6] dark:text-[#A1A1A6] hover:bg-[#F2F2F7] dark:hover:bg-white/10 dark:hover:bg-white/10'
+                    ? 'bg-icloud-accent text-white'
+                    : 'bg-icloud-card text-icloud-text-secondary   hover:bg-icloud-bg-layer1 dark:hover:bg-icloud-text-primary/10 dark:hover:bg-icloud-text-primary/10'
                 }`}
               >
                 All of
@@ -193,8 +193,8 @@ export function SieveRuleEditor({
                 onClick={() => setConditionOperator('anyOf')}
                 className={`px-3 py-1 transition-colors ${
                   conditionOperator === 'anyOf'
-                    ? 'bg-[#007AFF] text-white'
-                    : 'bg-white dark:bg-[#2C2C2E] text-[#8E8E93] dark:text-[#A1A1A6] dark:text-[#A1A1A6] hover:bg-[#F2F2F7] dark:hover:bg-white/10 dark:hover:bg-white/10'
+                    ? 'bg-icloud-accent text-white'
+                    : 'bg-icloud-card text-icloud-text-secondary   hover:bg-icloud-bg-layer1 dark:hover:bg-icloud-text-primary/10 dark:hover:bg-icloud-text-primary/10'
                 }`}
               >
                 Any of
@@ -211,7 +211,7 @@ export function SieveRuleEditor({
                   onChange={(e) =>
                     updateCondition(i, { field: e.target.value as SieveCondition['field'] })
                   }
-                  className="flex-shrink-0 w-36 px-2 py-1.5 rounded-lg border border-[#E5E5EA] dark:border-[#38383A] text-[13px] bg-white dark:bg-[#2C2C2E] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/30"
+                  className="flex-shrink-0 w-36 px-2 py-1.5 rounded-lg border border-icloud-border text-[13px] bg-icloud-card focus:outline-none focus:ring-2 focus:ring-icloud-accent/30"
                 >
                   {FIELD_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>
@@ -228,7 +228,7 @@ export function SieveRuleEditor({
                       operator: e.target.value as SieveCondition['operator'],
                     })
                   }
-                  className="flex-shrink-0 w-40 px-2 py-1.5 rounded-lg border border-[#E5E5EA] dark:border-[#38383A] text-[13px] bg-white dark:bg-[#2C2C2E] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/30"
+                  className="flex-shrink-0 w-40 px-2 py-1.5 rounded-lg border border-icloud-border text-[13px] bg-icloud-card focus:outline-none focus:ring-2 focus:ring-icloud-accent/30"
                 >
                   {OPERATOR_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>
@@ -243,7 +243,7 @@ export function SieveRuleEditor({
                   value={cond.value}
                   onChange={(e) => updateCondition(i, { value: e.target.value })}
                   placeholder={cond.field === 'size' ? 'bytes, e.g. 1048576' : 'value…'}
-                  className="flex-1 min-w-0 px-3 py-1.5 rounded-lg border border-[#E5E5EA] dark:border-[#38383A] text-[13px] bg-white dark:bg-[#2C2C2E] placeholder-[#C7C7CC] dark:placeholder-[#636366] dark:placeholder-[#636366] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/30"
+                  className="flex-1 min-w-0 px-3 py-1.5 rounded-lg border border-icloud-border text-[13px] bg-icloud-card placeholder-[#C7C7CC]   focus:outline-none focus:ring-2 focus:ring-icloud-accent/30"
                 />
 
                 {/* Remove */}
@@ -251,7 +251,7 @@ export function SieveRuleEditor({
                   type="button"
                   onClick={() => removeCondition(i)}
                   disabled={conditions.length === 1}
-                  className="shrink-0 p-1.5 rounded-lg text-[#FF3B30] hover:bg-[#FF3B30]/10 disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
+                  className="shrink-0 p-1.5 rounded-lg text-icloud-red hover:bg-icloud-red/10 disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
                   aria-label="Remove condition"
                 >
                   <Minus className="w-3.5 h-3.5" strokeWidth={2} />
@@ -263,7 +263,7 @@ export function SieveRuleEditor({
           <button
             type="button"
             onClick={addCondition}
-            className="flex items-center gap-1.5 text-[13px] font-medium text-[#007AFF] hover:opacity-70 transition-opacity"
+            className="flex items-center gap-1.5 text-[13px] font-medium text-icloud-accent hover:opacity-70 transition-opacity"
           >
             <Plus className="w-3.5 h-3.5" strokeWidth={2} />
             Add Condition
@@ -272,7 +272,7 @@ export function SieveRuleEditor({
 
         {/* Actions */}
         <div className="space-y-3">
-          <span className="block text-[12px] font-semibold text-[#8E8E93] dark:text-[#A1A1A6] uppercase tracking-wide">
+          <span className="block text-[12px] font-semibold text-icloud-text-secondary  uppercase tracking-wide">
             Actions
           </span>
 
@@ -289,7 +289,7 @@ export function SieveRuleEditor({
                       value: actionNeedsValue(newType) ? (action.value ?? '') : undefined,
                     });
                   }}
-                  className="flex-shrink-0 w-52 px-2 py-1.5 rounded-lg border border-[#E5E5EA] dark:border-[#38383A] text-[13px] bg-white dark:bg-[#2C2C2E] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/30"
+                  className="flex-shrink-0 w-52 px-2 py-1.5 rounded-lg border border-icloud-border text-[13px] bg-icloud-card focus:outline-none focus:ring-2 focus:ring-icloud-accent/30"
                 >
                   {ACTION_TYPE_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>
@@ -305,7 +305,7 @@ export function SieveRuleEditor({
                     value={action.value ?? ''}
                     onChange={(e) => updateAction(i, { value: e.target.value })}
                     placeholder={actionValuePlaceholder(action.type)}
-                    className="flex-1 min-w-0 px-3 py-1.5 rounded-lg border border-[#E5E5EA] dark:border-[#38383A] text-[13px] bg-white dark:bg-[#2C2C2E] placeholder-[#C7C7CC] dark:placeholder-[#636366] dark:placeholder-[#636366] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/30"
+                    className="flex-1 min-w-0 px-3 py-1.5 rounded-lg border border-icloud-border text-[13px] bg-icloud-card placeholder-[#C7C7CC]   focus:outline-none focus:ring-2 focus:ring-icloud-accent/30"
                   />
                 ) : (
                   <span className="flex-1" />
@@ -316,7 +316,7 @@ export function SieveRuleEditor({
                   type="button"
                   onClick={() => removeAction(i)}
                   disabled={actions.length === 1}
-                  className="shrink-0 p-1.5 rounded-lg text-[#FF3B30] hover:bg-[#FF3B30]/10 disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
+                  className="shrink-0 p-1.5 rounded-lg text-icloud-red hover:bg-icloud-red/10 disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
                   aria-label="Remove action"
                 >
                   <Minus className="w-3.5 h-3.5" strokeWidth={2} />
@@ -328,7 +328,7 @@ export function SieveRuleEditor({
           <button
             type="button"
             onClick={addAction}
-            className="flex items-center gap-1.5 text-[13px] font-medium text-[#007AFF] hover:opacity-70 transition-opacity"
+            className="flex items-center gap-1.5 text-[13px] font-medium text-icloud-accent hover:opacity-70 transition-opacity"
           >
             <Plus className="w-3.5 h-3.5" strokeWidth={2} />
             Add Action
@@ -336,21 +336,21 @@ export function SieveRuleEditor({
         </div>
 
         {/* Collapsible Sieve preview */}
-        <div className="rounded-xl border border-[#E5E5EA] dark:border-[#38383A] overflow-hidden">
+        <div className="rounded-xl border border-icloud-border overflow-hidden">
           <button
             type="button"
             onClick={() => setShowPreview((v) => !v)}
-            className="w-full flex items-center justify-between px-4 py-3 bg-[#F2F2F7] text-[13px] font-medium text-[#1C1C1E] dark:text-white hover:bg-[#E5E5EA] transition-colors"
+            className="w-full flex items-center justify-between px-4 py-3 bg-icloud-bg-layer1 text-[13px] font-medium text-icloud-text-primary hover:bg-icloud-border transition-colors"
           >
             <span>Sieve Preview</span>
             {showPreview ? (
-              <ChevronUp className="w-4 h-4 text-[#8E8E93] dark:text-[#A1A1A6]" strokeWidth={1.5} />
+              <ChevronUp className="w-4 h-4 text-icloud-text-secondary " strokeWidth={1.5} />
             ) : (
-              <ChevronDown className="w-4 h-4 text-[#8E8E93] dark:text-[#A1A1A6]" strokeWidth={1.5} />
+              <ChevronDown className="w-4 h-4 text-icloud-text-secondary " strokeWidth={1.5} />
             )}
           </button>
           {showPreview && (
-            <pre className="px-4 py-3 text-[12px] font-mono text-[#1C1C1E] dark:text-white bg-white dark:bg-[#2C2C2E] overflow-x-auto whitespace-pre leading-relaxed">
+            <pre className="px-4 py-3 text-[12px] font-mono text-icloud-text-primary bg-icloud-card overflow-x-auto whitespace-pre leading-relaxed">
               {previewScript}
             </pre>
           )}
@@ -358,11 +358,11 @@ export function SieveRuleEditor({
       </div>
 
       {/* Footer actions */}
-      <div className="px-5 py-4 border-t border-[#E5E5EA] dark:border-[#38383A] bg-[#F2F2F7]/40 dark:bg-[#2C2C2E] flex items-center justify-end gap-3">
+      <div className="px-5 py-4 border-t border-icloud-border bg-icloud-bg-layer1/40 bg-icloud-card flex items-center justify-end gap-3">
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 text-[13px] font-medium text-[#8E8E93] dark:text-[#A1A1A6] bg-white border border-[#E5E5EA] dark:border-[#38383A] rounded-xl hover:bg-[#F2F2F7] dark:hover:bg-white/10 transition-colors"
+          className="px-4 py-2 text-[13px] font-medium text-icloud-text-secondary  bg-white border border-icloud-border rounded-xl hover:bg-icloud-bg-layer1 dark:hover:bg-icloud-text-primary/10 transition-colors"
         >
           Cancel
         </button>
@@ -370,7 +370,7 @@ export function SieveRuleEditor({
           type="button"
           onClick={handleSave}
           disabled={isSaving}
-          className="px-4 py-2 text-[13px] font-semibold text-white bg-[#007AFF] hover:bg-[#0051D5] rounded-xl transition-colors disabled:opacity-60 flex items-center gap-2 shadow-sm"
+          className="px-4 py-2 text-[13px] font-semibold text-white bg-icloud-accent hover:bg-[#0051D5] rounded-xl transition-colors disabled:opacity-60 flex items-center gap-2 shadow-sm"
         >
           {isSaving && (
             <RefreshCw className="w-3.5 h-3.5 animate-spin" strokeWidth={2} />

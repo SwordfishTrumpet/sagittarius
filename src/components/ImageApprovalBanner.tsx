@@ -26,17 +26,17 @@ export function ImageApprovalBanner({
   }
 
   return (
-    <div className="mx-8 mt-8 mb-6 p-4 rounded-xl bg-white/60 dark:bg-[#1C1C1E]/60 backdrop-blur-md border border-[#E5E5E5] dark:border-[#38383A] shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
+    <div className="mx-8 mt-8 mb-6 p-4 rounded-xl bg-white/60 bg-icloud-bg-primary/60 backdrop-blur-md border border-icloud-border shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-lg bg-[#007AFF]/10">
-            <Shield className="w-4 h-4 text-[#007AFF]" strokeWidth={2} />
+          <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-lg bg-icloud-accent/10">
+            <Shield className="w-4 h-4 text-icloud-accent" strokeWidth={2} />
           </div>
           <div className="min-w-0">
-            <p className="text-[13px] font-medium text-[#1C1C1E]">
+            <p className="text-[13px] font-medium text-icloud-text-primary">
               This message contains {blockedImageCount} remote {blockedImageCount === 1 ? 'image' : 'images'}
             </p>
-            <p className="text-[12px] text-[#8E8E93] mt-0.5">
+            <p className="text-[12px] text-icloud-text-secondary mt-0.5">
               Remote images can be used to track your activity and location.
             </p>
           </div>
@@ -46,14 +46,14 @@ export function ImageApprovalBanner({
           <button
             type="button"
             onClick={onDismiss}
-            className="px-3 py-1.5 text-[12px] font-medium text-[#8E8E93] hover:bg-black/5 rounded-lg transition-colors"
+            className="px-3 py-1.5 text-[12px] font-medium text-icloud-text-secondary hover:bg-icloud-text-primary/5 rounded-lg transition-colors"
           >
             Dismiss
           </button>
           <button
             type="button"
             onClick={onLoadImages}
-            className="px-3 py-1.5 text-[12px] font-semibold text-white bg-[#007AFF] hover:bg-[#0051D5] rounded-lg transition-colors flex items-center gap-1.5 shadow-sm"
+            className="px-3 py-1.5 text-[12px] font-semibold text-white bg-icloud-accent hover:bg-[#0051D5] rounded-lg transition-colors flex items-center gap-1.5 shadow-sm"
           >
             <Eye className="w-3.5 h-3.5" strokeWidth={2} />
             Load Images

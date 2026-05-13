@@ -99,8 +99,8 @@ function AddressBookSidebar({
         onClick={() => onSelectAddressBook(null)}
         className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
           selectedAddressBookId === null
-            ? 'bg-[#007AFF] text-white'
-            : 'hover:bg-black/5 text-[#1C1C1E]'
+            ? 'bg-icloud-accent text-white'
+            : 'hover:bg-icloud-text-primary/5 text-icloud-text-primary'
         }`}
       >
         <Users className="w-[18px] h-[18px]" strokeWidth={1.5} />
@@ -112,15 +112,15 @@ function AddressBookSidebar({
           onClick={() => onSelectAddressBook(ab.id)}
           className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
             selectedAddressBookId === ab.id
-              ? 'bg-[#007AFF] text-white'
-              : 'hover:bg-black/5 text-[#1C1C1E]'
+              ? 'bg-icloud-accent text-white'
+              : 'hover:bg-icloud-text-primary/5 text-icloud-text-primary'
           }`}
         >
           <User className="w-[18px] h-[18px]" strokeWidth={1.5} />
           <span className="text-[14px] truncate">{ab.name}</span>
           {ab.isDefault && (
             <span className={`text-[10px] px-1.5 py-0.5 rounded ${
-              selectedAddressBookId === ab.id ? 'bg-white/20' : 'bg-[#007AFF]/10 text-[#007AFF]'
+              selectedAddressBookId === ab.id ? 'bg-white/20' : 'bg-icloud-accent/10 text-icloud-accent'
             }`}>
               Default
             </span>
@@ -148,22 +148,22 @@ function ContactListItem({
     <button
       onClick={onClick}
       className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${
-        isSelected ? 'bg-[#007AFF] text-white' : 'hover:bg-black/5'
+        isSelected ? 'bg-icloud-accent text-white' : 'hover:bg-icloud-text-primary/5'
       }`}
     >
       <div
         className={`w-10 h-10 rounded-full flex items-center justify-center text-[14px] font-semibold shrink-0 ${
-          isSelected ? 'bg-white/20 text-white' : 'bg-[#E5E5EA] text-[#8E8E93]'
+          isSelected ? 'bg-white/20 text-white' : 'bg-icloud-border text-icloud-text-secondary'
         }`}
       >
         {initials}
       </div>
       <div className="flex-1 min-w-0 text-left">
-        <p className={`text-[14px] font-medium truncate ${isSelected ? 'text-white' : 'text-[#1C1C1E]'}`}>
+        <p className={`text-[14px] font-medium truncate ${isSelected ? 'text-white' : 'text-icloud-text-primary'}`}>
           {name}
         </p>
         {email && (
-          <p className={`text-[12px] truncate ${isSelected ? 'text-white/70' : 'text-[#8E8E93]'}`}>
+          <p className={`text-[12px] truncate ${isSelected ? 'text-white/70' : 'text-icloud-text-secondary'}`}>
             {email}
           </p>
         )}
@@ -196,18 +196,18 @@ function ContactDetail({
   return (
     <div className="flex-1 overflow-auto">
       {/* Header */}
-      <div className="text-center p-8 border-b border-[#E5E5EA] dark:border-[#38383A]">
-        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#007AFF] to-[#5856D6] flex items-center justify-center text-[32px] font-bold text-white mx-auto mb-4 shadow-lg">
+      <div className="text-center p-8 border-b border-icloud-border">
+        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-icloud-accent to-[#5856D6] flex items-center justify-center text-[32px] font-bold text-white mx-auto mb-4 shadow-lg">
           {initials}
         </div>
-        <h2 className="text-[22px] font-semibold text-[#1C1C1E]">{name}</h2>
+        <h2 className="text-[22px] font-semibold text-icloud-text-primary">{name}</h2>
         {organizations.length > 0 && (
-          <p className="text-[15px] text-[#8E8E93] mt-1">{organizations[0].name}</p>
+          <p className="text-[15px] text-icloud-text-secondary mt-1">{organizations[0].name}</p>
         )}
         <div className="flex items-center justify-center gap-3 mt-4">
           <button
             onClick={onEdit}
-            className="flex items-center gap-2 px-4 py-2 text-[14px] font-medium text-[#007AFF] hover:bg-[#007AFF]/10 rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-[14px] font-medium text-icloud-accent hover:bg-icloud-accent/10 rounded-lg transition-colors"
           >
             <Edit2 className="w-4 h-4" strokeWidth={1.5} />
             Edit
@@ -227,7 +227,7 @@ function ContactDetail({
         {/* Emails */}
         {emails.length > 0 && (
           <div>
-            <h3 className="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wide mb-2">
+            <h3 className="text-[11px] font-semibold text-icloud-text-secondary uppercase tracking-wide mb-2">
               Email
             </h3>
             <Card dividers>
@@ -235,13 +235,13 @@ function ContactDetail({
                 <a
                   key={idx}
                   href={`mailto:${email.address}`}
-                  className="flex items-center gap-3 px-4 py-3 hover:bg-black/5 transition-colors"
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-icloud-text-primary/5 transition-colors"
                 >
-                  <Mail className="w-5 h-5 text-[#007AFF]" strokeWidth={1.5} />
+                  <Mail className="w-5 h-5 text-icloud-accent" strokeWidth={1.5} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-[15px] text-[#007AFF] truncate">{email.address}</p>
+                    <p className="text-[15px] text-icloud-accent truncate">{email.address}</p>
                     {email.label && (
-                      <p className="text-[12px] text-[#8E8E93]">{email.label}</p>
+                      <p className="text-[12px] text-icloud-text-secondary">{email.label}</p>
                     )}
                   </div>
                 </a>
@@ -253,7 +253,7 @@ function ContactDetail({
         {/* Phones */}
         {phones.length > 0 && (
           <div>
-            <h3 className="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wide mb-2">
+            <h3 className="text-[11px] font-semibold text-icloud-text-secondary uppercase tracking-wide mb-2">
               Phone
             </h3>
             <Card dividers>
@@ -261,13 +261,13 @@ function ContactDetail({
                 <a
                   key={idx}
                   href={`tel:${phone.number}`}
-                  className="flex items-center gap-3 px-4 py-3 hover:bg-black/5 transition-colors"
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-icloud-text-primary/5 transition-colors"
                 >
-                  <Phone className="w-5 h-5 text-[#34C759]" strokeWidth={1.5} />
+                  <Phone className="w-5 h-5 text-icloud-green" strokeWidth={1.5} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-[15px] text-[#007AFF] truncate">{phone.number}</p>
+                    <p className="text-[15px] text-icloud-accent truncate">{phone.number}</p>
                     {phone.label && (
-                      <p className="text-[12px] text-[#8E8E93]">{phone.label}</p>
+                      <p className="text-[12px] text-icloud-text-secondary">{phone.label}</p>
                     )}
                   </div>
                 </a>
@@ -279,7 +279,7 @@ function ContactDetail({
         {/* Addresses */}
         {addresses.length > 0 && (
           <div>
-            <h3 className="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wide mb-2">
+            <h3 className="text-[11px] font-semibold text-icloud-text-secondary uppercase tracking-wide mb-2">
               Address
             </h3>
             <Card dividers>
@@ -287,11 +287,11 @@ function ContactDetail({
                 const fullAddr = addr.full || addr.components?.map(c => c.value).join(', ') || '';
                 return (
                   <div key={idx} className="flex items-start gap-3 px-4 py-3">
-                    <MapPin className="w-5 h-5 text-[#FF9500] shrink-0 mt-0.5" strokeWidth={1.5} />
+                    <MapPin className="w-5 h-5 text-icloud-orange shrink-0 mt-0.5" strokeWidth={1.5} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-[15px] text-[#1C1C1E] whitespace-pre-line">{fullAddr}</p>
+                      <p className="text-[15px] text-icloud-text-primary whitespace-pre-line">{fullAddr}</p>
                       {addr.label && (
-                        <p className="text-[12px] text-[#8E8E93] mt-0.5">{addr.label}</p>
+                        <p className="text-[12px] text-icloud-text-secondary mt-0.5">{addr.label}</p>
                       )}
                     </div>
                   </div>
@@ -304,12 +304,12 @@ function ContactDetail({
         {/* Notes */}
         {notes.length > 0 && (
           <div>
-            <h3 className="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wide mb-2">
+            <h3 className="text-[11px] font-semibold text-icloud-text-secondary uppercase tracking-wide mb-2">
               Notes
             </h3>
             <Card padding="medium">
               {notes.map((note, idx) => (
-                <p key={idx} className="text-[14px] text-[#1C1C1E] whitespace-pre-wrap">
+                <p key={idx} className="text-[14px] text-icloud-text-primary whitespace-pre-wrap">
                   {note.note}
                 </p>
               ))}
@@ -383,39 +383,39 @@ function ContactFormDialog({
       <form onSubmit={handleSubmit} className="p-4 space-y-4 max-h-[70vh] overflow-auto">
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wide mb-1">
+            <label className="block text-[11px] font-semibold text-icloud-text-secondary uppercase tracking-wide mb-1">
               First Name
             </label>
             <input
               type="text"
               value={form.givenName}
               onChange={(e) => setForm({ ...form, givenName: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] dark:border-[#38383A] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
+              className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[15px] focus:outline-none focus:ring-2 focus:ring-icloud-accent"
               placeholder="John"
             />
           </div>
           <div>
-            <label className="block text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wide mb-1">
+            <label className="block text-[11px] font-semibold text-icloud-text-secondary uppercase tracking-wide mb-1">
               Last Name
             </label>
             <input
               type="text"
               value={form.surname}
               onChange={(e) => setForm({ ...form, surname: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] dark:border-[#38383A] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
+              className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[15px] focus:outline-none focus:ring-2 focus:ring-icloud-accent"
               placeholder="Appleseed"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wide mb-1">
+          <label className="block text-[11px] font-semibold text-icloud-text-secondary uppercase tracking-wide mb-1">
             Address Book
           </label>
           <select
             value={form.addressBookId}
             onChange={(e) => setForm({ ...form, addressBookId: e.target.value })}
-            className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] dark:border-[#38383A] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007AFF] bg-white dark:bg-[#2C2C2E]"
+            className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[15px] focus:outline-none focus:ring-2 focus:ring-icloud-accent bg-icloud-card"
             required
           >
             {addressBooks.map((ab) => (
@@ -427,65 +427,65 @@ function ContactFormDialog({
         </div>
 
         <div>
-          <label className="block text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wide mb-1">
+          <label className="block text-[11px] font-semibold text-icloud-text-secondary uppercase tracking-wide mb-1">
             Email
           </label>
           <input
             type="email"
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
-            className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] dark:border-[#38383A] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
+            className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[15px] focus:outline-none focus:ring-2 focus:ring-icloud-accent"
             placeholder="john@example.com"
           />
         </div>
 
         <div>
-          <label className="block text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wide mb-1">
+          <label className="block text-[11px] font-semibold text-icloud-text-secondary uppercase tracking-wide mb-1">
             Phone
           </label>
           <input
             type="tel"
             value={form.phone}
             onChange={(e) => setForm({ ...form, phone: e.target.value })}
-            className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] dark:border-[#38383A] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
+            className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[15px] focus:outline-none focus:ring-2 focus:ring-icloud-accent"
             placeholder="+1 (555) 123-4567"
           />
         </div>
 
         <div>
-          <label className="block text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wide mb-1">
+          <label className="block text-[11px] font-semibold text-icloud-text-secondary uppercase tracking-wide mb-1">
             Company
           </label>
           <input
             type="text"
             value={form.organization}
             onChange={(e) => setForm({ ...form, organization: e.target.value })}
-            className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] dark:border-[#38383A] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
+            className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[15px] focus:outline-none focus:ring-2 focus:ring-icloud-accent"
             placeholder="Acme Inc."
           />
         </div>
 
         <div>
-          <label className="block text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wide mb-1">
+          <label className="block text-[11px] font-semibold text-icloud-text-secondary uppercase tracking-wide mb-1">
             Address
           </label>
           <textarea
             value={form.address}
             onChange={(e) => setForm({ ...form, address: e.target.value })}
-            className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] dark:border-[#38383A] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007AFF] resize-none"
+            className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[15px] focus:outline-none focus:ring-2 focus:ring-icloud-accent resize-none"
             rows={2}
             placeholder="123 Main St, City, State"
           />
         </div>
 
         <div>
-          <label className="block text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wide mb-1">
+          <label className="block text-[11px] font-semibold text-icloud-text-secondary uppercase tracking-wide mb-1">
             Notes
           </label>
           <textarea
             value={form.notes}
             onChange={(e) => setForm({ ...form, notes: e.target.value })}
-            className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] dark:border-[#38383A] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007AFF] resize-none"
+            className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[15px] focus:outline-none focus:ring-2 focus:ring-icloud-accent resize-none"
             rows={3}
             placeholder="Additional notes..."
           />
@@ -495,14 +495,14 @@ function ContactFormDialog({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-[14px] font-medium text-[#8E8E93] hover:bg-black/5 rounded-lg transition-colors"
+            className="px-4 py-2 text-[14px] font-medium text-icloud-text-secondary hover:bg-icloud-text-primary/5 rounded-lg transition-colors"
             disabled={isPending}
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="px-4 py-2 text-[14px] font-medium text-white bg-[#007AFF] hover:bg-[#0066DD] rounded-lg transition-colors disabled:opacity-50"
+            className="px-4 py-2 text-[14px] font-medium text-white bg-icloud-accent hover:bg-icloud-accent-hover rounded-lg transition-colors disabled:opacity-50"
             disabled={isPending || (!form.givenName && !form.surname)}
           >
             {isPending ? 'Saving...' : contact ? 'Save' : 'Create'}
@@ -637,17 +637,17 @@ export function ContactsView({ isOpen, onClose }: ContactsViewProps) {
 
   if (!hasCapability) {
     return (
-      <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/30 backdrop-blur-sm">
-        <div className="bg-white/95 dark:bg-[#1C1C1E]/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-[#E5E5E5] dark:border-[#38383A] max-w-md w-full mx-4 p-8 text-center">
-          <AlertCircle className="w-12 h-12 text-[#FF9500] mx-auto mb-4" strokeWidth={1.5} />
-          <h2 className="text-[17px] font-bold text-[#1C1C1E] mb-2">Contacts Not Available</h2>
-          <p className="text-[14px] text-[#8E8E93] mb-6">
+      <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-icloud-bg-primary/30 backdrop-blur-sm">
+        <div className="bg-white/95 bg-icloud-bg-primary/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-icloud-border max-w-md w-full mx-4 p-8 text-center">
+          <AlertCircle className="w-12 h-12 text-icloud-orange mx-auto mb-4" strokeWidth={1.5} />
+          <h2 className="text-[17px] font-bold text-icloud-text-primary mb-2">Contacts Not Available</h2>
+          <p className="text-[14px] text-icloud-text-secondary mb-6">
             Your JMAP server does not support the Contacts capability (RFC 9610).
             Contact your server administrator for more information.
           </p>
           <button
             onClick={onClose}
-            className="px-6 py-2 text-[14px] font-medium text-white bg-[#007AFF] hover:bg-[#0066DD] rounded-lg transition-colors"
+            className="px-6 py-2 text-[14px] font-medium text-white bg-icloud-accent hover:bg-icloud-accent-hover rounded-lg transition-colors"
           >
             Close
           </button>
@@ -659,23 +659,23 @@ export function ContactsView({ isOpen, onClose }: ContactsViewProps) {
   const isLoading = addressBooksLoading || contactsLoading;
 
   return (
-    <div className="fixed inset-0 z-[10000] flex bg-[#F2F2F7]">
+    <div className="fixed inset-0 z-[10000] flex bg-icloud-bg-layer1">
       {/* Sidebar */}
-      <aside className="w-64 bg-white/70 dark:bg-[#1C1C1E]/70 backdrop-blur-xl border-r border-[#E5E5E5] flex flex-col">
-        <header className="px-4 py-4 border-b border-[#E5E5E5] flex items-center justify-between">
-          <h1 className="text-[17px] font-bold text-[#1C1C1E]">Contacts</h1>
+      <aside className="w-64 bg-white/70 bg-icloud-bg-primary/70 backdrop-blur-xl border-r border-icloud-border flex flex-col">
+        <header className="px-4 py-4 border-b border-icloud-border flex items-center justify-between">
+          <h1 className="text-[17px] font-bold text-icloud-text-primary">Contacts</h1>
           <button
             onClick={onClose}
-            className="p-1.5 hover:bg-black/5 rounded-lg transition-colors"
+            className="p-1.5 hover:bg-icloud-text-primary/5 rounded-lg transition-colors"
             aria-label="Close contacts"
           >
-            <X className="w-5 h-5 text-[#8E8E93]" strokeWidth={1.5} />
+            <X className="w-5 h-5 text-icloud-text-secondary" strokeWidth={1.5} />
           </button>
         </header>
 
         {/* Address books */}
         <div className="flex-1 overflow-auto p-4">
-          <h2 className="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wide mb-2">
+          <h2 className="text-[11px] font-semibold text-icloud-text-secondary uppercase tracking-wide mb-2">
             Address Books
           </h2>
           <AddressBookSidebar
@@ -687,13 +687,13 @@ export function ContactsView({ isOpen, onClose }: ContactsViewProps) {
         </div>
 
         {/* Add contact button */}
-        <div className="p-4 border-t border-[#E5E5E5]">
+        <div className="p-4 border-t border-icloud-border">
           <button
             onClick={() => {
               setEditingContact(null);
               setIsContactFormOpen(true);
             }}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-[14px] font-medium text-white bg-[#007AFF] hover:bg-[#0066DD] rounded-xl transition-colors"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-[14px] font-medium text-white bg-icloud-accent hover:bg-icloud-accent-hover rounded-xl transition-colors"
           >
             <Plus className="w-4 h-4" strokeWidth={2} />
             New Contact
@@ -702,12 +702,12 @@ export function ContactsView({ isOpen, onClose }: ContactsViewProps) {
       </aside>
 
       {/* Contact list */}
-      <div className="w-80 bg-white/50 dark:bg-[#1C1C1E]/50 backdrop-blur-xl border-r border-[#E5E5E5] flex flex-col">
+      <div className="w-80 bg-white/50 bg-icloud-bg-primary/50 backdrop-blur-xl border-r border-icloud-border flex flex-col">
         {/* Search */}
-        <div className="p-3 border-b border-[#E5E5E5]">
+        <div className="p-3 border-b border-icloud-border">
           <div className="relative">
             <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8E8E93]"
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-icloud-text-secondary"
               strokeWidth={1.5}
             />
             <input
@@ -715,7 +715,7 @@ export function ContactsView({ isOpen, onClose }: ContactsViewProps) {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search contacts"
-              className="w-full pl-9 pr-3 py-2 rounded-lg bg-[#F2F2F7] text-[14px] placeholder-[#8E8E93] focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
+              className="w-full pl-9 pr-3 py-2 rounded-lg bg-icloud-bg-layer1 text-[14px] placeholder-icloud-text-secondary focus:outline-none focus:ring-2 focus:ring-icloud-accent"
             />
           </div>
         </div>
@@ -729,7 +729,7 @@ export function ContactsView({ isOpen, onClose }: ContactsViewProps) {
           ) : sortedContacts.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center p-8">
               <User className="w-12 h-12 text-[#C7C7CC] mb-3" strokeWidth={1} />
-              <p className="text-[15px] text-[#8E8E93]">
+              <p className="text-[15px] text-icloud-text-secondary">
                 {searchTerm ? 'No contacts found' : 'No contacts yet'}
               </p>
               {!searchTerm && (
@@ -738,7 +738,7 @@ export function ContactsView({ isOpen, onClose }: ContactsViewProps) {
                     setEditingContact(null);
                     setIsContactFormOpen(true);
                   }}
-                  className="text-[14px] text-[#007AFF] font-medium mt-2 hover:underline"
+                  className="text-[14px] text-icloud-accent font-medium mt-2 hover:underline"
                 >
                   Add your first contact
                 </button>
@@ -748,7 +748,7 @@ export function ContactsView({ isOpen, onClose }: ContactsViewProps) {
             <div className="py-2">
               {Object.entries(groupedContacts).map(([letter, contacts]) => (
                 <div key={letter}>
-                  <div className="px-4 py-1 text-[12px] font-semibold text-[#8E8E93] bg-[#F2F2F7] sticky top-0">
+                  <div className="px-4 py-1 text-[12px] font-semibold text-icloud-text-secondary bg-icloud-bg-layer1 sticky top-0">
                     {letter}
                   </div>
                   <div className="px-2">
@@ -768,15 +768,15 @@ export function ContactsView({ isOpen, onClose }: ContactsViewProps) {
         </div>
 
         {/* Contact count */}
-        <div className="px-4 py-2 border-t border-[#E5E5E5] text-center">
-          <span className="text-[12px] text-[#8E8E93]">
+        <div className="px-4 py-2 border-t border-icloud-border text-center">
+          <span className="text-[12px] text-icloud-text-secondary">
             {sortedContacts.length} {sortedContacts.length === 1 ? 'contact' : 'contacts'}
           </span>
         </div>
       </div>
 
       {/* Contact detail */}
-      <main className="flex-1 flex flex-col overflow-hidden bg-white dark:bg-[#1C1C1E]">
+      <main className="flex-1 flex flex-col overflow-hidden bg-icloud-bg-layer2">
         {selectedContact ? (
           <ContactDetail
             contact={selectedContact}
@@ -788,10 +788,10 @@ export function ContactsView({ isOpen, onClose }: ContactsViewProps) {
           />
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-            <div className="w-20 h-20 rounded-full bg-[#F2F2F7] flex items-center justify-center mb-4">
+            <div className="w-20 h-20 rounded-full bg-icloud-bg-layer1 flex items-center justify-center mb-4">
               <User className="w-10 h-10 text-[#C7C7CC]" strokeWidth={1} />
             </div>
-            <p className="text-[17px] text-[#8E8E93]">Select a contact to view details</p>
+            <p className="text-[17px] text-icloud-text-secondary">Select a contact to view details</p>
           </div>
         )}
       </main>

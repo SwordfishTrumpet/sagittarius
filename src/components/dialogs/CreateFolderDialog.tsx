@@ -35,7 +35,7 @@ export function CreateFolderDialog({
     >
       <form onSubmit={handleSubmit} className="p-6 space-y-4">
         <div>
-          <label className="block text-[13px] font-medium text-[#1C1C1E] mb-2">
+          <label className="block text-[13px] font-medium text-icloud-text-primary mb-2">
             Folder Name
           </label>
           <input
@@ -45,7 +45,7 @@ export function CreateFolderDialog({
             value={folderName}
             onChange={(e) => setFolderName(e.target.value)}
             placeholder="Enter folder name"
-            className="w-full px-3 py-2 bg-[#F2F2F7] dark:bg-[#2C2C2E] border border-[#E5E5E5] dark:border-[#38383A] rounded-lg text-[13px] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#007AFF] dark:focus:ring-[#0A84FF] focus:bg-white dark:focus:bg-[#1C1C1E] transition-colors"
+            className="w-full px-3 py-2 bg-icloud-bg-layer1 border border-icloud-border rounded-lg text-[13px] text-icloud-text-primary focus:outline-none focus:ring-2 focus:ring-icloud-accent focus:bg-white dark:focus:bg-icloud-bg-primary transition-colors"
             disabled={isLoading}
           />
         </div>
@@ -55,14 +55,14 @@ export function CreateFolderDialog({
             type="button"
             onClick={onClose}
             disabled={isLoading}
-            className="flex-1 px-4 py-2 bg-[#F2F2F7] dark:bg-[#2C2C2E] text-[#1C1C1E] dark:text-white rounded-lg font-medium text-[13px] hover:bg-[#E5E5E5] dark:hover:bg-[#38383A] transition-colors disabled:opacity-50"
+            className="flex-1 px-4 py-2 bg-icloud-bg-layer1 text-icloud-text-primary rounded-lg font-medium text-[13px] hover:bg-icloud-border  transition-colors disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={!folderName.trim() || isLoading}
-            className="flex-1 px-4 py-2 bg-[#007AFF] text-white rounded-lg font-medium text-[13px] hover:bg-[#0051D5] transition-colors disabled:opacity-50"
+            className="flex-1 px-4 py-2 bg-icloud-accent text-white rounded-lg font-medium text-[13px] hover:bg-[#0051D5] transition-colors disabled:opacity-50"
           >
             {isLoading ? 'Creating...' : 'Create'}
           </button>

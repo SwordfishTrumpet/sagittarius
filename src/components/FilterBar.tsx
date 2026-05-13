@@ -25,8 +25,8 @@ export function FilterBar({ activeFilters, onToggleFilter }: FilterBarProps) {
             aria-label={`Filter ${label}`}
             className={`flex items-center justify-center gap-1.5 min-h-[44px] rounded-full px-4 text-[12px] font-semibold transition-all duration-150 shrink-0 ${
               isActive
-                ? 'bg-[#007AFF] text-white shadow-sm'
-                : 'bg-[#F2F2F7] dark:bg-[#2C2C2E] text-[#8E8E93] dark:text-[#A1A1A6] hover:bg-[#E5E5EA] dark:hover:bg-[#38383A]'
+                ? 'bg-icloud-accent text-white shadow-sm'
+                : 'bg-icloud-bg-layer1 text-icloud-text-secondary  hover:bg-icloud-border '
             }`}
           >
             <Icon className="w-4 h-4" strokeWidth={1.5} />

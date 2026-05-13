@@ -132,19 +132,19 @@ function CalendarSidebar({
       {calendars.map((cal) => (
         <label
           key={cal.id}
-          className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-black/5 cursor-pointer transition-colors"
+          className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-icloud-text-primary/5 cursor-pointer transition-colors"
         >
           <input
             type="checkbox"
             checked={visibleCalendarIds.has(cal.id)}
             onChange={() => onToggleCalendar(cal.id)}
-            className="w-4 h-4 rounded border-gray-300 dark:border-[#38383A] text-[#007AFF] focus:ring-[#007AFF]"
+            className="w-4 h-4 rounded border-gray-300 border-icloud-border text-icloud-accent focus:ring-icloud-accent"
           />
           <span
             className="w-3 h-3 rounded-full shrink-0"
             style={{ backgroundColor: cal.color || '#007AFF' }}
           />
-          <span className="text-[13px] text-[#1C1C1E] dark:text-white truncate">{cal.name}</span>
+          <span className="text-[13px] text-icloud-text-primary truncate">{cal.name}</span>
         </label>
       ))}
     </div>
@@ -167,7 +167,7 @@ function EventItem({
 
   return (
     <div
-      className="group flex items-start gap-3 px-3 py-2.5 rounded-xl hover:bg-black/5 transition-colors cursor-pointer"
+      className="group flex items-start gap-3 px-3 py-2.5 rounded-xl hover:bg-icloud-text-primary/5 transition-colors cursor-pointer"
       onClick={() => onEdit(event)}
       role="button"
       tabIndex={0}
@@ -183,14 +183,14 @@ function EventItem({
         style={{ backgroundColor: calendar?.color || '#007AFF' }}
       />
       <div className="flex-1 min-w-0">
-        <p className="text-[14px] font-medium text-[#1C1C1E] dark:text-white truncate">{event.title}</p>
+        <p className="text-[14px] font-medium text-icloud-text-primary truncate">{event.title}</p>
         <div className="flex items-center gap-3 mt-0.5">
-          <span className="text-[12px] text-[#8E8E93] dark:text-[#A1A1A6] flex items-center gap-1">
+          <span className="text-[12px] text-icloud-text-secondary  flex items-center gap-1">
             <Clock className="w-3 h-3" strokeWidth={1.5} />
             {event.isAllDay ? 'All day' : startTime}
           </span>
           {location && (
-            <span className="text-[12px] text-[#8E8E93] dark:text-[#A1A1A6] flex items-center gap-1 truncate">
+            <span className="text-[12px] text-icloud-text-secondary  flex items-center gap-1 truncate">
               <MapPin className="w-3 h-3" strokeWidth={1.5} />
               {location}
             </span>
@@ -247,11 +247,11 @@ function MonthView({
   return (
     <div className="flex-1 overflow-auto">
       {/* Day headers */}
-      <div className="grid grid-cols-7 border-b border-[#E5E5EA] dark:border-[#38383A]">
+      <div className="grid grid-cols-7 border-b border-icloud-border">
         {DAYS.map((day) => (
           <div
             key={day}
-            className="px-2 py-2 text-center text-[11px] font-semibold text-[#8E8E93] dark:text-[#A1A1A6] uppercase"
+            className="px-2 py-2 text-center text-[11px] font-semibold text-icloud-text-secondary  uppercase"
           >
             {day}
           </div>
@@ -268,8 +268,8 @@ function MonthView({
           return (
             <div
               key={idx}
-              className={`min-h-[100px] border-b border-r border-[#E5E5EA] dark:border-[#38383A] p-1 cursor-pointer hover:bg-[#F2F2F7] dark:hover:bg-white/5 transition-colors ${
-                !isCurrentMonth ? 'bg-[#F9F9F9] dark:bg-[#1C1C1E]/50' : ''
+              className={`min-h-[100px] border-b border-r border-icloud-border p-1 cursor-pointer hover:bg-icloud-bg-layer1 dark:hover:bg-white/5 transition-colors ${
+                !isCurrentMonth ? 'bg-icloud-bg-primary/50 dark:bg-icloud-bg-primary/50' : ''
               }`}
               onClick={() => onSelectDate(day)}
               role="button"
@@ -284,9 +284,9 @@ function MonthView({
               <div
                 className={`w-7 h-7 flex items-center justify-center rounded-full text-[13px] font-medium mb-1 ${
                   isToday
-                    ? 'bg-[#007AFF] text-white'
+                    ? 'bg-icloud-accent text-white'
                     : isCurrentMonth
-                    ? 'text-[#1C1C1E]'
+                    ? 'text-icloud-text-primary'
                     : 'text-[#C7C7CC]'
                 }`}
               >
@@ -321,7 +321,7 @@ function MonthView({
                   );
                 })}
                 {dayEvents.length > 3 && (
-                  <div className="text-[10px] text-[#8E8E93] dark:text-[#A1A1A6] px-1">
+                  <div className="text-[10px] text-icloud-text-secondary  px-1">
                     +{dayEvents.length - 3} more
                   </div>
                 )}
@@ -370,7 +370,7 @@ function ListView({
     return (
       <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
         <CalendarIcon className="w-12 h-12 text-[#C7C7CC] mb-3" strokeWidth={1} />
-        <p className="text-[15px] text-[#8E8E93] dark:text-[#A1A1A6]">No events to display</p>
+        <p className="text-[15px] text-icloud-text-secondary ">No events to display</p>
         <p className="text-[13px] text-[#C7C7CC] mt-1">
           Create an event or select different calendars
         </p>
@@ -382,7 +382,7 @@ function ListView({
     <div className="flex-1 overflow-auto p-4 space-y-4">
       {Object.entries(groupedEvents).map(([dateKey, dayEvents]) => (
         <div key={dateKey}>
-          <h3 className="text-[13px] font-semibold text-[#8E8E93] dark:text-[#A1A1A6] uppercase tracking-wide px-3 mb-2">
+          <h3 className="text-[13px] font-semibold text-icloud-text-secondary  uppercase tracking-wide px-3 mb-2">
             {new Date(dateKey).toLocaleDateString(undefined, {
               weekday: 'long',
               month: 'long',
@@ -477,27 +477,27 @@ function EventFormDialog({
     >
       <form onSubmit={handleSubmit} className="p-4 space-y-4">
         <div>
-          <label className="block text-[11px] font-semibold text-[#8E8E93] dark:text-[#A1A1A6] uppercase tracking-wide mb-1">
+          <label className="block text-[11px] font-semibold text-icloud-text-secondary  uppercase tracking-wide mb-1">
             Title
           </label>
           <input
             type="text"
             value={form.title}
             onChange={(e) => setForm({ ...form, title: e.target.value })}
-            className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] dark:border-[#38383A] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
+            className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[15px] focus:outline-none focus:ring-2 focus:ring-icloud-accent"
             placeholder="Event title"
             required
           />
         </div>
 
         <div>
-          <label className="block text-[11px] font-semibold text-[#8E8E93] dark:text-[#A1A1A6] uppercase tracking-wide mb-1">
+          <label className="block text-[11px] font-semibold text-icloud-text-secondary  uppercase tracking-wide mb-1">
             Calendar
           </label>
           <select
             value={form.calendarId}
             onChange={(e) => setForm({ ...form, calendarId: e.target.value })}
-            className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] dark:border-[#38383A] text-[15px] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#007AFF] dark:focus:ring-[#0A84FF] bg-white dark:bg-[#2C2C2E]"
+            className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[15px] text-icloud-text-primary focus:outline-none focus:ring-2 focus:ring-icloud-accent bg-icloud-card"
             required
           >
             {calendars.map((cal) => (
@@ -514,61 +514,61 @@ function EventFormDialog({
             id="isAllDay"
             checked={form.isAllDay}
             onChange={(e) => setForm({ ...form, isAllDay: e.target.checked })}
-            className="w-4 h-4 rounded border-gray-300 dark:border-[#38383A] text-[#007AFF] focus:ring-[#007AFF]"
+            className="w-4 h-4 rounded border-gray-300 border-icloud-border text-icloud-accent focus:ring-icloud-accent"
           />
-          <label htmlFor="isAllDay" className="text-[14px] text-[#1C1C1E] dark:text-white">
+          <label htmlFor="isAllDay" className="text-[14px] text-icloud-text-primary">
             All-day event
           </label>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-[11px] font-semibold text-[#8E8E93] dark:text-[#A1A1A6] uppercase tracking-wide mb-1">
+            <label className="block text-[11px] font-semibold text-icloud-text-secondary  uppercase tracking-wide mb-1">
               Start
             </label>
             <input
               type={form.isAllDay ? 'date' : 'datetime-local'}
               value={form.isAllDay ? form.start.slice(0, 10) : form.start}
               onChange={(e) => setForm({ ...form, start: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] dark:border-[#38383A] text-[14px] focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
+              className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[14px] focus:outline-none focus:ring-2 focus:ring-icloud-accent"
               required
             />
           </div>
           <div>
-            <label className="block text-[11px] font-semibold text-[#8E8E93] dark:text-[#A1A1A6] uppercase tracking-wide mb-1">
+            <label className="block text-[11px] font-semibold text-icloud-text-secondary  uppercase tracking-wide mb-1">
               End
             </label>
             <input
               type={form.isAllDay ? 'date' : 'datetime-local'}
               value={form.isAllDay ? form.end.slice(0, 10) : form.end}
               onChange={(e) => setForm({ ...form, end: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] dark:border-[#38383A] text-[14px] focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
+              className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[14px] focus:outline-none focus:ring-2 focus:ring-icloud-accent"
               required
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-[11px] font-semibold text-[#8E8E93] dark:text-[#A1A1A6] uppercase tracking-wide mb-1">
+          <label className="block text-[11px] font-semibold text-icloud-text-secondary  uppercase tracking-wide mb-1">
             Location
           </label>
           <input
             type="text"
             value={form.location}
             onChange={(e) => setForm({ ...form, location: e.target.value })}
-            className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] dark:border-[#38383A] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
+            className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[15px] focus:outline-none focus:ring-2 focus:ring-icloud-accent"
             placeholder="Add location"
           />
         </div>
 
         <div>
-          <label className="block text-[11px] font-semibold text-[#8E8E93] dark:text-[#A1A1A6] uppercase tracking-wide mb-1">
+          <label className="block text-[11px] font-semibold text-icloud-text-secondary  uppercase tracking-wide mb-1">
             Description
           </label>
           <textarea
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
-            className="w-full px-3 py-2 rounded-lg border border-[#E5E5EA] dark:border-[#38383A] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#007AFF] resize-none"
+            className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[15px] focus:outline-none focus:ring-2 focus:ring-icloud-accent resize-none"
             rows={3}
             placeholder="Add notes"
           />
@@ -589,14 +589,14 @@ function EventFormDialog({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-[14px] font-medium text-[#8E8E93] dark:text-[#A1A1A6] hover:bg-black/5 rounded-lg transition-colors"
+              className="px-4 py-2 text-[14px] font-medium text-icloud-text-secondary  hover:bg-icloud-text-primary/5 rounded-lg transition-colors"
               disabled={isPending}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 text-[14px] font-medium text-white bg-[#007AFF] hover:bg-[#0066DD] rounded-lg transition-colors disabled:opacity-50"
+              className="px-4 py-2 text-[14px] font-medium text-white bg-icloud-accent hover:bg-icloud-accent-hover rounded-lg transition-colors disabled:opacity-50"
               disabled={isPending}
             >
               {isPending ? 'Saving...' : event ? 'Save' : 'Create'}
@@ -735,17 +735,17 @@ export function CalendarView({ isOpen, onClose }: CalendarViewProps) {
 
   if (!hasCapability) {
     return (
-      <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/30 backdrop-blur-sm">
-        <div className="bg-white/95 dark:bg-[#1C1C1E]/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-[#E5E5E5] dark:border-[#38383A] max-w-md w-full mx-4 p-8 text-center">
-          <AlertCircle className="w-12 h-12 text-[#FF9500] mx-auto mb-4" strokeWidth={1.5} />
-          <h2 className="text-[17px] font-bold text-[#1C1C1E] dark:text-white mb-2">Calendar Not Available</h2>
-          <p className="text-[14px] text-[#8E8E93] dark:text-[#A1A1A6] mb-6">
+      <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-icloud-bg-primary/30 backdrop-blur-sm">
+        <div className="bg-white/95 bg-icloud-bg-primary/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-icloud-border max-w-md w-full mx-4 p-8 text-center">
+          <AlertCircle className="w-12 h-12 text-icloud-orange mx-auto mb-4" strokeWidth={1.5} />
+          <h2 className="text-[17px] font-bold text-icloud-text-primary mb-2">Calendar Not Available</h2>
+          <p className="text-[14px] text-icloud-text-secondary  mb-6">
             Your JMAP server does not support the Calendar capability (RFC 8984).
             Contact your server administrator for more information.
           </p>
           <button
             onClick={onClose}
-            className="px-6 py-2 text-[14px] font-medium text-white bg-[#007AFF] hover:bg-[#0066DD] rounded-lg transition-colors"
+            className="px-6 py-2 text-[14px] font-medium text-white bg-icloud-accent hover:bg-icloud-accent-hover rounded-lg transition-colors"
           >
             Close
           </button>
@@ -757,38 +757,38 @@ export function CalendarView({ isOpen, onClose }: CalendarViewProps) {
   const isLoading = calendarsLoading || eventsLoading;
 
   return (
-    <div className="fixed inset-0 z-[10000] flex bg-[#F2F2F7]">
+    <div className="fixed inset-0 z-[10000] flex bg-icloud-bg-layer1">
       {/* Sidebar */}
-      <aside className="w-64 bg-white/70 dark:bg-[#1C1C1E]/70 backdrop-blur-xl border-r border-[#E5E5E5] flex flex-col">
-        <header className="px-4 py-4 border-b border-[#E5E5E5] flex items-center justify-between">
-          <h1 className="text-[17px] font-bold text-[#1C1C1E] dark:text-white">Calendar</h1>
+      <aside className="w-64 bg-white/70 bg-icloud-bg-primary/70 backdrop-blur-xl border-r border-icloud-border flex flex-col">
+        <header className="px-4 py-4 border-b border-icloud-border flex items-center justify-between">
+          <h1 className="text-[17px] font-bold text-icloud-text-primary">Calendar</h1>
           <button
             onClick={onClose}
-            className="p-1.5 hover:bg-black/5 rounded-lg transition-colors"
+            className="p-1.5 hover:bg-icloud-text-primary/5 rounded-lg transition-colors"
             aria-label="Close calendar"
           >
-            <X className="w-5 h-5 text-[#8E8E93] dark:text-[#A1A1A6]" strokeWidth={1.5} />
+            <X className="w-5 h-5 text-icloud-text-secondary " strokeWidth={1.5} />
           </button>
         </header>
 
         {/* Today's events */}
         {todaysEvents.length > 0 && (
-          <div className="px-4 py-3 border-b border-[#E5E5E5]">
-            <h2 className="text-[11px] font-semibold text-[#8E8E93] dark:text-[#A1A1A6] uppercase tracking-wide mb-2">
+          <div className="px-4 py-3 border-b border-icloud-border">
+            <h2 className="text-[11px] font-semibold text-icloud-text-secondary  uppercase tracking-wide mb-2">
               Today
             </h2>
             <div className="space-y-1">
               {todaysEvents.slice(0, 3).map((event) => (
                 <div
                   key={event.id}
-                  className="text-[12px] text-[#1C1C1E] dark:text-white truncate cursor-pointer hover:text-[#007AFF]"
+                  className="text-[12px] text-icloud-text-primary truncate cursor-pointer hover:text-icloud-accent"
                   onClick={() => handleEditEvent(event)}
                 >
                   {formatTime(event.start)} - {event.title}
                 </div>
               ))}
               {todaysEvents.length > 3 && (
-                <div className="text-[11px] text-[#8E8E93] dark:text-[#A1A1A6]">
+                <div className="text-[11px] text-icloud-text-secondary ">
                   +{todaysEvents.length - 3} more events
                 </div>
               )}
@@ -798,7 +798,7 @@ export function CalendarView({ isOpen, onClose }: CalendarViewProps) {
 
         {/* Calendars list */}
         <div className="flex-1 overflow-auto p-4">
-          <h2 className="text-[11px] font-semibold text-[#8E8E93] dark:text-[#A1A1A6] uppercase tracking-wide mb-2">
+          <h2 className="text-[11px] font-semibold text-icloud-text-secondary  uppercase tracking-wide mb-2">
             My Calendars
           </h2>
           <CalendarSidebar
@@ -810,10 +810,10 @@ export function CalendarView({ isOpen, onClose }: CalendarViewProps) {
         </div>
 
         {/* Create event button */}
-        <div className="p-4 border-t border-[#E5E5E5]">
+        <div className="p-4 border-t border-icloud-border">
           <button
             onClick={handleNewEvent}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-[14px] font-medium text-white bg-[#007AFF] hover:bg-[#0066DD] rounded-xl transition-colors"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-[14px] font-medium text-white bg-icloud-accent hover:bg-icloud-accent-hover rounded-xl transition-colors"
           >
             <Plus className="w-4 h-4" strokeWidth={2} />
             New Event
@@ -824,44 +824,44 @@ export function CalendarView({ isOpen, onClose }: CalendarViewProps) {
       {/* Main content */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="px-6 py-4 bg-white/70 dark:bg-[#1C1C1E]/70 backdrop-blur-xl border-b border-[#E5E5E5] flex items-center justify-between">
+        <header className="px-6 py-4 bg-white/70 bg-icloud-bg-primary/70 backdrop-blur-xl border-b border-icloud-border flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1">
               <button
                 onClick={() => navigateMonth(-1)}
-                className="p-2 hover:bg-black/5 rounded-lg transition-colors"
+                className="p-2 hover:bg-icloud-text-primary/5 rounded-lg transition-colors"
                 aria-label="Previous month"
               >
-                <ChevronLeft className="w-5 h-5 text-[#8E8E93] dark:text-[#A1A1A6]" strokeWidth={1.5} />
+                <ChevronLeft className="w-5 h-5 text-icloud-text-secondary " strokeWidth={1.5} />
               </button>
               <button
                 onClick={() => navigateMonth(1)}
-                className="p-2 hover:bg-black/5 rounded-lg transition-colors"
+                className="p-2 hover:bg-icloud-text-primary/5 rounded-lg transition-colors"
                 aria-label="Next month"
               >
-                <ChevronRight className="w-5 h-5 text-[#8E8E93] dark:text-[#A1A1A6]" strokeWidth={1.5} />
+                <ChevronRight className="w-5 h-5 text-icloud-text-secondary " strokeWidth={1.5} />
               </button>
             </div>
-            <h2 className="text-[20px] font-semibold text-[#1C1C1E] dark:text-white">
+            <h2 className="text-[20px] font-semibold text-icloud-text-primary">
               {MONTHS[currentDate.getMonth()]} {currentDate.getFullYear()}
             </h2>
             <button
               onClick={goToToday}
-              className="px-3 py-1.5 text-[13px] font-medium text-[#007AFF] hover:bg-[#007AFF]/10 rounded-lg transition-colors"
+              className="px-3 py-1.5 text-[13px] font-medium text-icloud-accent hover:bg-icloud-accent/10 rounded-lg transition-colors"
             >
               Today
             </button>
           </div>
 
-          <div className="flex items-center gap-1 p-1 bg-[#F2F2F7] rounded-lg">
+          <div className="flex items-center gap-1 p-1 bg-icloud-bg-layer1 rounded-lg">
             {(['month', 'list'] as const).map((mode) => (
               <button
                 key={mode}
                 onClick={() => setViewMode(mode)}
                 className={`px-3 py-1.5 text-[13px] font-medium rounded-md transition-colors ${
                   viewMode === mode
-                    ? 'bg-white dark:bg-[#1C1C1E] text-[#007AFF] shadow-sm'
-                    : 'text-[#8E8E93] hover:text-[#1C1C1E]'
+                    ? 'bg-icloud-bg-layer2 text-icloud-accent shadow-sm'
+                    : 'text-icloud-text-secondary hover:text-icloud-text-primary'
                 }`}
               >
                 {mode.charAt(0).toUpperCase() + mode.slice(1)}
@@ -873,7 +873,7 @@ export function CalendarView({ isOpen, onClose }: CalendarViewProps) {
         {/* Content */}
         {isLoading ? (
           <div className="flex-1 flex items-center justify-center">
-            <div className="w-8 h-8 border-2 border-[#007AFF] border-t-transparent rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-icloud-accent border-t-transparent rounded-full animate-spin" />
           </div>
         ) : viewMode === 'month' ? (
           <MonthView

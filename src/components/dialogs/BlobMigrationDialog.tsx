@@ -128,7 +128,7 @@ export function BlobMigrationDialog({
                   <select
                     value={selectedSourceAccount}
                     onChange={(e) => setSelectedSourceAccount(e.target.value)}
-                    className="w-full px-3 py-2 bg-[#F2F2F7] dark:bg-[#2C2C2E] rounded-lg text-[15px] text-[#1C1C1E] border border-[#E5E5EA] focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
+                    className="w-full px-3 py-2 bg-icloud-bg-layer1 rounded-lg text-[15px] text-icloud-text-primary border border-icloud-border focus:outline-none focus:ring-2 focus:ring-icloud-accent"
                     disabled={isMigrating || !!sourceAccountId}
                   >
                     <option value="">Select source account...</option>
@@ -144,7 +144,7 @@ export function BlobMigrationDialog({
                   <select
                     value={selectedTargetAccount}
                     onChange={(e) => setSelectedTargetAccount(e.target.value)}
-                    className="w-full px-3 py-2 bg-[#F2F2F7] dark:bg-[#2C2C2E] rounded-lg text-[15px] text-[#1C1C1E] border border-[#E5E5EA] focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
+                    className="w-full px-3 py-2 bg-icloud-bg-layer1 rounded-lg text-[15px] text-icloud-text-primary border border-icloud-border focus:outline-none focus:ring-2 focus:ring-icloud-accent"
                     disabled={isMigrating}
                   >
                     <option value="">Select target account...</option>
@@ -160,16 +160,16 @@ export function BlobMigrationDialog({
 
             {/* Migration Summary */}
             {initialBlobs.length > 0 && (
-              <Card padding="medium" className="bg-gradient-to-br from-[#007AFF]/5 to-transparent">
+              <Card padding="medium" className="bg-gradient-to-br from-icloud-accent/5 to-transparent">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#007AFF]/10 flex items-center justify-center">
-                    <ArrowRightLeft className="w-5 h-5 text-[#007AFF]" strokeWidth={1.5} />
+                  <div className="w-10 h-10 rounded-xl bg-icloud-accent/10 flex items-center justify-center">
+                    <ArrowRightLeft className="w-5 h-5 text-icloud-accent" strokeWidth={1.5} />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-[15px] text-[#1C1C1E]">
+                    <h4 className="font-semibold text-[15px] text-icloud-text-primary">
                       {initialBlobs.length} Attachment{initialBlobs.length === 1 ? '' : 's'}
                     </h4>
-                    <p className="text-[13px] text-[#6C6C70]">
+                    <p className="text-[13px] ">
                       Total: {formatBytes(totalSize)} · Est. {formatDuration(estimatedDuration)}
                     </p>
                   </div>
@@ -202,7 +202,7 @@ export function BlobMigrationDialog({
                 <>
                   <button
                     onClick={handleClose}
-                    className="flex-1 px-4 py-3 bg-[#F2F2F7] dark:bg-[#2C2C2E] hover:bg-[#E5E5EA] dark:bg-[#2C2C2E] rounded-xl text-[15px] font-medium text-[#1C1C1E] transition-colors"
+                    className="flex-1 px-4 py-3 bg-icloud-bg-layer1 hover:bg-icloud-border bg-icloud-card rounded-xl text-[15px] font-medium text-icloud-text-primary transition-colors"
                     disabled={isMigrating}
                   >
                     Cancel
@@ -210,7 +210,7 @@ export function BlobMigrationDialog({
                   <button
                     onClick={handleMigrate}
                     disabled={!canMigrate}
-                    className="flex-1 px-4 py-3 bg-[#007AFF] hover:bg-[#0051D5] disabled:bg-[#C7C7CC] disabled:cursor-not-allowed rounded-xl text-[15px] font-medium text-white transition-colors"
+                    className="flex-1 px-4 py-3 bg-icloud-accent hover:bg-[#0051D5] disabled:bg-[#C7C7CC] disabled:cursor-not-allowed rounded-xl text-[15px] font-medium text-white transition-colors"
                   >
                     {isMigrating ? 'Migrating...' : 'Migrate'}
                   </button>
@@ -218,7 +218,7 @@ export function BlobMigrationDialog({
               ) : (
                 <button
                   onClick={handleClose}
-                  className="w-full px-4 py-3 bg-[#007AFF] hover:bg-[#0051D5] rounded-xl text-[15px] font-medium text-white transition-colors"
+                  className="w-full px-4 py-3 bg-icloud-accent hover:bg-[#0051D5] rounded-xl text-[15px] font-medium text-white transition-colors"
                 >
                   Done
                 </button>
@@ -236,11 +236,11 @@ export function BlobMigrationDialog({
 function CapabilityWarning() {
   return (
     <div className="p-8 text-center">
-      <AlertCircle className="w-12 h-12 text-[#FF9500] mx-auto mb-4" strokeWidth={1.5} />
-      <h3 className="text-[17px] font-semibold text-[#1C1C1E] mb-2">
+      <AlertCircle className="w-12 h-12 text-icloud-orange mx-auto mb-4" strokeWidth={1.5} />
+      <h3 className="text-[17px] font-semibold text-icloud-text-primary mb-2">
         Blob Management Not Available
       </h3>
-      <p className="text-[13px] text-[#6C6C70] max-w-xs mx-auto">
+      <p className="text-[13px]  max-w-xs mx-auto">
         Your JMAP server does not support RFC 9404 Blob Management, which is required for cross-account blob migration.
       </p>
     </div>
@@ -250,11 +250,11 @@ function CapabilityWarning() {
 function SingleAccountWarning() {
   return (
     <div className="p-8 text-center">
-      <HardDrive className="w-12 h-12 text-[#8E8E93] mx-auto mb-4" strokeWidth={1.5} />
-      <h3 className="text-[17px] font-semibold text-[#1C1C1E] mb-2">
+      <HardDrive className="w-12 h-12 text-icloud-text-secondary mx-auto mb-4" strokeWidth={1.5} />
+      <h3 className="text-[17px] font-semibold text-icloud-text-primary mb-2">
         Multiple Accounts Required
       </h3>
-      <p className="text-[13px] text-[#6C6C70] max-w-xs mx-auto">
+      <p className="text-[13px]  max-w-xs mx-auto">
         Blob migration requires at least two accounts. Add another account to use this feature.
       </p>
     </div>
@@ -273,31 +273,31 @@ function MigrationProgress({ progress, completed, total, failed }: MigrationProg
     <Card padding="medium">
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <span className="text-[13px] font-medium text-[#1C1C1E]">Migration Progress</span>
-          <span className="text-[13px] text-[#6C6C70]">{progress}%</span>
+          <span className="text-[13px] font-medium text-icloud-text-primary">Migration Progress</span>
+          <span className="text-[13px] ">{progress}%</span>
         </div>
         
         {/* Progress Bar */}
-        <div className="h-2 bg-[#F2F2F7] dark:bg-[#2C2C2E] rounded-full overflow-hidden">
+        <div className="h-2 bg-icloud-bg-layer1 rounded-full overflow-hidden">
           <div 
-            className="h-full bg-[#007AFF] rounded-full transition-all duration-300"
+            className="h-full bg-icloud-accent rounded-full transition-all duration-300"
             style={{ width: `${progress}%` }}
           />
         </div>
 
         {/* Stats */}
         <div className="flex items-center gap-4 text-[12px]">
-          <span className="text-[#34C759]">
+          <span className="text-icloud-green">
             <CheckCircle2 className="w-3.5 h-3.5 inline mr-1" strokeWidth={2} />
             {completed} done
           </span>
           {failed > 0 && (
-            <span className="text-[#FF3B30]">
+            <span className="text-icloud-red">
               <XCircle className="w-3.5 h-3.5 inline mr-1" strokeWidth={2} />
               {failed} failed
             </span>
           )}
-          <span className="text-[#8E8E93]">
+          <span className="text-icloud-text-secondary">
             of {total} total
           </span>
         </div>
@@ -317,24 +317,24 @@ function MigrationResults({ results, expanded, onToggleExpand }: MigrationResult
   const failed = results.filter(r => !r.success);
 
   return (
-    <Card padding="medium" className={failed.length > 0 ? 'bg-[#FF3B30]/5' : 'bg-[#34C759]/5'}>
+    <Card padding="medium" className={failed.length > 0 ? 'bg-icloud-red/5' : 'bg-icloud-green/5'}>
       <div className="space-y-3">
         {/* Summary */}
         <div className="flex items-center gap-3">
           <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-            failed.length > 0 ? 'bg-[#FF3B30]/10' : 'bg-[#34C759]/10'
+            failed.length > 0 ? 'bg-icloud-red/10' : 'bg-icloud-green/10'
           }`}>
             {failed.length > 0 ? (
-              <AlertCircle className="w-4 h-4 text-[#FF3B30]" strokeWidth={2} />
+              <AlertCircle className="w-4 h-4 text-icloud-red" strokeWidth={2} />
             ) : (
-              <CheckCircle2 className="w-4 h-4 text-[#34C759]" strokeWidth={2} />
+              <CheckCircle2 className="w-4 h-4 text-icloud-green" strokeWidth={2} />
             )}
           </div>
           <div className="flex-1">
-            <h4 className="font-medium text-[15px] text-[#1C1C1E]">
+            <h4 className="font-medium text-[15px] text-icloud-text-primary">
               {failed.length > 0 ? 'Migration Partially Complete' : 'Migration Complete'}
             </h4>
-            <p className="text-[13px] text-[#6C6C70]">
+            <p className="text-[13px] ">
               {successful.length} succeeded{failed.length > 0 ? `, ${failed.length} failed` : ''}
             </p>
           </div>
@@ -342,10 +342,10 @@ function MigrationResults({ results, expanded, onToggleExpand }: MigrationResult
 
         {/* Expandable Details */}
         {results.length > 0 && (
-          <div className="border-t border-[#E5E5EA] dark:border-[#38383A] pt-3">
+          <div className="border-t border-icloud-border pt-3">
             <button
               onClick={onToggleExpand}
-              className="flex items-center gap-1 text-[13px] text-[#007AFF] hover:opacity-80 transition-opacity"
+              className="flex items-center gap-1 text-[13px] text-icloud-accent hover:opacity-80 transition-opacity"
             >
               {expanded ? (
                 <>
@@ -377,19 +377,19 @@ function MigrationResults({ results, expanded, onToggleExpand }: MigrationResult
 function ResultItem({ result }: { result: BlobMigrationResult }) {
   return (
     <div className={`flex items-center gap-2 p-2 rounded-lg ${
-      result.success ? 'bg-[#34C759]/10' : 'bg-[#FF3B30]/10'
+      result.success ? 'bg-icloud-green/10' : 'bg-icloud-red/10'
     }`}>
       {result.success ? (
-        <CheckCircle2 className="w-4 h-4 text-[#34C759] shrink-0" strokeWidth={2} />
+        <CheckCircle2 className="w-4 h-4 text-icloud-green shrink-0" strokeWidth={2} />
       ) : (
-        <XCircle className="w-4 h-4 text-[#FF3B30] shrink-0" strokeWidth={2} />
+        <XCircle className="w-4 h-4 text-icloud-red shrink-0" strokeWidth={2} />
       )}
       <div className="flex-1 min-w-0">
-        <code className="text-[11px] text-[#1C1C1E] truncate block">
+        <code className="text-[11px] text-icloud-text-primary truncate block">
           {result.sourceBlobId.slice(0, 20)}...
         </code>
         {result.error && (
-          <span className="text-[10px] text-[#FF3B30]">{result.error}</span>
+          <span className="text-[10px] text-icloud-red">{result.error}</span>
         )}
       </div>
     </div>

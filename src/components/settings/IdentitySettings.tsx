@@ -44,10 +44,10 @@ function IdentityForm({ initial = EMPTY_FORM, onSave, onCancel, isSaving }: Iden
     setForm((f) => ({ ...f, [key]: e.target.value }));
 
   return (
-    <div className="bg-[#F2F2F7] dark:bg-[#1C1C1E]/50 rounded-2xl border border-[#E5E5EA] dark:border-[#38383A] overflow-hidden">
+    <div className="bg-icloud-bg-layer1 bg-icloud-bg-primary/50 rounded-2xl border border-icloud-border overflow-hidden">
       {/* Display Name */}
-      <div className="bg-white dark:bg-[#1C1C1E] dark:bg-[#1C1C1E] border-b border-[#E5E5EA] dark:border-[#38383A]">
-        <label className="block px-4 pt-3 text-[11px] font-semibold text-[#8E8E93] dark:text-[#A1A1A6] uppercase tracking-wide">
+      <div className="bg-icloud-bg-layer2 bg-icloud-bg-primary border-b border-icloud-border">
+        <label className="block px-4 pt-3 text-[11px] font-semibold text-icloud-text-secondary  uppercase tracking-wide">
           Display Name
         </label>
         <input
@@ -55,13 +55,13 @@ function IdentityForm({ initial = EMPTY_FORM, onSave, onCancel, isSaving }: Iden
           value={form.name}
           onChange={set('name')}
           placeholder="Your Name"
-          className="w-full px-4 pb-3 pt-1 text-[15px] text-[#1C1C1E] dark:text-white placeholder:text-[#C7C7CC] dark:placeholder:text-[#636366] bg-transparent focus:outline-none"
+          className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-[#C7C7CC] dark:placeholder:text-[#636366] bg-transparent focus:outline-none"
         />
       </div>
 
       {/* Email */}
-      <div className="bg-white dark:bg-[#1C1C1E] dark:bg-[#1C1C1E] border-b border-[#E5E5EA] dark:border-[#38383A]">
-        <label className="block px-4 pt-3 text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wide">
+      <div className="bg-icloud-bg-layer2 bg-icloud-bg-primary border-b border-icloud-border">
+        <label className="block px-4 pt-3 text-[11px] font-semibold text-icloud-text-secondary uppercase tracking-wide">
           Email Address
         </label>
         <input
@@ -69,13 +69,13 @@ function IdentityForm({ initial = EMPTY_FORM, onSave, onCancel, isSaving }: Iden
           value={form.email}
           onChange={set('email')}
           placeholder="you@example.com"
-          className="w-full px-4 pb-3 pt-1 text-[15px] text-[#1C1C1E] dark:text-white placeholder:text-[#C7C7CC] dark:placeholder:text-[#636366] bg-transparent focus:outline-none"
+          className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-[#C7C7CC] dark:placeholder:text-[#636366] bg-transparent focus:outline-none"
         />
       </div>
 
       {/* Reply-To */}
-      <div className="bg-white dark:bg-[#1C1C1E] dark:bg-[#1C1C1E] border-b border-[#E5E5EA] dark:border-[#38383A]">
-        <label className="block px-4 pt-3 text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wide">
+      <div className="bg-icloud-bg-layer2 bg-icloud-bg-primary border-b border-icloud-border">
+        <label className="block px-4 pt-3 text-[11px] font-semibold text-icloud-text-secondary uppercase tracking-wide">
           Reply-To (optional)
         </label>
         <input
@@ -83,13 +83,13 @@ function IdentityForm({ initial = EMPTY_FORM, onSave, onCancel, isSaving }: Iden
           value={form.replyTo}
           onChange={set('replyTo')}
           placeholder="replies@example.com"
-          className="w-full px-4 pb-3 pt-1 text-[15px] text-[#1C1C1E] dark:text-white placeholder:text-[#C7C7CC] dark:placeholder:text-[#636366] bg-transparent focus:outline-none"
+          className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-[#C7C7CC] dark:placeholder:text-[#636366] bg-transparent focus:outline-none"
         />
       </div>
 
       {/* Signature */}
-      <div className="bg-white dark:bg-[#1C1C1E]">
-        <label className="block px-4 pt-3 text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wide">
+      <div className="bg-icloud-bg-layer2">
+        <label className="block px-4 pt-3 text-[11px] font-semibold text-icloud-text-secondary uppercase tracking-wide">
           Signature
         </label>
         <textarea
@@ -97,15 +97,15 @@ function IdentityForm({ initial = EMPTY_FORM, onSave, onCancel, isSaving }: Iden
           onChange={set('textSignature')}
           rows={4}
           placeholder="-- &#10;Your signature"
-          className="w-full px-4 pb-3 pt-1 text-[15px] text-[#1C1C1E] dark:text-white placeholder:text-[#C7C7CC] dark:placeholder:text-[#636366] bg-transparent focus:outline-none resize-none font-mono text-[13px]"
+          className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-[#C7C7CC] dark:placeholder:text-[#636366] bg-transparent focus:outline-none resize-none font-mono text-[13px]"
         />
       </div>
 
       {/* Actions */}
-      <div className="flex items-center justify-end gap-2 px-4 py-3 bg-[#F2F2F7]">
+      <div className="flex items-center justify-end gap-2 px-4 py-3 bg-icloud-bg-layer1">
         <button
           onClick={onCancel}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5EA] text-[14px] text-[#1C1C1E] hover:bg-[#F2F2F7] transition-colors"
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-icloud-bg-layer2 border border-icloud-border text-[14px] text-icloud-text-primary hover:bg-icloud-bg-layer1 transition-colors"
         >
           <X size={13} strokeWidth={1.5} />
           Cancel
@@ -113,7 +113,7 @@ function IdentityForm({ initial = EMPTY_FORM, onSave, onCancel, isSaving }: Iden
         <button
           onClick={() => onSave(form)}
           disabled={isSaving || !form.name || !form.email}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#007AFF] hover:bg-[#0066CC] disabled:opacity-50 text-white text-[14px] font-medium transition-colors"
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-icloud-accent hover:bg-icloud-accent-hover disabled:opacity-50 text-white text-[14px] font-medium transition-colors"
         >
           <Check size={13} strokeWidth={2} />
           {isSaving ? 'Saving…' : 'Save'}
@@ -162,11 +162,11 @@ export function IdentitySettings() {
   return (
     <div className="p-6 space-y-5">
       <div className="flex items-center justify-between">
-        <h2 className="text-[17px] font-semibold text-[#1C1C1E]">Identities</h2>
+        <h2 className="text-[17px] font-semibold text-icloud-text-primary">Identities</h2>
         {!showAddForm && (
           <button
             onClick={() => setShowAddForm(true)}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#007AFF] hover:bg-[#0066CC] text-white text-[13px] font-medium transition-colors"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-icloud-accent hover:bg-icloud-accent-hover text-white text-[13px] font-medium transition-colors"
           >
             <Plus size={13} strokeWidth={2} />
             Add Identity
@@ -187,12 +187,12 @@ export function IdentitySettings() {
       {isLoading ? (
         <div className="space-y-2 animate-pulse">
           {[1, 2].map((i) => (
-            <div key={i} className="h-16 bg-[#E5E5EA] rounded-2xl" />
+            <div key={i} className="h-16 bg-icloud-border rounded-2xl" />
           ))}
         </div>
       ) : identities.length === 0 && !showAddForm ? (
-        <div className="bg-[#F2F2F7] rounded-2xl px-5 py-8 text-center">
-          <p className="text-[15px] text-[#8E8E93]">No identities configured</p>
+        <div className="bg-icloud-bg-layer1 rounded-2xl px-5 py-8 text-center">
+          <p className="text-[15px] text-icloud-text-secondary">No identities configured</p>
           <p className="text-[13px] text-[#C7C7CC] mt-1">Click "Add Identity" to get started</p>
         </div>
       ) : (
@@ -212,15 +212,15 @@ export function IdentitySettings() {
                   isSaving={updateIdentity.isPending}
                 />
               ) : (
-                <div className="bg-white dark:bg-[#1C1C1E] rounded-2xl border border-[#E5E5EA] px-4 py-3 flex items-center justify-between gap-3">
+                <div className="bg-icloud-bg-layer2 rounded-2xl border border-icloud-border px-4 py-3 flex items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-[15px] font-medium text-[#1C1C1E] truncate">{identity.name}</p>
-                    <p className="text-[13px] text-[#8E8E93] truncate">{identity.email}</p>
+                    <p className="text-[15px] font-medium text-icloud-text-primary truncate">{identity.name}</p>
+                    <p className="text-[13px] text-icloud-text-secondary truncate">{identity.email}</p>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
                     <button
                       onClick={() => setEditingId(identity.id)}
-                      className="w-8 h-8 rounded-lg hover:bg-[#F2F2F7] flex items-center justify-center transition-colors text-[#8E8E93] hover:text-[#007AFF]"
+                      className="w-8 h-8 rounded-lg hover:bg-icloud-bg-layer1 flex items-center justify-center transition-colors text-icloud-text-secondary hover:text-icloud-accent"
                       aria-label="Edit identity"
                     >
                       <Edit2 size={14} strokeWidth={1.5} />
@@ -228,7 +228,7 @@ export function IdentitySettings() {
                     <button
                       onClick={() => handleDelete(identity.id, identity.name)}
                       disabled={deleteIdentity.isPending}
-                      className="w-8 h-8 rounded-lg hover:bg-[#FFF1F0] flex items-center justify-center transition-colors text-[#8E8E93] hover:text-[#FF3B30] disabled:opacity-40"
+                      className="w-8 h-8 rounded-lg hover:bg-[#FFF1F0] flex items-center justify-center transition-colors text-icloud-text-secondary hover:text-icloud-red disabled:opacity-40"
                       aria-label="Delete identity"
                     >
                       <Trash2 size={14} strokeWidth={1.5} />

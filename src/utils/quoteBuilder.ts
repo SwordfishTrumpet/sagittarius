@@ -72,7 +72,7 @@ export function buildReplyQuote(email: EmailForQuote): string {
     `  <div style="color: #8E8E93; font-size: 13px; margin-bottom: 8px;">`,
     `    On ${dateStr} at ${timeStr}, ${senderStr} wrote:`,
     `  </div>`,
-    `  <blockquote style="margin: 0; padding: 0 0 0 12px; border-left: 2px solid #007AFF;">`,
+    `  <blockquote style="margin: 0; padding: 0 0 0 12px; border-left: 2px solid #0071e3;">`,
     `    ${body}`,
     `  </blockquote>`,
     '</div>',

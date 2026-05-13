@@ -236,7 +236,7 @@ export function RecursiveSidebarItem({
     <div ref={(el) => { drop(el); drag(el); itemRef.current = el; }} role="presentation" className={`relative ${isDraggingMailbox ? 'opacity-40' : ''}`}>
       {/* Drop indicator: before (reorder line at top) */}
       {showDropBefore && (
-        <div className="absolute top-0 left-3 right-3 h-[2px] bg-[#007AFF] rounded-full z-10 shadow-[0_0_4px_rgba(0,122,255,0.4)]" />
+        <div className="absolute top-0 left-3 right-3 h-[2px] bg-icloud-accent rounded-full z-10 shadow-[0_0_4px_rgba(0,122,255,0.4)]" />
       )}
       {/* Main folder item */}
       <div
@@ -271,13 +271,13 @@ export function RecursiveSidebarItem({
           onContextMenuProp(node.id, node.name, e);
         } : undefined}
         style={{ paddingLeft: `${indentPx}px` }}
-        className={`flex items-center justify-between transition-all relative group cursor-default rounded-lg focus:outline-none focus:ring-2 focus:ring-[#007AFF]/50
+        className={`flex items-center justify-between transition-all relative group cursor-default rounded-lg focus:outline-none focus:ring-2 focus:ring-icloud-accent/50
           ${
             active && !showDropInside
-              ? 'bg-[#007AFF] text-white shadow-md'
+              ? 'bg-icloud-accent text-white shadow-md'
               : showDropInside
-                ? 'bg-[#007AFF]/15 ring-2 ring-[#007AFF] text-[#007AFF] scale-[1.02]'
-                : 'hover:bg-black/[0.04] text-[#1C1C1E]'
+                ? 'bg-icloud-accent/15 ring-2 ring-icloud-accent text-icloud-accent scale-[1.02]'
+                : 'hover:bg-black/[0.04] text-icloud-text-primary'
           }
           px-2 py-1.5`}
       >
@@ -289,7 +289,7 @@ export function RecursiveSidebarItem({
               onToggleExpand(node.id);
             }}
             className={`flex items-center justify-center w-5 h-5 shrink-0 transition-transform ${
-              active && !showDropInside ? 'text-white' : 'text-[#007AFF]'
+              active && !showDropInside ? 'text-white' : 'text-icloud-accent'
             } hover:opacity-70`}
           >
             {node.isExpanded ? (
@@ -316,7 +316,7 @@ export function RecursiveSidebarItem({
         {/* Icon & label or input */}
         <div className="flex items-center gap-2 flex-1 overflow-hidden min-w-0">
           <span
-            className={`shrink-0 ${active && !showDropInside ? 'text-white' : 'text-[#007AFF]'}`}
+            className={`shrink-0 ${active && !showDropInside ? 'text-white' : 'text-icloud-accent'}`}
           >
             {icon}
           </span>
@@ -330,8 +330,8 @@ export function RecursiveSidebarItem({
               onBlur={handleSaveRename}
               className={`text-[14px] leading-none font-medium flex-1 min-w-0 px-1 rounded border-0 outline-none ${
                 active
-                  ? 'bg-white/20 dark:bg-white/10 text-white dark:text-white placeholder-white/60'
-                  : 'bg-white/10 text-[#1C1C1E] placeholder-[#1C1C1E]/40'
+                  ? 'bg-white/20 dark:bg-white/10 text-white text-icloud-text-primary placeholder-white/60'
+                  : 'bg-white/10 text-icloud-text-primary placeholder-[#1C1C1E]/40'
               }`}
               onClick={(e) => e.stopPropagation()}
             />
@@ -351,8 +351,8 @@ export function RecursiveSidebarItem({
           <span
             className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ${
               active && !showDropInside
-                ? 'bg-white/20 dark:bg-white/10 text-white dark:text-white'
-                : 'bg-[#E5E5EA] text-[#8E8E93]'
+                ? 'bg-white/20 dark:bg-white/10 text-white text-icloud-text-primary'
+                : 'bg-icloud-border text-icloud-text-secondary'
             }`}
           >
             {unreadCount}
@@ -361,7 +361,7 @@ export function RecursiveSidebarItem({
       </div>
       {/* Drop indicator: after (reorder line at bottom) */}
       {showDropAfter && (
-        <div className="absolute bottom-0 left-3 right-3 h-[2px] bg-[#007AFF] rounded-full z-10 shadow-[0_0_4px_rgba(0,122,255,0.4)]" />
+        <div className="absolute bottom-0 left-3 right-3 h-[2px] bg-icloud-accent rounded-full z-10 shadow-[0_0_4px_rgba(0,122,255,0.4)]" />
       )}
 
       {/* Children (expanded) */}
@@ -442,7 +442,7 @@ function RootDropZone({ onReparent }: { onReparent?: (draggedId: string, newPare
       ref={drop}
       className={`h-6 rounded-lg transition-all ${
         isOver && canDrop
-          ? 'bg-[#007AFF]/10 ring-1 ring-[#007AFF]/30'
+          ? 'bg-icloud-accent/10 ring-1 ring-icloud-accent/30'
           : ''
       }`}
     />

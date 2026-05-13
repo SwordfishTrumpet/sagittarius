@@ -27,12 +27,12 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div role="alert" className="flex flex-col items-center justify-center h-full bg-white dark:bg-black text-center px-10">
-          <p className="text-xl font-bold text-[#1C1C1E] dark:text-white mb-2">Something went wrong</p>
-          <p className="text-sm text-[#8E8E93] dark:text-[#A1A1A6] mb-6 max-w-md">{this.state.error?.message}</p>
+        <div role="alert" className="flex flex-col items-center justify-center h-full bg-icloud-bg-primary text-center px-10">
+          <p className="text-xl font-bold text-icloud-text-primary mb-2">Something went wrong</p>
+          <p className="text-sm text-icloud-text-secondary  mb-6 max-w-md">{this.state.error?.message}</p>
           <button
             onClick={() => this.setState({ hasError: false, error: null })}
-            className="px-4 py-2 bg-[#007AFF] text-white rounded-lg font-medium text-sm hover:bg-[#0062CC] transition-colors"
+            className="px-4 py-2 bg-icloud-accent text-white rounded-lg font-medium text-sm hover:bg-icloud-accent-hover transition-colors"
           >
             Try Again
           </button>

@@ -23,7 +23,7 @@ export function ThemeToggle() {
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex gap-1 p-1 bg-[#F2F2F7] dark:bg-[#2C2C2E] rounded-xl">
+      <div className="flex gap-1 p-1 bg-icloud-bg-layer1 rounded-xl">
         {THEME_OPTIONS.map(({ mode: optionMode, label, Icon }) => (
           <button
             key={optionMode}
@@ -32,8 +32,8 @@ export function ThemeToggle() {
               flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg
               text-[13px] font-medium transition-all duration-200
               ${mode === optionMode
-                ? 'bg-white dark:bg-[#1C1C1E] text-[#007AFF] dark:text-[#0A84FF] shadow-sm'
-                : 'text-[#6C6C70] dark:text-[#8E8E93] hover:text-[#1C1C1E] dark:hover:text-white'
+                ? 'bg-icloud-bg-layer2 text-icloud-accent shadow-sm'
+                : ' text-icloud-text-secondary hover:text-icloud-text-primary dark:hover:text-white'
               }
             `}
             aria-pressed={mode === optionMode}
@@ -43,7 +43,7 @@ export function ThemeToggle() {
           </button>
         ))}
       </div>
-      <p className="text-[12px] text-[#8E8E93] dark:text-[#636366] px-1">
+      <p className="text-[12px] text-icloud-text-secondary dark:text-[#636366] px-1">
         {mode === 'auto' 
           ? 'Automatically switches between light and dark based on your system settings.'
           : mode === 'light'

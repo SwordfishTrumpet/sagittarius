@@ -43,7 +43,7 @@ describe('ActionButton', () => {
 
     const button = screen.getByRole('button', { name: 'Reply' });
     expect(button.className).toContain('focus:ring-2');
-    expect(button.className).toContain('focus:ring-[#007AFF]/50');
+    expect(button.className).toContain('focus:ring-icloud-accent/50');
   });
 
   it('has minimum touch target size', () => {

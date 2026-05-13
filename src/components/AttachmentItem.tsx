@@ -88,11 +88,11 @@ function AttachmentItemComponent({ attachment }: { attachment: any }) {
   
   return (
     <div 
-      className="flex items-center gap-4 p-3 bg-[#F2F2F7]/50 dark:bg-[#1C1C1E]/50 rounded-xl border border-[#E5E5E5] dark:border-[#38383A] group hover:bg-white dark:hover:bg-[#2C2C2E] hover:shadow-sm transition-all duration-200 cursor-pointer"
+      className="flex items-center gap-4 p-3 bg-icloud-bg-layer1/50 bg-icloud-bg-primary/50 rounded-xl border border-icloud-border group hover:bg-white hover:bg-icloud-card hover:shadow-sm transition-all duration-200 cursor-pointer"
       onDoubleClick={handleOpen}
       title="Double-click to open"
     >
-      <div className="w-10 h-10 rounded-lg bg-white dark:bg-[#2C2C2E] border border-[#E5E5E5] dark:border-[#38383A] flex items-center justify-center text-[#007AFF] dark:text-[#0A84FF] shrink-0 overflow-hidden shadow-sm">
+      <div className="w-10 h-10 rounded-lg bg-icloud-card border border-icloud-border flex items-center justify-center text-icloud-accent shrink-0 overflow-hidden shadow-sm">
         {isImage && thumbnailUrl ? (
           <img src={thumbnailUrl} alt={attachment.name} className="w-full h-full object-cover" />
         ) : (
@@ -100,15 +100,15 @@ function AttachmentItemComponent({ attachment }: { attachment: any }) {
         )}
       </div>
       <div className="flex-1 min-w-0">
-        <div className="font-semibold text-[13px] text-[#1C1C1E] truncate">{attachment.name}</div>
-        <div className="text-[11px] text-[#6C6C70] font-medium uppercase tracking-tight">
+        <div className="font-semibold text-[13px] text-icloud-text-primary truncate">{attachment.name}</div>
+        <div className="text-[11px]  font-medium uppercase tracking-tight">
           {(attachment.size / 1024).toFixed(0)} KB · {attachment.type.split('/')[1]?.toUpperCase() || 'FILE'}
         </div>
       </div>
       <div className="flex items-center gap-1 opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 transition-opacity">
         <button 
           onClick={handleDownload}
-          className="p-2 text-[#007AFF] hover:bg-[#F2F2F7] rounded-full transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+          className="p-2 text-icloud-accent hover:bg-icloud-bg-layer1 rounded-full transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
           title="Download"
           aria-label={`Download ${attachment.name}`}
         >
@@ -116,7 +116,7 @@ function AttachmentItemComponent({ attachment }: { attachment: any }) {
         </button>
         <button 
           onClick={(e) => { e.stopPropagation(); handleOpen(); }}
-          className="p-2 text-[#6C6C70] hover:bg-[#F2F2F7] rounded-full transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+          className="p-2  hover:bg-icloud-bg-layer1 rounded-full transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
           title="Open in New Tab"
           aria-label={`Open ${attachment.name} in new tab`}
         >

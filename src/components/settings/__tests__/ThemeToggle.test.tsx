@@ -113,7 +113,7 @@ describe('ThemeToggle', () => {
     render(<ThemeToggle />);
 
     const lightButton = screen.getByRole('button', { name: 'Light' });
-    expect(lightButton.className).toContain('bg-white');
-    expect(lightButton.className).toContain('text-[#007AFF]');
+    expect(lightButton.className).toContain('bg-icloud-bg-layer2');
+    expect(lightButton.className).toContain('text-icloud-accent');
   });
 });

@@ -48,12 +48,12 @@ describe('FilterBar', () => {
     const flaggedButton = screen.getByRole('button', { name: 'Filter Flagged' })
 
     // Active filter should have blue background class
-    expect(unreadButton.className).toContain('bg-[#007AFF]')
+    expect(unreadButton.className).toContain('bg-icloud-accent')
     expect(unreadButton.className).toContain('text-white')
 
     // Inactive filter should have gray background class
-    expect(flaggedButton.className).toContain('bg-[#F2F2F7]')
-    expect(flaggedButton.className).toContain('text-[#8E8E93]')
+    expect(flaggedButton.className).toContain('bg-icloud-bg-layer1')
+    expect(flaggedButton.className).toContain('text-icloud-text-secondary')
   })
 
   it('supports keyboard navigation between filters', async () => {

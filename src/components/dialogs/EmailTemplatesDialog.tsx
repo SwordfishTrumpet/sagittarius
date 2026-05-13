@@ -150,21 +150,21 @@ export function EmailTemplatesDialog({
       >
         <div className="flex flex-col h-[500px]">
           {/* Search and New button */}
-          <div className="flex items-center gap-2 px-4 py-3 border-b border-[#E5E5EA] dark:border-[#38383A]">
+          <div className="flex items-center gap-2 px-4 py-3 border-b border-icloud-border">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8E8E93]" strokeWidth={1.5} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-icloud-text-secondary" strokeWidth={1.5} />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search templates..."
-                className="w-full pl-9 pr-3 py-2 bg-[#F2F2F7] dark:bg-[#2C2C2E] rounded-lg text-[13px] text-[#1C1C1E] placeholder:text-[#8E8E93] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/30"
+                className="w-full pl-9 pr-3 py-2 bg-icloud-bg-layer1 rounded-lg text-[13px] text-icloud-text-primary placeholder:text-icloud-text-secondary focus:outline-none focus:ring-2 focus:ring-icloud-accent/30"
               />
             </div>
             {!selectionMode && (
               <button
                 onClick={handleCreateNew}
-                className="flex items-center gap-1.5 px-3 py-2 bg-[#007AFF] text-white rounded-lg text-[13px] font-medium hover:bg-[#0051D5] transition-colors"
+                className="flex items-center gap-1.5 px-3 py-2 bg-icloud-accent text-white rounded-lg text-[13px] font-medium hover:bg-[#0051D5] transition-colors"
               >
                 <Plus className="w-4 h-4" strokeWidth={1.5} />
                 New
@@ -177,19 +177,19 @@ export function EmailTemplatesDialog({
             {isLoading ? (
               <div className="space-y-2 animate-pulse">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-16 bg-[#E5E5EA] dark:bg-[#2C2C2E] rounded-xl" />
+                  <div key={i} className="h-16 bg-icloud-border bg-icloud-card rounded-xl" />
                 ))}
               </div>
             ) : filteredTemplates.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center">
                 <FileText className="w-12 h-12 text-[#C7C7CC] mb-3" strokeWidth={1.5} />
-                <p className="text-[15px] text-[#8E8E93]">
+                <p className="text-[15px] text-icloud-text-secondary">
                   {searchQuery ? 'No templates match your search' : 'No templates yet'}
                 </p>
                 {!searchQuery && !selectionMode && (
                   <button
                     onClick={handleCreateNew}
-                    className="mt-3 text-[13px] text-[#007AFF] hover:underline"
+                    className="mt-3 text-[13px] text-icloud-accent hover:underline"
                   >
                     Create your first template
                   </button>
@@ -201,17 +201,17 @@ export function EmailTemplatesDialog({
                   <div
                     key={template.id}
                     onClick={() => selectionMode && handleSelect(template)}
-                    className={`group bg-white dark:bg-[#1C1C1E] rounded-xl border border-[#E5E5EA] overflow-hidden transition-all hover:border-[#007AFF]/30 ${
-                      selectionMode ? 'cursor-pointer hover:bg-[#F2F2F7] dark:bg-[#2C2C2E] dark:hover:bg-white/5' : ''
+                    className={`group bg-icloud-bg-layer2 rounded-xl border border-icloud-border overflow-hidden transition-all hover:border-icloud-accent/30 ${
+                      selectionMode ? 'cursor-pointer hover:bg-icloud-bg-layer1 dark:hover:bg-white/5' : ''
                     }`}
                   >
                     <div className="p-3">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-[15px] font-medium text-[#1C1C1E] truncate">
+                          <h3 className="text-[15px] font-medium text-icloud-text-primary truncate">
                             {template.name}
                           </h3>
-                          <p className="text-[13px] text-[#8E8E93] truncate">
+                          <p className="text-[13px] text-icloud-text-secondary truncate">
                             {template.subject}
                           </p>
                           {template.to && (
@@ -227,7 +227,7 @@ export function EmailTemplatesDialog({
                                 e.stopPropagation();
                                 handleEdit(template);
                               }}
-                              className="p-1.5 text-[#8E8E93] hover:bg-[#F2F2F7] dark:bg-[#2C2C2E] dark:hover:bg-white/5 rounded-lg transition-colors"
+                              className="p-1.5 text-icloud-text-secondary hover:bg-icloud-bg-layer1 dark:hover:bg-white/5 rounded-lg transition-colors"
                               aria-label="Edit template"
                             >
                               <Edit2 className="w-4 h-4" strokeWidth={1.5} />
@@ -237,7 +237,7 @@ export function EmailTemplatesDialog({
                                 e.stopPropagation();
                                 handleDuplicate(template.id);
                               }}
-                              className="p-1.5 text-[#8E8E93] hover:bg-[#F2F2F7] dark:bg-[#2C2C2E] dark:hover:bg-white/5 rounded-lg transition-colors"
+                              className="p-1.5 text-icloud-text-secondary hover:bg-icloud-bg-layer1 dark:hover:bg-white/5 rounded-lg transition-colors"
                               aria-label="Duplicate template"
                             >
                               <Copy className="w-4 h-4" strokeWidth={1.5} />
@@ -247,7 +247,7 @@ export function EmailTemplatesDialog({
                                 e.stopPropagation();
                                 handleDelete(template.id);
                               }}
-                              className="p-1.5 text-[#FF3B30] hover:bg-[#FF3B30]/10 rounded-lg transition-colors"
+                              className="p-1.5 text-icloud-red hover:bg-icloud-red/10 rounded-lg transition-colors"
                               aria-label="Delete template"
                             >
                               <Trash2 className="w-4 h-4" strokeWidth={1.5} />
@@ -264,10 +264,10 @@ export function EmailTemplatesDialog({
 
           {/* Footer */}
           {selectionMode && (
-            <div className="px-4 py-3 border-t border-[#E5E5EA] dark:border-[#38383A]">
+            <div className="px-4 py-3 border-t border-icloud-border">
               <button
                 onClick={handleClose}
-                className="w-full px-4 py-2 bg-[#F2F2F7] dark:bg-[#2C2C2E] text-[#1C1C1E] rounded-lg text-[13px] font-medium hover:bg-[#E5E5E5] dark:hover:bg-[#38383A] transition-colors"
+                className="w-full px-4 py-2 bg-icloud-bg-layer1 text-icloud-text-primary rounded-lg text-[13px] font-medium hover:bg-icloud-border  transition-colors"
               >
                 Cancel
               </button>
@@ -292,13 +292,13 @@ export function EmailTemplatesDialog({
     >
       <div className="flex flex-col h-[500px]">
         {/* Back button */}
-        <div className="flex items-center gap-2 px-4 py-2 border-b border-[#E5E5EA] dark:border-[#38383A]">
+        <div className="flex items-center gap-2 px-4 py-2 border-b border-icloud-border">
           <button
             onClick={() => {
               setViewMode('list');
               resetForm();
             }}
-            className="flex items-center gap-1 text-[13px] text-[#007AFF] hover:underline"
+            className="flex items-center gap-1 text-[13px] text-icloud-accent hover:underline"
           >
             <ChevronLeft className="w-4 h-4" strokeWidth={1.5} />
             Back to templates
@@ -315,7 +315,7 @@ export function EmailTemplatesDialog({
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
                 placeholder="e.g., Meeting Request"
-                className="w-full px-4 pb-3 pt-1 text-[15px] text-[#1C1C1E] placeholder:text-[#C7C7CC] bg-transparent focus:outline-none"
+                className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-[#C7C7CC] bg-transparent focus:outline-none"
               />
             </FormField>
           </FormSection>
@@ -327,7 +327,7 @@ export function EmailTemplatesDialog({
                 value={formSubject}
                 onChange={(e) => setFormSubject(e.target.value)}
                 placeholder="e.g., Meeting request: {{topic}}"
-                className="w-full px-4 pb-3 pt-1 text-[15px] text-[#1C1C1E] placeholder:text-[#C7C7CC] bg-transparent focus:outline-none"
+                className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-[#C7C7CC] bg-transparent focus:outline-none"
               />
             </FormField>
           </FormSection>
@@ -339,14 +339,14 @@ export function EmailTemplatesDialog({
                 onChange={(e) => setFormBody(e.target.value)}
                 rows={6}
                 placeholder="Enter email body text..."
-                className="w-full px-4 pb-3 pt-1 text-[15px] text-[#1C1C1E] placeholder:text-[#C7C7CC] bg-transparent focus:outline-none resize-none"
+                className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-[#C7C7CC] bg-transparent focus:outline-none resize-none"
               />
             </FormField>
           </FormSection>
 
           {/* Optional recipient fields */}
           <div className="pt-2">
-            <p className="px-1 text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wide mb-2">
+            <p className="px-1 text-[11px] font-semibold text-icloud-text-secondary uppercase tracking-wide mb-2">
               Optional Default Recipients
             </p>
             <FormSection>
@@ -356,7 +356,7 @@ export function EmailTemplatesDialog({
                   value={formTo}
                   onChange={(e) => setFormTo(e.target.value)}
                   placeholder="Default recipient(s)"
-                  className="w-full px-4 pb-3 pt-1 text-[15px] text-[#1C1C1E] placeholder:text-[#C7C7CC] bg-transparent focus:outline-none"
+                  className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-[#C7C7CC] bg-transparent focus:outline-none"
                 />
               </FormField>
             </FormSection>
@@ -369,7 +369,7 @@ export function EmailTemplatesDialog({
                 value={formCc}
                 onChange={(e) => setFormCc(e.target.value)}
                 placeholder="Default CC recipient(s)"
-                className="w-full px-4 pb-3 pt-1 text-[15px] text-[#1C1C1E] placeholder:text-[#C7C7CC] bg-transparent focus:outline-none"
+                className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-[#C7C7CC] bg-transparent focus:outline-none"
               />
             </FormField>
           </FormSection>
@@ -381,28 +381,28 @@ export function EmailTemplatesDialog({
                 value={formBcc}
                 onChange={(e) => setFormBcc(e.target.value)}
                 placeholder="Default BCC recipient(s)"
-                className="w-full px-4 pb-3 pt-1 text-[15px] text-[#1C1C1E] placeholder:text-[#C7C7CC] bg-transparent focus:outline-none"
+                className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-[#C7C7CC] bg-transparent focus:outline-none"
               />
             </FormField>
           </FormSection>
         </div>
 
         {/* Footer actions */}
-        <div className="flex gap-3 px-4 py-4 border-t border-[#E5E5EA] dark:border-[#38383A]">
+        <div className="flex gap-3 px-4 py-4 border-t border-icloud-border">
           <button
             onClick={() => {
               setViewMode('list');
               resetForm();
             }}
             disabled={isSaving}
-            className="flex-1 px-4 py-2 bg-[#F2F2F7] dark:bg-[#2C2C2E] text-[#1C1C1E] rounded-lg font-medium text-[13px] hover:bg-[#E5E5E5] dark:hover:bg-[#38383A] transition-colors disabled:opacity-50"
+            className="flex-1 px-4 py-2 bg-icloud-bg-layer1 text-icloud-text-primary rounded-lg font-medium text-[13px] hover:bg-icloud-border  transition-colors disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={!isFormValid || isSaving}
-            className="flex-1 px-4 py-2 bg-[#007AFF] text-white rounded-lg font-medium text-[13px] hover:bg-[#0051D5] transition-colors disabled:opacity-50"
+            className="flex-1 px-4 py-2 bg-icloud-accent text-white rounded-lg font-medium text-[13px] hover:bg-[#0051D5] transition-colors disabled:opacity-50"
           >
             {isSaving ? 'Saving...' : viewMode === 'edit' ? 'Save Changes' : 'Create Template'}
           </button>

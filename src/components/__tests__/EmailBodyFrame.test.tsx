@@ -37,7 +37,7 @@ describe('EmailBodyFrame helpers', () => {
     expect(srcDoc).toContain('color: inherit !important')
     // Verify link colors are preserved
     expect(srcDoc).toContain('a, a:link, a:visited')
-    expect(srcDoc).toContain('color: #0A84FF !important')
+    expect(srcDoc).toContain('color: #009aff !important')
   })
 
   it('builds light mode iframe document with dark text', () => {

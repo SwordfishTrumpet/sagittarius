@@ -86,41 +86,41 @@ function GeneralSettings() {
 
   return (
     <div className="p-6">
-      <h2 className="text-[17px] font-semibold text-[#1C1C1E] mb-4">General</h2>
-      <div className="bg-white dark:bg-[#1C1C1E] rounded-2xl border border-[#E5E5EA] dark:border-[#38383A] divide-y divide-[#E5E5EA] dark:divide-[#38383A]">
+      <h2 className="text-[17px] font-semibold text-icloud-text-primary mb-4">General</h2>
+      <div className="bg-icloud-bg-layer2 rounded-2xl border border-icloud-border divide-y divide-[#E5E5EA] divide-icloud-border">
         <div className="px-4 py-3 flex items-center justify-between">
-          <span className="text-[15px] text-[#1C1C1E] dark:text-white">App Version</span>
-          <span className="text-[13px] text-[#6C6C70] dark:text-[#8E8E93]">Sagittarius 1.0</span>
+          <span className="text-[15px] text-icloud-text-primary">App Version</span>
+          <span className="text-[13px]  text-icloud-text-secondary">Sagittarius 1.0</span>
         </div>
         <div className="px-4 py-3 flex items-center justify-between">
-          <span className="text-[15px] text-[#1C1C1E] dark:text-white">Protocol</span>
-          <span className="text-[13px] text-[#6C6C70] dark:text-[#8E8E93]">JMAP (RFC 8620 / 8621)</span>
+          <span className="text-[15px] text-icloud-text-primary">Protocol</span>
+          <span className="text-[13px]  text-icloud-text-secondary">JMAP (RFC 8620 / 8621)</span>
         </div>
       </div>
 
-      <h3 className="text-[15px] font-semibold text-[#1C1C1E] dark:text-white mt-6 mb-3">Appearance</h3>
-      <div className="bg-white dark:bg-[#1C1C1E] rounded-2xl border border-[#E5E5EA] dark:border-[#38383A] p-4 space-y-6">
+      <h3 className="text-[15px] font-semibold text-icloud-text-primary mt-6 mb-3">Appearance</h3>
+      <div className="bg-icloud-bg-layer2 rounded-2xl border border-icloud-border p-4 space-y-6">
         <ThemeToggle />
-        <div className="border-t border-[#E5E5EA] dark:border-[#38383A]" />
+        <div className="border-t border-icloud-border" />
         <FontSelector />
       </div>
 
-      <h3 className="text-[15px] font-semibold text-[#1C1C1E] dark:text-white mt-6 mb-3">Notifications</h3>
-      <div className="bg-white dark:bg-[#1C1C1E] rounded-2xl border border-[#E5E5EA] dark:border-[#38383A] divide-y divide-[#E5E5EA] dark:divide-[#38383A]">
+      <h3 className="text-[15px] font-semibold text-icloud-text-primary mt-6 mb-3">Notifications</h3>
+      <div className="bg-icloud-bg-layer2 rounded-2xl border border-icloud-border divide-y divide-[#E5E5EA] divide-icloud-border">
         {/* Notification permission status */}
         {isSupported && !isPermissionGranted && (
           <div className="px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <BellOff className="w-4 h-4 text-[#8E8E93] dark:text-[#636366]" strokeWidth={1.5} />
-              <span className="text-[15px] text-[#1C1C1E] dark:text-white">Desktop notifications</span>
+              <BellOff className="w-4 h-4 text-icloud-text-secondary dark:text-[#636366]" strokeWidth={1.5} />
+              <span className="text-[15px] text-icloud-text-primary">Desktop notifications</span>
             </div>
             <button
               onClick={handleRequestPermission}
               disabled={isPermissionDenied || isRequesting}
               className={`px-3 py-1.5 text-[13px] font-medium rounded-lg transition-colors ${
                 isPermissionDenied
-                  ? 'bg-[#E5E5EA] dark:bg-[#3A3A3C] text-[#8E8E93] dark:text-[#636366] cursor-not-allowed'
-                  : 'bg-[#007AFF] text-white hover:bg-[#0051D5]'
+                  ? 'bg-icloud-border dark:bg-[#3A3A3C] text-icloud-text-secondary dark:text-[#636366] cursor-not-allowed'
+                  : 'bg-icloud-accent text-white hover:bg-[#0051D5]'
               }`}
             >
               {isRequesting ? 'Requesting...' : isPermissionDenied ? 'Blocked' : 'Enable'}
@@ -132,10 +132,10 @@ function GeneralSettings() {
         {isPermissionGranted && (
           <div className="px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <Bell className="w-4 h-4 text-[#34C759]" strokeWidth={1.5} />
-              <span className="text-[15px] text-[#1C1C1E] dark:text-white">Desktop notifications</span>
+              <Bell className="w-4 h-4 text-icloud-green" strokeWidth={1.5} />
+              <span className="text-[15px] text-icloud-text-primary">Desktop notifications</span>
             </div>
-            <span className="text-[13px] text-[#34C759] font-medium">Enabled</span>
+            <span className="text-[13px] text-icloud-green font-medium">Enabled</span>
           </div>
         )}
 
@@ -143,10 +143,10 @@ function GeneralSettings() {
         {isPermissionDenied && (
           <div className="px-4 py-3 bg-[#FFF3F0] dark:bg-[#3A1A1A]">
             <div className="flex items-start gap-2.5">
-              <AlertCircle className="w-4 h-4 text-[#FF3B30] mt-0.5 shrink-0" strokeWidth={1.5} />
+              <AlertCircle className="w-4 h-4 text-icloud-red mt-0.5 shrink-0" strokeWidth={1.5} />
               <div className="flex-1">
-                <p className="text-[13px] text-[#1C1C1E] dark:text-white font-medium">Notifications blocked</p>
-                <p className="text-[12px] text-[#6C6C70] dark:text-[#8E8E93] mt-1">
+                <p className="text-[13px] text-icloud-text-primary font-medium">Notifications blocked</p>
+                <p className="text-[12px]  text-icloud-text-secondary mt-1">
                   Enable notifications in your browser settings to receive new mail alerts.
                 </p>
               </div>
@@ -157,8 +157,8 @@ function GeneralSettings() {
         {/* Sound toggle - only show when notifications enabled or as fallback */}
         <div className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <Volume2 className="w-4 h-4 text-[#6C6C70] dark:text-[#8E8E93]" strokeWidth={1.5} />
-            <span className="text-[15px] text-[#1C1C1E] dark:text-white">New mail sound</span>
+            <Volume2 className="w-4 h-4  text-icloud-text-secondary" strokeWidth={1.5} />
+            <span className="text-[15px] text-icloud-text-primary">New mail sound</span>
           </div>
           <IOSToggle
             checked={soundEnabled}
@@ -170,7 +170,7 @@ function GeneralSettings() {
         {/* Volume slider */}
         {soundEnabled && (
           <div className="px-4 py-3 flex items-center gap-4">
-            <label htmlFor="settings-volume" className="text-[13px] text-[#6C6C70] dark:text-[#8E8E93] shrink-0 w-14">Volume</label>
+            <label htmlFor="settings-volume" className="text-[13px]  text-icloud-text-secondary shrink-0 w-14">Volume</label>
             <input
               id="settings-volume"
               type="range"
@@ -181,23 +181,23 @@ function GeneralSettings() {
               onChange={handleVolumeChange}
               onMouseUp={handleVolumeCommit}
               onTouchEnd={handleVolumeCommit}
-              className="flex-1 h-1 accent-[#007AFF] dark:accent-[#0A84FF] rounded-full appearance-none bg-[#E5E5EA] dark:bg-[#3A3A3C] cursor-pointer
+              className="flex-1 h-1 accent-icloud-accent accent-icloud-accent rounded-full appearance-none bg-icloud-border dark:bg-[#3A3A3C] cursor-pointer
                 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4
-                [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white dark:[&::-webkit-slider-thumb]:bg-[#E5E5E5] [&::-webkit-slider-thumb]:shadow-md
-                [&::-webkit-slider-thumb]:border [&::-webkit-slider-thumb]:border-[#E5E5EA] dark:[&::-webkit-slider-thumb]:border-[#38383A]
+                [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white dark:[&::-webkit-slider-thumb]:bg-icloud-border [&::-webkit-slider-thumb]:shadow-md
+                [&::-webkit-slider-thumb]:border [&::-webkit-slider-thumb]:border-icloud-border dark:[&::-webkit-slider-thumb]:border-icloud-border
                 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full
-                [&::-moz-range-thumb]:bg-white dark:[&::-moz-range-thumb]:bg-[#E5E5E5] [&::-moz-range-thumb]:shadow-md [&::-moz-range-thumb]:border
-                [&::-moz-range-thumb]:border-[#E5E5EA] dark:[&::-moz-range-thumb]:border-[#38383A]"
+                [&::-moz-range-thumb]:bg-white dark:[&::-moz-range-thumb]:bg-icloud-border [&::-moz-range-thumb]:shadow-md [&::-moz-range-thumb]:border
+                [&::-moz-range-thumb]:border-icloud-border dark:[&::-moz-range-thumb]:border-icloud-border"
             />
-            <span className="text-[13px] text-[#6C6C70] dark:text-[#8E8E93] w-10 text-right">{Math.round(volume * 100)}%</span>
+            <span className="text-[13px]  text-icloud-text-secondary w-10 text-right">{Math.round(volume * 100)}%</span>
           </div>
         )}
       </div>
 
       {/* Unsupported notice */}
       {!isSupported && (
-        <div className="mt-4 px-4 py-3 bg-[#F2F2F7] dark:bg-[#2C2C2E] rounded-xl">
-          <p className="text-[13px] text-[#6C6C70] dark:text-[#8E8E93]">
+        <div className="mt-4 px-4 py-3 bg-icloud-bg-layer1 rounded-xl">
+          <p className="text-[13px]  text-icloud-text-secondary">
             Desktop notifications are not supported in this browser. Use the volume control for audio alerts.
           </p>
         </div>
@@ -265,7 +265,7 @@ export function Settings({ isOpen, onClose, isMobile = false }: SettingsProps) {
   return (
     /* Overlay */
     <div
-      className={`fixed inset-0 z-[300] bg-black/30 backdrop-blur-sm flex items-start justify-center overflow-y-auto ${isMobile ? 'py-0' : 'py-8'}`}
+      className={`fixed inset-0 z-[300] bg-icloud-bg-primary/30 backdrop-blur-sm flex items-start justify-center overflow-y-auto ${isMobile ? 'py-0' : 'py-8'}`}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -277,7 +277,7 @@ export function Settings({ isOpen, onClose, isMobile = false }: SettingsProps) {
         aria-modal="true"
         aria-labelledby="settings-dialog-title"
         tabIndex={-1}
-        className={`relative bg-white dark:bg-[#1C1C1E] shadow-2xl w-full flex overflow-hidden ${
+        className={`relative bg-icloud-bg-layer2 shadow-2xl w-full flex overflow-hidden ${
           isMobile 
             ? 'flex-col h-full max-w-full rounded-none' 
             : 'rounded-2xl max-w-4xl mx-4'
@@ -285,21 +285,21 @@ export function Settings({ isOpen, onClose, isMobile = false }: SettingsProps) {
         style={isMobile ? undefined : { height: 'calc(100vh - 64px)', maxHeight: 680 }}
       >
         {/* Category nav: horizontal tabs on mobile, left sidebar on desktop */}
-        <nav aria-label="Settings categories" className={`shrink-0 bg-[#F2F2F7] dark:bg-[#1C1C1E] flex ${
+        <nav aria-label="Settings categories" className={`shrink-0 bg-icloud-bg-layer1 bg-icloud-bg-primary flex ${
           isMobile 
-            ? 'flex-col border-b border-[#E5E5EA] dark:border-[#38383A] py-3' 
-            : 'flex-col w-[200px] border-r border-[#E5E5EA] dark:border-[#38383A] py-4'
+            ? 'flex-col border-b border-icloud-border py-3' 
+            : 'flex-col w-[200px] border-r border-icloud-border py-4'
         }`}>
           <div className={`flex items-center justify-between ${isMobile ? 'px-4 pb-2' : 'px-4 pb-3'}`}>
-            <p id="settings-dialog-title" className="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wide">
+            <p id="settings-dialog-title" className="text-[11px] font-semibold text-icloud-text-secondary uppercase tracking-wide">
               Settings
             </p>
             <button
               onClick={onClose}
-              className="w-7 h-7 rounded-full bg-[#E5E5EA] dark:bg-[#3A3A3C] hover:bg-[#D1D1D6] dark:hover:bg-[#48484A] flex items-center justify-center transition-colors"
+              className="w-7 h-7 rounded-full bg-icloud-border dark:bg-[#3A3A3C] hover:bg-icloud-divider dark:hover:bg-[#48484A] flex items-center justify-center transition-colors"
               aria-label="Close settings"
             >
-              <X size={13} strokeWidth={2} className="text-[#636366] dark:text-[#8E8E93]" />
+              <X size={13} strokeWidth={2} className="text-[#636366] text-icloud-text-secondary" />
             </button>
           </div>
           <div role="tablist" aria-orientation={isMobile ? 'horizontal' : 'vertical'} className={isMobile ? 'flex gap-1 px-2 overflow-x-auto' : ''}>
@@ -317,15 +317,15 @@ export function Settings({ isOpen, onClose, isMobile = false }: SettingsProps) {
                   isMobile ? 'px-3 py-2 shrink-0' : 'px-4 py-2.5 mx-2'
                 } ${
                   selected === id
-                    ? 'bg-white dark:bg-[#2C2C2E] text-[#007AFF] dark:text-[#0A84FF] shadow-sm'
-                    : 'text-[#1C1C1E] dark:text-white hover:bg-white/60 dark:hover:bg-white/10'
+                    ? 'bg-icloud-card text-icloud-accent shadow-sm'
+                    : 'text-icloud-text-primary hover:bg-white/60 dark:hover:bg-icloud-text-primary/10'
                 }`}
               >
                 <Icon
                   width={16}
                   height={16}
                   strokeWidth={1.5}
-                  className={selected === id ? 'text-[#007AFF] dark:text-[#0A84FF]' : 'text-[#8E8E93]'}
+                  className={selected === id ? 'text-icloud-accent' : 'text-icloud-text-secondary'}
                 />
                 {label}
               </button>

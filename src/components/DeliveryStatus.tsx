@@ -44,25 +44,25 @@ function getBadgeConfig(
       return {
         label: 'Scheduled',
         icon: <Clock className="w-3 h-3" strokeWidth={1.5} />,
-        className: 'bg-[#007AFF]/10 text-[#007AFF]',
+        className: 'bg-icloud-accent/10 text-icloud-accent',
       };
     case 'delivered':
       return {
         label: 'Delivered',
         icon: <CheckCircle className="w-3 h-3" strokeWidth={1.5} />,
-        className: 'bg-[#34C759]/10 text-[#34C759]',
+        className: 'bg-icloud-green/10 text-icloud-green',
       };
     case 'queued':
       return {
         label: 'Queued',
         icon: <AlertCircle className="w-3 h-3" strokeWidth={1.5} />,
-        className: 'bg-[#FF9500]/10 text-[#FF9500]',
+        className: 'bg-icloud-orange/10 text-icloud-orange',
       };
     case 'failed':
       return {
         label: 'Failed',
         icon: <XCircle className="w-3 h-3" strokeWidth={1.5} />,
-        className: 'bg-[#FF3B30]/10 text-[#FF3B30]',
+        className: 'bg-icloud-red/10 text-icloud-red',
       };
   }
 }
@@ -76,7 +76,7 @@ export function DeliveryStatus({ emailId }: DeliveryStatusProps) {
 
   if (isLoading) {
     return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#F2F2F7] dark:bg-[#2C2C2E] text-[#6C6C70] dark:text-[#A1A1A6]">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-icloud-bg-layer1  ">
           <span className="w-2 h-2 rounded-full bg-[#8E8E93] animate-pulse" />
           Checking…
         </span>

@@ -29,7 +29,7 @@ export function SearchBar({
   return (
     <div role="search" className="relative">
       {/* Search Icon */}
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#8E8E93] pointer-events-none" />
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-icloud-text-secondary pointer-events-none" />
 
       {/* Input Field */}
       <input
@@ -43,7 +43,7 @@ export function SearchBar({
         onBlur={() => setTimeout(() => setIsFocused(false), 200)}
         disabled={disabled}
         aria-label="Search emails"
-        className="w-full bg-[#8E8E93]/10 border-none rounded-lg py-1.5 pl-9 pr-24 text-[14px] focus:ring-2 focus:ring-[#007AFF]/30 placeholder-[#8E8E93] transition-all hover:bg-[#8E8E93]/15 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full bg-[#8E8E93]/10 border-none rounded-lg py-1.5 pl-9 pr-24 text-[14px] focus:ring-2 focus:ring-icloud-accent/30 placeholder-icloud-text-secondary transition-all hover:bg-[#8E8E93]/15 disabled:opacity-50 disabled:cursor-not-allowed"
       />
 
       {/* Right Icons */}
@@ -52,24 +52,24 @@ export function SearchBar({
         <button
           onClick={onHistoryClick}
           disabled={disabled}
-          className="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-black/5 rounded-md transition-colors disabled:opacity-50"
+          className="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-icloud-text-primary/5 rounded-md transition-colors disabled:opacity-50"
           title="Search History"
           aria-label="Search history"
           type="button"
         >
-          <History className="w-4 h-4 text-[#8E8E93]" strokeWidth={1.5} />
+          <History className="w-4 h-4 text-icloud-text-secondary" strokeWidth={1.5} />
         </button>
 
         {/* Advanced Filter Button */}
         <button
           onClick={onAdvancedClick}
           disabled={disabled}
-          className="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-black/5 rounded-md transition-colors disabled:opacity-50"
+          className="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-icloud-text-primary/5 rounded-md transition-colors disabled:opacity-50"
           title="Advanced Search"
           aria-label="Advanced search"
           type="button"
         >
-          <Filter className="w-4 h-4 text-[#007AFF]" strokeWidth={1.5} />
+          <Filter className="w-4 h-4 text-icloud-accent" strokeWidth={1.5} />
         </button>
 
         {/* Clear Button (only show when input has value) */}
@@ -77,19 +77,19 @@ export function SearchBar({
           <button
             onClick={() => onChange('')}
             disabled={disabled}
-            className="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-black/5 rounded-full transition-colors disabled:opacity-50"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-icloud-text-primary/5 rounded-full transition-colors disabled:opacity-50"
             title="Clear search"
             aria-label="Clear search"
             type="button"
           >
-            <X className="w-4 h-4 text-[#8E8E93]" strokeWidth={2} />
+            <X className="w-4 h-4 text-icloud-text-secondary" strokeWidth={2} />
           </button>
         )}
       </div>
 
       {/* Hint for keyboard shortcut (optional) */}
       {!value && !isFocused && (
-        <span className="absolute right-24 top-1/2 -translate-y-1/2 text-[11px] text-[#6C6C70]/70 pointer-events-none hidden sm:inline">
+        <span className="absolute right-24 top-1/2 -translate-y-1/2 text-[11px] /70 pointer-events-none hidden sm:inline">
           Cmd K
         </span>
       )}

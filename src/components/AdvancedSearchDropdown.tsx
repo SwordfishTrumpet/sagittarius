@@ -16,43 +16,43 @@ export function AdvancedSearchDropdown({
   onOpenModal,
 }: AdvancedSearchDropdownProps) {
   return (
-    <div className="absolute top-full right-0 mt-2 w-56 bg-white dark:bg-[#1C1C1E] border border-[#E5E5E5] dark:border-[#38383A] rounded-xl shadow-lg p-2 z-50 animate-in fade-in duration-150">
+    <div className="absolute top-full right-0 mt-2 w-56 bg-icloud-bg-layer2 border border-icloud-border rounded-xl shadow-lg p-2 z-50 animate-in fade-in duration-150">
       {/* Header */}
-      <div className="px-3 py-2 text-[11px] font-bold text-[#8E8E93] uppercase tracking-wider opacity-60">
+      <div className="px-3 py-2 text-[11px] font-bold text-icloud-text-secondary uppercase tracking-wider opacity-60">
         Quick Filters
       </div>
 
       {/* Unread */}
       <button
         onClick={() => onFilterApply({ isUnread: true })}
-        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-[#F2F2F7] dark:hover:bg-white/5 rounded-lg text-[13px] font-medium text-[#1C1C1E] dark:text-white transition-colors"
+        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-icloud-bg-layer1 dark:hover:bg-white/5 rounded-lg text-[13px] font-medium text-icloud-text-primary transition-colors"
       >
-        <Mail className="w-4 h-4 text-[#007AFF]" strokeWidth={1.5} />
+        <Mail className="w-4 h-4 text-icloud-accent" strokeWidth={1.5} />
         <span>Unread</span>
       </button>
 
       {/* Flagged */}
       <button
         onClick={() => onFilterApply({ isFlagged: true })}
-        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-[#F2F2F7] dark:hover:bg-white/5 rounded-lg text-[13px] font-medium text-[#1C1C1E] dark:text-white transition-colors"
+        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-icloud-bg-layer1 dark:hover:bg-white/5 rounded-lg text-[13px] font-medium text-icloud-text-primary transition-colors"
       >
-        <AlertCircle className="w-4 h-4 text-[#FF9500]" strokeWidth={1.5} />
+        <AlertCircle className="w-4 h-4 text-icloud-orange" strokeWidth={1.5} />
         <span>Flagged</span>
       </button>
 
       {/* Has Attachments */}
       <button
         onClick={() => onFilterApply({ hasAttachment: true })}
-        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-[#F2F2F7] dark:hover:bg-white/5 rounded-lg text-[13px] font-medium text-[#1C1C1E] dark:text-white transition-colors"
+        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-icloud-bg-layer1 dark:hover:bg-white/5 rounded-lg text-[13px] font-medium text-icloud-text-primary transition-colors"
       >
-        <Paperclip className="w-4 h-4 text-[#34C759]" strokeWidth={1.5} />
+        <Paperclip className="w-4 h-4 text-icloud-green" strokeWidth={1.5} />
         <span>Has Attachments</span>
       </button>
 
-      <hr className="my-2 border-[#E5E5E5]" />
+      <hr className="my-2 border-icloud-border" />
 
       {/* Date Filters Header */}
-      <div className="px-3 py-2 text-[11px] font-bold text-[#8E8E93] uppercase tracking-wider opacity-60">
+      <div className="px-3 py-2 text-[11px] font-bold text-icloud-text-secondary uppercase tracking-wider opacity-60">
         Date Range
       </div>
 
@@ -63,7 +63,7 @@ export function AdvancedSearchDropdown({
           today.setHours(0, 0, 0, 0);
           onFilterApply({ after: today });
         }}
-        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-[#F2F2F7] dark:hover:bg-white/5 rounded-lg text-[13px] font-medium text-[#1C1C1E] dark:text-white transition-colors"
+        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-icloud-bg-layer1 dark:hover:bg-white/5 rounded-lg text-[13px] font-medium text-icloud-text-primary transition-colors"
       >
         <Calendar className="w-4 h-4 text-[#5AC8FA]" strokeWidth={1.5} />
         <span>Today</span>
@@ -77,7 +77,7 @@ export function AdvancedSearchDropdown({
           weekAgo.setHours(0, 0, 0, 0);
           onFilterApply({ after: weekAgo });
         }}
-        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-[#F2F2F7] dark:hover:bg-white/5 rounded-lg text-[13px] font-medium text-[#1C1C1E] dark:text-white transition-colors"
+        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-icloud-bg-layer1 dark:hover:bg-white/5 rounded-lg text-[13px] font-medium text-icloud-text-primary transition-colors"
       >
         <Calendar className="w-4 h-4 text-[#5AC8FA]" strokeWidth={1.5} />
         <span>This Week</span>
@@ -91,18 +91,18 @@ export function AdvancedSearchDropdown({
           monthAgo.setHours(0, 0, 0, 0);
           onFilterApply({ after: monthAgo });
         }}
-        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-[#F2F2F7] dark:hover:bg-white/5 rounded-lg text-[13px] font-medium text-[#1C1C1E] dark:text-white transition-colors"
+        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-icloud-bg-layer1 dark:hover:bg-white/5 rounded-lg text-[13px] font-medium text-icloud-text-primary transition-colors"
       >
         <Calendar className="w-4 h-4 text-[#5AC8FA]" strokeWidth={1.5} />
         <span>This Month</span>
       </button>
 
-      <hr className="my-2 border-[#E5E5E5]" />
+      <hr className="my-2 border-icloud-border" />
 
       {/* Advanced Search */}
       <button
         onClick={onOpenModal}
-        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-[#F2F2F7] dark:hover:bg-white/5 rounded-lg text-[13px] font-medium text-[#007AFF] transition-colors"
+        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-icloud-bg-layer1 dark:hover:bg-white/5 rounded-lg text-[13px] font-medium text-icloud-accent transition-colors"
       >
         <Search className="w-4 h-4" strokeWidth={1.5} />
         <span>Advanced Search...</span>
