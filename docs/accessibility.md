@@ -1,6 +1,6 @@
 # Accessibility
 
-Sagittarius targets WCAG 2.1 AA for keyboard and assistive technology support.
+Sagittarius targets WCAG 2.2 AA for keyboard and assistive technology support.
 
 Current accessibility contract:
 - Use semantic landmarks and labels for the 3-pane layout.
@@ -19,6 +19,11 @@ Implementation notes:
 - `src/hooks/useFocusTrap.ts` is the shared primitive for modal focus containment and restoration.
 - `src/components/accessible/LiveRegion.tsx` is the shared primitive for polite app-level announcements.
 - `@axe-core/react` is enabled in development and `vitest-axe` is used for automated render checks.
+- WCAG 2.2 AA compliance was audited and remediated in May 2026. Key fixes:
+  - **2.4.11 Focus Not Obscured:** Added `useFocusTrap` to AdvancedSearchModal, CalendarView, ContactsView.
+  - **2.5.7 Dragging Gestures:** Added "Move to…" context menu option for folders (keyboard-accessible alternative to drag-and-drop reparenting).
+  - **2.5.8 Target Size Minimum:** Increased interactive targets below 24x24px (Sign Out, attachment remove, minimized bar close, Cc/Bcc toggle).
+  - **3.2.6 Consistent Help:** Added "Keyboard Shortcuts" menu item to toolbar "More" menu.
 
 Review learnings / gotchas:
 - Do not use `role="banner"` inside `aside`, `section`, `main`, or other nested landmarks; keep `banner` top-level only.

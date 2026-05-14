@@ -125,9 +125,9 @@ export function Sidebar({
       {!isSidebarCollapsed && (
       <>
       <header className="px-5 py-4 flex items-center justify-between">
-        <h1 className="text-xl font-bold tracking-tight flex items-center leading-none text-icloud-text-primary">
+        <p className="text-xl font-bold tracking-tight flex items-center leading-none text-icloud-text-primary">
           sagittarius
-        </h1>
+        </p>
         <div className="flex items-center gap-2">
           <button 
             onClick={onToggleSidebarCollapsed}
@@ -302,10 +302,10 @@ export function Sidebar({
                <span className="truncate max-w-[100px] font-medium text-icloud-text-primary">{userLabel || 'User'}</span>
             </div>
            <div className="flex items-center gap-2">
-             <button onClick={onOpenSettings} className="p-1 hover:bg-icloud-text-primary/5 dark:hover:bg-icloud-text-primary/10 rounded transition-colors" title="Settings" aria-label="Settings">
-                <SettingsIcon className="w-3.5 h-3.5 text-icloud-text-secondary" strokeWidth={1.5} />
+              <button onClick={onOpenSettings} className="min-w-[24px] min-h-[24px] p-1 hover:bg-icloud-text-primary/5 dark:hover:bg-icloud-text-primary/10 rounded transition-colors flex items-center justify-center" title="Settings" aria-label="Settings">
+                 <SettingsIcon className="w-3.5 h-3.5 text-icloud-text-secondary" strokeWidth={1.5} />
              </button>
-             <button onClick={() => jmapClient.logout()} className="text-icloud-accent font-medium hover:underline">Sign Out</button>
+             <button onClick={() => jmapClient.logout()} className="px-2 py-1 min-h-[24px] flex items-center text-icloud-accent font-medium hover:underline">Sign Out</button>
           </div>
          </div>
        </div>

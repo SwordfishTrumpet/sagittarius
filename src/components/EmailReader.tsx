@@ -203,7 +203,7 @@ export function EmailReader({
       <article className="flex-1 overflow-y-auto bg-icloud-bg-layer2 select-text">
         <div className="flex flex-col items-center justify-center h-full text-icloud-text-secondary text-center opacity-30 px-10">
           <Mail className="w-20 h-20 mb-5 stroke-1" />
-          <h3 className="text-xl font-medium tracking-tight">No Message Selected</h3>
+          <h2 className="text-xl font-medium tracking-tight">No Message Selected</h2>
         </div>
       </article>
     );

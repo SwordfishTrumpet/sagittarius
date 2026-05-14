@@ -9,7 +9,7 @@
  * - iCloud-style glassmorphic design
  */
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import {
   User,
   Users,
@@ -43,6 +43,7 @@ import {
 } from '../types/jmap-contacts';
 import { Card, Skeleton } from './ui/Card';
 import { BaseDialog } from './dialogs/BaseDialog';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface ContactsViewProps {
   isOpen: boolean;
@@ -54,6 +55,7 @@ interface ContactFormData {
   surname: string;
   email: string;
   phone: string;
+  title: string;
   organization: string;
   address: string;
   notes: string;
@@ -65,6 +67,7 @@ const DEFAULT_CONTACT_FORM: ContactFormData = {
   surname: '',
   email: '',
   phone: '',
+  title: '',
   organization: '',
   address: '',
   notes: '',
@@ -146,6 +149,8 @@ function ContactListItem({
 
   return (
     <button
+      role="option"
+      aria-selected={isSelected}
       onClick={onClick}
       className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${
         isSelected ? 'bg-icloud-accent text-white' : 'hover:bg-icloud-text-primary/5'
@@ -191,6 +196,7 @@ function ContactDetail({
   const phones = contact.phones ? Object.values(contact.phones) : [];
   const addresses = contact.addresses ? Object.values(contact.addresses) : [];
   const organizations = contact.organizations ? Object.values(contact.organizations) : [];
+  const titles = contact.title ? Object.values(contact.title) : [];
   const notes = contact.notes ? Object.values(contact.notes) : [];
 
   return (
@@ -201,8 +207,11 @@ function ContactDetail({
           {initials}
         </div>
         <h2 className="text-[22px] font-semibold text-icloud-text-primary">{name}</h2>
+        {titles.length > 0 && (
+          <p className="text-[15px] text-icloud-text-secondary mt-1">{titles[0].value}</p>
+        )}
         {organizations.length > 0 && (
-          <p className="text-[15px] text-icloud-text-secondary mt-1">{organizations[0].name}</p>
+          <p className="text-[15px] text-icloud-text-secondary">{organizations[0].name}</p>
         )}
         <div className="flex items-center justify-center gap-3 mt-4">
           <button
@@ -345,6 +354,7 @@ function ContactFormDialog({
       const surname = contact.name?.components?.find(c => c.kind === 'surname')?.value || '';
       const email = getContactPrimaryEmail(contact) || '';
       const phone = getContactPrimaryPhone(contact) || '';
+      const title = contact.title ? Object.values(contact.title)[0]?.value : '';
       const org = contact.organizations ? Object.values(contact.organizations)[0]?.name : '';
       const addr = contact.addresses ? Object.values(contact.addresses)[0]?.full : '';
       const notes = contact.notes ? Object.values(contact.notes)[0]?.note : '';
@@ -355,6 +365,7 @@ function ContactFormDialog({
         surname,
         email,
         phone,
+        title: title || '',
         organization: org || '',
         address: addr || '',
         notes: notes || '',
@@ -449,6 +460,19 @@ function ContactFormDialog({
             onChange={(e) => setForm({ ...form, phone: e.target.value })}
             className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[15px] focus:outline-none focus:ring-2 focus:ring-icloud-accent"
             placeholder="+1 (555) 123-4567"
+          />
+        </div>
+
+        <div>
+          <label className="block text-[11px] font-semibold text-icloud-text-secondary uppercase tracking-wide mb-1">
+            Job Title
+          </label>
+          <input
+            type="text"
+            value={form.title}
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
+            className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[15px] focus:outline-none focus:ring-2 focus:ring-icloud-accent"
+            placeholder="Software Engineer"
           />
         </div>
 
@@ -603,6 +627,12 @@ export function ContactsView({ isOpen, onClose }: ContactsViewProps) {
         };
       }
 
+      if (data.title) {
+        contactCard.title = {
+          title1: { value: data.title },
+        };
+      }
+
       if (data.organization) {
         contactCard.organizations = {
           org1: { name: data.organization },
@@ -633,6 +663,9 @@ export function ContactsView({ isOpen, onClose }: ContactsViewProps) {
     [createContactCard, updateContactCard]
   );
 
+  const contactsContainerRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(contactsContainerRef, { isActive: isOpen });
+
   if (!isOpen) return null;
 
   if (!hasCapability) {
@@ -659,11 +692,11 @@ export function ContactsView({ isOpen, onClose }: ContactsViewProps) {
   const isLoading = addressBooksLoading || contactsLoading;
 
   return (
-    <div className="fixed inset-0 z-[10000] flex bg-icloud-bg-layer1">
+    <div ref={contactsContainerRef} role="dialog" aria-modal="true" aria-labelledby="contacts-view-title" tabIndex={-1} className="fixed inset-0 z-[10000] flex bg-icloud-bg-layer1">
       {/* Sidebar */}
       <aside className="w-64 bg-white/70 bg-icloud-bg-primary/70 backdrop-blur-xl border-r border-icloud-border flex flex-col">
         <header className="px-4 py-4 border-b border-icloud-border flex items-center justify-between">
-          <h1 className="text-[17px] font-bold text-icloud-text-primary">Contacts</h1>
+          <h2 id="contacts-view-title" className="text-[17px] font-bold text-icloud-text-primary">Contacts</h2>
           <button
             onClick={onClose}
             className="p-1.5 hover:bg-icloud-text-primary/5 rounded-lg transition-colors"
@@ -715,6 +748,7 @@ export function ContactsView({ isOpen, onClose }: ContactsViewProps) {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search contacts"
+              aria-label="Search contacts"
               className="w-full pl-9 pr-3 py-2 rounded-lg bg-icloud-bg-layer1 text-[14px] placeholder-icloud-text-secondary focus:outline-none focus:ring-2 focus:ring-icloud-accent"
             />
           </div>
@@ -727,7 +761,7 @@ export function ContactsView({ isOpen, onClose }: ContactsViewProps) {
               <Skeleton count={5} />
             </div>
           ) : sortedContacts.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center p-8">
+            <div role="status" aria-live="polite" className="flex flex-col items-center justify-center h-full text-center p-8">
               <User className="w-12 h-12 text-icloud-text-tertiary mb-3" strokeWidth={1} />
               <p className="text-[15px] text-icloud-text-secondary">
                 {searchTerm ? 'No contacts found' : 'No contacts yet'}
@@ -745,7 +779,7 @@ export function ContactsView({ isOpen, onClose }: ContactsViewProps) {
               )}
             </div>
           ) : (
-            <div className="py-2">
+            <div role="listbox" aria-label="Contacts list" className="py-2">
               {Object.entries(groupedContacts).map(([letter, contacts]) => (
                 <div key={letter}>
                   <div className="px-4 py-1 text-[12px] font-semibold text-icloud-text-secondary bg-icloud-bg-layer1 sticky top-0">
@@ -769,7 +803,7 @@ export function ContactsView({ isOpen, onClose }: ContactsViewProps) {
 
         {/* Contact count */}
         <div className="px-4 py-2 border-t border-icloud-border text-center">
-          <span className="text-[12px] text-icloud-text-secondary">
+          <span aria-live="polite" className="text-[12px] text-icloud-text-secondary">
             {sortedContacts.length} {sortedContacts.length === 1 ? 'contact' : 'contacts'}
           </span>
         </div>

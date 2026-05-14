@@ -24,7 +24,7 @@ export function SearchFilterPills({ pills, onRemove }: SearchFilterPillsProps) {
           <span className="truncate max-w-[150px]">{pill.label}</span>
           <button
             onClick={() => onRemove(pill.id)}
-            className="hover:opacity-70 transition-opacity ml-1 -mr-1"
+            className="hover:opacity-70 transition-opacity ml-1 -mr-1 min-w-[24px] min-h-[24px] flex items-center justify-center"
             title={`Remove ${pill.label}`}
             aria-label={`Remove filter ${pill.label}`}
             type="button"

@@ -102,8 +102,8 @@ export function MessageListHeader({
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
           aria-label="Search emails"
-          className="w-full bg-icloud-text-secondary/10 border-none rounded-lg py-1.5 pl-9 pr-12 text-[14px] focus:ring-0 placeholder-icloud-text-secondary transition-colors hover:bg-icloud-text-secondary/15"
-        />
+className="w-full bg-icloud-text-secondary/10 border-none rounded-lg py-1.5 pl-9 pr-12 text-[14px] focus:ring-2 focus:ring-icloud-accent placeholder-icloud-text-secondary transition-colors hover:bg-icloud-text-secondary/15"
+          />
         {searchTerm && (
           <button 
             onClick={onClearSearch}

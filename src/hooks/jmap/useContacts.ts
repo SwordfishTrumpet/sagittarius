@@ -7,7 +7,6 @@
 
 import { useQuery, useMutation, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
 import { jmapClient } from '../../api/jmap';
-import { logger } from '../../utils/logger';
 import type {
   AddressBook,
   ContactCard,
@@ -20,10 +19,12 @@ import type {
   AddressBookChangesResponse,
   ContactCardChangesResponse,
   ContactCardQueryResponse,
+  ContactCardQueryChangesResponse,
+  ContactCardCopyRequest,
+  ContactCardCopyResponse,
   AddressBookSetRequest,
   ContactCardSetRequest,
 } from '../../types/jmap-contacts';
-import { createJMAPListHook, createJMAPSingletonHook } from './jmapHookFactory';
 
 const CONTACTS_CAPABILITY = 'urn:ietf:params:jmap:contacts';
 
@@ -326,6 +327,58 @@ export function useContactCardQuery(
 }
 
 /**
+ * Hook for ContactCard/queryChanges (incremental query sync)
+ * Per RFC 9610 §3.4 - standard /queryChanges method
+ */
+export function useContactCardQueryChanges() {
+  const queryClient = useQueryClient();
+  const accountId = jmapClient.getPrimaryAccount();
+
+  return useMutation({
+    mutationFn: async ({
+      sinceQueryState,
+      filter,
+      sort,
+    }: {
+      sinceQueryState: string;
+      filter?: ContactCardFilter;
+      sort?: Array<{ property: string; isAscending?: boolean }>;
+    }) => {
+      if (!accountId) throw new Error('No account available');
+
+      const request: {
+        accountId: string;
+        sinceQueryState: string;
+        filter?: ContactCardFilter;
+        sort?: Array<{ property: string; isAscending?: boolean }>;
+      } = { accountId, sinceQueryState };
+
+      if (filter) request.filter = filter;
+      if (sort) request.sort = sort;
+
+      const response = await jmapClient.request(
+        [['ContactCard/queryChanges', request, 'contactCardQueryChanges0']],
+        [CONTACTS_CAPABILITY]
+      );
+
+      const methodRes = response.methodResponses[0];
+      if (!methodRes || methodRes[0] === 'error') {
+        const error = methodRes?.[1] as { description?: string } | undefined;
+        throw new Error(error?.description || 'Failed to get query changes');
+      }
+
+      return methodRes[1] as ContactCardQueryChangesResponse;
+    },
+    onSuccess: (data) => {
+      if (data.removed.length > 0 || data.added.length > 0) {
+        queryClient.invalidateQueries({ queryKey: ['contactCardQuery', accountId] });
+        queryClient.invalidateQueries({ queryKey: ['contactCards', accountId] });
+      }
+    },
+  });
+}
+
+/**
  * Hook for ContactCard changes (incremental sync)
  */
 export function useContactCardChanges() {
@@ -410,6 +463,40 @@ export function useContactCardActions() {
     isPending: mutation.isPending,
     error: mutation.error,
   };
+}
+
+// ============ ContactCard/copy Hook ============
+
+/**
+ * Hook for ContactCard/copy (copy contacts between accounts)
+ * Per RFC 9610 §3.6 - standard /copy method
+ */
+export function useContactCardCopy() {
+  const queryClient = useQueryClient();
+  const accountId = jmapClient.getPrimaryAccount();
+
+  return useMutation({
+    mutationFn: async (request: Omit<ContactCardCopyRequest, 'accountId'> & { fromAccountId: string }) => {
+      if (!accountId) throw new Error('No account available');
+
+      const response = await jmapClient.request(
+        [['ContactCard/copy', { accountId, ...request }, 'contactCardCopy0']],
+        [CONTACTS_CAPABILITY]
+      );
+
+      const methodRes = response.methodResponses[0];
+      if (!methodRes || methodRes[0] === 'error') {
+        const error = methodRes?.[1] as { description?: string } | undefined;
+        throw new Error(error?.description || 'ContactCard copy failed');
+      }
+
+      return methodRes[1] as ContactCardCopyResponse;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contactCards', accountId] });
+      queryClient.invalidateQueries({ queryKey: ['contactCardQuery', accountId] });
+    },
+  });
 }
 
 // ============ Search Hook ============

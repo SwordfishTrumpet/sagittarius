@@ -160,7 +160,7 @@ export function SieveRuleEditor({
               if (e.target.value.trim()) setNameError('');
             }}
             placeholder="My rule"
-            className={`w-full px-3 py-2 rounded-xl border text-[14px] bg-icloud-card placeholder-[#C7C7CC]   focus:outline-none focus:ring-2 focus:ring-icloud-accent/40 transition ${
+            className={`w-full px-3 py-2 rounded-xl border text-[14px] bg-icloud-card placeholder-[#C7C7CC]   focus:outline-none focus:ring-2 focus:ring-icloud-accent transition ${
               nameError ? 'border-[icloud-red]' : 'border-icloud-border'
             }`}
           />
@@ -211,7 +211,7 @@ export function SieveRuleEditor({
                   onChange={(e) =>
                     updateCondition(i, { field: e.target.value as SieveCondition['field'] })
                   }
-                  className="flex-shrink-0 w-36 px-2 py-1.5 rounded-lg border border-icloud-border text-[13px] bg-icloud-card focus:outline-none focus:ring-2 focus:ring-icloud-accent/30"
+                  className="flex-shrink-0 w-36 px-2 py-1.5 rounded-lg border border-icloud-border text-[13px] bg-icloud-card focus:outline-none focus:ring-2 focus:ring-icloud-accent"
                 >
                   {FIELD_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>
@@ -228,7 +228,7 @@ export function SieveRuleEditor({
                       operator: e.target.value as SieveCondition['operator'],
                     })
                   }
-                  className="flex-shrink-0 w-40 px-2 py-1.5 rounded-lg border border-icloud-border text-[13px] bg-icloud-card focus:outline-none focus:ring-2 focus:ring-icloud-accent/30"
+                  className="flex-shrink-0 w-40 px-2 py-1.5 rounded-lg border border-icloud-border text-[13px] bg-icloud-card focus:outline-none focus:ring-2 focus:ring-icloud-accent"
                 >
                   {OPERATOR_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>
@@ -243,7 +243,7 @@ export function SieveRuleEditor({
                   value={cond.value}
                   onChange={(e) => updateCondition(i, { value: e.target.value })}
                   placeholder={cond.field === 'size' ? 'bytes, e.g. 1048576' : 'value…'}
-                  className="flex-1 min-w-0 px-3 py-1.5 rounded-lg border border-icloud-border text-[13px] bg-icloud-card placeholder-[#C7C7CC]   focus:outline-none focus:ring-2 focus:ring-icloud-accent/30"
+                  className="flex-1 min-w-0 px-3 py-1.5 rounded-lg border border-icloud-border text-[13px] bg-icloud-card placeholder-[#C7C7CC]   focus:outline-none focus:ring-2 focus:ring-icloud-accent"
                 />
 
                 {/* Remove */}
@@ -289,7 +289,7 @@ export function SieveRuleEditor({
                       value: actionNeedsValue(newType) ? (action.value ?? '') : undefined,
                     });
                   }}
-                  className="flex-shrink-0 w-52 px-2 py-1.5 rounded-lg border border-icloud-border text-[13px] bg-icloud-card focus:outline-none focus:ring-2 focus:ring-icloud-accent/30"
+                  className="flex-shrink-0 w-52 px-2 py-1.5 rounded-lg border border-icloud-border text-[13px] bg-icloud-card focus:outline-none focus:ring-2 focus:ring-icloud-accent"
                 >
                   {ACTION_TYPE_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>
@@ -305,7 +305,7 @@ export function SieveRuleEditor({
                     value={action.value ?? ''}
                     onChange={(e) => updateAction(i, { value: e.target.value })}
                     placeholder={actionValuePlaceholder(action.type)}
-                    className="flex-1 min-w-0 px-3 py-1.5 rounded-lg border border-icloud-border text-[13px] bg-icloud-card placeholder-[#C7C7CC]   focus:outline-none focus:ring-2 focus:ring-icloud-accent/30"
+                    className="flex-1 min-w-0 px-3 py-1.5 rounded-lg border border-icloud-border text-[13px] bg-icloud-card placeholder-[#C7C7CC]   focus:outline-none focus:ring-2 focus:ring-icloud-accent"
                   />
                 ) : (
                   <span className="flex-1" />

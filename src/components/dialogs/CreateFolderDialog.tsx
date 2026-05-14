@@ -47,6 +47,7 @@ export function CreateFolderDialog({
             placeholder="Enter folder name"
             className="w-full px-3 py-2 bg-icloud-bg-layer1 border border-icloud-border rounded-lg text-[13px] text-icloud-text-primary focus:outline-none focus:ring-2 focus:ring-icloud-accent focus:bg-white dark:focus:bg-icloud-bg-primary transition-colors"
             disabled={isLoading}
+            aria-invalid={folderName.trim() === '' && false ? 'true' : 'false'}
           />
         </div>
 

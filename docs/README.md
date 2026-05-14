@@ -135,7 +135,7 @@ See [`src/test/performance/`](src/test/performance/) for benchmark suite.
 - Search & filters
 - Keyboard shortcuts
 - Mobile responsive
-- Accessibility (WCAG 2.1 AA)
+- Accessibility (WCAG 2.2 AA)
 
 ### 🚧 In Progress
 - Email templates

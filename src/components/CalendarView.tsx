@@ -1,6 +1,6 @@
 /**
- * CalendarView — Full calendar UI component for RFC 8984 JMAP Calendars
- * 
+ * CalendarView — Full calendar UI component for draft-ietf-jmap-calendars-26
+ *
  * Features:
  * - Month/Week/Day views with navigation
  * - Event list with creation, editing, deletion
@@ -8,7 +8,7 @@
  * - iCloud-style glassmorphic design
  */
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
@@ -33,7 +33,8 @@ import {
 } from '../hooks/jmap/useCalendars';
 import { Card, Skeleton } from './ui/Card';
 import { BaseDialog } from './dialogs/BaseDialog';
-import type { Calendar, CalendarEvent, CalendarEventPatch } from '../types/jmap-calendar';
+import { useFocusTrap } from '../hooks/useFocusTrap';
+import type { Calendar, CalendarEvent, CalendarEventPatch, CalendarNotification } from '../types/jmap-calendar';
 
 // View modes
 type ViewMode = 'month' | 'week' | 'day' | 'list';
@@ -77,6 +78,10 @@ function formatTime(dateStr: string): string {
 
 function formatDateForInput(date: Date): string {
   return date.toISOString().slice(0, 16);
+}
+
+function getPrimaryCalendarId(event: CalendarEvent): string {
+  return Object.keys(event.calendarIds)[0] || '';
 }
 
 function isSameDay(d1: Date, d2: Date): boolean {
@@ -238,7 +243,7 @@ function MonthView({
     (day: Date) =>
       events.filter(
         (e) =>
-          visibleCalendarIds.has(e.calendarId) &&
+          Object.keys(e.calendarIds).some((cid) => visibleCalendarIds.has(cid)) &&
           isSameDay(new Date(e.start), day)
       ),
     [events, visibleCalendarIds]
@@ -274,6 +279,7 @@ function MonthView({
               onClick={() => onSelectDate(day)}
               role="button"
               tabIndex={0}
+              aria-label={day.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
@@ -294,7 +300,7 @@ function MonthView({
               </div>
               <div className="space-y-0.5 overflow-hidden">
                 {dayEvents.slice(0, 3).map((event) => {
-                  const cal = calendars.find((c) => c.id === event.calendarId);
+                  const cal = calendars.find((c) => c.id === getPrimaryCalendarId(event));
                   return (
                     <div
                       key={event.id}
@@ -350,7 +356,7 @@ function ListView({
   const filteredEvents = useMemo(
     () =>
       events
-        .filter((e) => visibleCalendarIds.has(e.calendarId))
+        .filter((e) => Object.keys(e.calendarIds).some((cid) => visibleCalendarIds.has(cid)))
         .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()),
     [events, visibleCalendarIds]
   );
@@ -394,7 +400,7 @@ function ListView({
               <EventItem
                 key={event.id}
                 event={event}
-                calendar={calendars.find((c) => c.id === event.calendarId)}
+                calendar={calendars.find((c) => c.id === getPrimaryCalendarId(event))}
                 onEdit={onEditEvent}
                 onDelete={onDeleteEvent}
               />
@@ -436,7 +442,7 @@ function EventFormDialog({
         start: event.start ? formatDateForInput(new Date(event.start)) : '',
         end: event.end ? formatDateForInput(new Date(event.end)) : '',
         isAllDay: event.isAllDay || false,
-        calendarId: event.calendarId,
+        calendarId: getPrimaryCalendarId(event),
         location: location || '',
       });
     } else if (event) {
@@ -447,7 +453,7 @@ function EventFormDialog({
         start: event.start ? formatDateForInput(new Date(event.start)) : '',
         end: event.end ? formatDateForInput(new Date(event.end)) : '',
         isAllDay: event.isAllDay || false,
-        calendarId: event.calendarId || calendars[0]?.id || '',
+        calendarId: getPrimaryCalendarId(event) || calendars[0]?.id || '',
         location: '',
       });
     } else {
@@ -623,11 +629,11 @@ export function CalendarView({ isOpen, onClose }: CalendarViewProps) {
   const [isEventFormOpen, setIsEventFormOpen] = useState(false);
 
   // Initialize visible calendars when data loads
-  useMemo(() => {
+  useEffect(() => {
     if (calendars.length > 0 && visibleCalendarIds.size === 0) {
       setVisibleCalendarIds(new Set(calendars.map((c) => c.id)));
     }
-  }, [calendars]);
+  }, [calendars, visibleCalendarIds.size]);
 
   const toggleCalendar = useCallback((id: string) => {
     setVisibleCalendarIds((prev) => {
@@ -664,7 +670,7 @@ export function CalendarView({ isOpen, onClose }: CalendarViewProps) {
       start: startTime.toISOString(),
       end: endTime.toISOString(),
       isAllDay: false,
-      calendarId: defaultCalendarId,
+      calendarIds: defaultCalendarId ? { [defaultCalendarId]: true } : {},
     } as CalendarEvent);
     setIsEventFormOpen(true);
   }, [calendars]);
@@ -681,7 +687,7 @@ export function CalendarView({ isOpen, onClose }: CalendarViewProps) {
       start: now.toISOString(),
       end: oneHourLater.toISOString(),
       isAllDay: false,
-      calendarId: defaultCalendarId,
+      calendarIds: defaultCalendarId ? { [defaultCalendarId]: true } : {},
     } as CalendarEvent);
     setIsEventFormOpen(true);
   }, [calendars]);
@@ -707,7 +713,7 @@ export function CalendarView({ isOpen, onClose }: CalendarViewProps) {
       const patch: CalendarEventPatch = {
         title: data.title,
         description: data.description || undefined,
-        calendarId: data.calendarId,
+        calendarIds: data.calendarId ? { [data.calendarId]: true } : undefined,
         start: new Date(data.start).toISOString(),
         end: new Date(data.end).toISOString(),
         isAllDay: data.isAllDay,
@@ -730,6 +736,9 @@ export function CalendarView({ isOpen, onClose }: CalendarViewProps) {
     },
     [createEvent, updateEvent]
   );
+
+  const calendarContainerRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(calendarContainerRef, { isActive: isOpen });
 
   if (!isOpen) return null;
 
@@ -757,11 +766,11 @@ export function CalendarView({ isOpen, onClose }: CalendarViewProps) {
   const isLoading = calendarsLoading || eventsLoading;
 
   return (
-    <div className="fixed inset-0 z-[10000] flex bg-icloud-bg-layer1">
+    <div ref={calendarContainerRef} tabIndex={-1} className="fixed inset-0 z-[10000] flex bg-icloud-bg-layer1">
       {/* Sidebar */}
       <aside className="w-64 bg-white/70 bg-icloud-bg-primary/70 backdrop-blur-xl border-r border-icloud-border flex flex-col">
         <header className="px-4 py-4 border-b border-icloud-border flex items-center justify-between">
-          <h1 className="text-[17px] font-bold text-icloud-text-primary">Calendar</h1>
+          <h2 className="text-[17px] font-bold text-icloud-text-primary">Calendar</h2>
           <button
             onClick={onClose}
             className="p-1.5 hover:bg-icloud-text-primary/5 rounded-lg transition-colors"

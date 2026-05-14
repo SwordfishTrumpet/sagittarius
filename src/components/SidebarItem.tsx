@@ -43,7 +43,7 @@ function SidebarItemComponent({ icon, label, active = false, count, mailboxId, h
           onClick()
         }
       }}
-      className={`flex items-center justify-between px-3 py-1.5 rounded-lg cursor-default group transition-all relative focus:outline-none focus:ring-2 focus:ring-icloud-accent/50 focus:ring-icloud-accent/50 ${
+      className={`flex items-center justify-between px-3 py-1.5 rounded-lg cursor-default group transition-all relative focus:outline-none focus:ring-2 focus:ring-icloud-accent ${
         active ? 'bg-icloud-accent text-white shadow-md' : 
         isOver && canDrop ? 'bg-icloud-accent/10 dark:bg-icloud-accent/10 ring-2 ring-icloud-accent ring-icloud-accent text-icloud-accent' :
         'hover:bg-black/[0.04] dark:hover:bg-white/[0.06] text-icloud-text-primary'

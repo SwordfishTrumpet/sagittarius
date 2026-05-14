@@ -29,7 +29,7 @@ Upload the final image at:
 
 ### Tools for Creation
 
-- **Figma:** [Open Graph Image Template](https://www.figma.com/community/file/...) — Use a template
+- **Figma:** Search "Open Graph Image Template" on [Figma Community](https://www.figma.com/community)
 - **Canva:** Search "GitHub Social Preview" templates
 - **Photoshop/GIMP:** Create 1280×640 canvas
 

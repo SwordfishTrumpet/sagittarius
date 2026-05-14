@@ -1,18 +1,21 @@
 import { useState } from 'react'
-import { Edit2, Trash } from 'lucide-react'
+import { Edit2, Trash, FolderInput } from 'lucide-react'
 import { toast } from 'sonner'
 import { useMailboxActions } from './jmap/useMailboxes'
 import { ContextMenu, type ContextMenuItemConfig } from '../components/ContextMenu'
 import { CreateFolderDialog } from '../components/dialogs/CreateFolderDialog'
 import { RenameFolderDialog } from '../components/dialogs/RenameFolderDialog'
 import { DeleteFolderDialog } from '../components/dialogs/DeleteFolderDialog'
+import type { Mailbox } from '../types/jmap'
 
 interface UseFolderDialogsParams {
   selectedMailboxId: string | null
   setSelectedMailboxId: (id: string | null) => void
+  mailboxes?: Mailbox[]
+  onReparentMailbox?: (draggedId: string, newParentId: string | null) => void
 }
 
-export function useFolderDialogs({ selectedMailboxId, setSelectedMailboxId }: UseFolderDialogsParams) {
+export function useFolderDialogs({ selectedMailboxId, setSelectedMailboxId, mailboxes, onReparentMailbox }: UseFolderDialogsParams) {
   const { createMailbox, renameMailbox, deleteMailbox } = useMailboxActions()
 
   // Context menu state
@@ -72,6 +75,26 @@ export function useFolderDialogs({ selectedMailboxId, setSelectedMailboxId }: Us
     }
   }
 
+  const handleMoveToFolder = () => {
+    if (!selectedFolderId) return
+    const customMailboxes = (mailboxes || []).filter((m: Mailbox) => !m.role)
+    const folderNames = customMailboxes.map((m: Mailbox) => m.name).join(', ')
+    const parentName = window.prompt(
+      `Enter the name of the parent folder to move "${selectedFolderName}" into.\nAvailable folders: ${folderNames || '(none)'}\nLeave empty to move to top level.`
+    )
+    if (parentName === null) return
+    const newParentId = parentName.trim()
+      ? (customMailboxes.find((m: Mailbox) => m.name.toLowerCase() === parentName.toLowerCase())?.id ?? null)
+      : null
+    if (parentName.trim() && !newParentId) {
+      toast.error(`Folder "${parentName}" not found`)
+      return
+    }
+    onReparentMailbox?.(selectedFolderId, newParentId)
+    toast.success(newParentId ? `Moved "${selectedFolderName}" into subfolder` : `Moved "${selectedFolderName}" to top level`)
+    setContextMenu(null)
+  }
+
   const getMailboxContextMenu = (): ContextMenuItemConfig[] => {
     return [
       {
@@ -82,6 +105,12 @@ export function useFolderDialogs({ selectedMailboxId, setSelectedMailboxId }: Us
           setRenameFolderOpen(true)
           setContextMenu(null)
         },
+      },
+      {
+        id: 'move',
+        label: 'Move to…',
+        icon: <FolderInput className="w-4 h-4" strokeWidth={1.5} />,
+        onSelect: handleMoveToFolder,
       },
       {
         id: 'delete',

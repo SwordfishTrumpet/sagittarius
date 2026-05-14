@@ -742,20 +742,13 @@ class JMAPClient {
     return this.getAccountCapability('urn:ietf:params:jmap:contacts') as ContactsCapability | null;
   }
 
-  // ============ RFC 8984 JSCalendar Methods ============
+  // ============ draft-ietf-jmap-calendars-26 Calendars Methods ============
 
   /**
-   * Check if the server supports RFC 8984 JSCalendar
+   * Check if the server supports draft-ietf-jmap-calendars-26 Calendars
    */
   hasCalendarCapability(): boolean {
     return this.hasCapability('urn:ietf:params:jmap:calendars');
-  }
-
-  /**
-   * Check if the server supports RFC 8984 CalendarEvents
-   */
-  hasCalendarEventCapability(): boolean {
-    return this.hasCapability('urn:ietf:params:jmap:calendarEvents');
   }
 
   /**

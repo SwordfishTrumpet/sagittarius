@@ -1,14 +1,12 @@
 /**
- * RFC 8984 JMAP for JSCalendar Type Definitions
- * 
- * This module defines types for the JMAP Calendar extension per RFC 8984.
- * It includes Calendar, CalendarEvent, and CalendarNotification data types with their associated
- * JMAP methods: get, changes, set, query, queryChanges.
- * 
- * JSCalendar is a JSON representation of calendar data, replacing the older iCalendar format.
- * It supports events, tasks, and journals with rich properties for scheduling.
- * 
- * @see https://datatracker.ietf.org/doc/html/rfc8984
+ * draft-ietf-jmap-calendars-26 JMAP for Calendars Type Definitions
+ *
+ * This module defines types for the JMAP Calendar extension per draft-ietf-jmap-calendars-26.
+ * The companion data format specification is RFC 8984 (JSCalendar).
+ * It includes Calendar, CalendarEvent, ParticipantIdentity, CalendarEventNotification,
+ * and CalendarPrincipal data types with their associated JMAP methods.
+ *
+ * @see https://datatracker.ietf.org/doc/draft-ietf-jmap-calendars/
  */
 
 // ============ Capability Types ============
@@ -16,30 +14,42 @@
 /**
  * The account-specific calendar capability configuration.
  * Returned in accountCapabilities for urn:ietf:params:jmap:calendars
+ * Defined in draft Section 1.5.1
  */
 export interface CalendarsCapability {
-  /** Maximum number of calendars that can be created in the account */
-  maxCalendarsPerAccount: number | null;
-  /** Maximum size in octets for a calendar event */
-  maxCalendarEventSize: number | null;
+  /** Maximum number of calendars per event */
+  maxCalendarsPerEvent: number | null;
   /** Maximum number of participants allowed in one event */
   maxParticipantsPerEvent: number | null;
   /** Whether the user may create calendars in this account */
   mayCreateCalendar: boolean;
-  /** Supported iCalendar RRULE parts for recurrence */
-  supportedRRULEProperties: string[] | null;
+  /** Earliest date/time that can be used in the system */
+  minDateTime: string | null;
+  /** Latest date/time that can be used in the system */
+  maxDateTime: string | null;
+  /** Maximum duration that can be queried with expandRecurrences */
+  maxExpandedQueryDuration: string | null;
 }
 
 // ============ Calendar Types ============
 
 /**
  * Access rights for a Calendar
+ * Defined in draft Section 4
  */
 export interface CalendarRights {
+  /** The user may fetch free/busy information for this calendar */
+  mayReadFreeBusy: boolean;
   /** The user may fetch the events in this calendar */
-  mayRead: boolean;
-  /** The user may create, modify, or destroy events in this calendar */
-  mayWrite: boolean;
+  mayReadItems: boolean;
+  /** The user may create, update, or destroy all events in this calendar */
+  mayWriteAll: boolean;
+  /** The user may create events and update/destroy only events they created */
+  mayWriteOwn: boolean;
+  /** The user may update private events in this calendar */
+  mayUpdatePrivate: boolean;
+  /** The user may RSVP on events inviting their mailbox */
+  mayRSVP: boolean;
   /** The user may share the calendar with others */
   mayShare: boolean;
   /** The user may delete the calendar itself */
@@ -47,7 +57,7 @@ export interface CalendarRights {
 }
 
 /**
- * Calendar object per RFC 8984
+ * Calendar object per draft Section 4
  * A named collection of CalendarEvents
  */
 export interface Calendar {
@@ -63,6 +73,10 @@ export interface Calendar {
   isDefault: boolean;
   /** True if the user wishes to see this calendar */
   isSubscribed: boolean;
+  /** Whether the calendar events are visible in free/busy time displays */
+  isVisible: boolean;
+  /** Which events are included in free/busy calculations */
+  includeInAvailability: 'all' | 'attending' | 'none';
   /** Color for displaying this calendar (hex or CSS color string) */
   color: string | null;
   /** Timezone for the calendar (if events don't specify one) */
@@ -71,6 +85,10 @@ export interface Calendar {
   shareWith: Record<string, CalendarRights> | null;
   /** The set of access rights the user has for this calendar */
   myRights: CalendarRights;
+  /** Default alerts for events with a time */
+  defaultAlertsWithTime: Record<string, Alert> | null;
+  /** Default alerts for events without a time */
+  defaultAlertsWithoutTime: Record<string, Alert> | null;
 }
 
 // ============ CalendarEvent Types ============
@@ -89,6 +107,11 @@ export type ParticipationStatus = 'needs-action' | 'accepted' | 'declined' | 'te
  * Show/free/busy status for time blocking
  */
 export type ShowStatus = 'busy' | 'free';
+
+/**
+ * Free/busy status filter
+ */
+export type FreeBusyStatus = 'free' | 'busy' | 'tentative' | 'unavailable';
 
 /**
  * Email address with optional name
@@ -124,6 +147,10 @@ export interface Participant {
   delegatedFrom?: string[];
   /** Whether this participant is the current user */
   isOwn?: boolean;
+  /** Sequence number for scheduling message tracking */
+  scheduleSequence?: number;
+  /** When the scheduling message was last updated */
+  scheduleUpdated?: string;
   /** Additional properties for this participant */
   properties?: Record<string, unknown>;
 }
@@ -169,7 +196,7 @@ export interface RecurrenceRule {
   /** RFC 5545 RRULE string for complex rules */
   rrule?: string;
   /** End type for recurrence */
-  until?: string; // ISO 8601 date/datetime
+  until?: string;
   /** Maximum number of occurrences */
   count?: number;
   /** Days of the week for weekly/monthly recurrence */
@@ -208,6 +235,7 @@ export interface Link {
 
 /**
  * Alert/notification for an event
+ * Per draft Section 6
  */
 export interface Alert {
   /** Unique id for this alert within the event */
@@ -228,7 +256,9 @@ export interface Alert {
   /** For email actions, who to notify */
   attendees?: string[];
   /** Whether this alert has been acknowledged */
-  acknowledged?: string; // ISO 8601 timestamp
+  acknowledged?: string;
+  /** If set, the alert is snoozed until this time */
+  snoozedUntil?: string;
 }
 
 /**
@@ -248,67 +278,81 @@ export interface TimeRange {
 }
 
 /**
- * CalendarEvent object per RFC 8984
- * Represents a calendar event, task, or journal entry
+ * CalendarEvent object per draft-ietf-jmap-calendars-26 Section 5
+ * Represents a calendar event
  */
 export interface CalendarEvent {
   /** The id of the event (immutable, server-set) */
   id: string;
-  /** The calendar this event belongs to */
-  calendarId: string;
+  /** The calendars this event belongs to (map of calendarId -> true) */
+  calendarIds: Record<string, boolean>;
   /** UID for iCalendar interoperability */
   uid: string;
-  
+
   // Core properties
-  /** Event title/summary */
+  /** Event title */
   title: string;
   /** Detailed description (HTML allowed) */
   description?: string;
-  /** Plain text description */
+  /** Content type of description */
   descriptionContentType?: 'text/plain' | 'text/html';
-  /** Short plain text summary for list views */
-  summary?: string;
-  
+
   // Time properties
-  /** When this event occurs (may be multiple for recurrence exceptions) */
+  /** Timezone for the event */
   timeZone?: string;
   /** Main time range for the event */
-  start: string; // ISO 8601
-  /** Duration in seconds, or end time in UTC/local */
+  start: string;
+  /** Duration in seconds */
   duration?: number;
   /** Explicit end time (alternative to duration) */
-  end?: string; // ISO 8601
+  end?: string;
   /** Is this an all-day event */
   isAllDay?: boolean;
   /** Show as busy/free during this time */
   showAs?: ShowStatus;
-  /** Whether the end time is inclusive */
-  endTimeInclusive?: boolean;
-  
+
+  // Server-set time properties
+  /** Server-calculated UTC start time */
+  utcStart?: string;
+  /** Server-calculated UTC end time */
+  utcEnd?: string;
+
   // Recurrence
   /** Recurrence rule for repeating events */
   recurrenceRule?: RecurrenceRule;
   /** Specific occurrence overrides (for exceptions to the rule) */
   recurrenceOverrides?: Record<string, Partial<CalendarEvent>>;
-  /** Excluded occurrence ids */
+  /** Excluded recurrence rules */
   excludedRecurrenceRules?: RecurrenceRule[];
-  
+  /** For split/override events, the original event this relates to */
+  relatedTo?: { type?: string; id: string } | null;
+
   // Participants
+  /** Whether participants may invite themselves */
+  mayInviteSelf?: boolean;
+  /** Whether participants may invite others */
+  mayInviteOthers?: boolean;
+  /** Whether to hide attendees from each other */
+  hideAttendees?: boolean;
   /** Organizer of the event */
   organizer?: Participant;
   /** All participants including organizer */
   participants?: Record<string, Participant>;
-  /** Participant ids invited to this event */
-  participantIds?: string[];
-  
-  // Locations
   /** Locations for this event */
   locations?: Record<string, Location>;
-  /** Main location id */
-  locationId?: string;
   /** Virtual meeting URLs */
   virtualLocations?: Record<string, Link>;
-  
+
+  // Server-set references
+  /** The base event id for occurrences of a recurring event */
+  baseEventId?: string | null;
+  /** Whether this is a draft (unpublished) event */
+  isDraft?: boolean;
+  /** Whether this is the origin event in a split */
+  isOrigin?: boolean;
+  /** The blob id for the iCalendar representation */
+  blobId?: string | null;
+
   // Links and attachments
   /** Related external resources */
   links?: Record<string, Link>;
@@ -316,13 +360,13 @@ export interface CalendarEvent {
   attachments?: Record<string, Link>;
   /** Per-user locale for this event */
   locale?: string;
-  
+
   // Alerts
   /** Alerts/reminders for this event */
   alerts?: Record<string, Alert>;
   /** Whether to use default calendar alerts */
   useDefaultAlerts?: boolean;
-  
+
   // Status and classification
   /** Event status */
   status?: 'confirmed' | 'tentative' | 'cancelled';
@@ -332,15 +376,15 @@ export interface CalendarEvent {
   priority?: number;
   /** Sequence number for iCalendar compatibility */
   sequence?: number;
-  
-  // Task-specific properties (for VTODO in iCalendar)
+
+  // Task-specific properties
   /** For tasks: percent complete (0-100) */
   percentComplete?: number;
   /** For tasks: estimated duration */
   estimatedDuration?: number;
   /** For tasks: due date */
   due?: string;
-  
+
   // Server-set properties
   /** Creation timestamp */
   created: string;
@@ -352,18 +396,117 @@ export interface CalendarEvent {
   method?: string;
 }
 
+// ============ ParticipantIdentity Types ============
+
+/**
+ * ParticipantIdentity object per draft Section 3
+ * Represents a mailbox (email address) that can be invited to events
+ */
+export interface ParticipantIdentity {
+  /** The id of the identity (immutable, server-set) */
+  id: string;
+  /** The email address for this participant identity */
+  email: string;
+  /** Display name for this identity */
+  name: string | null;
+  /** Map of calendar id to default participation status */
+  defaultParticipationStatus: Record<string, ParticipationStatus> | null;
+  /** Whether this identity may be used to invite others */
+  mayInvite: boolean;
+  /** When this identity was created */
+  created: string;
+  /** When this identity was last updated */
+  updated: string;
+}
+
+/**
+ * Arguments for ParticipantIdentity/get
+ */
+export interface ParticipantIdentityGetRequest {
+  accountId?: string | null;
+  ids: string[] | null;
+  properties?: string[] | null;
+}
+
+/**
+ * Response from ParticipantIdentity/get
+ */
+export interface ParticipantIdentityGetResponse {
+  accountId: string;
+  state: string;
+  list: ParticipantIdentity[];
+  notFound?: string[];
+}
+
+/**
+ * Arguments for ParticipantIdentity/changes
+ */
+export interface ParticipantIdentityChangesRequest {
+  accountId?: string | null;
+  sinceState: string;
+  maxChanges?: number | null;
+}
+
+/**
+ * Response from ParticipantIdentity/changes
+ */
+export interface ParticipantIdentityChangesResponse {
+  accountId: string;
+  oldState: string;
+  newState: string;
+  hasMoreChanges: boolean;
+  created: string[];
+  updated: string[];
+  destroyed: string[];
+}
+
+/**
+ * Patch object for ParticipantIdentity/set
+ */
+export interface ParticipantIdentityPatch {
+  email?: string;
+  name?: string | null;
+  defaultParticipationStatus?: Record<string, ParticipationStatus> | null;
+}
+
+/**
+ * Arguments for ParticipantIdentity/set
+ */
+export interface ParticipantIdentitySetRequest {
+  accountId?: string | null;
+  ifInState?: string | null;
+  create?: Record<string, ParticipantIdentityPatch> | null;
+  update?: Record<string, ParticipantIdentityPatch> | null;
+  destroy?: string[] | null;
+}
+
+/**
+ * Response from ParticipantIdentity/set
+ */
+export interface ParticipantIdentitySetResponse {
+  accountId: string;
+  oldState?: string | null;
+  newState: string;
+  created?: Record<string, ParticipantIdentity | Error>;
+  updated?: Record<string, ParticipantIdentity | null | Error>;
+  destroyed?: Record<string, null | Error>;
+  notCreated?: Record<string, Error>;
+  notUpdated?: Record<string, Error>;
+  notDestroyed?: Record<string, Error>;
+}
+
 // ============ CalendarNotification Types ============
 
 /**
  * Calendar notification type
  */
-export type NotificationType = 
-  | 'invite' 
-  | 'reply' 
-  | 'update' 
-  | 'cancel' 
-  | 'refresh' 
-  | 'alarm' 
+export type NotificationType =
+  | 'invite'
+  | 'reply'
+  | 'update'
+  | 'cancel'
+  | 'refresh'
+  | 'alarm'
   | 'comment';
 
 /**
@@ -394,6 +537,7 @@ export interface CalendarNotification {
 
 /**
  * Filter condition for Calendar/query
+ * Per draft Section 4
  */
 export interface CalendarFilterCondition {
   /** Match calendars with this id */
@@ -404,8 +548,14 @@ export interface CalendarFilterCondition {
   isDefault?: boolean;
   /** Match only subscribed calendars */
   isSubscribed?: boolean;
+  /** Match only visible calendars */
+  isVisible?: boolean;
+  /** Match calendars by includeInAvailability value */
+  includeInAvailability?: 'all' | 'attending' | 'none';
   /** Match calendars shared with a specific principal */
   shareWith?: string;
+  /** Match calendars shared by a specific principal */
+  principalId?: string;
 }
 
 /**
@@ -425,20 +575,19 @@ export type CalendarFilter = CalendarFilterCondition | CalendarFilterOperator;
 
 /**
  * Filter condition for CalendarEvent/query
+ * Per draft Section 5.11.1
  */
 export interface CalendarEventFilterCondition {
   /** Match events in this calendar */
   inCalendar?: string;
   /** Match events with this id */
   id?: string;
-  /** Match events with uid containing this string */
+  /** Match events with this exact UID */
   uid?: string;
   /** Match events with title containing this string */
   title?: string;
   /** Match events with description containing this string */
   description?: string;
-  /** Match events with summary containing this string */
-  summary?: string;
   /** Match events with location name containing this string */
   location?: string;
   /** Match events starting after this time */
@@ -447,12 +596,18 @@ export interface CalendarEventFilterCondition {
   before?: string;
   /** Match events overlapping this time range */
   inTimeRange?: { start: string; end: string };
+  /** Match events in these calendars */
+  calendarIds?: Record<string, boolean>;
   /** Match events with this participant */
   hasParticipant?: string;
-  /** Match events organized by this participant */
-  organizer?: string;
+  /** Match events organized by this email address */
+  organizerCalendarAddress?: string;
   /** Match events with this status */
   status?: 'confirmed' | 'tentative' | 'cancelled';
+  /** Match events with this free/busy status */
+  freeBusyStatus?: FreeBusyStatus;
+  /** Match events with this privacy level */
+  privacy?: 'public' | 'private' | 'secret';
   /** Match all-day events */
   isAllDay?: boolean;
   /** Match recurring events */
@@ -461,6 +616,14 @@ export interface CalendarEventFilterCondition {
   hasAlarm?: boolean;
   /** Match events with attachments */
   hasAttachment?: boolean;
+  /** Match draft events */
+  isDraft?: boolean;
+  /** Match events with this server-calculated UTC start */
+  utcStart?: string;
+  /** Match events with this server-calculated UTC end */
+  utcEnd?: string;
+  /** Match events with this base event id */
+  baseEventId?: string;
 }
 
 /**
@@ -484,11 +647,8 @@ export type CalendarEventFilter = CalendarEventFilterCondition | CalendarEventFi
  * Arguments for Calendar/get
  */
 export interface CalendarGetRequest {
-  /** The id of the account to use */
   accountId?: string | null;
-  /** The ids of the calendars to return */
   ids: string[] | null;
-  /** Properties to return (null = all) */
   properties?: string[] | null;
 }
 
@@ -496,13 +656,9 @@ export interface CalendarGetRequest {
  * Response from Calendar/get
  */
 export interface CalendarGetResponse {
-  /** The account id used for the request */
   accountId: string;
-  /** The state string for caching */
   state: string;
-  /** The list of calendars */
   list: Calendar[];
-  /** Not found ids */
   notFound?: string[];
 }
 
@@ -511,9 +667,7 @@ export interface CalendarGetResponse {
  */
 export interface CalendarChangesRequest {
   accountId?: string | null;
-  /** The state to compare against */
   sinceState: string;
-  /** Maximum changes to return */
   maxChanges?: number | null;
 }
 
@@ -522,17 +676,11 @@ export interface CalendarChangesRequest {
  */
 export interface CalendarChangesResponse {
   accountId: string;
-  /** Old state */
   oldState: string;
-  /** New state */
   newState: string;
-  /** Has more changes available */
   hasMoreChanges: boolean;
-  /** Created calendar ids */
   created: string[];
-  /** Updated calendar ids */
   updated: string[];
-  /** Destroyed calendar ids */
   destroyed: string[];
 }
 
@@ -540,28 +688,33 @@ export interface CalendarChangesResponse {
  * Calendar object for create/update in Calendar/set
  */
 export interface CalendarPatch {
-  id?: string;
   name?: string;
   description?: string | null;
   sortOrder?: number;
+  isSubscribed?: boolean;
+  isVisible?: boolean;
+  includeInAvailability?: 'all' | 'attending' | 'none';
   color?: string | null;
   timeZone?: string | null;
   shareWith?: Record<string, CalendarRights> | null;
+  defaultAlertsWithTime?: Record<string, Alert> | null;
+  defaultAlertsWithoutTime?: Record<string, Alert> | null;
 }
 
 /**
  * Arguments for Calendar/set
+ * Per draft Section 4.3
  */
 export interface CalendarSetRequest {
   accountId?: string | null;
-  /** If non-null, destroys all calendars not in this list */
   ifInState?: string | null;
-  /** Map of creation id to CalendarPatch for new calendars */
   create?: Record<string, CalendarPatch> | null;
-  /** Map of calendar id to CalendarPatch for updates */
   update?: Record<string, CalendarPatch> | null;
-  /** List of calendar ids to destroy */
   destroy?: string[] | null;
+  /** If true, events in a destroyed calendar are also destroyed */
+  onDestroyRemoveEvents?: boolean | null;
+  /** If set, the calendar created/set as the default for the account */
+  onSuccessSetIsDefault?: string[] | null;
 }
 
 /**
@@ -569,17 +722,14 @@ export interface CalendarSetRequest {
  */
 export interface CalendarSetResponse {
   accountId: string;
-  /** New state after changes */
   oldState?: string | null;
   newState: string;
-  /** Created calendars (creation id -> Calendar or error) */
-  created?: Record<string, Calendar | Error>;
-  /** Updated calendars (id -> Calendar or null or error) */
-  updated?: Record<string, Calendar | null | Error>;
-  /** Destroyed ids (id -> null or error) */
-  destroyed?: Record<string, null | Error>;
-  /** Not created due to id already existing */
-  notCreated?: Record<string, Error>;
+  created?: Record<string, Calendar | { type: string; description?: string }>;
+  updated?: Record<string, Calendar | null | { type: string; description?: string }>;
+  destroyed?: Record<string, null | { type: string; description?: string }>;
+  notCreated?: Record<string, { type: string; description?: string }>;
+  notUpdated?: Record<string, { type: string; description?: string }>;
+  notDestroyed?: Record<string, { type: string; description?: string }>;
 }
 
 /**
@@ -587,15 +737,10 @@ export interface CalendarSetResponse {
  */
 export interface CalendarQueryRequest {
   accountId?: string | null;
-  /** Filter to apply */
   filter?: CalendarFilter | null;
-  /** Sort order */
   sort?: Array<{ property: string; isAscending?: boolean }> | null;
-  /** Position in results */
   position?: number | null;
-  /** Maximum results to return */
   limit?: number | null;
-  /** Calculate total matches */
   calculateTotal?: boolean;
 }
 
@@ -604,17 +749,11 @@ export interface CalendarQueryRequest {
  */
 export interface CalendarQueryResponse {
   accountId: string;
-  /** Query state for caching */
   queryState: string;
-  /** Can calculate changes between states */
   canCalculateChanges: boolean;
-  /** Position of first result */
   position: number;
-  /** Total matches (if requested) */
   total?: number;
-  /** Sorted list of ids */
   ids: string[];
-  /** Sort order used */
   sort?: Array<{ property: string; isAscending?: boolean }>;
 }
 
@@ -623,13 +762,9 @@ export interface CalendarQueryResponse {
  */
 export interface CalendarEventGetRequest {
   accountId?: string | null;
-  /** Calendar ids to get events from (null = all calendars) */
   calendarIds?: string[] | null;
-  /** The ids of the events to return */
   ids?: string[] | null;
-  /** Properties to return */
   properties?: string[] | null;
-  /** Return events with alerts only */
   hasAlarm?: boolean | null;
 }
 
@@ -648,7 +783,6 @@ export interface CalendarEventGetResponse {
  */
 export interface CalendarEventChangesRequest {
   accountId?: string | null;
-  /** Calendar ids to check for changes */
   calendarIds?: string[] | null;
   sinceState: string;
   maxChanges?: number | null;
@@ -671,8 +805,7 @@ export interface CalendarEventChangesResponse {
  * CalendarEvent object for create/update in CalendarEvent/set
  */
 export interface CalendarEventPatch {
-  id?: string;
-  calendarId?: string;
+  calendarIds?: Record<string, boolean>;
   uid?: string;
   title?: string;
   description?: string | null;
@@ -688,11 +821,14 @@ export interface CalendarEventPatch {
   priority?: number;
   recurrenceRule?: RecurrenceRule | null;
   recurrenceOverrides?: Record<string, Partial<CalendarEvent>> | null;
+  excludedRecurrenceRules?: RecurrenceRule[] | null;
+  relatedTo?: { type?: string; id: string } | null;
+  mayInviteSelf?: boolean;
+  mayInviteOthers?: boolean;
+  hideAttendees?: boolean;
   organizer?: Participant;
   participants?: Record<string, Participant>;
-  participantIds?: string[];
   locations?: Record<string, Location>;
-  locationId?: string;
   virtualLocations?: Record<string, Link>;
   links?: Record<string, Link>;
   attachments?: Record<string, Link>;
@@ -701,10 +837,12 @@ export interface CalendarEventPatch {
   percentComplete?: number;
   due?: string;
   estimatedDuration?: number;
+  locale?: string;
 }
 
 /**
  * Arguments for CalendarEvent/set
+ * Per draft Section 5.9.2
  */
 export interface CalendarEventSetRequest {
   accountId?: string | null;
@@ -712,6 +850,8 @@ export interface CalendarEventSetRequest {
   create?: Record<string, CalendarEventPatch>;
   update?: Record<string, CalendarEventPatch>;
   destroy?: string[];
+  /** If present, send scheduling messages for the operation */
+  sendSchedulingMessage?: 'whenNeeded' | 'always' | 'never';
 }
 
 /**
@@ -721,10 +861,12 @@ export interface CalendarEventSetResponse {
   accountId: string;
   oldState?: string | null;
   newState: string;
-  created?: Record<string, CalendarEvent | Error>;
-  updated?: Record<string, CalendarEvent | null | Error>;
-  destroyed?: Record<string, null | Error>;
-  notCreated?: Record<string, Error>;
+  created?: Record<string, CalendarEvent | { type: string; description?: string }>;
+  updated?: Record<string, CalendarEvent | null | { type: string; description?: string }>;
+  destroyed?: Record<string, null | { type: string; description?: string }>;
+  notCreated?: Record<string, { type: string; description?: string }>;
+  notUpdated?: Record<string, { type: string; description?: string }>;
+  notDestroyed?: Record<string, { type: string; description?: string }>;
 }
 
 /**
@@ -732,16 +874,13 @@ export interface CalendarEventSetResponse {
  */
 export interface CalendarEventQueryRequest {
   accountId?: string | null;
-  /** Calendar ids to search (null = all calendars) */
   calendarIds?: string[] | null;
   filter?: CalendarEventFilter | null;
   sort?: Array<{ property: string; isAscending?: boolean }> | null;
   position?: number | null;
   limit?: number | null;
   calculateTotal?: boolean;
-  /** Include expanded occurrences for recurring events */
   expandRecurrences?: boolean;
-  /** Time range for expansion (required if expandRecurrences is true) */
   expandTimeZone?: string | null;
 }
 
@@ -758,11 +897,286 @@ export interface CalendarEventQueryResponse {
   sort?: Array<{ property: string; isAscending?: boolean }>;
 }
 
-// ============ Error Type ============
+// ============ CalendarEvent/copy (draft Section 5.10) ============
 
 /**
- * JMAP method error response
+ * Arguments for CalendarEvent/copy
  */
+export interface CalendarEventCopyRequest {
+  accountId?: string | null;
+  /** The ids of events to copy */
+  ids: string[];
+  /** IfInState for optimistic concurrency */
+  ifInState?: string | null;
+  /** Map of original event id to the calendarIds to copy into */
+  calendarIds?: Record<string, Record<string, boolean>>;
+  /** Properties to update on the copied events */
+  propertiesToUpdate?: Record<string, CalendarEventPatch>;
+  /** Whether to send scheduling messages */
+  sendSchedulingMessage?: 'whenNeeded' | 'always' | 'never';
+}
+
+/**
+ * Response from CalendarEvent/copy
+ */
+export interface CalendarEventCopyResponse {
+  accountId: string;
+  oldState?: string | null;
+  newState: string;
+  copied?: Record<string, CalendarEvent | { type: string; description?: string }>;
+  notCopied?: Record<string, { type: string; description?: string }>;
+}
+
+// ============ CalendarEvent/queryChanges (draft Section 5.12) ============
+
+/**
+ * Arguments for CalendarEvent/queryChanges
+ */
+export interface CalendarEventQueryChangesRequest {
+  accountId?: string | null;
+  filter?: CalendarEventFilter | null;
+  sort?: Array<{ property: string; isAscending?: boolean }> | null;
+  sinceQueryState: string;
+  maxChanges?: number | null;
+  upToId?: string | null;
+  calculateTotal?: boolean;
+}
+
+/**
+ * Response from CalendarEvent/queryChanges
+ */
+export interface CalendarEventQueryChangesResponse {
+  accountId: string;
+  oldQueryState: string;
+  newQueryState: string;
+  total?: number;
+  added: Array<{ id: string; index: number }>;
+  removed: string[];
+}
+
+// ============ CalendarEvent/parse (draft Section 5.13) ============
+
+/**
+ * Arguments for CalendarEvent/parse
+ */
+export interface CalendarEventParseRequest {
+  accountId?: string | null;
+  /** The blob ids of iCalendar data to parse */
+  blobIds: string[];
+}
+
+/**
+ * Response from CalendarEvent/parse
+ */
+export interface CalendarEventParseResponse {
+  accountId: string;
+  parsed?: Record<string, CalendarEvent | { type: string; description?: string }>;
+  notParsed?: Record<string, { type: string; description?: string }>;
+}
+
+// ============ CalendarEventNotification/query (draft Section 7.4) ============
+
+/**
+ * Filter condition for CalendarEventNotification/query
+ */
+export interface CalendarEventNotificationFilterCondition {
+  /** Match by notification type */
+  type?: NotificationType;
+  /** Match by event id */
+  eventId?: string;
+  /** Match by calendar id */
+  calendarId?: string;
+  /** Match read/unread */
+  isRead?: boolean;
+  /** Match notifications created after this time */
+  after?: string;
+  /** Match notifications created before this time */
+  before?: string;
+}
+
+/**
+ * Filter operator for CalendarEventNotification/query
+ */
+export interface CalendarEventNotificationFilterOperator {
+  allOf?: CalendarEventNotificationFilter[];
+  anyOf?: CalendarEventNotificationFilter[];
+  noneOf?: CalendarEventNotificationFilter[];
+}
+
+export type CalendarEventNotificationFilter = CalendarEventNotificationFilterCondition | CalendarEventNotificationFilterOperator;
+
+/**
+ * Arguments for CalendarEventNotification/query
+ */
+export interface CalendarEventNotificationQueryRequest {
+  accountId?: string | null;
+  filter?: CalendarEventNotificationFilter | null;
+  sort?: Array<{ property: string; isAscending?: boolean }> | null;
+  position?: number | null;
+  limit?: number | null;
+  calculateTotal?: boolean;
+}
+
+/**
+ * Response from CalendarEventNotification/query
+ */
+export interface CalendarEventNotificationQueryResponse {
+  accountId: string;
+  queryState: string;
+  canCalculateChanges: boolean;
+  position: number;
+  total?: number;
+  ids: string[];
+}
+
+/**
+ * Arguments for CalendarEventNotification/queryChanges
+ */
+export interface CalendarEventNotificationQueryChangesRequest {
+  accountId?: string | null;
+  filter?: CalendarEventNotificationFilter | null;
+  sort?: Array<{ property: string; isAscending?: boolean }> | null;
+  sinceQueryState: string;
+  maxChanges?: number | null;
+  upToId?: string | null;
+  calculateTotal?: boolean;
+}
+
+/**
+ * Response from CalendarEventNotification/queryChanges
+ */
+export interface CalendarEventNotificationQueryChangesResponse {
+  accountId: string;
+  oldQueryState: string;
+  newQueryState: string;
+  total?: number;
+  added: Array<{ id: string; index: number }>;
+  removed: string[];
+}
+
+/**
+ * Arguments for CalendarEventNotification/get
+ */
+export interface CalendarEventNotificationGetRequest {
+  accountId?: string | null;
+  ids: string[] | null;
+  properties?: string[] | null;
+}
+
+/**
+ * Response from CalendarEventNotification/get
+ */
+export interface CalendarEventNotificationGetResponse {
+  accountId: string;
+  state: string;
+  list: CalendarNotification[];
+  notFound?: string[];
+}
+
+/**
+ * Arguments for CalendarEventNotification/changes
+ */
+export interface CalendarEventNotificationChangesRequest {
+  accountId?: string | null;
+  sinceState: string;
+  maxChanges?: number | null;
+}
+
+/**
+ * Response from CalendarEventNotification/changes
+ */
+export interface CalendarEventNotificationChangesResponse {
+  accountId: string;
+  oldState: string;
+  newState: string;
+  hasMoreChanges: boolean;
+  created: string[];
+  updated: string[];
+  destroyed: string[];
+}
+
+/**
+ * Patch object for CalendarEventNotification/set
+ */
+export interface CalendarEventNotificationPatch {
+  isRead?: boolean;
+  properties?: Record<string, unknown>;
+}
+
+/**
+ * Arguments for CalendarEventNotification/set
+ */
+export interface CalendarEventNotificationSetRequest {
+  accountId?: string | null;
+  ifInState?: string | null;
+  update?: Record<string, CalendarEventNotificationPatch> | null;
+  destroy?: string[] | null;
+}
+
+/**
+ * Response from CalendarEventNotification/set
+ */
+export interface CalendarEventNotificationSetResponse {
+  accountId: string;
+  oldState?: string | null;
+  newState: string;
+  updated?: Record<string, CalendarNotification | null | { type: string; description?: string }>;
+  destroyed?: Record<string, null | { type: string; description?: string }>;
+  notUpdated?: Record<string, { type: string; description?: string }>;
+  notDestroyed?: Record<string, { type: string; description?: string }>;
+}
+
+// ============ Principal/getAvailability (draft Section 2.2) ============
+
+/**
+ * Arguments for Principal/getAvailability
+ */
+export interface PrincipalGetAvailabilityRequest {
+  accountId?: string | null;
+  /** The principal ids to check availability for */
+  ids: string[];
+  /** Start of the time range */
+  start: string;
+  /** End of the time range */
+  end: string;
+}
+
+/**
+ * A busy time slot for a principal
+ */
+export interface BusyTimeSlot {
+  /** Start of the busy period */
+  start: string;
+  /** End of the busy period */
+  end: string;
+  /** Whether this is free, busy, tentative, or unavailable */
+  status?: FreeBusyStatus;
+}
+
+/**
+ * Availability information for a principal
+ */
+export interface PrincipalAvailability {
+  /** The principal id */
+  id: string;
+  /** Busy time slots within the requested range */
+  busy: BusyTimeSlot[];
+  /** Whether the principal is available for the entire range */
+  isAvailable?: boolean;
+}
+
+/**
+ * Response from Principal/getAvailability
+ */
+export interface PrincipalGetAvailabilityResponse {
+  accountId: string;
+  /** Map of principal id to availability information */
+  list: Record<string, PrincipalAvailability>;
+  notFound?: string[];
+}
+
+// ============ Error Type ============
+
 export interface Error {
   type: string;
   description?: string | null;
