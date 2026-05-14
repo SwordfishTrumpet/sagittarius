@@ -1,13 +1,42 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-icloud-bg-primary: var(--icloud-bg-primary);
+  --color-icloud-bg-sidebar: var(--icloud-bg-sidebar);
+  --color-icloud-bg-layer1: var(--icloud-bg-layer1);
+  --color-icloud-bg-layer2: var(--icloud-bg-layer2);
+  --color-icloud-text-primary: var(--icloud-text-primary);
+  --color-icloud-text-secondary: var(--icloud-text-secondary);
+  --color-icloud-text-tertiary: var(--icloud-text-tertiary);
+  --color-icloud-accent: var(--icloud-accent);
+  --color-icloud-accent-hover: var(--icloud-accent-hover);
+  --color-icloud-border: var(--icloud-border);
+  --color-icloud-divider: var(--icloud-divider);
+  --color-icloud-red: var(--icloud-red);
+  --color-icloud-orange: var(--icloud-orange);
+  --color-icloud-yellow: var(--icloud-yellow);
+  --color-icloud-green: var(--icloud-green);
+  --color-icloud-gray1: var(--icloud-gray1);
+  --color-icloud-gray2: var(--icloud-gray2);
+  --color-icloud-gray3: var(--icloud-gray3);
+  --color-icloud-gray4: var(--icloud-gray4);
+  --color-icloud-gray5: var(--icloud-gray5);
+  --color-icloud-gray6: var(--icloud-gray6);
+  --color-icloud-card: var(--icloud-card);
+  --color-icloud-shadow: var(--icloud-shadow);
+  --color-icloud-scrollbar-thumb: var(--icloud-scrollbar-thumb);
+  --color-icloud-scrollbar-thumb-hover: var(--icloud-scrollbar-thumb-hover);
+  --shadow-icloud: var(--icloud-shadow-standard);
+  --radius-icloud: 12px;
+}
 
 /* ── iCloud Mail Design System CSS Variables ── */
 
 :root {
   color-scheme: light dark;
 
-  /* Typography */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
@@ -18,26 +47,21 @@
   --icloud-bg-layer2: #ffffff;
   --icloud-card: #ffffff;
 
-  /* Text (Apple label hierarchy) */
   --icloud-text-primary: rgba(0, 0, 0, 0.88);
   --icloud-text-secondary: rgba(0, 0, 0, 0.56);
   --icloud-text-tertiary: rgba(0, 0, 0, 0.48);
 
-  /* Accent — Mail app blue */
   --icloud-accent: #0071e3;
   --icloud-accent-hover: #0056cc;
 
-  /* Borders & dividers */
   --icloud-border: #d1d1d6;
   --icloud-divider: #d1d1d6;
 
-  /* Semantic */
   --icloud-red: #e30000;
   --icloud-orange: #ff9500;
   --icloud-yellow: #ffcc00;
   --icloud-green: #03a10e;
 
-  /* Grayscale */
   --icloud-gray1: hsl(240, 2.3%, 56.7%);
   --icloud-gray2: #aeaeb2;
   --icloud-gray3: hsl(240, 4.7%, 79.0%);
@@ -45,15 +69,12 @@
   --icloud-gray5: hsl(240, 10.6%, 90.8%);
   --icloud-gray6: #f2f2f7;
 
-  /* Shadow */
   --icloud-shadow-color: rgba(0, 0, 0, 0.16);
   --icloud-shadow-standard: 0 11px 34px rgba(0, 0, 0, 0.16);
 
-  /* Scrollbar */
   --icloud-scrollbar-thumb: #c1c1c1;
   --icloud-scrollbar-thumb-hover: #a8a8a8;
 
-  /* Selection */
   --icloud-selection-bg: #0071e3;
   --icloud-selection-text: #ffffff;
 }
@@ -104,7 +125,6 @@ body {
   @apply bg-icloud-bg-primary text-icloud-text-primary overflow-hidden antialiased;
   height: 100vh;
   width: 100vw;
-  /* Safe area insets for mobile devices */
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
@@ -112,7 +132,6 @@ body {
   height: 100%;
 }
 
-/* Custom scrollbar to match macOS */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -131,18 +150,15 @@ body {
   background: var(--icloud-scrollbar-thumb-hover);
 }
 
-/* Selection colors */
 ::selection {
   background: var(--icloud-selection-bg);
   color: var(--icloud-selection-text);
 }
 
-/* Sidebar active item — accent background, white text */
 .sidebar-item-active {
   @apply bg-icloud-accent text-white;
 }
 
-/* Quoted content in composer */
 .ProseMirror blockquote {
   margin: 0;
   padding: 0 0 0 12px;
@@ -171,7 +187,6 @@ body {
   border-left-color: #48484a;
 }
 
-/* Resize handle styles */
 .resize-handle {
   width: 6px;
   cursor: col-resize;
@@ -202,19 +217,16 @@ body {
   width: 2px;
 }
 
-/* Monospace font override */
 .font-mono,
 code, pre, samp, kbd {
   font-family: var(--font-mono) !important;
 }
 
-/* Composer code blocks */
 .ProseMirror code,
 .ProseMirror pre {
   font-family: var(--font-mono) !important;
 }
 
-/* Prevent text selection and set cursor globally during resize drag */
 body.is-resizing {
   cursor: col-resize !important;
   user-select: none !important;

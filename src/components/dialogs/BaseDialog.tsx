@@ -8,7 +8,7 @@ export interface BaseDialogProps {
   title: string;
   titleId: string;
   children: ReactNode;
-  initialFocusRef?: React.RefObject<HTMLElement>;
+  initialFocusRef?: React.RefObject<HTMLElement | null>;
 }
 
 /**

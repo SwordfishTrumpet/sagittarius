@@ -17,11 +17,11 @@ function getFocusableElements(container: HTMLElement) {
 
 interface UseFocusTrapOptions {
   isActive?: boolean;
-  initialFocusRef?: RefObject<HTMLElement>;
+  initialFocusRef?: RefObject<HTMLElement | null>;
 }
 
 export function useFocusTrap(
-  containerRef: RefObject<HTMLElement>,
+  containerRef: RefObject<HTMLElement | null>,
   { isActive = true, initialFocusRef }: UseFocusTrapOptions = {}
 ) {
   useEffect(() => {

@@ -29,7 +29,7 @@ function SidebarItemComponent({ icon, label, active = false, count, mailboxId, h
 
   return (
     <div 
-      ref={mailboxId ? drop : null}
+      ref={mailboxId ? (drop as unknown as React.Ref<HTMLDivElement>) : null}
       onClick={onClick}
       onContextMenu={onContextMenu}
       role="treeitem"

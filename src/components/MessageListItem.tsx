@@ -145,7 +145,7 @@ function MessageListItemComponent({
 
   return (
     <motion.div
-      ref={drag}
+      ref={drag as unknown as React.Ref<HTMLDivElement>}
       onClick={handleClick}
       onDoubleClick={onDoubleClick}
       onContextMenu={handleContextMenu}
