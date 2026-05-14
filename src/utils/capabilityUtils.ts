@@ -122,7 +122,7 @@ export function getMailCapabilityLimits(): MailCapabilityLimits {
 }
 
 /**
- * JMAP Sieve Capability Limits (RFC 9266)
+ * JMAP Sieve Capability Limits (RFC 9661)
  */
 export interface SieveCapabilityLimits {
   /** Maximum number of Sieve scripts */

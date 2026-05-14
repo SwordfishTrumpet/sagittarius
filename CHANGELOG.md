@@ -93,7 +93,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Scheduled send functionality
 - Email import via drag-and-drop (.eml files)
 - Raw email viewer with MIME structure tree
-- MDN read receipt support (RFC 8098)
+- MDN read receipt support (RFC 9007)
 - Delivery status tracking
 
 ### Changed

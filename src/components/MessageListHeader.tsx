@@ -1,5 +1,6 @@
 import { Search, Filter, Square, ChevronRight, X, Menu } from 'lucide-react'
-import { FilterBar } from './FilterBar'
+import { FilterDialog } from './FilterDialog'
+import type { FilterState } from '../hooks/useListFilters'
 
 export interface MessageListHeaderProps {
   title: string
@@ -8,15 +9,19 @@ export interface MessageListHeaderProps {
   emails: any[] | undefined
   selectedEmailIds: Set<string>
   searchTerm: string
-  showFilterBar: boolean
-  activeListFilters: Set<string>
+  showFilterDialog: boolean
+  activeFilters: FilterState
+  hasActiveFilters: boolean
+  activeFilterCount: number
   onShowSidebar: () => void
   onSelectAll: () => void
   onClearSelection: () => void
-  onToggleFilterBar: () => void
+  onOpenFilterDialog: () => void
+  onCloseFilterDialog: () => void
+  onApplyFilters: (filters: FilterState) => void
+  onClearFilters: () => void
   onSearchChange: (value: string) => void
   onClearSearch: () => void
-  onToggleListFilter: (filter: string) => void
 }
 
 export function MessageListHeader({
@@ -26,15 +31,19 @@ export function MessageListHeader({
   emails,
   selectedEmailIds,
   searchTerm,
-  showFilterBar,
-  activeListFilters,
+  showFilterDialog,
+  activeFilters,
+  hasActiveFilters,
+  activeFilterCount,
   onShowSidebar,
   onSelectAll,
   onClearSelection,
-  onToggleFilterBar,
+  onOpenFilterDialog,
+  onCloseFilterDialog,
+  onApplyFilters,
+  onClearFilters,
   onSearchChange,
   onClearSearch,
-  onToggleListFilter,
 }: MessageListHeaderProps) {
   const emailCount = emails?.length || 0;
   const allSelected = emailCount > 0 && selectedEmailIds.size === emailCount;
@@ -79,15 +88,15 @@ export function MessageListHeader({
         <div className="flex gap-4">
            <div className="relative">
               <button 
-                onClick={onToggleFilterBar}
+                onClick={onOpenFilterDialog}
                 className="min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-gray-100 dark:hover:bg-white/[0.06] rounded transition-colors"
-                aria-label={activeListFilters.size > 0 ? 'Toggle filters, active filters applied' : 'Toggle filters'}
+                aria-label={hasActiveFilters ? 'Filters active, open filter dialog' : 'Open filter dialog'}
               >
-                <Filter className={`w-4 h-4 ${activeListFilters.size > 0 ? 'text-icloud-accent fill-icloud-accent/20' : 'text-icloud-accent'}`} strokeWidth={1.25} />
+                <Filter className={`w-4 h-4 ${hasActiveFilters ? 'text-icloud-accent fill-icloud-accent/20' : 'text-icloud-accent'}`} strokeWidth={1.25} />
              </button>
-             {activeListFilters.size > 0 && (
+             {hasActiveFilters && (
                <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-icloud-accent text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                 {activeListFilters.size}
+                 {activeFilterCount}
                </span>
              )}
            </div>
@@ -102,8 +111,8 @@ export function MessageListHeader({
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
           aria-label="Search emails"
-className="w-full bg-icloud-text-secondary/10 border-none rounded-lg py-1.5 pl-9 pr-12 text-[14px] focus:ring-2 focus:ring-icloud-accent placeholder-icloud-text-secondary transition-colors hover:bg-icloud-text-secondary/15"
-          />
+          className="w-full bg-icloud-text-secondary/10 border-none rounded-lg py-1.5 pl-9 pr-12 text-[14px] focus:ring-2 focus:ring-icloud-accent placeholder-icloud-text-secondary transition-colors hover:bg-icloud-text-secondary/15"
+        />
         {searchTerm && (
           <button 
             onClick={onClearSearch}
@@ -114,12 +123,13 @@ className="w-full bg-icloud-text-secondary/10 border-none rounded-lg py-1.5 pl-9
           </button>
         )}
       </div>
-      {(showFilterBar || activeListFilters.size > 0) && (
-        <FilterBar
-          activeFilters={activeListFilters}
-          onToggleFilter={onToggleListFilter}
-        />
-      )}
+      <FilterDialog
+        isOpen={showFilterDialog}
+        onClose={onCloseFilterDialog}
+        currentFilters={activeFilters}
+        onApply={onApplyFilters}
+        onClear={onClearFilters}
+      />
     </header>
   )
 }

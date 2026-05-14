@@ -2,10 +2,18 @@ import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import type { EmailFilter, EmailFilterCondition } from '../types/jmap'
 
-export interface ListFilter {
+export interface HeaderFilterEntry {
   id: string
-  label: string
-  jmapCondition: EmailFilterCondition
+  headerName: string
+  value: string
+}
+
+export interface FilterState {
+  unread: boolean
+  flagged: boolean
+  toMe: boolean
+  attachments: boolean
+  headerFilters: HeaderFilterEntry[]
 }
 
 interface UseListFiltersOptions {
@@ -13,110 +21,112 @@ interface UseListFiltersOptions {
 }
 
 interface UseListFiltersReturn {
-  activeListFilters: Set<string>
-  showFilterBar: boolean
+  activeFilters: FilterState
+  hasActiveFilters: boolean
+  activeFilterCount: number
   quickJMAPFilter: EmailFilter | undefined
-  toggleFilter: (filterId: string) => void
-  setShowFilterBar: (show: boolean) => void
-  toggleFilterBar: () => void
+  showFilterDialog: boolean
+  openFilterDialog: () => void
+  closeFilterDialog: () => void
+  applyFilters: (filters: FilterState) => void
   clearFilters: () => void
 }
 
-/**
- * Available list filters with their JMAP filter conditions.
- * Note: "toMe" is populated dynamically with userEmail at runtime.
- */
-export const AVAILABLE_FILTERS: ListFilter[] = [
-  { id: 'unread', label: 'Unread', jmapCondition: { notHasKeyword: '$seen' } },
-  { id: 'flagged', label: 'Flagged', jmapCondition: { hasKeyword: '$flagged' } },
-  { id: 'toMe', label: 'To Me', jmapCondition: {} }, // to condition populated dynamically with userEmail
-  { id: 'attachments', label: 'Attachments', jmapCondition: { hasAttachment: true } },
-]
+const EMPTY_FILTERS: FilterState = {
+  unread: false,
+  flagged: false,
+  toMe: false,
+  attachments: false,
+  headerFilters: [],
+}
 
-/**
- * Hook for managing message list filters.
- * Handles filter toggling, building JMAP filter conditions, and UI state.
- */
 export function useListFilters({ userEmail }: UseListFiltersOptions): UseListFiltersReturn {
   const queryClient = useQueryClient()
-  const [activeListFilters, setActiveListFilters] = useState<Set<string>>(new Set())
-  const [showFilterBar, setShowFilterBarState] = useState(false)
-  const previousFiltersRef = useRef<Set<string>>(new Set())
+  const [activeFilters, setActiveFilters] = useState<FilterState>(EMPTY_FILTERS)
+  const [showFilterDialog, setShowFilterDialog] = useState(false)
+  const previousFiltersKeyRef = useRef('')
+  const initializedRef = useRef(false)
 
-  const toggleFilter = useCallback((filterId: string) => {
-    setActiveListFilters(prev => {
-      const next = new Set(prev)
-      if (next.has(filterId)) {
-        next.delete(filterId)
-      } else {
-        next.add(filterId)
-      }
-      return next
-    })
-  }, [])
+  const openFilterDialog = useCallback(() => setShowFilterDialog(true), [])
+  const closeFilterDialog = useCallback(() => setShowFilterDialog(false), [])
 
-  const setShowFilterBar = useCallback((show: boolean) => {
-    setShowFilterBarState(show)
-  }, [])
-
-  const toggleFilterBar = useCallback(() => {
-    setShowFilterBarState(prev => !prev)
+  const applyFilters = useCallback((filters: FilterState) => {
+    setActiveFilters(filters)
+    setShowFilterDialog(false)
   }, [])
 
   const clearFilters = useCallback(() => {
-    setActiveListFilters(new Set())
+    setActiveFilters(EMPTY_FILTERS)
+    setShowFilterDialog(false)
   }, [])
 
   // Invalidate threads query when filters change
   useEffect(() => {
-    const previous = previousFiltersRef.current
-    const current = activeListFilters
-    
-    // Check if filters actually changed
-    const filtersChanged = 
-      previous.size !== current.size ||
-      [...previous].some(id => !current.has(id)) ||
-      [...current].some(id => !previous.has(id))
-    
-    if (filtersChanged) {
-      // Invalidate threads queries to force refetch with new filters
-      queryClient.invalidateQueries({ queryKey: ['threads'] })
-      previousFiltersRef.current = new Set(current)
+    const key = JSON.stringify(activeFilters)
+    if (!initializedRef.current) {
+      initializedRef.current = true
+      previousFiltersKeyRef.current = key
+      return
     }
-  }, [activeListFilters, queryClient])
+    if (key !== previousFiltersKeyRef.current) {
+      queryClient.invalidateQueries({ queryKey: ['threads'] })
+      previousFiltersKeyRef.current = key
+    }
+  }, [activeFilters, queryClient])
 
-  // Build JMAP filter from active quick filters
+  // Build JMAP filter from active filters
   const quickJMAPFilter = useMemo(() => {
-    if (activeListFilters.size === 0) return undefined
-
     const conditions: EmailFilterCondition[] = []
 
-    if (activeListFilters.has('unread')) {
+    if (activeFilters.unread) {
       conditions.push({ notHasKeyword: '$seen' })
     }
-    if (activeListFilters.has('flagged')) {
+    if (activeFilters.flagged) {
       conditions.push({ hasKeyword: '$flagged' })
     }
-    if (activeListFilters.has('toMe') && userEmail) {
-      // RFC 8621 §4.4.1: "to" filter is a String that the server matches against
+    if (activeFilters.toMe && userEmail) {
       conditions.push({ to: userEmail })
     }
-    if (activeListFilters.has('attachments')) {
+    if (activeFilters.attachments) {
       conditions.push({ hasAttachment: true })
+    }
+
+    for (const hf of activeFilters.headerFilters) {
+      if (hf.headerName.trim()) {
+        const header: string[] = [hf.headerName.trim()]
+        if (hf.value.trim()) header.push(hf.value.trim())
+        conditions.push({ header })
+      }
     }
 
     if (conditions.length === 0) return undefined
     if (conditions.length === 1) return conditions[0]
     return { allOf: conditions }
-  }, [activeListFilters, userEmail])
+  }, [activeFilters, userEmail])
+
+  const hasActiveFilters =
+    activeFilters.unread ||
+    activeFilters.flagged ||
+    activeFilters.toMe ||
+    activeFilters.attachments ||
+    activeFilters.headerFilters.length > 0
+
+  const activeFilterCount =
+    (activeFilters.unread ? 1 : 0) +
+    (activeFilters.flagged ? 1 : 0) +
+    (activeFilters.toMe ? 1 : 0) +
+    (activeFilters.attachments ? 1 : 0) +
+    activeFilters.headerFilters.length
 
   return {
-    activeListFilters,
-    showFilterBar,
+    activeFilters,
+    hasActiveFilters,
+    activeFilterCount,
     quickJMAPFilter,
-    toggleFilter,
-    setShowFilterBar,
-    toggleFilterBar,
+    showFilterDialog,
+    openFilterDialog,
+    closeFilterDialog,
+    applyFilters,
     clearFilters,
   }
 }

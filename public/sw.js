@@ -147,6 +147,45 @@ async function staleWhileRevalidate(request) {
   throw new Error('Network and cache both failed')
 }
 
+// Push notification handler (RFC 9749 WebPush)
+self.addEventListener('push', (event) => {
+  const data = event.data?.json() || {};
+  const { title, body, icon, tag, url } = data;
+
+  event.waitUntil(
+    self.registration.showNotification(title || 'New email', {
+      body: body || 'You have a new message',
+      icon: icon || '/favicon.svg',
+      badge: '/favicon.svg',
+      tag: tag || 'sagittarius-email',
+      data: { url: url || '/' },
+      requireInteraction: false,
+      actions: [
+        { action: 'open', title: 'Open' },
+        { action: 'dismiss', title: 'Dismiss' },
+      ],
+    })
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url || '/';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if ('focus' in client) {
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(url);
+      }
+    })
+  );
+});
+
 // Message handler for cache clearing
 self.addEventListener('message', event => {
   if (event.data === 'skipWaiting') {

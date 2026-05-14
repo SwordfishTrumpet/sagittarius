@@ -87,12 +87,14 @@ function App() {
 
   // List filters
   const {
-    activeListFilters,
-    showFilterBar,
+    activeFilters,
+    hasActiveFilters,
+    activeFilterCount,
     quickJMAPFilter,
-    toggleFilter: handleToggleListFilter,
-    setShowFilterBar,
-    toggleFilterBar,
+    showFilterDialog,
+    openFilterDialog,
+    closeFilterDialog,
+    applyFilters,
     clearFilters,
   } = useListFilters({ userEmail })
 
@@ -337,12 +339,11 @@ function App() {
     resetSelection()
     setSearchTerm('')
     clearFilters()
-    setShowFilterBar(false)
     // On mobile, switch to list view when selecting a mailbox
     if (isMobile) {
       setMobileView('list')
     }
-  }, [queryClient, resetSelection, clearFilters, setShowFilterBar, isMobile])
+  }, [queryClient, resetSelection, clearFilters, isMobile])
 
   // Mobile navigation helpers
   const navigateToMailboxList = useCallback(() => {
@@ -658,15 +659,19 @@ function App() {
             emails={emails}
             selectedEmailIds={selectedEmailIds}
             searchTerm={searchTerm}
-            showFilterBar={showFilterBar}
-            activeListFilters={activeListFilters}
+            showFilterDialog={showFilterDialog}
+            activeFilters={activeFilters}
+            hasActiveFilters={hasActiveFilters}
+            activeFilterCount={activeFilterCount}
             onShowSidebar={navigateToMailboxList}
             onSelectAll={selectAllEmails}
             onClearSelection={clearSelection}
-            onToggleFilterBar={toggleFilterBar}
+            onOpenFilterDialog={openFilterDialog}
+            onCloseFilterDialog={closeFilterDialog}
+            onApplyFilters={applyFilters}
+            onClearFilters={clearFilters}
             onSearchChange={setSearchTerm}
             onClearSearch={() => setSearchTerm('')}
-            onToggleListFilter={handleToggleListFilter}
           />
           <VirtualMessageList
             emails={emails || []}

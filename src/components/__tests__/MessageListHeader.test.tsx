@@ -8,15 +8,19 @@ const baseProps = {
   emails: [],
   selectedEmailIds: new Set<string>(),
   searchTerm: '',
-  showFilterBar: false,
-  activeListFilters: new Set<string>(),
+  showFilterDialog: false,
+  activeFilters: { unread: false, flagged: false, toMe: false, attachments: false, headerFilters: [] },
+  hasActiveFilters: false,
+  activeFilterCount: 0,
   onShowSidebar: vi.fn(),
   onSelectAll: vi.fn(),
   onClearSelection: vi.fn(),
-  onToggleFilterBar: vi.fn(),
+  onOpenFilterDialog: vi.fn(),
+  onCloseFilterDialog: vi.fn(),
+  onApplyFilters: vi.fn(),
+  onClearFilters: vi.fn(),
   onSearchChange: vi.fn(),
   onClearSearch: vi.fn(),
-  onToggleListFilter: vi.fn(),
 }
 
 describe('MessageListHeader', () => {

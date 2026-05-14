@@ -8,6 +8,7 @@ import { jmapClient } from '../api/jmap'
 import { ImageApprovalBanner } from './ImageApprovalBanner'
 import { ReadReceiptBanner } from './ReadReceiptBanner'
 import { DeliveryStatus } from './DeliveryStatus'
+import { SmimeBadge } from './SmimeBadge'
 import { AttachmentItem } from './AttachmentItem'
 import { EmailBodyFrame } from './EmailBodyFrame'
 import { useTheme } from '../hooks/useTheme'
@@ -245,6 +246,7 @@ export function EmailReader({
                             <DeliveryStatus emailId={email.id} />
                           );
                         })()}
+                        <SmimeBadge status={email.smimeStatus} certificate={email.smimeCertificate} />
                       </div>
                     </div>
                 </div>
