@@ -165,7 +165,7 @@ default-src 'self'
 script-src 'self'
 style-src 'self'
 connect-src 'self'
-img-src 'self' data: blob:
+img-src 'self' data: blob: https: http:
 font-src 'self'
 media-src 'self' blob:
 frame-ancestors 'none'

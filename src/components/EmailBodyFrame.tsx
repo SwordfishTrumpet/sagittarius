@@ -129,48 +129,50 @@ export function buildSrcDoc(
 ): string {
   const displayHtml = normalizeDisplayHtml(html)
 
-  // Dark mode CSS: force light text colors and ensure readability
-  // Emails often have inline styles with hardcoded colors like "color: black"
-  // We use CSS variables and !important overrides to ensure readability
   const darkModeStyles = darkMode ? `
-      /* Dark mode: ensure text is readable */
       color-scheme: dark;
-      color: #FFFFFF !important;
-      background: transparent !important;
+      background: #434349;
+      color: rgba(255, 255, 255, 0.98);
 
-      /* Force all text elements to use light colors */
-      *, *::before, *::after {
-        color: inherit !important;
-        background-color: transparent !important;
+      /* Fix form elements in dark mode */
+      input, textarea, select {
+        color-scheme: dark;
       }
 
-      /* Preserve link colors */
-      a, a:link, a:visited {
-        color: #009aff !important;
+      /* Ensure links use accent color but don't clobber custom link colors */
+      a:not([style*="color"]) {
+        color: #009aff;
       }
 
-      a:hover {
-        color: #4da6ff !important;
+      a:hover:not([style*="color"]) {
+        color: #33b5ff;
       }
 
-      /* Preserve code/pre backgrounds but ensure text is light */
+      /* Pre/code blocks need explicit dark styling */
       pre, code {
-        background-color: #2c2c2e !important;
-        color: #ffffff !important;
+        background-color: #2c2c2e;
+        color: rgba(255, 255, 255, 0.92);
       }
 
-      /* Preserve blockquote styling */
+      /* Quoted text - subtle styling */
       blockquote {
-        border-left-color: #343436 !important;
-        color: #d1d1d6 !important;
+        border-left: 2px solid #48484a;
+        color: rgba(255, 255, 255, 0.66);
+        margin: 0 0 8px 0;
+        padding: 0 0 0 12px;
       }
-  ` : ''
+
+      /* Tables often have hardcoded light borders */
+      table {
+        border-color: #48484a;
+      }
+  ` : `
+      color-scheme: light;
+      background: #ffffff;
+      color: rgba(0, 0, 0, 0.88);
+  `
 
   const monoFont = monospaceFontFamily || 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace'
-
-  const baseBodyStyles = darkMode
-    ? `color: #FFFFFF;`
-    : `color: #1C1C1E;`
 
   return `<!doctype html>
 <html${darkMode ? ' class="dark"' : ''}>
@@ -179,24 +181,42 @@ export function buildSrcDoc(
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <base target="_blank" />
     <style>
+      :root {
+        --icloud-text-primary: ${darkMode ? 'rgba(255, 255, 255, 0.98)' : 'rgba(0, 0, 0, 0.88)'};
+        --icloud-text-secondary: ${darkMode ? 'rgba(255, 255, 255, 0.66)' : 'rgba(0, 0, 0, 0.56)'};
+        --icloud-text-tertiary: ${darkMode ? 'rgba(255, 255, 255, 0.50)' : 'rgba(0, 0, 0, 0.48)'};
+        --icloud-accent: ${darkMode ? '#009aff' : '#0071e3'};
+        --icloud-border: ${darkMode ? '#343436' : '#d1d1d6'};
+        --icloud-red: ${darkMode ? '#ff2d55' : '#e30000'};
+        --icloud-green: ${darkMode ? '#32d158' : '#03a10e'};
+      }
+
+      *, *::before, *::after { box-sizing: border-box; }
+
       html, body {
         margin: 0;
         padding: 0;
-        background: transparent;
+        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Inter', sans-serif;
+        font-size: 16px;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
 
       body {
-        ${baseBodyStyles}
-        font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
-        font-size: 15px;
-        line-height: 1.625;
-        overflow-wrap: anywhere;
-        word-break: break-word;
         ${darkModeStyles}
       }
 
-      pre, code {
-        font-family: ${monoFont} !important;
+      /* Ensure heading hierarchy works when email content doesn't specify */
+      h1 { font-size: 1.375em; }
+      h2 { font-size: 1.25em; }
+      h3 { font-size: 1.125em; }
+      h4 { font-size: 1em; }
+
+      pre, code, kbd, samp {
+        font-family: ${monoFont};
       }
     </style>
   </head>

@@ -119,7 +119,7 @@ function toResult(record: DeferredMutation): DeferredMutationResult {
   }
 }
 
-function assertSuccessfulJmapResponse(response: unknown) {
+export function assertSuccessfulJmapResponse(response: unknown) {
   const methodResponses = 
     response && typeof response === 'object' && 'methodResponses' in response
       ? (response as JMAPResponse).methodResponses 

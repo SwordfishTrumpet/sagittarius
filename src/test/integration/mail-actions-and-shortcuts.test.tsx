@@ -112,6 +112,46 @@ describe('mail actions and shortcuts', () => {
     })
   })
 
+  it('removes the trashed message from the list after refetch', async () => {
+    // After trash, the server returns only the remaining email
+    const remainingEmails = makeEmailList('mailbox-inbox', 1, [
+      {
+        id: 'email-2',
+        threadId: 'thread-2',
+        from: [{ name: 'Bob Example', email: 'bob@example.com' }],
+        subject: 'Team lunch',
+        preview: 'Second preview',
+        receivedAt: '2025-01-02T08:00:00.000Z',
+        keywords: { '$seen': true },
+      },
+    ])
+
+    seedMailView({
+      extraResponses: [
+        jsonResponse({ methodResponses: [wrapMethodResponse('Email/set', { accountId: 'account-001', oldState: 'emails-old', newState: 'emails-new' })], sessionState: 'trash-save-state' }, { methodCalls: ['Email/set'] }),
+        jsonResponse({ methodResponses: [wrapMethodResponse('Email/query', remainingEmails.query)], sessionState: 'trash-refetch-query' }, { methodCalls: ['Email/query'] }),
+        jsonResponse({ methodResponses: [wrapMethodResponse('Mailbox/get', makeMailboxList())], sessionState: 'trash-refetch-mailboxes' }, { methodCalls: ['Mailbox/get'] }),
+        jsonResponse({ methodResponses: [wrapMethodResponse('Email/get', remainingEmails.get)], sessionState: 'trash-refetch-emails' }, { methodCalls: ['Email/get'] }),
+        jsonResponse({ methodResponses: [wrapMethodResponse('Thread/get', makeThreadList(remainingEmails.emails))], sessionState: 'trash-refetch-threads' }, { methodCalls: ['Thread/get'] }),
+      ],
+    })
+
+    const { user, screen } = renderApp()
+
+    const message = await screen.findByRole('option', { name: /Quarterly update/ })
+    await user.click(within(message).getByText('Quarterly update'))
+    await screen.findByText('First message body')
+    await user.click(screen.getByRole('button', { name: 'Trash' }))
+
+    // After the refetch, the trashed email should no longer be in the list
+    await waitFor(() => {
+      expect(screen.queryByRole('option', { name: /Quarterly update/ })).not.toBeInTheDocument()
+    })
+
+    // The remaining email should still be visible
+    expect(screen.getByRole('option', { name: /Team lunch/ })).toBeInTheDocument()
+  })
+
   it('filters the message list with search and fetches snippets', async () => {
     seedMailView({
       searchResponse: makeEmailList('mailbox-inbox', 1, [{
@@ -163,7 +203,7 @@ describe('mail actions and shortcuts', () => {
     await waitFor(() => {
       const queryBodies = getJmapRequestBodies(['Email/query'])
       const searchQuery = queryBodies[queryBodies.length - 1]
-      expect(searchQuery.methodCalls[0][1].filter.allOf[1].anyOf[3].text).toBe('Quarterly')
+      expect(searchQuery.methodCalls[0][1].filter.conditions[1].text).toBe('Quarterly')
     })
     await waitFor(() => {
       expect(screen.getAllByRole('option')).toHaveLength(1)

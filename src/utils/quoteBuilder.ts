@@ -69,10 +69,10 @@ export function buildReplyQuote(email: EmailForQuote): string {
 
   return [
     '<div id="quoted-content" data-sagittarius-quote="1" style="margin-top: 16px;">',
-    `  <div style="color: #8E8E93; font-size: 13px; margin-bottom: 8px;">`,
+    `  <div style="color: var(--icloud-text-secondary); font-size: 13px; margin-bottom: 8px;">`,
     `    On ${dateStr} at ${timeStr}, ${senderStr} wrote:`,
     `  </div>`,
-    `  <blockquote style="margin: 0; padding: 0 0 0 12px; border-left: 2px solid #0071e3;">`,
+    `  <blockquote style="margin: 0; padding: 0 0 0 12px; border-left: 2px solid var(--icloud-accent);">`,
     `    ${body}`,
     `  </blockquote>`,
     '</div>',
@@ -106,7 +106,7 @@ export function buildForwardQuote(email: EmailForQuote): string {
 
   return [
     '<div id="quoted-content" data-sagittarius-quote="1" style="margin-top: 16px;">',
-    `  <div style="color: #8E8E93; font-size: 13px; border-top: 1px solid #E5E5E5; padding-top: 12px; margin-bottom: 8px;">`,
+    `  <div style="color: var(--icloud-text-secondary); font-size: 13px; border-top: 1px solid var(--icloud-border); padding-top: 12px; margin-bottom: 8px;">`,
     `    <b>Begin forwarded message:</b><br/>`,
     `    ${headers.join('<br/>')}`,
     `  </div>`,

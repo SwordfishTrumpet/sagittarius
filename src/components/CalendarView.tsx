@@ -138,11 +138,11 @@ function CalendarSidebar({
             type="checkbox"
             checked={visibleCalendarIds.has(cal.id)}
             onChange={() => onToggleCalendar(cal.id)}
-            className="w-4 h-4 rounded border-gray-300 border-icloud-border text-icloud-accent focus:ring-icloud-accent"
+            className="w-4 h-4 rounded border-icloud-border text-icloud-accent focus:ring-icloud-accent"
           />
           <span
             className="w-3 h-3 rounded-full shrink-0"
-            style={{ backgroundColor: cal.color || '#007AFF' }}
+            style={{ backgroundColor: cal.color || 'var(--icloud-accent)' }}
           />
           <span className="text-[13px] text-icloud-text-primary truncate">{cal.name}</span>
         </label>
@@ -180,7 +180,7 @@ function EventItem({
     >
       <div
         className="w-1 h-full min-h-[40px] rounded-full shrink-0"
-        style={{ backgroundColor: calendar?.color || '#007AFF' }}
+        style={{ backgroundColor: calendar?.color || 'var(--icloud-accent)' }}
       />
       <div className="flex-1 min-w-0">
         <p className="text-[14px] font-medium text-icloud-text-primary truncate">{event.title}</p>
@@ -202,10 +202,10 @@ function EventItem({
           e.stopPropagation();
           onDelete(event.id);
         }}
-        className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-100 rounded-lg transition-all"
+        className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-icloud-red/10 rounded-lg transition-all"
         aria-label="Delete event"
       >
-        <Trash2 className="w-4 h-4 text-red-500" strokeWidth={1.5} />
+        <Trash2 className="w-4 h-4 text-icloud-red" strokeWidth={1.5} />
       </button>
     </div>
   );
@@ -287,7 +287,7 @@ function MonthView({
                     ? 'bg-icloud-accent text-white'
                     : isCurrentMonth
                     ? 'text-icloud-text-primary'
-                    : 'text-[#C7C7CC]'
+                    : 'text-icloud-text-tertiary'
                 }`}
               >
                 {day.getDate()}
@@ -300,8 +300,8 @@ function MonthView({
                       key={event.id}
                       className="text-[10px] px-1.5 py-0.5 rounded truncate"
                       style={{
-                        backgroundColor: `${cal?.color || '#007AFF'}20`,
-                        color: cal?.color || '#007AFF',
+                        backgroundColor: cal?.color ? `${cal.color}20` : 'color-mix(in srgb, var(--icloud-accent) 12%, transparent)',
+                        color: cal?.color || 'var(--icloud-accent)',
                       }}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -369,9 +369,9 @@ function ListView({
   if (filteredEvents.length === 0) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-        <CalendarIcon className="w-12 h-12 text-[#C7C7CC] mb-3" strokeWidth={1} />
+        <CalendarIcon className="w-12 h-12 text-icloud-text-tertiary mb-3" strokeWidth={1} />
         <p className="text-[15px] text-icloud-text-secondary ">No events to display</p>
-        <p className="text-[13px] text-[#C7C7CC] mt-1">
+        <p className="text-[13px] text-icloud-text-tertiary mt-1">
           Create an event or select different calendars
         </p>
       </div>
@@ -514,7 +514,7 @@ function EventFormDialog({
             id="isAllDay"
             checked={form.isAllDay}
             onChange={(e) => setForm({ ...form, isAllDay: e.target.checked })}
-            className="w-4 h-4 rounded border-gray-300 border-icloud-border text-icloud-accent focus:ring-icloud-accent"
+            className="w-4 h-4 rounded border-icloud-border text-icloud-accent focus:ring-icloud-accent"
           />
           <label htmlFor="isAllDay" className="text-[14px] text-icloud-text-primary">
             All-day event
@@ -579,7 +579,7 @@ function EventFormDialog({
             <button
               type="button"
               onClick={() => onDelete(event.id)}
-              className="px-4 py-2 text-[14px] font-medium text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+              className="px-4 py-2 text-[14px] font-medium text-icloud-red hover:bg-icloud-red/10 rounded-lg transition-colors"
               disabled={isPending}
             >
               Delete

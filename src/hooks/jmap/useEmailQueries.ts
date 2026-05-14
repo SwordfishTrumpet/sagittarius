@@ -83,21 +83,11 @@ export function useThreads(
 
       let searchFilter: EmailFilter | null = null
       if (searchTerm) {
-        // Parse special search syntax (from:, to:, has:attachment, etc.)
         const parsed = parseSearchQuery(searchTerm)
         const parsedFilter = buildJMAPFilter(parsed.filters)
-        
-        // Build text search filter for any remaining free text
-        const textFilter = parsed.text ? {
-          anyOf: [
-            { from: parsed.text },
-            { to: parsed.text },
-            { subject: parsed.text },
-            { text: parsed.text },
-          ],
-        } : null
-        
-        // Merge parsed filters with text search filter
+
+        const textFilter: EmailFilter | null = parsed.text ? { text: parsed.text } : null
+
         searchFilter = textFilter 
           ? (Object.keys(parsedFilter).length > 0 
               ? mergeFiltersAND(parsedFilter, textFilter) 

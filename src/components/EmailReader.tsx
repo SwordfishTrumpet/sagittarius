@@ -81,11 +81,11 @@ export function EmailReader({
 
     return html
       .replace(
-        /(<br\s*\/?>\s*){2,}(?=\s*<div id=["']quoted-content["']>\s*<div style=["']color: #8E8E93; font-size: 13px; margin-bottom: 8px;["'])/gi,
+        /(<br\s*\/?>\s*){2,}(?=\s*<div id=["']quoted-content["']>\s*<div style=["'][^"']*font-size: 13px[^"']*["'])/gi,
         '',
       )
       .replace(
-        /(<div id=["']quoted-content["']>\s*<div style=["']color: #8E8E93; font-size: 13px; border-top: 1px solid #E5E5E5; padding-top: 12px; margin-bottom: 8px;["']>\s*<b>Begin forwarded message:<\/b>)\s*(<br\s*\/?>\s*){2,}/gi,
+        /(<div id=["']quoted-content["']>\s*<div style=["'][^"']*font-size: 13px[^"']*border-top[^"']*["']>\s*<b>Begin forwarded message:<\/b>)\s*(<br\s*\/?>\s*){2,}/gi,
         '$1<br/>',
       )
   }
@@ -107,7 +107,7 @@ export function EmailReader({
 
       // Handle empty body content as "no content"
       if (!html || html.trim().length === 0 || html === '<pre style="font-family: inherit; white-space: pre-wrap; margin: 0;"></pre>') {
-        html = '<div style="padding:20px;color:#8E8E93;font-style:italic;">(No content)</div>';
+        html = '<div style="padding:20px;color:var(--icloud-text-secondary);font-style:italic;">(No content)</div>';
       }
 
       // Sanitize with DOMPurify FIRST (security)
@@ -134,7 +134,7 @@ export function EmailReader({
       logger.error('Failed to sanitize email HTML:', err);
       return {
         blockedImageCount: 0,
-        displayHtml: '<div style="padding:20px;color:#8E8E93;font-style:italic;">Unable to display this message.</div>',
+        displayHtml: '<div style="padding:20px;color:var(--icloud-text-secondary);font-style:italic;">Unable to display this message.</div>',
       };
     }
   }, [remoteImageState]);
@@ -211,15 +211,15 @@ export function EmailReader({
 
   return (
     <article className="flex-1 overflow-y-auto bg-icloud-bg-layer2 select-text">
-      <div className="max-w-[780px] mx-auto w-full px-5 py-8 md:px-8 animate-in fade-in duration-300">
+      <div className="w-full px-5 py-6 animate-in fade-in duration-300">
         {processedEmails.map(({ email, emailImageState, processedHtml }, index: number) => {
           const blockedImageCount = processedHtml?.blockedImageCount || 0;
           const isImageBannerDismissed = emailImageState?.showRemoteImages || emailImageState?.bannerDismissed || false;
           
           return (
-            <div key={email.id} className={`${index > 0 ? 'pt-8 border-t border-icloud-bg-layer1' : ''}`}>
-              <header className="mb-6 pb-4 border-b border-icloud-bg-layer1">
-                <div className="flex items-start justify-between mb-6 gap-4">
+            <div key={email.id} className={`${index > 0 ? 'pt-4 border-t border-icloud-bg-layer1' : ''}`}>
+              <header className="mb-5 pb-3 border-b border-icloud-bg-layer1">
+                <div className="flex items-start justify-between mb-5 gap-4">
                     <h1 className="text-[22px] font-bold text-icloud-text-primary leading-snug tracking-tight">{email.subject || '(No Subject)'}</h1>
                     <time className="text-[13px] text-icloud-text-secondary font-medium pt-1 shrink-0">
                       {formatReceivedAt(email.receivedAt)}
@@ -299,7 +299,7 @@ export function EmailReader({
               {(() => {
                 const visibleAttachments = (email.attachments?.filter((a) => !isInlineAttachment(a)) || []) as EmailBodyPart[];
                 return visibleAttachments.length > 0 && (
-                 <div className="mt-12 pt-10 border-t border-icloud-bg-layer1">
+                 <div className="mt-8 pt-6 border-t border-icloud-bg-layer1">
                   <div className="flex items-center gap-2 mb-6 text-icloud-text-secondary font-bold text-[11px] uppercase tracking-wider">
                     <Paperclip className="w-3.5 h-3.5" strokeWidth={2} />
                     {visibleAttachments.length} {visibleAttachments.length === 1 ? 'Attachment' : 'Attachments'}

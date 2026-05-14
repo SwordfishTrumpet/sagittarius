@@ -73,6 +73,36 @@ function buildAuthVariants(rawUsername: string): string[] {
 
 const DEFAULT_REQUEST_TIMEOUT_MS = 30_000;
 
+type FilterLike = Record<string, unknown>;
+
+function normalizeFilter(filter: unknown): unknown {
+  if (!filter || typeof filter !== 'object' || Array.isArray(filter)) return filter;
+
+  const f = filter as FilterLike;
+
+  if (Array.isArray(f.allOf)) {
+    return { operator: 'AND', conditions: (f.allOf as unknown[]).map(normalizeFilter) };
+  }
+  if (Array.isArray(f.anyOf)) {
+    return { operator: 'OR', conditions: (f.anyOf as unknown[]).map(normalizeFilter) };
+  }
+  if (f.not !== undefined && f.not !== null) {
+    return { operator: 'NOT', conditions: [normalizeFilter(f.not)] };
+  }
+
+  return filter;
+}
+
+function normalizeMethodCalls(methodCalls: JMAPMethodCall[]): JMAPMethodCall[] {
+  return methodCalls.map((call) => {
+    const [name, params, tag] = call as [string, Record<string, unknown>, string];
+    if (params && typeof params === 'object' && 'filter' in params && params.filter) {
+      return [name, { ...params, filter: normalizeFilter(params.filter) }, tag];
+    }
+    return call;
+  });
+}
+
 class JMAPClient {
   private session: JMAPSession | null = null;
   private authHeader: string | null = null;
@@ -210,7 +240,7 @@ class JMAPClient {
       : defaultCapabilities;
 
     const requestId = Math.random().toString(36).substring(7);
-    const body = { using, methodCalls };
+    const body = { using, methodCalls: normalizeMethodCalls(methodCalls) };
     
     logger.debug(`[JMAP Request ${requestId}]`, JSON.stringify(body, null, 2));
 
