@@ -214,7 +214,7 @@ export function AdvancedSearchModal({
               </div>
 
               {/* Thread Attachment Checkbox */}
-              <label className="flex items-center gap-3 cursor-pointer hover:bg-icloud-bg-layer1 dark:hover:bg-white/5/50 dark:hover:bg-white/5 p-2 rounded-lg transition-colors">
+              <label className="flex items-center gap-3 cursor-pointer hover:bg-icloud-bg-layer1 dark:hover:bg-white/5 p-2 rounded-lg transition-colors">
                 <input
                   type="checkbox"
                   checked={filters.threadHasAttachment === true}
@@ -282,7 +282,7 @@ export function AdvancedSearchModal({
           {/* Checkboxes (Email tab only) */}
           {activeTab === 'email' && (
             <div className="space-y-3 pt-2">
-              <label className="flex items-center gap-3 cursor-pointer hover:bg-icloud-bg-layer1 dark:hover:bg-white/5/50 dark:hover:bg-white/5 p-2 rounded-lg transition-colors">
+              <label className="flex items-center gap-3 cursor-pointer hover:bg-icloud-bg-layer1 dark:hover:bg-white/5 p-2 rounded-lg transition-colors">
                 <input
                   type="checkbox"
                   checked={filters.hasAttachment === true}
@@ -299,7 +299,7 @@ export function AdvancedSearchModal({
                 </span>
               </label>
 
-              <label className="flex items-center gap-3 cursor-pointer hover:bg-icloud-bg-layer1 dark:hover:bg-white/5/50 dark:hover:bg-white/5 p-2 rounded-lg transition-colors">
+              <label className="flex items-center gap-3 cursor-pointer hover:bg-icloud-bg-layer1 dark:hover:bg-white/5 p-2 rounded-lg transition-colors">
                 <input
                   type="checkbox"
                   checked={filters.isUnread === true}
@@ -316,7 +316,7 @@ export function AdvancedSearchModal({
                 </span>
               </label>
 
-              <label className="flex items-center gap-3 cursor-pointer hover:bg-icloud-bg-layer1 dark:hover:bg-white/5/50 dark:hover:bg-white/5 p-2 rounded-lg transition-colors">
+              <label className="flex items-center gap-3 cursor-pointer hover:bg-icloud-bg-layer1 dark:hover:bg-white/5 p-2 rounded-lg transition-colors">
                 <input
                   type="checkbox"
                   checked={filters.isFlagged === true}
@@ -333,7 +333,7 @@ export function AdvancedSearchModal({
                 </span>
               </label>
 
-              <label className="flex items-center gap-3 cursor-pointer hover:bg-icloud-bg-layer1 dark:hover:bg-white/5/50 dark:hover:bg-white/5 p-2 rounded-lg transition-colors">
+              <label className="flex items-center gap-3 cursor-pointer hover:bg-icloud-bg-layer1 dark:hover:bg-white/5 p-2 rounded-lg transition-colors">
                 <input
                   type="checkbox"
                   checked={filters.isDraft === true}
@@ -350,7 +350,7 @@ export function AdvancedSearchModal({
                 </span>
               </label>
 
-              <label className="flex items-center gap-3 cursor-pointer hover:bg-icloud-bg-layer1 dark:hover:bg-white/5/50 dark:hover:bg-white/5 p-2 rounded-lg transition-colors">
+              <label className="flex items-center gap-3 cursor-pointer hover:bg-icloud-bg-layer1 dark:hover:bg-white/5 p-2 rounded-lg transition-colors">
                 <input
                   type="checkbox"
                   checked={filters.isAnswered === true}
