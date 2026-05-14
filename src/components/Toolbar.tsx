@@ -2,10 +2,11 @@ import type { ReactNode } from 'react'
 import { MoreHorizontal, Code, Eye, ChevronLeft } from 'lucide-react'
 import { SFReply, SFReplyAll, SFForward, SFStar, SFArchive, SFTrash } from './SFIcon'
 import { ActionButton } from './ActionButton'
+import type { Email } from '../types/jmap'
 
 export interface ToolbarProps {
   selectedEmailId: string | null
-  selectedEmail: any
+  selectedEmail: Email | null
   selectedEmailIds: Set<string>
   moreMenuOpen: boolean
   statusBadge?: ReactNode

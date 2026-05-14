@@ -24,7 +24,7 @@ export function Card({
     large: 'p-6',
   };
 
-  const dividerClass = dividers ? 'divide-y divide-[#E5E5EA] divide-icloud-border' : '';
+  const dividerClass = dividers ? 'divide-y divide-icloud-border' : '';
 
   return (
     <div

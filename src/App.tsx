@@ -35,6 +35,8 @@ import { CalendarView } from './components/CalendarView'
 import { ContactsView } from './components/ContactsView'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { formatMessageDate } from './utils/dateFormat'
+import { useDebouncedValue } from './hooks/useDebouncedValue'
+import { DEBOUNCE } from './utils/constants'
 import { useNetworkStatus } from './hooks/useNetworkStatus'
 import { useOfflineSyncQueue } from './hooks/useOfflineSyncQueue'
 import { usePushConnection } from './hooks/usePushConnection'
@@ -55,6 +57,7 @@ function App() {
   const [session, setSession] = useState(jmapClient.getStoredSession())
   const [selectedMailboxId, setSelectedMailboxId] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
+  const debouncedSearchTerm = useDebouncedValue(searchTerm, DEBOUNCE.search)
   const [moreMenuOpen, setMoreMenuOpen] = useState(false)
   const [liveAnnouncement, setLiveAnnouncement] = useState('')
   const [rawViewerBlobId, setRawViewerBlobId] = useState<string | null>(null)
@@ -96,7 +99,7 @@ function App() {
   // Email threads
   const { data: emails, isLoading: emailsLoading, isRefetching: emailsRefetching, refetch: refetchEmails } = useThreads(
     selectedMailboxId || undefined,
-    searchTerm,
+    debouncedSearchTerm,
     quickJMAPFilter
   )
 
@@ -252,15 +255,17 @@ function App() {
 
   const handleArchiveFromId = useCallback((emailId: string) => {
     setSelectedEmailId(emailId)
-    // Use timeout to ensure state update before archive action
-    setTimeout(() => handleArchive(), 0)
-  }, [handleArchive, setSelectedEmailId])
+    setSelectedEmailIds(new Set([emailId]))
+    // Yield to React so state updates flush, then invoke latest handler
+    requestAnimationFrame(() => handleArchive())
+  }, [handleArchive, setSelectedEmailId, setSelectedEmailIds])
 
   const handleDeleteFromId = useCallback((emailId: string) => {
     setSelectedEmailId(emailId)
-    // Use timeout to ensure state update before delete action
-    setTimeout(() => handleDelete(), 0)
-  }, [handleDelete, setSelectedEmailId])
+    setSelectedEmailIds(new Set([emailId]))
+    // Yield to React so state updates flush, then invoke latest handler
+    requestAnimationFrame(() => handleDelete())
+  }, [handleDelete, setSelectedEmailId, setSelectedEmailIds])
 
   // Animated email moves
   const { removingEmailIds, moveEmailsToFolder } = useAnimatedEmailMoves({
@@ -652,7 +657,7 @@ function App() {
           >
             <Toolbar
               selectedEmailId={selectedEmailId}
-              selectedEmail={selectedEmailDetail}
+              selectedEmail={selectedEmailDetail ?? null}
               selectedEmailIds={selectedEmailIds}
               moreMenuOpen={moreMenuOpen}
               statusBadge={

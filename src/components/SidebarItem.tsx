@@ -59,7 +59,7 @@ function SidebarItemComponent({ icon, label, active = false, count, mailboxId, h
         <span className={`text-[14px] truncate leading-none ${active ? 'font-semibold' : 'font-medium'}`}>{label}</span>
       </div>
       {count !== undefined && count > 0 && (
-        <span aria-label={`${count} unread`} className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${active ? 'bg-white/20 text-white' : 'bg-icloud-border dark:bg-[#3A3A3C] text-[#636366] text-icloud-text-secondary'}`}>{count}</span>
+        <span aria-label={`${count} unread`} className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${active ? 'bg-white/20 text-white' : 'bg-icloud-border dark:bg-icloud-gray3 text-icloud-text-secondary'}`}>{count}</span>
       )}
     </div>
   )

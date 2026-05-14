@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { jmapClient } from '../../api/jmap'
-import { stateManager } from '../../api/stateManager'
-import { isDeferredMutationResult, runDeferredAwareMutation } from '../../utils/offlineSyncQueue'
+import { assertSuccessfulJmapResponse, isDeferredMutationResult, runDeferredAwareMutation } from '../../utils/offlineSyncQueue'
 import { chunkForSet } from '../../utils/capabilityUtils'
 import type { Email } from '../../types/jmap'
 import {
@@ -59,12 +58,9 @@ export function useEmailActions(): EmailActionsReturn {
       for (const [key, value] of Object.entries(keywords)) {
         patch[`keywords/${key}`] = value ? true : null
       }
-      // Include ifInState for conflict detection per RFC 8620
-      const emailState = stateManager.getState('Email')
       const requests = [
         jmapMethodCall('Email/set', {
           accountId,
-          ifInState: emailState || undefined,
           update: {
             [emailId]: patch,
           },
@@ -78,51 +74,59 @@ export function useEmailActions(): EmailActionsReturn {
           description: `Toggle keywords for ${emailId}`,
           requests,
         },
-        execute: () => jmapRequest(requests),
+        execute: async () => {
+          const result = await jmapRequest(requests)
+          assertSuccessfulJmapResponse(result)
+          return result
+        },
       })
     },
     onMutate: async ({ emailId, keywords }) => {
       suppressNewMailNotification()
       await queryClient.cancelQueries({ queryKey: ['emailDetail'] })
       await queryClient.cancelQueries({ queryKey: ['threads'] })
+      await queryClient.cancelQueries({ queryKey: ['emails'] })
 
-      // Capture mailboxId in closure for proper rollback
       const previousEmailDetail = queryClient.getQueryData<Email[]>(['emailDetail', accountId, emailId])
       const previousThreads = queryClient.getQueriesData({ queryKey: ['threads'] })
-      // Store the query keys for proper rollback
+      const previousEmails = queryClient.getQueriesData({ queryKey: ['emails'] })
       const affectedThreadQueryKeys = previousThreads.map(([queryKey]) => queryKey)
+
+      const applyPatch = (email: Email) =>
+        email.id === emailId
+          ? { ...email, keywords: { ...email.keywords, ...keywords } }
+          : email
 
       queryClient.setQueryData(['emailDetail', accountId, emailId], (old: Email[] | undefined) => {
         if (!old) return old
-        return old.map((email) =>
-          email.id === emailId
-            ? { ...email, keywords: { ...email.keywords, ...keywords } }
-            : email,
-        )
+        return old.map(applyPatch)
       })
 
-      // Reuse previousThreads to avoid double query
       previousThreads.forEach(([queryKey, oldData]) => {
-        if (!oldData) return
+        if (!Array.isArray(oldData)) return
         queryClient.setQueryData(queryKey, (old: Email[] | undefined) => {
           if (!old) return old
-          return old.map((email) =>
-            email.id === emailId
-              ? { ...email, keywords: { ...email.keywords, ...keywords } }
-              : email,
-          )
+          return old.map(applyPatch)
         })
       })
 
-      return { previousEmailDetail, previousThreads, affectedThreadQueryKeys, emailId }
+      previousEmails.forEach(([queryKey, oldData]) => {
+        if (!Array.isArray(oldData)) return
+        queryClient.setQueryData(queryKey, (old: Email[] | undefined) => {
+          if (!old) return old
+          return old.map(applyPatch)
+        })
+      })
+
+      return { previousEmailDetail, previousThreads, previousEmails, affectedThreadQueryKeys, emailId }
     },
-    onError: (_err, newData, context: { previousEmailDetail?: Email[]; previousThreads?: QuerySnapshot; affectedThreadQueryKeys?: (readonly unknown[])[]; emailId?: string } | undefined) => {
-      // Rollback to correct cache using captured context
+    onError: (_err, newData, context: { previousEmailDetail?: Email[]; previousThreads?: QuerySnapshot; previousEmails?: QuerySnapshot; affectedThreadQueryKeys?: (readonly unknown[])[]; emailId?: string } | undefined) => {
       if (context?.emailId) {
         if (context?.previousEmailDetail) {
           queryClient.setQueryData(['emailDetail', accountId, context.emailId], context.previousEmailDetail)
         }
         rollbackQueries(queryClient, context?.previousThreads)
+        rollbackQueries(queryClient, context?.previousEmails)
       }
     },
     onSuccess: (result) => {
@@ -141,7 +145,6 @@ export function useEmailActions(): EmailActionsReturn {
 
       // Chunk email IDs to respect maxObjectsInSet server limit (RFC 8620)
       const chunks = chunkForSet(emailIds)
-      const emailState = stateManager.getState('Email')
 
       // Execute each chunk as a separate request
       const results = []
@@ -154,7 +157,6 @@ export function useEmailActions(): EmailActionsReturn {
         const requests = [
           jmapMethodCall('Email/set', {
             accountId,
-            ifInState: emailState || undefined,
             update: updates,
           }, '0'),
         ]
@@ -166,7 +168,11 @@ export function useEmailActions(): EmailActionsReturn {
             description: `Toggle keywords for ${chunk.length} emails`,
             requests,
           },
-          execute: () => jmapRequest(requests),
+          execute: async () => {
+            const chunkResult = await jmapRequest(requests)
+            assertSuccessfulJmapResponse(chunkResult)
+            return chunkResult
+          },
         })
 
         results.push(result)
@@ -225,12 +231,9 @@ export function useEmailActions(): EmailActionsReturn {
   const moveEmail = useMutation({
     mutationFn: async ({ emailId, mailboxIds }: { emailId: string, mailboxIds: Record<string, boolean> }) => {
       if (!accountId) throw new Error('No account available')
-      // Include ifInState for conflict detection per RFC 8620
-      const emailState = stateManager.getState('Email')
       const requests = [
         jmapMethodCall('Email/set', {
           accountId,
-          ifInState: emailState || undefined,
           update: {
             [emailId]: { mailboxIds },
           },
@@ -244,7 +247,11 @@ export function useEmailActions(): EmailActionsReturn {
           description: `Move ${emailId}`,
           requests,
         },
-        execute: () => jmapRequest(requests),
+        execute: async () => {
+          const result = await jmapRequest(requests)
+          assertSuccessfulJmapResponse(result)
+          return result
+        },
       })
     },
     onMutate: async ({ emailId, mailboxIds }) => {
@@ -300,7 +307,6 @@ export function useEmailActions(): EmailActionsReturn {
       if (!accountId) throw new Error('No account available')
       // Chunk email IDs to respect maxObjectsInSet server limit (RFC 8620)
       const chunks = chunkForSet(emailIds)
-      const emailState = stateManager.getState('Email')
 
       // Execute each chunk as a separate request
       const results = []
@@ -313,7 +319,6 @@ export function useEmailActions(): EmailActionsReturn {
         const requests = [
           jmapMethodCall('Email/set', {
             accountId,
-            ifInState: emailState || undefined,
             update: updates,
           }, '0'),
         ]
@@ -325,7 +330,11 @@ export function useEmailActions(): EmailActionsReturn {
             description: `Move ${chunk.length} emails`,
             requests,
           },
-          execute: () => jmapRequest(requests),
+          execute: async () => {
+            const chunkResult = await jmapRequest(requests)
+            assertSuccessfulJmapResponse(chunkResult)
+            return chunkResult
+          },
         })
 
         results.push(result)
@@ -379,12 +388,9 @@ export function useEmailActions(): EmailActionsReturn {
   const destroyEmail = useMutation({
     mutationFn: async ({ emailId }: { emailId: string }) => {
       if (!accountId) throw new Error('No account available')
-      // Include ifInState for conflict detection per RFC 8620
-      const emailState = stateManager.getState('Email')
       const requests = [
         jmapMethodCall('Email/set', {
           accountId,
-          ifInState: emailState || undefined,
           destroy: [emailId],
         }, '0'),
       ]
@@ -396,7 +402,11 @@ export function useEmailActions(): EmailActionsReturn {
           description: `Permanently delete ${emailId}`,
           requests,
         },
-        execute: () => jmapRequest(requests),
+        execute: async () => {
+          const result = await jmapRequest(requests)
+          assertSuccessfulJmapResponse(result)
+          return result
+        },
       })
     },
     onMutate: async ({ emailId }) => {
@@ -436,7 +446,6 @@ export function useEmailActions(): EmailActionsReturn {
       if (!accountId) throw new Error('No account available')
       // Chunk email IDs to respect maxObjectsInSet server limit (RFC 8620)
       const chunks = chunkForSet(emailIds)
-      const emailState = stateManager.getState('Email')
 
       // Execute each chunk as a separate request
       const results = []
@@ -444,7 +453,6 @@ export function useEmailActions(): EmailActionsReturn {
         const requests = [
           jmapMethodCall('Email/set', {
             accountId,
-            ifInState: emailState || undefined,
             destroy: chunk,
           }, '0'),
         ]
@@ -456,7 +464,11 @@ export function useEmailActions(): EmailActionsReturn {
             description: `Permanently delete ${chunk.length} emails`,
             requests,
           },
-          execute: () => jmapRequest(requests),
+          execute: async () => {
+            const chunkResult = await jmapRequest(requests)
+            assertSuccessfulJmapResponse(chunkResult)
+            return chunkResult
+          },
         })
 
         results.push(result)

@@ -169,7 +169,7 @@ function ContactListItem({
         )}
       </div>
       <ChevronRight
-        className={`w-4 h-4 shrink-0 ${isSelected ? 'text-white/50' : 'text-[#C7C7CC]'}`}
+        className={`w-4 h-4 shrink-0 ${isSelected ? 'text-white/50' : 'text-icloud-text-tertiary'}`}
         strokeWidth={1.5}
       />
     </button>
@@ -214,7 +214,7 @@ function ContactDetail({
           </button>
           <button
             onClick={onDelete}
-            className="flex items-center gap-2 px-4 py-2 text-[14px] font-medium text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-[14px] font-medium text-icloud-red hover:bg-icloud-red/10 rounded-lg transition-colors"
           >
             <Trash2 className="w-4 h-4" strokeWidth={1.5} />
             Delete
@@ -728,7 +728,7 @@ export function ContactsView({ isOpen, onClose }: ContactsViewProps) {
             </div>
           ) : sortedContacts.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center p-8">
-              <User className="w-12 h-12 text-[#C7C7CC] mb-3" strokeWidth={1} />
+              <User className="w-12 h-12 text-icloud-text-tertiary mb-3" strokeWidth={1} />
               <p className="text-[15px] text-icloud-text-secondary">
                 {searchTerm ? 'No contacts found' : 'No contacts yet'}
               </p>
@@ -789,7 +789,7 @@ export function ContactsView({ isOpen, onClose }: ContactsViewProps) {
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
             <div className="w-20 h-20 rounded-full bg-icloud-bg-layer1 flex items-center justify-center mb-4">
-              <User className="w-10 h-10 text-[#C7C7CC]" strokeWidth={1} />
+              <User className="w-10 h-10 text-icloud-text-tertiary" strokeWidth={1} />
             </div>
             <p className="text-[17px] text-icloud-text-secondary">Select a contact to view details</p>
           </div>

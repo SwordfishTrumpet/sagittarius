@@ -76,7 +76,7 @@ export function blockExternalImages(html: string): BlockedImageInfo {
 
     img.setAttribute('data-blocked-src', src);
     img.setAttribute('src', getPlaceholder(width, height));
-    img.setAttribute('style', `${stylePrefix}border:1px dashed #C7C7CC;border-radius:8px;`);
+    img.setAttribute('style', `${stylePrefix}border:1px dashed var(--icloud-text-tertiary);border-radius:8px;`);
   });
 
   const styledElements = Array.from(doc.querySelectorAll<HTMLElement>('[style]'));
@@ -120,7 +120,7 @@ export function unblockExternalImages(html: string): string {
       img.removeAttribute('data-blocked-src');
       // Remove the dashed border we added
       const style = img.getAttribute('style') || '';
-      img.setAttribute('style', style.replace(/;?border:1px dashed #C7C7CC;border-radius:8px;?/g, ''));
+      img.setAttribute('style', style.replace(/;?border:1px dashed var\(--icloud-text-tertiary\);border-radius:8px;?/g, ''));
     }
   });
 

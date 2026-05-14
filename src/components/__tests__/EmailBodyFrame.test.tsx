@@ -31,18 +31,18 @@ describe('EmailBodyFrame helpers', () => {
     expect(srcDoc).toContain('<!doctype html>')
     expect(srcDoc).toContain('<html class="dark">')
     expect(srcDoc).toContain('color-scheme: dark')
-    expect(srcDoc).toContain('color: #FFFFFF !important')
-    // Check that dark mode CSS forces all elements to inherit light colors
-    expect(srcDoc).toContain('*, *::before, *::after')
-    expect(srcDoc).toContain('color: inherit !important')
-    // Verify link colors are preserved
-    expect(srcDoc).toContain('a, a:link, a:visited')
-    expect(srcDoc).toContain('color: #009aff !important')
+    expect(srcDoc).toContain('color: rgba(255, 255, 255, 0.98)')
+    // Check that dark mode CSS sets :root variables
+    expect(srcDoc).toContain('--icloud-text-primary: rgba(255, 255, 255, 0.98)')
+    expect(srcDoc).toContain('--icloud-accent: #009aff;')
+    // Verify link colors use :not([style*="color"]) to preserve custom link colors
+    expect(srcDoc).toContain('a:not([style*="color"])')
+    expect(srcDoc).toContain('color: #009aff;')
   })
 
   it('builds light mode iframe document with dark text', () => {
     const srcDoc = buildSrcDoc('<p>Hello</p>', false)
-    expect(srcDoc).toContain('color: #1C1C1E')
+    expect(srcDoc).toContain('color: rgba(0, 0, 0, 0.88)')
     expect(srcDoc).not.toContain('color-scheme: dark')
     expect(srcDoc).not.toContain('<html class="dark">')
   })

@@ -114,7 +114,7 @@ app.use((req, res, next) => {
       "default-src 'self'",
       "script-src 'self'",                          // No inline scripts in production
       "style-src 'self' 'unsafe-inline'",           // Tailwind CSS uses inline styles
-      "img-src 'self' data: blob:",                 // inline images, blob previews
+      "img-src 'self' data: blob: https: http:",    // inline images, blob previews, remote images
       "font-src 'self'",
       "connect-src 'self'",                         // Same-origin only (JMAP API + WebSocket proxied)
       "media-src 'self' blob:",                     // audio notifications
