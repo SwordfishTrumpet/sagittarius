@@ -87,7 +87,7 @@ function GeneralSettings() {
   return (
     <div className="p-6">
       <h2 className="text-[17px] font-semibold text-icloud-text-primary mb-4">General</h2>
-      <div className="bg-icloud-bg-layer2 rounded-2xl border border-icloud-border divide-y divide-[#E5E5EA] divide-icloud-border">
+      <div className="bg-icloud-bg-layer2 rounded-2xl border border-icloud-border divide-y divide-icloud-border">
         <div className="px-4 py-3 flex items-center justify-between">
           <span className="text-[15px] text-icloud-text-primary">App Version</span>
           <span className="text-[13px]  text-icloud-text-secondary">Sagittarius 1.0</span>
@@ -106,7 +106,7 @@ function GeneralSettings() {
       </div>
 
       <h3 className="text-[15px] font-semibold text-icloud-text-primary mt-6 mb-3">Notifications</h3>
-      <div className="bg-icloud-bg-layer2 rounded-2xl border border-icloud-border divide-y divide-[#E5E5EA] divide-icloud-border">
+      <div className="bg-icloud-bg-layer2 rounded-2xl border border-icloud-border divide-y divide-icloud-border">
         {/* Notification permission status */}
         {isSupported && !isPermissionGranted && (
           <div className="px-4 py-3 flex items-center justify-between">
@@ -117,11 +117,11 @@ function GeneralSettings() {
             <button
               onClick={handleRequestPermission}
               disabled={isPermissionDenied || isRequesting}
-              className={`px-3 py-1.5 text-[13px] font-medium rounded-lg transition-colors ${
-                isPermissionDenied
-                  ? 'bg-icloud-border dark:bg-icloud-gray5 text-icloud-text-secondary cursor-not-allowed'
-                  : 'bg-icloud-accent text-white hover:bg-[#0051D5]'
-              }`}
+className={`px-3 py-1.5 text-[13px] font-medium rounded-lg transition-colors ${
+                 isPermissionDenied
+                   ? 'bg-icloud-border dark:bg-icloud-gray5 text-icloud-text-secondary cursor-not-allowed'
+                   : 'bg-icloud-accent text-white hover:bg-icloud-accent-hover'
+               }`}
             >
               {isRequesting ? 'Requesting...' : isPermissionDenied ? 'Blocked' : 'Enable'}
             </button>
@@ -141,7 +141,7 @@ function GeneralSettings() {
 
         {/* Permission denied warning */}
         {isPermissionDenied && (
-          <div className="px-4 py-3 bg-[#FFF3F0] dark:bg-[#3A1A1A]">
+          <div className="px-4 py-3 bg-icloud-red/5 dark:bg-icloud-red/15">
             <div className="flex items-start gap-2.5">
               <AlertCircle className="w-4 h-4 text-icloud-red mt-0.5 shrink-0" strokeWidth={1.5} />
               <div className="flex-1">
@@ -181,7 +181,7 @@ function GeneralSettings() {
               onChange={handleVolumeChange}
               onMouseUp={handleVolumeCommit}
               onTouchEnd={handleVolumeCommit}
-              className="flex-1 h-1 accent-icloud-accent accent-icloud-accent rounded-full appearance-none bg-icloud-border dark:bg-[#3A3A3C] cursor-pointer
+              className="flex-1 h-1 accent-icloud-accent accent-icloud-accent rounded-full appearance-none bg-icloud-border dark:bg-icloud-gray4 cursor-pointer
                 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4
                 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white dark:[&::-webkit-slider-thumb]:bg-icloud-border [&::-webkit-slider-thumb]:shadow-md
                 [&::-webkit-slider-thumb]:border [&::-webkit-slider-thumb]:border-icloud-border dark:[&::-webkit-slider-thumb]:border-icloud-border

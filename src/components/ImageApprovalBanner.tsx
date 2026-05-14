@@ -53,7 +53,7 @@ export function ImageApprovalBanner({
           <button
             type="button"
             onClick={onLoadImages}
-            className="px-3 py-1.5 text-[12px] font-semibold text-white bg-icloud-accent hover:bg-[#0051D5] rounded-lg transition-colors flex items-center gap-1.5 shadow-sm"
+            className="px-3 py-1.5 text-[12px] font-semibold text-white bg-icloud-accent hover:bg-icloud-accent-hover rounded-lg transition-colors flex items-center gap-1.5 shadow-sm"
           >
             <Eye className="w-3.5 h-3.5" strokeWidth={2} />
             Load Images

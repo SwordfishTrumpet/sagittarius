@@ -139,7 +139,7 @@ export function SieveSettings() {
         {editingId === null && (
           <button
             onClick={() => setEditingId('new')}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-icloud-accent text-white text-[13px] font-semibold rounded-xl hover:bg-[#0051D5] transition-colors shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-icloud-accent text-white text-[13px] font-semibold rounded-xl hover:bg-icloud-accent-hover transition-colors shadow-sm"
           >
             <Plus className="w-3.5 h-3.5" strokeWidth={2.5} />
             Create Rule
@@ -168,7 +168,7 @@ export function SieveSettings() {
           </p>
         </div>
       ) : (
-        <div className="bg-icloud-bg-layer2 rounded-2xl border border-icloud-border divide-y divide-[#E5E5EA] divide-icloud-border overflow-hidden">
+        <div className="bg-icloud-bg-layer2 rounded-2xl border border-icloud-border divide-y divide-icloud-border overflow-hidden">
           {scripts.map((script) => (
             <div
               key={script.id}
@@ -178,7 +178,7 @@ export function SieveSettings() {
               <div className="flex items-center gap-3 min-w-0">
                 <div
                   className={`w-2 h-2 rounded-full shrink-0 ${
-                    script.isActive ? 'bg-icloud-green' : 'bg-[#C7C7CC]'
+                    script.isActive ? 'bg-icloud-green' : 'bg-icloud-gray3'
                   }`}
                 />
                 <div className="min-w-0">

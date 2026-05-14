@@ -159,7 +159,7 @@ export function EmailImportZone({ mailboxId }: EmailImportZoneProps) {
             className={`flex flex-col items-center justify-center gap-5 w-80 h-56 rounded-3xl border-2 border-dashed transition-all duration-200 ${
               isDragOver
                 ? 'border-icloud-accent dark:border-icloud-accent bg-icloud-accent/8'
-                : 'border-[#C7C7CC] dark:border-[#636366] bg-white/40 bg-icloud-bg-primary/40'
+                : 'border-icloud-gray3 dark:border-icloud-gray2 bg-white/40 bg-icloud-bg-primary/40'
             }`}
           >
             <div

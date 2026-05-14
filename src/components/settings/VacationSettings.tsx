@@ -137,7 +137,7 @@ export function VacationSettings() {
           </div>
 
           {/* Date range */}
-          <div className="bg-icloud-bg-layer2 rounded-2xl border border-icloud-border divide-y divide-[#E5E5EA] divide-icloud-border">
+          <div className="bg-icloud-bg-layer2 rounded-2xl border border-icloud-border divide-y divide-icloud-border">
             <div className="px-4 py-3 flex items-center justify-between gap-4">
               <label className="text-[15px] text-icloud-text-primary shrink-0">Start Date</label>
               <input

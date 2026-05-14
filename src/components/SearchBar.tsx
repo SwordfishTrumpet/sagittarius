@@ -43,7 +43,7 @@ export function SearchBar({
         onBlur={() => setTimeout(() => setIsFocused(false), 200)}
         disabled={disabled}
         aria-label="Search emails"
-        className="w-full bg-[#8E8E93]/10 border-none rounded-lg py-1.5 pl-9 pr-24 text-[14px] focus:ring-2 focus:ring-icloud-accent placeholder-icloud-text-secondary transition-all hover:bg-[#8E8E93]/15 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full bg-icloud-text-tertiary/10 border-none rounded-lg py-1.5 pl-9 pr-24 text-[14px] focus:ring-2 focus:ring-icloud-accent placeholder-icloud-text-secondary transition-all hover:bg-icloud-text-tertiary/15 disabled:opacity-50 disabled:cursor-not-allowed"
       />
 
       {/* Right Icons */}

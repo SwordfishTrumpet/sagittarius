@@ -70,7 +70,7 @@ export function RenameFolderDialog({
           <button
             type="submit"
             disabled={!newName.trim() || newName === folderName || isLoading}
-            className="flex-1 px-4 py-2 bg-icloud-accent text-white rounded-lg font-medium text-[13px] hover:bg-[#0051D5] transition-colors disabled:opacity-50"
+            className="flex-1 px-4 py-2 bg-icloud-accent text-white rounded-lg font-medium text-[13px] hover:bg-icloud-accent-hover transition-colors disabled:opacity-50"
           >
             {isLoading ? 'Renaming...' : 'Rename'}
           </button>

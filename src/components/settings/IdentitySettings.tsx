@@ -228,7 +228,7 @@ export function IdentitySettings() {
                     <button
                       onClick={() => handleDelete(identity.id, identity.name)}
                       disabled={deleteIdentity.isPending}
-                      className="w-8 h-8 rounded-lg hover:bg-[#FFF1F0] flex items-center justify-center transition-colors text-icloud-text-secondary hover:text-icloud-red disabled:opacity-40"
+                      className="w-8 h-8 rounded-lg hover:bg-icloud-red/10 flex items-center justify-center transition-colors text-icloud-text-secondary hover:text-icloud-red disabled:opacity-40"
                       aria-label="Delete identity"
                     >
                       <Trash2 size={14} strokeWidth={1.5} />

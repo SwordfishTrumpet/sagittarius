@@ -28,7 +28,7 @@ export function FontSelector() {
             className={`flex flex-col items-start gap-1 p-3 rounded-xl border transition-all text-left ${
               fontId === f.id
                 ? 'border-icloud-accent bg-icloud-accent/5 text-icloud-accent'
-                : 'border-icloud-border hover:border-[#D1D1D6] border-icloud-border dark:hover:border-[#48484A]'
+                : 'border-icloud-border hover:border-icloud-gray2 dark:hover:border-icloud-scrollbar-thumb'
             }`}
             aria-pressed={fontId === f.id}
           >

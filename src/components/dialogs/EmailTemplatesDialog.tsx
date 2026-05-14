@@ -164,7 +164,7 @@ export function EmailTemplatesDialog({
             {!selectionMode && (
               <button
                 onClick={handleCreateNew}
-                className="flex items-center gap-1.5 px-3 py-2 bg-icloud-accent text-white rounded-lg text-[13px] font-medium hover:bg-[#0051D5] transition-colors"
+                className="flex items-center gap-1.5 px-3 py-2 bg-icloud-accent text-white rounded-lg text-[13px] font-medium hover:bg-icloud-accent-hover transition-colors"
               >
                 <Plus className="w-4 h-4" strokeWidth={1.5} />
                 New
@@ -402,7 +402,7 @@ export function EmailTemplatesDialog({
           <button
             onClick={handleSave}
             disabled={!isFormValid || isSaving}
-            className="flex-1 px-4 py-2 bg-icloud-accent text-white rounded-lg font-medium text-[13px] hover:bg-[#0051D5] transition-colors disabled:opacity-50"
+            className="flex-1 px-4 py-2 bg-icloud-accent text-white rounded-lg font-medium text-[13px] hover:bg-icloud-accent-hover transition-colors disabled:opacity-50"
           >
             {isSaving ? 'Saving...' : viewMode === 'edit' ? 'Save Changes' : 'Create Template'}
           </button>

@@ -224,7 +224,7 @@ export function AdvancedSearchModal({
                       threadHasAttachment: e.target.checked || undefined,
                     })
                   }
-                  className="w-4 h-4 rounded border-[#8E8E93] text-icloud-accent cursor-pointer"
+                  className="w-4 h-4 rounded border-icloud-gray2 text-icloud-accent cursor-pointer"
                 />
                 <div>
                   <span className="text-[13px] font-medium text-icloud-text-primary block">
@@ -292,7 +292,7 @@ export function AdvancedSearchModal({
                       hasAttachment: e.target.checked || undefined,
                     })
                   }
-                  className="w-4 h-4 rounded border-[#8E8E93] text-icloud-accent cursor-pointer"
+                  className="w-4 h-4 rounded border-icloud-gray2 text-icloud-accent cursor-pointer"
                 />
                 <span className="text-[13px] font-medium text-icloud-text-primary">
                   Has Attachments
@@ -309,7 +309,7 @@ export function AdvancedSearchModal({
                       isUnread: e.target.checked || undefined,
                     })
                   }
-                  className="w-4 h-4 rounded border-[#8E8E93] text-icloud-accent cursor-pointer"
+                  className="w-4 h-4 rounded border-icloud-gray2 text-icloud-accent cursor-pointer"
                 />
                 <span className="text-[13px] font-medium text-icloud-text-primary">
                   Unread Only
@@ -326,7 +326,7 @@ export function AdvancedSearchModal({
                       isFlagged: e.target.checked || undefined,
                     })
                   }
-                  className="w-4 h-4 rounded border-[#8E8E93] text-icloud-accent cursor-pointer"
+                  className="w-4 h-4 rounded border-icloud-gray2 text-icloud-accent cursor-pointer"
                 />
                 <span className="text-[13px] font-medium text-icloud-text-primary">
                   Flagged Only
@@ -343,7 +343,7 @@ export function AdvancedSearchModal({
                       isDraft: e.target.checked || undefined,
                     })
                   }
-                  className="w-4 h-4 rounded border-[#8E8E93] text-icloud-accent cursor-pointer"
+                  className="w-4 h-4 rounded border-icloud-gray2 text-icloud-accent cursor-pointer"
                 />
                 <span className="text-[13px] font-medium text-icloud-text-primary">
                   Drafts Only
@@ -360,7 +360,7 @@ export function AdvancedSearchModal({
                       isAnswered: e.target.checked || undefined,
                     })
                   }
-                  className="w-4 h-4 rounded border-[#8E8E93] text-icloud-accent cursor-pointer"
+                  className="w-4 h-4 rounded border-icloud-gray2 text-icloud-accent cursor-pointer"
                 />
                 <span className="text-[13px] font-medium text-icloud-text-primary">
                   Answered Only
@@ -388,7 +388,7 @@ export function AdvancedSearchModal({
           </button>
           <button
             onClick={handleApply}
-            className="flex-1 px-4 py-2 bg-icloud-accent text-white rounded-lg font-medium text-[13px] hover:bg-[#0051D5] transition-colors"
+            className="flex-1 px-4 py-2 bg-icloud-accent text-white rounded-lg font-medium text-[13px] hover:bg-icloud-accent-hover transition-colors"
             type="button"
           >
             Apply

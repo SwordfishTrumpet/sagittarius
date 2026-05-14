@@ -773,7 +773,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
 
           {/* Formatting toolbar — always visible */}
           {editor && (
-            <div role="toolbar" aria-orientation="horizontal" aria-label="Text formatting" className="px-5 py-1.5 border-b border-icloud-border flex items-center gap-1 shrink-0 bg-[#FAFAFA] bg-icloud-card">
+            <div role="toolbar" aria-orientation="horizontal" aria-label="Text formatting" className="px-5 py-1.5 border-b border-icloud-border flex items-center gap-1 shrink-0 bg-icloud-card">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -793,7 +793,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
               >
                 <Paperclip className={`w-3.5 h-3.5 ${isUploading ? 'animate-pulse' : ''}`} strokeWidth={1.5} />
               </button>
-              <div aria-hidden="true" className="w-[1px] h-4 bg-icloud-border dark:bg-[#48484A] mx-1" />
+              <div aria-hidden="true" className="w-[1px] h-4 bg-icloud-border mx-1" />
               <ToolbarButton 
                 onClick={() => editor.chain().focus().toggleBold().run()} 
                 active={editor.isActive('bold')}
@@ -812,7 +812,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
                 icon={<Underline className="w-3.5 h-3.5" />} 
                 label="Underline"
               />
-              <div aria-hidden="true" className="w-[1px] h-4 bg-icloud-border dark:bg-[#48484A] mx-1" />
+              <div aria-hidden="true" className="w-[1px] h-4 bg-icloud-border mx-1" />
               <ToolbarButton 
                 onClick={() => editor.chain().focus().toggleBulletList().run()} 
                 active={editor.isActive('bulletList')}
@@ -825,14 +825,14 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
                 icon={<ListOrdered className="w-3.5 h-3.5" />} 
                 label="Numbered list"
               />
-              <div aria-hidden="true" className="w-[1px] h-4 bg-icloud-border dark:bg-[#48484A] mx-1" />
+              <div aria-hidden="true" className="w-[1px] h-4 bg-icloud-border mx-1" />
               <ToolbarButton 
                 onClick={setLink} 
                 active={editor.isActive('link')}
                 icon={<Link className="w-3.5 h-3.5" />} 
                 label="Insert link"
               />
-              <div aria-hidden="true" className="w-[1px] h-4 bg-icloud-border dark:bg-[#48484A] mx-1" />
+              <div aria-hidden="true" className="w-[1px] h-4 bg-icloud-border mx-1" />
               <ToolbarButton 
                 onClick={() => setShowTemplatesDialog(true)} 
                 active={false}
