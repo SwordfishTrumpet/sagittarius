@@ -55,7 +55,7 @@ function IdentityForm({ initial = EMPTY_FORM, onSave, onCancel, isSaving }: Iden
           value={form.name}
           onChange={set('name')}
           placeholder="Your Name"
-          className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-[#C7C7CC] dark:placeholder:text-[#636366] bg-transparent focus:outline-none"
+          className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-[#C7C7CC] dark:placeholder:text-[#636366] bg-transparent focus:ring-2 focus:ring-icloud-accent focus:outline-none rounded"
         />
       </div>
 
@@ -69,7 +69,7 @@ function IdentityForm({ initial = EMPTY_FORM, onSave, onCancel, isSaving }: Iden
           value={form.email}
           onChange={set('email')}
           placeholder="you@example.com"
-          className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-[#C7C7CC] dark:placeholder:text-[#636366] bg-transparent focus:outline-none"
+          className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-[#C7C7CC] dark:placeholder:text-[#636366] bg-transparent focus:ring-2 focus:ring-icloud-accent focus:outline-none rounded"
         />
       </div>
 
@@ -83,7 +83,7 @@ function IdentityForm({ initial = EMPTY_FORM, onSave, onCancel, isSaving }: Iden
           value={form.replyTo}
           onChange={set('replyTo')}
           placeholder="replies@example.com"
-          className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-[#C7C7CC] dark:placeholder:text-[#636366] bg-transparent focus:outline-none"
+          className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-[#C7C7CC] dark:placeholder:text-[#636366] bg-transparent focus:ring-2 focus:ring-icloud-accent focus:outline-none rounded"
         />
       </div>
 

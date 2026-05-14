@@ -271,7 +271,7 @@ export function RecursiveSidebarItem({
           onContextMenuProp(node.id, node.name, e);
         } : undefined}
         style={{ paddingLeft: `${indentPx}px` }}
-        className={`flex items-center justify-between transition-all relative group cursor-default rounded-lg focus:outline-none focus:ring-2 focus:ring-icloud-accent/50
+        className={`flex items-center justify-between transition-all relative group cursor-default rounded-lg focus:outline-none focus:ring-2 focus:ring-icloud-accent
           ${
             active && !showDropInside
               ? 'bg-icloud-accent text-white shadow-md'
@@ -288,7 +288,7 @@ export function RecursiveSidebarItem({
               e.stopPropagation();
               onToggleExpand(node.id);
             }}
-            className={`flex items-center justify-center w-5 h-5 shrink-0 transition-transform ${
+            className={`flex items-center justify-center min-w-[24px] min-h-[24px] w-5 h-5 shrink-0 transition-transform ${
               active && !showDropInside ? 'text-white' : 'text-icloud-accent'
             } hover:opacity-70`}
           >
@@ -306,7 +306,7 @@ export function RecursiveSidebarItem({
         {isEditing && isCustomFolder && (
           <button
             onClick={handleDeleteClick}
-            className="flex items-center justify-center w-5 h-5 shrink-0 text-red-500 hover:opacity-70 transition-opacity"
+            className="flex items-center justify-center min-w-[24px] min-h-[24px] w-5 h-5 shrink-0 text-red-500 hover:opacity-70 transition-opacity"
             title="Delete folder"
           >
             <MinusCircle className="w-4 h-4" strokeWidth={2} />

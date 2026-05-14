@@ -16,6 +16,8 @@ import {
   useContactCardActions,
   useContactSearch,
   useContactCardQuery,
+  useContactCardQueryChanges,
+  useContactCardCopy,
 } from '../jmap/useContacts';
 import { jmapClient } from '../../api/jmap';
 import type { AddressBook, ContactCard } from '../../types/jmap-contacts';
@@ -679,6 +681,113 @@ describe('useContacts hooks', () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(result.current.data?.ids).toHaveLength(2);
+    });
+  });
+
+  describe('useContactCardQueryChanges', () => {
+    beforeEach(() => {
+      vi.mocked(jmapClient.getPrimaryAccount).mockReturnValue('account-1');
+    });
+
+    it('queries changes successfully with a filter', async () => {
+      vi.mocked(jmapClient.request).mockResolvedValue({
+        methodResponses: [
+          [
+            'ContactCard/queryChanges',
+            {
+              accountId: 'account-1',
+              oldQueryState: 'query-state-1',
+              newQueryState: 'query-state-2',
+              hasMoreChanges: false,
+              removed: ['contact-2'],
+              added: [{ id: 'contact-3', index: 0 }],
+            },
+            'contactCardQueryChanges0',
+          ],
+        ],
+        sessionState: 'session-state',
+      });
+
+      const { result } = renderHook(() => useContactCardQueryChanges(), { wrapper: Wrapper });
+
+      await waitFor(() => expect(result.current.isPending).toBe(false));
+
+      const data = await result.current.mutateAsync({
+        sinceQueryState: 'query-state-1',
+        filter: { inAddressBook: 'addrbook-1' },
+      });
+
+      expect(data.removed).toContain('contact-2');
+      expect(data.added).toHaveLength(1);
+      expect(data.added[0].id).toBe('contact-3');
+      expect(data.newQueryState).toBe('query-state-2');
+    });
+
+    it('throws when no account is available', async () => {
+      vi.mocked(jmapClient.getPrimaryAccount).mockReturnValue(null);
+
+      const { result } = renderHook(() => useContactCardQueryChanges(), { wrapper: Wrapper });
+
+      await waitFor(() => expect(result.current.isPending).toBe(false));
+
+      await expect(result.current.mutateAsync({
+        sinceQueryState: 'state-1',
+      })).rejects.toThrow('No account available');
+    });
+  });
+
+  describe('useContactCardCopy', () => {
+    beforeEach(() => {
+      vi.mocked(jmapClient.getPrimaryAccount).mockReturnValue('account-1');
+    });
+
+    it('copies contacts between accounts successfully', async () => {
+      vi.mocked(jmapClient.request).mockResolvedValue({
+        methodResponses: [
+          [
+            'ContactCard/copy',
+            {
+              accountId: 'account-1',
+              fromAccountId: 'account-2',
+              created: {
+                c1: { id: 'copied-contact-1' },
+                c2: { id: 'copied-contact-2' },
+              },
+            },
+            'contactCardCopy0',
+          ],
+        ],
+        sessionState: 'session-state',
+      });
+
+      const { result } = renderHook(() => useContactCardCopy(), { wrapper: Wrapper });
+
+      await waitFor(() => expect(result.current.isPending).toBe(false));
+
+      const data = await result.current.mutateAsync({
+        fromAccountId: 'account-2',
+        create: {
+          c1: 'contact-1',
+          c2: 'contact-2',
+        },
+      });
+
+      expect(data.created).toBeDefined();
+      expect(data.created?.c1.id).toBe('copied-contact-1');
+      expect(data.created?.c2.id).toBe('copied-contact-2');
+    });
+
+    it('throws when no account is available', async () => {
+      vi.mocked(jmapClient.getPrimaryAccount).mockReturnValue(null);
+
+      const { result } = renderHook(() => useContactCardCopy(), { wrapper: Wrapper });
+
+      await waitFor(() => expect(result.current.isPending).toBe(false));
+
+      await expect(result.current.mutateAsync({
+        fromAccountId: 'account-2',
+        create: { c1: 'contact-1' },
+      })).rejects.toThrow('No account available');
     });
   });
 });

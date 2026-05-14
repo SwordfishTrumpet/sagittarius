@@ -553,22 +553,14 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
         transition={{ type: 'spring', damping: 20, stiffness: 300 }}
         className="fixed bottom-0 right-6 w-[280px] bg-icloud-bg-layer2 border border-icloud-border rounded-t-xl shadow-[0_-4px_20px_rgba(0,0,0,0.08)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.30)] flex items-center justify-between px-4 py-2.5 cursor-pointer z-[300]"
         onClick={() => setIsMinimized(false)}
-        role="button"
-        tabIndex={0}
         aria-label={`Expand composer: ${subject || 'New Message'}`}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            setIsMinimized(false);
-          }
-        }}
       >
         <span className="font-semibold text-[13px] text-icloud-text-primary truncate">{subject || 'New Message'}</span>
         <div className="flex gap-2 items-center">
           <button aria-label="Expand composer" onClick={(e) => { e.stopPropagation(); setIsMinimized(false); }} className="p-0.5 hover:bg-icloud-text-primary/5 dark:hover:bg-icloud-text-primary/10 rounded  text-icloud-text-secondary transition-colors">
             <Maximize2 className="w-3.5 h-3.5" strokeWidth={1.5} />
           </button>
-          <button aria-label="Close and save draft" onClick={handleCloseButtonClick} className="p-0.5 hover:bg-icloud-text-primary/5 dark:hover:bg-icloud-text-primary/10 rounded  text-icloud-text-secondary transition-colors">
+          <button aria-label="Close and save draft" onClick={handleCloseButtonClick} className="p-1.5 hover:bg-icloud-text-primary/5 dark:hover:bg-icloud-text-primary/10 rounded  text-icloud-text-secondary transition-colors">
             <X className="w-3.5 h-3.5" strokeWidth={1.5} />
           </button>
         </div>
@@ -699,7 +691,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
                 id="composer-from"
                 value={selectedIdentity?.id || ''}
                 onChange={(e) => setSelectedIdentityId(e.target.value)}
-                className="flex-1 border-none focus:ring-0 focus:outline-none text-[14px] py-1 bg-transparent cursor-pointer appearance-none text-icloud-text-primary"
+                className="flex-1 border-none focus:ring-2 focus:ring-icloud-accent focus:outline-none text-[14px] py-1 bg-transparent cursor-pointer appearance-none text-icloud-text-primary"
               >
                 {identities.map((identity: any) => (
                   <option key={identity.id} value={identity.id}>
@@ -721,17 +713,19 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
               id="composer-to"
               value={to} 
               onChange={e => setTo(e.target.value)} 
-              className="flex-1 border-none focus:ring-0 focus:outline-none text-[14px] py-1 bg-transparent text-icloud-text-primary placeholder:text-icloud-text-secondary dark:placeholder:text-[#636366]" 
+              className="flex-1 border-none focus:ring-2 focus:ring-icloud-accent focus:outline-none text-[14px] py-1 bg-transparent text-icloud-text-primary placeholder:text-icloud-text-secondary dark:placeholder:text-[#636366]" 
               placeholder="Recipients"
               aria-required="true"
+              aria-invalid={!to && false ? 'true' : 'false'}
               autoFocus 
+              autoComplete="email"
             />
             {!showCcBcc && (
               <button 
                 onClick={() => setShowCcBcc(true)}
                 aria-expanded="false"
                 aria-controls="cc-bcc-fields"
-                className="text-icloud-accent text-[12px] font-semibold hover:underline transition-opacity"
+                className="px-2 py-1 min-h-[24px] flex items-center text-icloud-accent text-[12px] font-semibold hover:underline transition-opacity"
               >
                 Cc/Bcc
               </button>
@@ -748,7 +742,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
                     id="composer-cc"
                     value={cc} 
                     onChange={e => setCc(e.target.value)} 
-                    className="flex-1 border-none focus:ring-0 focus:outline-none text-[14px] py-1 bg-transparent text-icloud-text-primary" 
+                    className="flex-1 border-none focus:ring-2 focus:ring-icloud-accent focus:outline-none text-[14px] py-1 bg-transparent text-icloud-text-primary" 
                   />
                 </div>
                 <div className="px-5 py-2 border-b border-icloud-border flex items-center gap-2 animate-in fade-in duration-200 shrink-0">
@@ -757,7 +751,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
                     id="composer-bcc"
                     value={bcc} 
                     onChange={e => setBcc(e.target.value)} 
-                    className="flex-1 border-none focus:ring-0 focus:outline-none text-[14px] py-1 bg-transparent text-icloud-text-primary" 
+                    className="flex-1 border-none focus:ring-2 focus:ring-icloud-accent focus:outline-none text-[14px] py-1 bg-transparent text-icloud-text-primary" 
                   />
                 </div>
               </>
@@ -771,8 +765,9 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
               id="composer-subject"
               value={subject} 
               onChange={e => setSubject(e.target.value)} 
-              className="flex-1 border-none focus:ring-0 focus:outline-none text-[14px] py-1 font-semibold bg-transparent text-icloud-text-primary" 
+              className="flex-1 border-none focus:ring-2 focus:ring-icloud-accent focus:outline-none text-[14px] py-1 font-semibold bg-transparent text-icloud-text-primary" 
               aria-required="true"
+              aria-invalid={!subject && false ? 'true' : 'false'}
             />
           </div>
 
@@ -857,7 +852,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
                     <Paperclip className="w-3 h-3" strokeWidth={1.5} />
                     <span className="max-w-[120px] truncate">{a.name}</span>
                     <span className="text-[#005FCC] dark:text-[#64B5FF] text-[11px]">{(a.size / 1024).toFixed(0)}K</span>
-                    <button aria-label={`Remove attachment ${a.name}`} onClick={() => removeAttachment(a.blobId)} className="p-0.5 hover:bg-icloud-accent/[0.15] dark:hover:bg-icloud-accent/[0.20] rounded-full transition-colors">
+                    <button aria-label={`Remove attachment ${a.name}`} onClick={() => removeAttachment(a.blobId)} className="p-1 min-w-[24px] min-h-[24px] flex items-center justify-center hover:bg-icloud-accent/[0.15] dark:hover:bg-icloud-accent/[0.20] rounded-full transition-colors">
                       <X className="w-3 h-3" />
                     </button>
                   </div>

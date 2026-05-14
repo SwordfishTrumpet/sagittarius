@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { jmapClient } from '../../api/jmap'
+import { stateManager } from '../../api/stateManager'
 import { assertSuccessfulJmapResponse, isDeferredMutationResult, runDeferredAwareMutation } from '../../utils/offlineSyncQueue'
 import { chunkForSet } from '../../utils/capabilityUtils'
 import type { Email } from '../../types/jmap'
@@ -13,6 +14,25 @@ import {
 } from './queryCacheUtils'
 
 import type { UseMutateFunction, UseMutateAsyncFunction } from '@tanstack/react-query'
+
+function buildEmailSetArgs(args: Record<string, unknown>): Record<string, unknown> {
+  const emailState = stateManager.getState('Email')
+  return {
+    ...args,
+    ifInState: emailState || undefined,
+  }
+}
+
+function updateEmailStateFromResponse(response: unknown): void {
+  if (!response || typeof response !== 'object' || !('methodResponses' in response)) return
+  const methodResponses = (response as { methodResponses: Array<[string, unknown, string]> }).methodResponses
+  for (const [method, result] of methodResponses) {
+    if (method === 'Email/set' && result && typeof result === 'object' && 'newState' in result) {
+      stateManager.setState('Email', (result as { newState: string }).newState)
+      break
+    }
+  }
+}
 
 interface EmailActionsReturn {
   updateKeywords: {
@@ -59,12 +79,12 @@ export function useEmailActions(): EmailActionsReturn {
         patch[`keywords/${key}`] = value ? true : null
       }
       const requests = [
-        jmapMethodCall('Email/set', {
+        jmapMethodCall('Email/set', buildEmailSetArgs({
           accountId,
           update: {
             [emailId]: patch,
           },
-        }, '0'),
+        }), '0'),
       ]
 
       return runDeferredAwareMutation({
@@ -77,6 +97,7 @@ export function useEmailActions(): EmailActionsReturn {
         execute: async () => {
           const result = await jmapRequest(requests)
           assertSuccessfulJmapResponse(result)
+          updateEmailStateFromResponse(result)
           return result
         },
       })
@@ -155,10 +176,10 @@ export function useEmailActions(): EmailActionsReturn {
         })
 
         const requests = [
-          jmapMethodCall('Email/set', {
+          jmapMethodCall('Email/set', buildEmailSetArgs({
             accountId,
             update: updates,
-          }, '0'),
+          }), '0'),
         ]
 
         const result = await runDeferredAwareMutation({
@@ -171,6 +192,7 @@ export function useEmailActions(): EmailActionsReturn {
           execute: async () => {
             const chunkResult = await jmapRequest(requests)
             assertSuccessfulJmapResponse(chunkResult)
+            updateEmailStateFromResponse(chunkResult)
             return chunkResult
           },
         })
@@ -232,12 +254,12 @@ export function useEmailActions(): EmailActionsReturn {
     mutationFn: async ({ emailId, mailboxIds }: { emailId: string, mailboxIds: Record<string, boolean> }) => {
       if (!accountId) throw new Error('No account available')
       const requests = [
-        jmapMethodCall('Email/set', {
+        jmapMethodCall('Email/set', buildEmailSetArgs({
           accountId,
           update: {
             [emailId]: { mailboxIds },
           },
-        }, '0'),
+        }), '0'),
       ]
 
       return runDeferredAwareMutation({
@@ -250,6 +272,7 @@ export function useEmailActions(): EmailActionsReturn {
         execute: async () => {
           const result = await jmapRequest(requests)
           assertSuccessfulJmapResponse(result)
+          updateEmailStateFromResponse(result)
           return result
         },
       })
@@ -317,10 +340,10 @@ export function useEmailActions(): EmailActionsReturn {
         })
 
         const requests = [
-          jmapMethodCall('Email/set', {
+          jmapMethodCall('Email/set', buildEmailSetArgs({
             accountId,
             update: updates,
-          }, '0'),
+          }), '0'),
         ]
 
         const result = await runDeferredAwareMutation({
@@ -333,6 +356,7 @@ export function useEmailActions(): EmailActionsReturn {
           execute: async () => {
             const chunkResult = await jmapRequest(requests)
             assertSuccessfulJmapResponse(chunkResult)
+            updateEmailStateFromResponse(chunkResult)
             return chunkResult
           },
         })
@@ -389,10 +413,10 @@ export function useEmailActions(): EmailActionsReturn {
     mutationFn: async ({ emailId }: { emailId: string }) => {
       if (!accountId) throw new Error('No account available')
       const requests = [
-        jmapMethodCall('Email/set', {
+        jmapMethodCall('Email/set', buildEmailSetArgs({
           accountId,
           destroy: [emailId],
-        }, '0'),
+        }), '0'),
       ]
 
       return runDeferredAwareMutation({
@@ -405,6 +429,7 @@ export function useEmailActions(): EmailActionsReturn {
         execute: async () => {
           const result = await jmapRequest(requests)
           assertSuccessfulJmapResponse(result)
+          updateEmailStateFromResponse(result)
           return result
         },
       })
@@ -451,10 +476,10 @@ export function useEmailActions(): EmailActionsReturn {
       const results = []
       for (const chunk of chunks) {
         const requests = [
-          jmapMethodCall('Email/set', {
+          jmapMethodCall('Email/set', buildEmailSetArgs({
             accountId,
             destroy: chunk,
-          }, '0'),
+          }), '0'),
         ]
 
         const result = await runDeferredAwareMutation({
@@ -467,6 +492,7 @@ export function useEmailActions(): EmailActionsReturn {
           execute: async () => {
             const chunkResult = await jmapRequest(requests)
             assertSuccessfulJmapResponse(chunkResult)
+            updateEmailStateFromResponse(chunkResult)
             return chunkResult
           },
         })

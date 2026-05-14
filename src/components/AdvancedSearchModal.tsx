@@ -4,8 +4,9 @@
  * Supports both Email/query and Thread/query filters per RFC 8621
  */
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { X, Users, MessageSquare } from 'lucide-react';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 import { SearchFilter } from '../types/search';
 
 interface AdvancedSearchModalProps {
@@ -21,6 +22,8 @@ export function AdvancedSearchModal({
 }: AdvancedSearchModalProps) {
   const [filters, setFilters] = useState<SearchFilter>(initialFilters || {});
   const [activeTab, setActiveTab] = useState<'email' | 'thread'>('email');
+  const containerRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(containerRef, { isActive: true });
 
   const handleApply = () => {
     onApply(filters);
@@ -33,7 +36,7 @@ export function AdvancedSearchModal({
 
   return (
     <div className="fixed inset-0 bg-icloud-bg-primary/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-icloud-bg-layer2 rounded-2xl shadow-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
+      <div ref={containerRef} tabIndex={-1} className="bg-icloud-bg-layer2 rounded-2xl shadow-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-icloud-border sticky top-0 bg-icloud-bg-layer2">
           <h2 className="text-[17px] font-bold text-icloud-text-primary">Advanced Search</h2>
@@ -92,7 +95,7 @@ export function AdvancedSearchModal({
                   placeholder="sender@example.com or 'me'"
                   value={filters.from || ''}
                   onChange={(e) => setFilters({ ...filters, from: e.target.value || undefined })}
-                  className="w-full px-3 py-2 bg-icloud-bg-layer1 border-none rounded-lg text-[13px] text-icloud-text-primary focus:ring-2 focus:ring-icloud-accent/30 focus:ring-icloud-accent/30 placeholder-icloud-text-secondary   transition-all"
+                  className="w-full px-3 py-2 bg-icloud-bg-layer1 border-none rounded-lg text-[13px] text-icloud-text-primary focus:ring-2 focus:ring-icloud-accent placeholder-icloud-text-secondary   transition-all"
                 />
               </div>
 
@@ -106,7 +109,7 @@ export function AdvancedSearchModal({
                   placeholder="recipient@example.com"
                   value={filters.to || ''}
                   onChange={(e) => setFilters({ ...filters, to: e.target.value || undefined })}
-                  className="w-full px-3 py-2 bg-icloud-bg-layer1 border-none rounded-lg text-[13px] text-icloud-text-primary focus:ring-2 focus:ring-icloud-accent/30 focus:ring-icloud-accent/30 placeholder-icloud-text-secondary   transition-all"
+                  className="w-full px-3 py-2 bg-icloud-bg-layer1 border-none rounded-lg text-[13px] text-icloud-text-primary focus:ring-2 focus:ring-icloud-accent placeholder-icloud-text-secondary   transition-all"
                 />
               </div>
 
@@ -120,7 +123,7 @@ export function AdvancedSearchModal({
                   placeholder="cc@example.com"
                   value={filters.cc || ''}
                   onChange={(e) => setFilters({ ...filters, cc: e.target.value || undefined })}
-                  className="w-full px-3 py-2 bg-icloud-bg-layer1 border-none rounded-lg text-[13px] text-icloud-text-primary focus:ring-2 focus:ring-icloud-accent/30 focus:ring-icloud-accent/30 placeholder-icloud-text-secondary   transition-all"
+                  className="w-full px-3 py-2 bg-icloud-bg-layer1 border-none rounded-lg text-[13px] text-icloud-text-primary focus:ring-2 focus:ring-icloud-accent placeholder-icloud-text-secondary   transition-all"
                 />
               </div>
 
@@ -134,7 +137,7 @@ export function AdvancedSearchModal({
                   placeholder="Subject keywords"
                   value={filters.subject || ''}
                   onChange={(e) => setFilters({ ...filters, subject: e.target.value || undefined })}
-                  className="w-full px-3 py-2 bg-icloud-bg-layer1 border-none rounded-lg text-[13px] text-icloud-text-primary focus:ring-2 focus:ring-icloud-accent/30 focus:ring-icloud-accent/30 placeholder-icloud-text-secondary   transition-all"
+                  className="w-full px-3 py-2 bg-icloud-bg-layer1 border-none rounded-lg text-[13px] text-icloud-text-primary focus:ring-2 focus:ring-icloud-accent placeholder-icloud-text-secondary   transition-all"
                 />
               </div>
 
@@ -148,7 +151,7 @@ export function AdvancedSearchModal({
                   value={filters.text || ''}
                   onChange={(e) => setFilters({ ...filters, text: e.target.value || undefined })}
                   rows={3}
-                  className="w-full px-3 py-2 bg-icloud-bg-layer1 border-none rounded-lg text-[13px] text-icloud-text-primary focus:ring-2 focus:ring-icloud-accent/30 focus:ring-icloud-accent/30 placeholder-icloud-text-secondary   transition-all resize-none"
+                  className="w-full px-3 py-2 bg-icloud-bg-layer1 border-none rounded-lg text-[13px] text-icloud-text-primary focus:ring-2 focus:ring-icloud-accent placeholder-icloud-text-secondary   transition-all resize-none"
                 />
               </div>
             </>
@@ -172,7 +175,7 @@ export function AdvancedSearchModal({
                   placeholder="Any sender in the thread"
                   value={filters.threadFrom || ''}
                   onChange={(e) => setFilters({ ...filters, threadFrom: e.target.value || undefined })}
-                  className="w-full px-3 py-2 bg-icloud-bg-layer1 border-none rounded-lg text-[13px] text-icloud-text-primary focus:ring-2 focus:ring-icloud-accent/30 focus:ring-icloud-accent/30 placeholder-icloud-text-secondary   transition-all"
+                  className="w-full px-3 py-2 bg-icloud-bg-layer1 border-none rounded-lg text-[13px] text-icloud-text-primary focus:ring-2 focus:ring-icloud-accent placeholder-icloud-text-secondary   transition-all"
                 />
                 <p className="text-[11px] text-icloud-text-secondary  mt-1">
                   Find threads containing messages from this sender
@@ -189,7 +192,7 @@ export function AdvancedSearchModal({
                   placeholder="Any recipient in the thread"
                   value={filters.threadTo || ''}
                   onChange={(e) => setFilters({ ...filters, threadTo: e.target.value || undefined })}
-                  className="w-full px-3 py-2 bg-icloud-bg-layer1 border-none rounded-lg text-[13px] text-icloud-text-primary focus:ring-2 focus:ring-icloud-accent/30 focus:ring-icloud-accent/30 placeholder-icloud-text-secondary   transition-all"
+                  className="w-full px-3 py-2 bg-icloud-bg-layer1 border-none rounded-lg text-[13px] text-icloud-text-primary focus:ring-2 focus:ring-icloud-accent placeholder-icloud-text-secondary   transition-all"
                 />
                 <p className="text-[11px] text-icloud-text-secondary  mt-1">
                   Find threads where this person received a message
@@ -206,7 +209,7 @@ export function AdvancedSearchModal({
                   placeholder="Any email in thread has this subject"
                   value={filters.threadSubject || ''}
                   onChange={(e) => setFilters({ ...filters, threadSubject: e.target.value || undefined })}
-                  className="w-full px-3 py-2 bg-icloud-bg-layer1 border-none rounded-lg text-[13px] text-icloud-text-primary focus:ring-2 focus:ring-icloud-accent/30 focus:ring-icloud-accent/30 placeholder-icloud-text-secondary   transition-all"
+                  className="w-full px-3 py-2 bg-icloud-bg-layer1 border-none rounded-lg text-[13px] text-icloud-text-primary focus:ring-2 focus:ring-icloud-accent placeholder-icloud-text-secondary   transition-all"
                 />
               </div>
 

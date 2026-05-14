@@ -72,7 +72,7 @@ export function Login({ onLoginSuccess }: { onLoginSuccess: () => void }) {
           <div className="w-24 h-24 bg-icloud-card shadow-md rounded-2xl flex items-center justify-center mb-6 border border-icloud-border">
              <span className="text-icloud-accent text-7xl font-black leading-none">♐︎</span>
           </div>
-          <h2 className="text-3xl font-bold tracking-tight text-icloud-text-primary">Sagittarius</h2>
+          <h1 className="text-3xl font-bold tracking-tight text-icloud-text-primary">Sagittarius</h1>
           <p className="text-icloud-text-secondary  mt-2 text-center text-sm">Sign in to your mail account</p>
         </div>
 
@@ -93,11 +93,13 @@ export function Login({ onLoginSuccess }: { onLoginSuccess: () => void }) {
                 type="text" 
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full bg-icloud-border/40 /40 border-none rounded-xl py-3 pl-10 pr-4 text-[15px] text-icloud-text-primary focus:ring-2 focus:ring-icloud-accent/20 focus:ring-icloud-accent/20 transition-all placeholder-icloud-text-secondary  disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-icloud-border/40 /40 border-none rounded-xl py-3 pl-10 pr-4 text-[15px] text-icloud-text-primary focus:ring-2 focus:ring-icloud-accent transition-all placeholder-icloud-text-secondary  disabled:opacity-50 disabled:cursor-not-allowed"
                 placeholder="name or email"
                 required
                 disabled={!!lockoutSeconds}
                 aria-describedby={error ? 'login-error' : undefined}
+                autoComplete="username"
+                aria-invalid={error ? 'true' : 'false'}
               />
             </div>
           </div>
@@ -111,11 +113,13 @@ export function Login({ onLoginSuccess }: { onLoginSuccess: () => void }) {
                 type="password" 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-icloud-border/40 /40 border-none rounded-xl py-3 pl-10 pr-4 text-[15px] text-icloud-text-primary focus:ring-2 focus:ring-icloud-accent/20 focus:ring-icloud-accent/20 transition-all placeholder-icloud-text-secondary  disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-icloud-border/40 /40 border-none rounded-xl py-3 pl-10 pr-4 text-[15px] text-icloud-text-primary focus:ring-2 focus:ring-icloud-accent transition-all placeholder-icloud-text-secondary  disabled:opacity-50 disabled:cursor-not-allowed"
                 placeholder="Password"
                 required
                 disabled={!!lockoutSeconds}
                 aria-describedby={error ? 'login-error' : undefined}
+                autoComplete="current-password"
+                aria-invalid={error ? 'true' : 'false'}
               />
             </div>
           </div>

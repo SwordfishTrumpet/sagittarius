@@ -25,6 +25,9 @@
     "typescript",
     "tailwindcss"
   ],
+  "overrides": {
+    "esbuild": "^0.28.0"
+  },
   "engines": {
     "node": ">=18"
   },

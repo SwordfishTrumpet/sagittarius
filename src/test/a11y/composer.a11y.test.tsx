@@ -99,7 +99,7 @@ describe('Composer accessibility', () => {
 
     await user.click(screen.getByRole('button', { name: 'Minimize composer' }))
 
-    const minimizedBar = screen.getByRole('button', { name: 'Expand composer: New Message' })
+    const minimizedBar = screen.getByRole('button', { name: 'Expand composer' })
     minimizedBar.focus()
     await user.keyboard('[Enter]')
 

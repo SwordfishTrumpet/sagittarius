@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { MoreHorizontal, Code, Eye, ChevronLeft } from 'lucide-react'
+import { MoreHorizontal, Code, Eye, ChevronLeft, Keyboard } from 'lucide-react'
 import { SFReply, SFReplyAll, SFForward, SFStar, SFArchive, SFTrash } from './SFIcon'
 import { ActionButton } from './ActionButton'
 import type { Email } from '../types/jmap'
@@ -22,6 +22,7 @@ export interface ToolbarProps {
   onToggleMoreMenu: () => void
   onViewSource: (blobId: string) => void
   onCloseMoreMenu: () => void
+  onShowKeyboardShortcuts?: () => void
 }
 
 export function Toolbar({
@@ -42,6 +43,7 @@ export function Toolbar({
   onToggleMoreMenu,
   onViewSource,
   onCloseMoreMenu,
+  onShowKeyboardShortcuts,
 }: ToolbarProps) {
   return (
     <header role="toolbar" aria-label="Email actions" className={`border-b border-icloud-border flex items-center justify-between min-h-[52px] ${isMobile ? 'px-3 py-2' : 'px-6 py-2'}`}>
@@ -127,6 +129,18 @@ export function Toolbar({
             >
               <Eye className="w-4 h-4 text-icloud-text-secondary" strokeWidth={1.5} />
               Mark as Unread
+            </button>
+            <div aria-hidden="true" className="h-[1px] bg-icloud-divider mx-4" />
+            <button
+              onClick={() => {
+                onShowKeyboardShortcuts?.();
+                onCloseMoreMenu();
+              }}
+              role="menuitem"
+              className="flex items-center gap-3 w-full px-4 py-2 text-[13px] text-icloud-text-primary hover:bg-icloud-bg-layer1 transition-colors"
+            >
+              <Keyboard className="w-4 h-4 text-icloud-text-secondary" strokeWidth={1.5} />
+              Keyboard Shortcuts
             </button>
           </div>
         )}

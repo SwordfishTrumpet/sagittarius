@@ -118,7 +118,7 @@ export function VacationSettings() {
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               placeholder="Out of Office"
-              className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-[#C7C7CC] bg-transparent focus:outline-none"
+              className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-[#C7C7CC] bg-transparent focus:ring-2 focus:ring-icloud-accent focus:outline-none rounded"
             />
           </div>
 
@@ -132,7 +132,7 @@ export function VacationSettings() {
               onChange={(e) => setTextBody(e.target.value)}
               rows={5}
               placeholder="I'm currently out of office and will reply when I return."
-              className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-[#C7C7CC] bg-transparent focus:outline-none resize-none"
+              className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-[#C7C7CC] bg-transparent focus:ring-2 focus:ring-icloud-accent focus:outline-none resize-none rounded"
             />
           </div>
 
@@ -144,7 +144,7 @@ export function VacationSettings() {
                 type="datetime-local"
                 value={fromDate}
                 onChange={(e) => setFromDate(e.target.value)}
-                className="text-[14px] text-icloud-accent bg-transparent focus:outline-none"
+                className="text-[14px] text-icloud-accent bg-transparent focus:ring-2 focus:ring-icloud-accent focus:outline-none rounded"
               />
             </div>
             <div className="px-4 py-3 flex items-center justify-between gap-4">
@@ -153,7 +153,7 @@ export function VacationSettings() {
                 type="datetime-local"
                 value={toDate}
                 onChange={(e) => setToDate(e.target.value)}
-                className="text-[14px] text-icloud-accent bg-transparent focus:outline-none"
+                className="text-[14px] text-icloud-accent bg-transparent focus:ring-2 focus:ring-icloud-accent focus:outline-none rounded"
               />
             </div>
           </div>

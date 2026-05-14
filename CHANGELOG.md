@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Nothing yet.
+
+## [1.1.0] - 2026-05-14
+
+### Added
 - Email templates feature — Save and reuse common email formats
   - Create, edit, delete, and duplicate templates
   - Templates stored per-account in localStorage
@@ -19,6 +24,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - CRUD operations via `useAddressBookActions` and `useContactCardActions`
   - Sharing support (RFC 9670) with `AddressBookRights`
   - 21 new tests for full coverage
+- **RFC 8984 JSCalendar** — Calendar and event management
+  - Calendar, CalendarEvent, and recurrence support
+  - Participant and alert handling
+- **Monospaced font selection** — Choose from 6 coding fonts in Settings → Appearance
+- **Email mutation conflict detection** — RFC 8620 `ifInState` validation on `Email/set`
+  - Prevents silent overwrites when server state changes between read and write
+  - State manager integration with automatic `newState` extraction after successful mutations
 
 ### Fixed
 - **BUG 9 (P0):** Calendar event creation now properly initializes with default calendar
@@ -30,6 +42,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Search functionality caching safeguards verified and enhanced
   - Confirmed `staleTime: 0` ensures refetch on search term changes
   - Query key properly includes search term for cache isolation
+
+### Security
+- Resolved `npm audit` vulnerabilities (`lodash-es`, `follow-redirects`, `postcss`)
+- Added `esbuild` override to fix moderate severity transitive dependency
 
 ## [1.0.0] - 2026-04-02
 

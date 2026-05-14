@@ -4,13 +4,14 @@ A high-performance, server-agnostic JMAP web client with a modern interface insp
 
 **Standards-compliant. Privacy-first. Built for power users.**
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue?style=flat-square)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.1.0-blue?style=flat-square)](CHANGELOG.md)
 [![CI](https://img.shields.io/badge/CI-passing-brightgreen?style=flat-square&logo=github-actions&logoColor=white)](.github/workflows/ci.yml)
 [![JMAP RFC 8620/8621](https://img.shields.io/badge/JMAP-RFC%208620%20%2F%208621-4A90D9?style=flat-square)](https://jmap.io/)
 [![TypeScript Strict](https://img.shields.io/badge/TypeScript-Strict-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React 18](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![Vitest](https://img.shields.io/badge/Tests-1074%20passing-6E9F18?style=flat-square&logo=vitest&logoColor=white)](package.json)
+[![Vitest](https://img.shields.io/badge/Tests-1217%20passing-6E9F18?style=flat-square&logo=vitest&logoColor=white)](package.json)
+[![WCAG 2.2 AA](https://img.shields.io/badge/WCAG-2.2%20AA-1a73e8?style=flat-square)]()
 [![License MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
 ## ✨ Why Sagittarius?
@@ -128,6 +129,7 @@ See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for complete configuration examples.
 | **Draft Auto-Save** | Automatic server persistence prevents data loss |
 | **Reply/Forward** | Smart recipient prefilling with quoted content |
 | **Batch Operations** | Multi-select with Shift/Cmd+Click and Select All |
+| **Email Templates** | Save, edit, and insert reusable email formats from the composer |
 
 ### 📁 Organization
 
@@ -146,6 +148,7 @@ See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for complete configuration examples.
 | **HTML Sanitization** | DOMPurify processes all message content |
 | **Sandboxed Iframes** | Email isolation prevents style leakage |
 | **Read Receipts** | MDN support per RFC 8098 |
+| **Conflict Detection** | RFC 8620 `ifInState` validation prevents concurrent edit overwrites |
 | **No Telemetry** | Zero analytics or tracking — your data stays local |
 
 ### 🎨 Appearance
@@ -165,6 +168,8 @@ See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for complete configuration examples.
 | **Sieve Filters** | Visual rule editor and raw script mode |
 | **Identity Management** | Multiple sending addresses per account |
 | **Delivery Status** | Track email submission status |
+| **Contact Management** | RFC 9610 JMAP for Contacts — AddressBooks and ContactCards |
+| **Calendar Integration** | draft-ietf-jmap-calendars-26 — Calendar, CalendarEvent, ParticipantIdentity, notifications, availability |
 | **RFC-Compliant Limits** | Respects server limits (max attachment size, folder depth, etc.) |
 
 ### 🎯 JMAP Capability Awareness
@@ -176,7 +181,7 @@ Sagittarius intelligently respects your server's JMAP capability limits for a be
 | **Core (RFC 8620)** | `maxObjectsInGet/Set` — Chunked batch operations, `maxSizeUpload` — Per-file upload limit |
 | **Mail (RFC 8621)** | `maxSizeAttachmentsPerEmail` — Total attachment size with live indicator, `maxMailboxDepth` — Folder nesting validation, `mayCreateTopLevelMailbox` — Controls root folder creation |
 | **Sieve (RFC 9266)** | `maxNumberScripts` — Warns at filter limit, `maxSizeScript` — Rejects oversized scripts |
-| **Calendar (RFC 8984)** | `maxParticipantsPerEvent` — Attendee limit warnings, `mayCreateCalendar` — Controls calendar creation |
+| **Calendar (draft-ietf-jmap-calendars-26)** | `maxCalendarsPerEvent` — Calendar limit per event, `maxParticipantsPerEvent` — Attendee limit warnings, `mayCreateCalendar` — Controls calendar creation, `minDateTime`/`maxDateTime` — Date range enforcement |
 | **Contacts (RFC 9610)** | `mayCreateAddressBook` — Controls address book creation |
 | **Blob (RFC 9404)** | `maxDataSources` — Validates blob upload data sources |
 
@@ -257,6 +262,8 @@ Sagittarius implements standard JMAP capabilities:
 | `urn:ietf:params:jmap:sieve` | Server-side mail filters (optional) |
 | `urn:ietf:params:jmap:mdn` | Read receipt handling (RFC 8098) |
 | `urn:ietf:params:jmap:blob` | Blob upload/download (RFC 9404) |
+| `urn:ietf:params:jmap:calendars` | Calendar, CalendarEvent, ParticipantIdentity (draft-ietf-jmap-calendars-26) |
+| `urn:ietf:params:jmap:principals:availability` | Principal availability checks (draft-ietf-jmap-calendars-26) |
 
 ---
 
@@ -300,10 +307,10 @@ npm run typecheck
 
 ## 📊 Stats
 
-- **1,074+ Tests** passing across 98 test files
+- **1,217 Tests** passing across 107 test files
 - **TypeScript Strict Mode** — Zero `any` types
-- **Full RFC Compliance** — JMAP 8620/8621, 8887, 9404, 9553, 9610
-- **WCAG 2.1 AA** accessibility compliant
+- **Full RFC Compliance** — JMAP 8620/8621, 8887, 9404, 9553, 9610, draft-ietf-jmap-calendars-26
+- **WCAG 2.2 AA** accessibility compliant
 
 ---
 

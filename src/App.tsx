@@ -177,7 +177,7 @@ function App() {
     renameMailbox,
     deleteMailbox,
     FolderDialogsUI,
-  } = useFolderDialogs({ selectedMailboxId, setSelectedMailboxId })
+  } = useFolderDialogs({ selectedMailboxId, setSelectedMailboxId, mailboxes, onReparentMailbox: handleMailboxReparent })
 
   // Push connection
   const { pushEnabled, pushConnected, hasNewMail, clearNewMail } = usePushConnection(!!session)
@@ -202,6 +202,24 @@ function App() {
     handleForward,
     handleOpenDraft,
   } = useComposerState()
+
+  // Dynamic page title
+  const viewTitle = useMemo(() => {
+    if (!session) return 'Sign In – Sagittarius';
+    const mailboxName = selectedMailboxId === 'all' ? 'All Mail' :
+      selectedMailboxId === 'flagged' ? 'Flagged' :
+      mailboxes?.find((m: Mailbox) => m.id === selectedMailboxId)?.name || '';
+    if (isComposerOpen) return `Compose – Sagittarius`;
+    if (isSettingsOpen) return `Settings – Sagittarius`;
+    if (isCalendarOpen) return `Calendar – Sagittarius`;
+    if (isContactsOpen) return `Contacts – Sagittarius`;
+    if (mailboxName) return `${mailboxName} – Sagittarius`;
+    return 'Sagittarius';
+  }, [session, selectedMailboxId, mailboxes, isComposerOpen, isSettingsOpen, isCalendarOpen, isContactsOpen]);
+
+  useEffect(() => {
+    document.title = viewTitle;
+  }, [viewTitle]);
 
   // Bulk email actions
   const { handleArchive, handleDelete, moveEmail, moveEmailBulk } = useEmailBulkActions({
@@ -476,6 +494,22 @@ function App() {
     return threadEmails?.find((e: Email) => e.id === selectedEmailId) || threadEmails?.[threadEmails.length - 1]
   }, [threadEmails, selectedEmailId])
 
+  // Move to folder handler (keyboard-accessible alternative to drag-and-drop)
+  const handleMoveToFolder = useCallback((emailId: string) => {
+    if (!mailboxes) return;
+    const customMailboxes = mailboxes.filter((m: Mailbox) => !m.role);
+    const folderNames = customMailboxes.map((m: Mailbox) => m.name).join(', ');
+    const folderName = window.prompt(`Enter folder name to move to. Available folders: ${folderNames || '(none)'}`);
+    if (!folderName) return;
+    const target = mailboxes.find((m: Mailbox) => m.name.toLowerCase() === folderName.toLowerCase());
+    if (target) {
+      moveEmailsToFolder([emailId], target.id, target.name);
+      toast.success(`Moved to ${target.name}`);
+    } else {
+      toast.error(`Folder "${folderName}" not found`);
+    }
+  }, [mailboxes, moveEmailsToFolder]);
+
   // Memoized handler for toggling flag on the currently selected email
   const handleToggleSelectedFlag = useCallback(() => {
     if (selectedEmailId && selectedEmailDetail) {
@@ -642,6 +676,7 @@ function App() {
             onForward={handleForwardFromId}
             onArchive={handleArchiveFromId}
             onDelete={handleDeleteFromId}
+            onMoveToFolder={handleMoveToFolder}
           />
         </main>
         {!isMobile && (
@@ -686,6 +721,7 @@ function App() {
               onToggleMoreMenu={() => setMoreMenuOpen(!moreMenuOpen)}
               onViewSource={(blobId) => setRawViewerBlobId(blobId)}
               onCloseMoreMenu={() => setMoreMenuOpen(false)}
+              onShowKeyboardShortcuts={() => setShowShortcutsHelp(true)}
             />
             <EmailReader
               threadEmails={threadEmails as Parameters<typeof EmailReader>[0]['threadEmails']}

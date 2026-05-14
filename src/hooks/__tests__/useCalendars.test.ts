@@ -1,5 +1,5 @@
 /**
- * Tests for RFC 8984 JMAP JSCalendar hooks
+ * Tests for draft-ietf-jmap-calendars-26 JMAP JSCalendar hooks
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -8,9 +8,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import * as React from 'react';
 import {
   hasCalendarCapability,
-  hasCalendarEventCapability,
   useHasCalendarCapability,
-  useHasCalendarEventCapability,
   useCalendars,
   useDefaultCalendar,
   useCalendarQuery,
@@ -22,11 +20,24 @@ import {
   useCalendarEventChanges,
   useEventsInRange,
   useTodaysEvents,
+  useCalendarEventCopy,
+  useCalendarEventQueryChanges,
+  useCalendarEventParse,
+  useHasCalendarEventParseCapability,
+  useParticipantIdentities,
+  useParticipantIdentityActions,
+  useParticipantIdentityChanges,
+  useCalendarEventNotifications,
+  useCalendarEventNotificationQuery,
+  useCalendarEventNotificationQueryChanges,
+  useCalendarEventNotificationChanges,
+  useCalendarEventNotificationActions,
+  usePrincipalAvailability,
+  useHasPrincipalAvailabilityCapability,
 } from '../jmap/useCalendars';
 import { jmapClient } from '../../api/jmap';
-import type { Calendar, CalendarEvent } from '../../types/jmap-calendar';
+import type { Calendar, CalendarEvent, CalendarNotification } from '../../types/jmap-calendar';
 
-// Mock the JMAP client
 vi.mock('../../api/jmap', () => ({
   jmapClient: {
     getPrimaryAccount: vi.fn(),
@@ -36,7 +47,6 @@ vi.mock('../../api/jmap', () => ({
   },
 }));
 
-// Create a test query client
 const createTestQueryClient = () =>
   new QueryClient({
     defaultOptions: {
@@ -69,13 +79,6 @@ describe('useCalendars hooks', () => {
       expect(hasCalendarCapability()).toBe(false);
     });
 
-    it('hasCalendarEventCapability returns true when server supports calendar events', () => {
-      vi.mocked(jmapClient.hasCapability).mockReturnValue(true);
-
-      expect(hasCalendarEventCapability()).toBe(true);
-      expect(jmapClient.hasCapability).toHaveBeenCalledWith('urn:ietf:params:jmap:calendarEvents');
-    });
-
     it('useHasCalendarCapability returns true when capability is available', () => {
       vi.mocked(jmapClient.getPrimaryAccount).mockReturnValue('account-1');
       vi.mocked(jmapClient.hasCapability).mockReturnValue(true);
@@ -93,13 +96,18 @@ describe('useCalendars hooks', () => {
       expect(result.current).toBe(false);
     });
 
-    it('useHasCalendarEventCapability returns true when both account and capability available', () => {
+    it('hasCalendarEventParseCapability returns true when server supports parse', () => {
       vi.mocked(jmapClient.getPrimaryAccount).mockReturnValue('account-1');
-      vi.mocked(jmapClient.hasCapability).mockImplementation((urn: string) => 
-        urn === 'urn:ietf:params:jmap:calendarEvents'
-      );
+      vi.mocked(jmapClient.hasCapability).mockReturnValue(true);
 
-      const { result } = renderHook(() => useHasCalendarEventCapability(), { wrapper: Wrapper });
+      expect(useHasCalendarEventParseCapability()).toBe(true);
+    });
+
+    it('hasPrincipalAvailabilityCapability returns true when server supports it', () => {
+      vi.mocked(jmapClient.getPrimaryAccount).mockReturnValue('account-1');
+      vi.mocked(jmapClient.hasCapability).mockReturnValue(true);
+
+      const { result } = renderHook(() => useHasPrincipalAvailabilityCapability(), { wrapper: Wrapper });
 
       expect(result.current).toBe(true);
     });
@@ -114,15 +122,23 @@ describe('useCalendars hooks', () => {
         sortOrder: 0,
         isDefault: true,
         isSubscribed: true,
+        isVisible: true,
+        includeInAvailability: 'all',
         color: '#007AFF',
         timeZone: 'America/New_York',
         shareWith: null,
         myRights: {
-          mayRead: true,
-          mayWrite: true,
+          mayReadFreeBusy: true,
+          mayReadItems: true,
+          mayWriteAll: true,
+          mayWriteOwn: true,
+          mayUpdatePrivate: true,
+          mayRSVP: true,
           mayShare: true,
           mayDelete: true,
         },
+        defaultAlertsWithTime: null,
+        defaultAlertsWithoutTime: null,
       },
       {
         id: 'cal-2',
@@ -131,15 +147,23 @@ describe('useCalendars hooks', () => {
         sortOrder: 1,
         isDefault: false,
         isSubscribed: true,
+        isVisible: true,
+        includeInAvailability: 'all',
         color: '#34C759',
         timeZone: null,
         shareWith: null,
         myRights: {
-          mayRead: true,
-          mayWrite: true,
+          mayReadFreeBusy: true,
+          mayReadItems: true,
+          mayWriteAll: true,
+          mayWriteOwn: true,
+          mayUpdatePrivate: true,
+          mayRSVP: true,
           mayShare: false,
           mayDelete: false,
         },
+        defaultAlertsWithTime: null,
+        defaultAlertsWithoutTime: null,
       },
     ];
 
@@ -234,10 +258,23 @@ describe('useCalendars hooks', () => {
         sortOrder: 0,
         isDefault: true,
         isSubscribed: true,
+        isVisible: true,
+        includeInAvailability: 'all',
         color: '#007AFF',
         timeZone: null,
         shareWith: null,
-        myRights: { mayRead: true, mayWrite: true, mayShare: true, mayDelete: true },
+        myRights: {
+          mayReadFreeBusy: true,
+          mayReadItems: true,
+          mayWriteAll: true,
+          mayWriteOwn: true,
+          mayUpdatePrivate: true,
+          mayRSVP: true,
+          mayShare: true,
+          mayDelete: true,
+        },
+        defaultAlertsWithTime: null,
+        defaultAlertsWithoutTime: null,
       },
       {
         id: 'cal-2',
@@ -246,10 +283,23 @@ describe('useCalendars hooks', () => {
         sortOrder: 1,
         isDefault: false,
         isSubscribed: true,
+        isVisible: true,
+        includeInAvailability: 'none',
         color: '#34C759',
         timeZone: null,
         shareWith: null,
-        myRights: { mayRead: true, mayWrite: true, mayShare: false, mayDelete: false },
+        myRights: {
+          mayReadFreeBusy: true,
+          mayReadItems: true,
+          mayWriteAll: true,
+          mayWriteOwn: true,
+          mayUpdatePrivate: true,
+          mayRSVP: true,
+          mayShare: false,
+          mayDelete: false,
+        },
+        defaultAlertsWithTime: null,
+        defaultAlertsWithoutTime: null,
       },
     ];
 
@@ -345,7 +395,7 @@ describe('useCalendars hooks', () => {
     const mockEvents: CalendarEvent[] = [
       {
         id: 'event-1',
-        calendarId: 'cal-1',
+        calendarIds: { 'cal-1': true },
         uid: 'uid-1@example.com',
         title: 'Team Meeting',
         start: '2026-04-02T10:00:00Z',
@@ -357,7 +407,7 @@ describe('useCalendars hooks', () => {
       },
       {
         id: 'event-2',
-        calendarId: 'cal-1',
+        calendarIds: { 'cal-1': true },
         uid: 'uid-2@example.com',
         title: 'Lunch Break',
         start: '2026-04-02T12:00:00Z',
@@ -371,9 +421,7 @@ describe('useCalendars hooks', () => {
 
     it('fetches calendar events', async () => {
       vi.mocked(jmapClient.getPrimaryAccount).mockReturnValue('account-1');
-      vi.mocked(jmapClient.hasCapability).mockImplementation((urn: string) =>
-        urn === 'urn:ietf:params:jmap:calendarEvents'
-      );
+      vi.mocked(jmapClient.hasCapability).mockReturnValue(true);
       vi.mocked(jmapClient.request).mockResolvedValue({
         methodResponses: [
           [
@@ -400,9 +448,7 @@ describe('useCalendars hooks', () => {
 
     it('filters events by time range', async () => {
       vi.mocked(jmapClient.getPrimaryAccount).mockReturnValue('account-1');
-      vi.mocked(jmapClient.hasCapability).mockImplementation((urn: string) =>
-        urn === 'urn:ietf:params:jmap:calendarEvents'
-      );
+      vi.mocked(jmapClient.hasCapability).mockReturnValue(true);
       vi.mocked(jmapClient.request).mockResolvedValue({
         methodResponses: [
           [
@@ -442,9 +488,7 @@ describe('useCalendars hooks', () => {
       }));
 
       vi.mocked(jmapClient.getPrimaryAccount).mockReturnValue('account-1');
-      vi.mocked(jmapClient.hasCapability).mockImplementation((urn: string) =>
-        urn === 'urn:ietf:params:jmap:calendarEvents'
-      );
+      vi.mocked(jmapClient.hasCapability).mockReturnValue(true);
       vi.mocked(jmapClient.request).mockResolvedValue({
         methodResponses: [
           [
@@ -474,9 +518,7 @@ describe('useCalendars hooks', () => {
   describe('useCalendarEventQuery', () => {
     it('queries calendar events with filter', async () => {
       vi.mocked(jmapClient.getPrimaryAccount).mockReturnValue('account-1');
-      vi.mocked(jmapClient.hasCapability).mockImplementation((urn: string) =>
-        urn === 'urn:ietf:params:jmap:calendarEvents'
-      );
+      vi.mocked(jmapClient.hasCapability).mockReturnValue(true);
       vi.mocked(jmapClient.request).mockResolvedValue({
         methodResponses: [
           [
@@ -524,10 +566,23 @@ describe('useCalendars hooks', () => {
                   sortOrder: 0,
                   isDefault: false,
                   isSubscribed: true,
+                  isVisible: true,
+                  includeInAvailability: 'all',
                   color: '#FF9500',
                   timeZone: null,
                   shareWith: null,
-                  myRights: { mayRead: true, mayWrite: true, mayShare: true, mayDelete: true },
+                  myRights: {
+                    mayReadFreeBusy: true,
+                    mayReadItems: true,
+                    mayWriteAll: true,
+                    mayWriteOwn: true,
+                    mayUpdatePrivate: true,
+                    mayRSVP: true,
+                    mayShare: true,
+                    mayDelete: true,
+                  },
+                  defaultAlertsWithTime: null,
+                  defaultAlertsWithoutTime: null,
                 },
               },
             },
@@ -569,10 +624,23 @@ describe('useCalendars hooks', () => {
                   sortOrder: 0,
                   isDefault: true,
                   isSubscribed: true,
+                  isVisible: true,
+                  includeInAvailability: 'all',
                   color: '#007AFF',
                   timeZone: null,
                   shareWith: null,
-                  myRights: { mayRead: true, mayWrite: true, mayShare: true, mayDelete: true },
+                  myRights: {
+                    mayReadFreeBusy: true,
+                    mayReadItems: true,
+                    mayWriteAll: true,
+                    mayWriteOwn: true,
+                    mayUpdatePrivate: true,
+                    mayRSVP: true,
+                    mayShare: true,
+                    mayDelete: true,
+                  },
+                  defaultAlertsWithTime: null,
+                  defaultAlertsWithoutTime: null,
                 },
               },
             },
@@ -636,7 +704,6 @@ describe('useCalendars hooks', () => {
 
       const { result } = renderHook(() => useCalendarActions(), { wrapper: Wrapper });
 
-      // Should throw when there are creation errors
       await expect(result.current.createCalendar({ name: '' })).rejects.toThrow();
     });
   });
@@ -655,7 +722,7 @@ describe('useCalendars hooks', () => {
               created: {
                 'create-123456': {
                   id: 'event-new',
-                  calendarId: 'cal-1',
+                  calendarIds: { 'cal-1': true },
                   uid: 'uid-new@example.com',
                   title: 'New Event',
                   start: '2026-04-02T14:00:00Z',
@@ -674,7 +741,7 @@ describe('useCalendars hooks', () => {
       const { result } = renderHook(() => useCalendarEventActions(), { wrapper: Wrapper });
 
       const newEvent = await result.current.createEvent({
-        calendarId: 'cal-1',
+        calendarIds: { 'cal-1': true },
         title: 'New Event',
         start: '2026-04-02T14:00:00Z',
         duration: 3600,
@@ -700,7 +767,7 @@ describe('useCalendars hooks', () => {
               updated: {
                 'event-1': {
                   id: 'event-1',
-                  calendarId: 'cal-1',
+                  calendarIds: { 'cal-1': true },
                   uid: 'uid-1@example.com',
                   title: 'Updated Event Title',
                   start: '2026-04-02T10:00:00Z',
@@ -748,6 +815,56 @@ describe('useCalendars hooks', () => {
 
       expect(deleteResult.destroyed?.['event-1']).toBeNull();
     });
+
+    it('creates event with sendSchedulingMessage', async () => {
+      vi.mocked(jmapClient.getPrimaryAccount).mockReturnValue('account-1');
+      vi.mocked(jmapClient.request).mockResolvedValue({
+        methodResponses: [
+          [
+            'CalendarEvent/set',
+            {
+              accountId: 'account-1',
+              oldState: 'old-state',
+              newState: 'new-state',
+              created: {
+                'create-123456': {
+                  id: 'event-new',
+                  calendarIds: { 'cal-1': true },
+                  uid: 'uid-new@example.com',
+                  title: 'New Event with Invite',
+                  start: '2026-04-02T14:00:00Z',
+                  duration: 3600,
+                  created: '2026-04-01T08:00:00Z',
+                  updated: '2026-04-01T08:00:00Z',
+                },
+              },
+            },
+            '0',
+          ],
+        ],
+        sessionState: 'session-state',
+      });
+
+      const { result } = renderHook(() => useCalendarEventActions(), { wrapper: Wrapper });
+
+      const newEvent = await result.current.createEvent(
+        {
+          calendarIds: { 'cal-1': true },
+          title: 'New Event with Invite',
+          start: '2026-04-02T14:00:00Z',
+          duration: 3600,
+        },
+        'whenNeeded'
+      );
+
+      expect(jmapClient.request).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          ['CalendarEvent/set', expect.objectContaining({ sendSchedulingMessage: 'whenNeeded' }), '0'],
+        ]),
+        ['urn:ietf:params:jmap:calendars']
+      );
+      expect(newEvent.created).toBeDefined();
+    });
   });
 
   describe('useCalendarChanges', () => {
@@ -794,9 +911,7 @@ describe('useCalendars hooks', () => {
   describe('useCalendarEventChanges', () => {
     it('fetches calendar event changes', async () => {
       vi.mocked(jmapClient.getPrimaryAccount).mockReturnValue('account-1');
-      vi.mocked(jmapClient.hasCapability).mockImplementation((urn: string) =>
-        urn === 'urn:ietf:params:jmap:calendarEvents'
-      );
+      vi.mocked(jmapClient.hasCapability).mockReturnValue(true);
       vi.mocked(jmapClient.request).mockResolvedValue({
         methodResponses: [
           [
@@ -829,7 +944,7 @@ describe('useCalendars hooks', () => {
       const mockEvents: CalendarEvent[] = [
         {
           id: 'event-1',
-          calendarId: 'cal-1',
+          calendarIds: { 'cal-1': true },
           uid: 'uid-1@example.com',
           title: 'Morning Meeting',
           start: '2026-04-02T09:00:00Z',
@@ -840,9 +955,7 @@ describe('useCalendars hooks', () => {
       ];
 
       vi.mocked(jmapClient.getPrimaryAccount).mockReturnValue('account-1');
-      vi.mocked(jmapClient.hasCapability).mockImplementation((urn: string) =>
-        urn === 'urn:ietf:params:jmap:calendarEvents'
-      );
+      vi.mocked(jmapClient.hasCapability).mockReturnValue(true);
       vi.mocked(jmapClient.request).mockResolvedValue({
         methodResponses: [
           [
@@ -873,7 +986,7 @@ describe('useCalendars hooks', () => {
       const mockEvents: CalendarEvent[] = [
         {
           id: 'event-today',
-          calendarId: 'cal-1',
+          calendarIds: { 'cal-1': true },
           uid: 'uid-today@example.com',
           title: 'Today\'s Meeting',
           start: new Date().toISOString(),
@@ -884,9 +997,7 @@ describe('useCalendars hooks', () => {
       ];
 
       vi.mocked(jmapClient.getPrimaryAccount).mockReturnValue('account-1');
-      vi.mocked(jmapClient.hasCapability).mockImplementation((urn: string) =>
-        urn === 'urn:ietf:params:jmap:calendarEvents'
-      );
+      vi.mocked(jmapClient.hasCapability).mockReturnValue(true);
       vi.mocked(jmapClient.request).mockResolvedValue({
         methodResponses: [
           [
@@ -907,6 +1018,462 @@ describe('useCalendars hooks', () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(result.current.data).toBeDefined();
+    });
+  });
+
+  describe('useCalendarEventCopy', () => {
+    it('copies events successfully', async () => {
+      vi.mocked(jmapClient.getPrimaryAccount).mockReturnValue('account-1');
+      vi.mocked(jmapClient.request).mockResolvedValue({
+        methodResponses: [
+          [
+            'CalendarEvent/copy',
+            {
+              accountId: 'account-1',
+              oldState: 'old-state',
+              newState: 'new-state',
+              copied: {
+                'event-1': {
+                  id: 'event-1-copy',
+                  calendarIds: { 'cal-2': true },
+                  uid: 'uid-copy@example.com',
+                  title: 'Copied Event',
+                  start: '2026-04-02T10:00:00Z',
+                  duration: 3600,
+                  created: '2026-04-01T08:00:00Z',
+                  updated: '2026-04-01T08:00:00Z',
+                },
+              },
+            },
+            '0',
+          ],
+        ],
+        sessionState: 'session-state',
+      });
+
+      const { result } = renderHook(() => useCalendarEventCopy(), { wrapper: Wrapper });
+
+      const copyResult = await result.current.mutateAsync({
+        ids: ['event-1'],
+        calendarIds: { 'event-1': { 'cal-2': true } },
+      });
+
+      expect(copyResult.copied).toBeDefined();
+      expect(copyResult.copied?.['event-1']).toMatchObject({
+        id: 'event-1-copy',
+        title: 'Copied Event',
+      });
+      expect(jmapClient.request).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          ['CalendarEvent/copy', expect.objectContaining({ ids: ['event-1'] }), '0'],
+        ]),
+        ['urn:ietf:params:jmap:calendars']
+      );
+    });
+  });
+
+  describe('useCalendarEventQueryChanges', () => {
+    it('fetches query changes for calendar events', async () => {
+      vi.mocked(jmapClient.getPrimaryAccount).mockReturnValue('account-1');
+      vi.mocked(jmapClient.hasCapability).mockReturnValue(true);
+      vi.mocked(jmapClient.request).mockResolvedValue({
+        methodResponses: [
+          [
+            'CalendarEvent/queryChanges',
+            {
+              accountId: 'account-1',
+              oldQueryState: 'old-query-state',
+              newQueryState: 'new-query-state',
+              total: 3,
+              added: [{ id: 'event-3', index: 0 }],
+              removed: ['event-1'],
+            },
+            '0',
+          ],
+        ],
+        sessionState: 'session-state',
+      });
+
+      const { result } = renderHook(
+        () => useCalendarEventQueryChanges({ sinceQueryState: 'old-query-state' }),
+        { wrapper: Wrapper }
+      );
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(result.current.data?.added).toEqual([{ id: 'event-3', index: 0 }]);
+      expect(result.current.data?.removed).toEqual(['event-1']);
+    });
+  });
+
+  describe('useCalendarEventParse', () => {
+    it('parses iCalendar data into events', async () => {
+      vi.mocked(jmapClient.getPrimaryAccount).mockReturnValue('account-1');
+      vi.mocked(jmapClient.request).mockResolvedValue({
+        methodResponses: [
+          [
+            'CalendarEvent/parse',
+            {
+              accountId: 'account-1',
+              parsed: {
+                'blob-1': {
+                  id: 'event-parsed',
+                  calendarIds: {},
+                  uid: 'parsed-uid@example.com',
+                  title: 'Parsed Event',
+                  start: '2026-04-02T10:00:00Z',
+                  duration: 3600,
+                  created: '2026-04-01T08:00:00Z',
+                  updated: '2026-04-01T08:00:00Z',
+                },
+              },
+            },
+            '0',
+          ],
+        ],
+        sessionState: 'session-state',
+      });
+
+      const { result } = renderHook(() => useCalendarEventParse(), { wrapper: Wrapper });
+
+      const parseResult = await result.current.mutateAsync({ blobIds: ['blob-1'] });
+
+      expect(parseResult.parsed).toBeDefined();
+      expect(parseResult.parsed?.['blob-1']).toMatchObject({ title: 'Parsed Event' });
+      expect(jmapClient.request).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          ['CalendarEvent/parse', expect.objectContaining({ blobIds: ['blob-1'] }), '0'],
+        ]),
+        ['urn:ietf:params:jmap:calendars', 'urn:ietf:params:jmap:calendars:parse']
+      );
+    });
+  });
+
+  describe('useParticipantIdentities', () => {
+    it('fetches participant identities', async () => {
+      vi.mocked(jmapClient.getPrimaryAccount).mockReturnValue('account-1');
+      vi.mocked(jmapClient.hasCapability).mockReturnValue(true);
+      vi.mocked(jmapClient.request).mockResolvedValue({
+        methodResponses: [
+          [
+            'ParticipantIdentity/get',
+            {
+              accountId: 'account-1',
+              state: 'state-1',
+              list: [
+                {
+                  id: 'pi-1',
+                  email: 'user@example.com',
+                  name: 'Test User',
+                  defaultParticipationStatus: null,
+                  mayInvite: true,
+                  created: '2026-01-01T00:00:00Z',
+                  updated: '2026-01-01T00:00:00Z',
+                },
+              ],
+            },
+            '0',
+          ],
+        ],
+        sessionState: 'session-state',
+      });
+
+      const { result } = renderHook(() => useParticipantIdentities(), { wrapper: Wrapper });
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(result.current.data).toHaveLength(1);
+      expect(result.current.data?.[0].email).toBe('user@example.com');
+    });
+  });
+
+  describe('useParticipantIdentityActions', () => {
+    it('creates a participant identity', async () => {
+      vi.mocked(jmapClient.getPrimaryAccount).mockReturnValue('account-1');
+      vi.mocked(jmapClient.request).mockResolvedValue({
+        methodResponses: [
+          [
+            'ParticipantIdentity/set',
+            {
+              accountId: 'account-1',
+              newState: 'new-state',
+              created: {
+                'create-123456': {
+                  id: 'pi-new',
+                  email: 'new@example.com',
+                  name: 'New User',
+                  defaultParticipationStatus: null,
+                  mayInvite: true,
+                  created: '2026-01-01T00:00:00Z',
+                  updated: '2026-01-01T00:00:00Z',
+                },
+              },
+            },
+            '0',
+          ],
+        ],
+        sessionState: 'session-state',
+      });
+
+      const { result } = renderHook(() => useParticipantIdentityActions(), { wrapper: Wrapper });
+
+      const created = await result.current.createIdentity({
+        email: 'new@example.com',
+        name: 'New User',
+      });
+
+      expect(created.created).toBeDefined();
+      expect(created.created?.['create-123456']).toMatchObject({ email: 'new@example.com' });
+    });
+  });
+
+  describe('useParticipantIdentityChanges', () => {
+    it('fetches participant identity changes', async () => {
+      vi.mocked(jmapClient.getPrimaryAccount).mockReturnValue('account-1');
+      vi.mocked(jmapClient.hasCapability).mockReturnValue(true);
+      vi.mocked(jmapClient.request).mockResolvedValue({
+        methodResponses: [
+          [
+            'ParticipantIdentity/changes',
+            {
+              accountId: 'account-1',
+              oldState: 'old-state',
+              newState: 'new-state',
+              hasMoreChanges: false,
+              created: ['pi-3'],
+              updated: ['pi-1'],
+              destroyed: ['pi-2'],
+            },
+            '0',
+          ],
+        ],
+        sessionState: 'session-state',
+      });
+
+      const { result } = renderHook(() => useParticipantIdentityChanges('old-state'), { wrapper: Wrapper });
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(result.current.data?.created).toEqual(['pi-3']);
+    });
+  });
+
+  describe('useCalendarEventNotifications', () => {
+    it('fetches calendar event notifications', async () => {
+      vi.mocked(jmapClient.getPrimaryAccount).mockReturnValue('account-1');
+      vi.mocked(jmapClient.hasCapability).mockReturnValue(true);
+      vi.mocked(jmapClient.request).mockResolvedValue({
+        methodResponses: [
+          [
+            'CalendarEventNotification/get',
+            {
+              accountId: 'account-1',
+              state: 'state-1',
+              list: [
+                {
+                  id: 'notif-1',
+                  type: 'invite',
+                  summary: 'New event invitation',
+                  eventId: 'event-1',
+                  calendarId: 'cal-1',
+                  created: '2026-04-01T08:00:00Z',
+                  isRead: false,
+                },
+              ],
+            },
+            '0',
+          ],
+        ],
+        sessionState: 'session-state',
+      });
+
+      const { result } = renderHook(() => useCalendarEventNotifications(), { wrapper: Wrapper });
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(result.current.data).toHaveLength(1);
+      expect(result.current.data?.[0].type).toBe('invite');
+    });
+  });
+
+  describe('useCalendarEventNotificationQuery', () => {
+    it('queries calendar event notifications', async () => {
+      vi.mocked(jmapClient.getPrimaryAccount).mockReturnValue('account-1');
+      vi.mocked(jmapClient.hasCapability).mockReturnValue(true);
+      vi.mocked(jmapClient.request).mockResolvedValue({
+        methodResponses: [
+          [
+            'CalendarEventNotification/query',
+            {
+              accountId: 'account-1',
+              queryState: 'q-state-1',
+              canCalculateChanges: true,
+              position: 0,
+              total: 2,
+              ids: ['notif-1', 'notif-2'],
+            },
+            '0',
+          ],
+        ],
+        sessionState: 'session-state',
+      });
+
+      const { result } = renderHook(() => useCalendarEventNotificationQuery({ isRead: false }), { wrapper: Wrapper });
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(result.current.data?.ids).toHaveLength(2);
+      expect(result.current.data?.total).toBe(2);
+    });
+  });
+
+  describe('useCalendarEventNotificationQueryChanges', () => {
+    it('fetches query changes for notifications', async () => {
+      vi.mocked(jmapClient.getPrimaryAccount).mockReturnValue('account-1');
+      vi.mocked(jmapClient.hasCapability).mockReturnValue(true);
+      vi.mocked(jmapClient.request).mockResolvedValue({
+        methodResponses: [
+          [
+            'CalendarEventNotification/queryChanges',
+            {
+              accountId: 'account-1',
+              oldQueryState: 'old-state',
+              newQueryState: 'new-state',
+              added: [{ id: 'notif-3', index: 0 }],
+              removed: ['notif-1'],
+            },
+            '0',
+          ],
+        ],
+        sessionState: 'session-state',
+      });
+
+      const { result } = renderHook(
+        () => useCalendarEventNotificationQueryChanges({ sinceQueryState: 'old-state' }),
+        { wrapper: Wrapper }
+      );
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(result.current.data?.added).toEqual([{ id: 'notif-3', index: 0 }]);
+    });
+  });
+
+  describe('useCalendarEventNotificationChanges', () => {
+    it('fetches notification changes', async () => {
+      vi.mocked(jmapClient.getPrimaryAccount).mockReturnValue('account-1');
+      vi.mocked(jmapClient.hasCapability).mockReturnValue(true);
+      vi.mocked(jmapClient.request).mockResolvedValue({
+        methodResponses: [
+          [
+            'CalendarEventNotification/changes',
+            {
+              accountId: 'account-1',
+              oldState: 'old-state',
+              newState: 'new-state',
+              hasMoreChanges: false,
+              created: ['notif-3'],
+              updated: ['notif-1'],
+              destroyed: ['notif-2'],
+            },
+            '0',
+          ],
+        ],
+        sessionState: 'session-state',
+      });
+
+      const { result } = renderHook(() => useCalendarEventNotificationChanges('old-state'), { wrapper: Wrapper });
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(result.current.data?.created).toEqual(['notif-3']);
+    });
+  });
+
+  describe('useCalendarEventNotificationActions', () => {
+    it('marks notification as read', async () => {
+      vi.mocked(jmapClient.getPrimaryAccount).mockReturnValue('account-1');
+      vi.mocked(jmapClient.request).mockResolvedValue({
+        methodResponses: [
+          [
+            'CalendarEventNotification/set',
+            {
+              accountId: 'account-1',
+              newState: 'new-state',
+              updated: {
+                'notif-1': {
+                  id: 'notif-1',
+                  type: 'invite',
+                  summary: 'Read notification',
+                  eventId: 'event-1',
+                  calendarId: 'cal-1',
+                  created: '2026-04-01T08:00:00Z',
+                  isRead: true,
+                },
+              },
+            },
+            '0',
+          ],
+        ],
+        sessionState: 'session-state',
+      });
+
+      const { result } = renderHook(() => useCalendarEventNotificationActions(), { wrapper: Wrapper });
+
+      const markResult = await result.current.markAsRead('notif-1');
+
+      expect(markResult.updated).toBeDefined();
+      expect(jmapClient.request).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          ['CalendarEventNotification/set', expect.objectContaining({
+            update: { 'notif-1': { isRead: true } },
+          }), '0'],
+        ]),
+        ['urn:ietf:params:jmap:calendars']
+      );
+    });
+  });
+
+  describe('usePrincipalAvailability', () => {
+    it('fetches principal availability', async () => {
+      vi.mocked(jmapClient.getPrimaryAccount).mockReturnValue('account-1');
+      vi.mocked(jmapClient.hasCapability).mockReturnValue(true);
+      vi.mocked(jmapClient.request).mockResolvedValue({
+        methodResponses: [
+          [
+            'Principal/getAvailability',
+            {
+              accountId: 'account-1',
+              list: {
+                'principal-1': {
+                  id: 'principal-1',
+                  busy: [
+                    { start: '2026-04-02T09:00:00Z', end: '2026-04-02T10:00:00Z', status: 'busy' },
+                  ],
+                  isAvailable: false,
+                },
+              },
+            },
+            '0',
+          ],
+        ],
+        sessionState: 'session-state',
+      });
+
+      const { result } = renderHook(
+        () => usePrincipalAvailability({
+          ids: ['principal-1'],
+          start: '2026-04-02T00:00:00Z',
+          end: '2026-04-02T23:59:59Z',
+        }),
+        { wrapper: Wrapper }
+      );
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(result.current.data?.list['principal-1']).toBeDefined();
+      expect(result.current.data?.list['principal-1'].busy).toHaveLength(1);
+      expect(result.current.data?.list['principal-1'].isAvailable).toBe(false);
     });
   });
 });

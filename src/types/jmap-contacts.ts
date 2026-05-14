@@ -175,6 +175,18 @@ export interface Media {
 }
 
 /**
+ * Title (job title) per RFC 9553 §2.3.1
+ */
+export interface Title {
+  /** The job title value */
+  value: string;
+  /** Contexts where this title is used (e.g., 'work', 'private') */
+  contexts?: Record<string, boolean>;
+  /** Label for this title */
+  label?: string;
+}
+
+/**
  * Note about a contact
  */
 export interface Note {
@@ -204,6 +216,8 @@ export interface ContactCard {
   nicknames?: Record<string, Nickname>;
   /** Organizations the contact belongs to */
   organizations?: Record<string, Organization>;
+  /** Job titles per RFC 9553 §2.3.1 */
+  title?: Record<string, Title>;
   /** Email addresses */
   emails?: Record<string, EmailAddress>;
   /** Phone numbers */
@@ -216,8 +230,8 @@ export interface ContactCard {
   photos?: Record<string, Media>;
   /** Notes about the contact */
   notes?: Record<string, Note>;
-  /** Members (for group contacts) - set of uids */
-  members?: string[];
+  /** Members (for group contacts) - map of uid to true per RFC 9610 §3 */
+  members?: Record<string, boolean>;
 }
 
 // ============ Filter Types ============
@@ -542,7 +556,7 @@ export interface ContactCardSetResponse {
 export interface ContactCardCopyRequest {
   accountId: string;
   fromAccountId: string;
-  create: Record<string, { id: string }>;
+  create: Record<string, string>;
   onSuccessDestroyOriginal?: boolean;
 }
 

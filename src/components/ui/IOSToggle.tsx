@@ -47,7 +47,7 @@ export function IOSToggle({
       role="switch"
       aria-checked={checked}
       aria-label={ariaLabel || label}
-      className={`relative w-[51px] h-[31px] rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-icloud-accent/50 ${
+      className={`relative w-[51px] h-[31px] rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-icloud-accent ${
         checked ? 'bg-icloud-green' : 'bg-icloud-border'
       } ${className}`}
     >

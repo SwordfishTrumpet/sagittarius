@@ -32,6 +32,7 @@ interface VirtualMessageListProps {
   onArchive?: (emailId: string) => void;
   onDelete?: (emailId: string) => void;
   onOpenDraft?: (emailId: string) => void;
+  onMoveToFolder?: (emailId: string) => void;
   onRefresh?: () => Promise<unknown>;
 }
 
@@ -60,6 +61,7 @@ export function VirtualMessageList({
   onArchive,
   onDelete,
   onOpenDraft,
+  onMoveToFolder,
   onRefresh,
 }: VirtualMessageListProps) {
   const virtuosoRef = useRef<VirtuosoHandle>(null);
@@ -119,8 +121,14 @@ export function VirtualMessageList({
         variant: 'destructive' as const,
         onSelect: () => onDelete?.(contextMenu.emailId),
       },
+      {
+        id: 'move-to-folder',
+        label: 'Move to Folder…',
+        divider: true,
+        onSelect: () => onMoveToFolder?.(contextMenu.emailId),
+      },
     ];
-  }, [contextMenu, emails, onReply, onReplyAll, onForward, onToggleFlag, onArchive, onDelete]);
+  }, [contextMenu, emails, onReply, onReplyAll, onForward, onToggleFlag, onArchive, onDelete, onMoveToFolder]);
 
   // Handle context menu open from message item
   const handleContextMenu = useCallback(
