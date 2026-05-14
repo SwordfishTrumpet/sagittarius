@@ -1,4 +1,4 @@
-import { Mail, Send, FileText, Archive, Trash2, ShieldAlert, Inbox, Star, Plus, ChevronLeft, Settings as SettingsIcon, Wifi, WifiOff, Calendar, Users } from 'lucide-react'
+import { Mail, Send, FileText, Archive, Trash2, ShieldAlert, Inbox, Star, Plus, ChevronLeft, Settings as SettingsIcon, Calendar, Users } from 'lucide-react'
 import { useMemo } from 'react'
 import { SidebarItem } from './SidebarItem'
 import { SidebarSection } from './SidebarSection'
@@ -25,7 +25,6 @@ export interface SidebarProps {
   expandedSections: { mailboxes: boolean; folders: boolean }
   customFolderTree: MailboxNode[]
   hasNewMail: boolean
-  esConnected: boolean
   isOffline: boolean
   quota: Quota | null
   isMobile?: boolean
@@ -82,7 +81,6 @@ export function Sidebar({
   expandedSections,
   customFolderTree,
   hasNewMail,
-  esConnected,
   isOffline,
   quota,
   isMobile = false,
@@ -299,21 +297,11 @@ export function Sidebar({
          {quota && quota.hardLimit && quota.hardLimit > 0 && (
            <QuotaBar used={quota.used || 0} total={quota.hardLimit || 0} />
          )}
-         <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+               <span className="truncate max-w-[100px] font-medium text-icloud-text-primary">{userLabel || 'User'}</span>
+            </div>
            <div className="flex items-center gap-2">
-              <span className="truncate max-w-[100px] font-medium text-icloud-text-primary">{userLabel || 'User'}</span>
-             {isOffline ? (
-               <>
-                  <WifiOff className="w-3 h-3 text-icloud-orange" strokeWidth={2} />
-                  <span className="text-icloud-orange font-medium">Offline cache</span>
-               </>
-             ) : esConnected ? (
-                <Wifi className="w-3 h-3 text-icloud-green" strokeWidth={2} />
-             ) : (
-                <WifiOff className="w-3 h-3 text-icloud-text-secondary" strokeWidth={2} />
-             )}
-           </div>
-          <div className="flex items-center gap-2">
              <button onClick={onOpenSettings} className="p-1 hover:bg-icloud-text-primary/5 dark:hover:bg-icloud-text-primary/10 rounded transition-colors" title="Settings" aria-label="Settings">
                 <SettingsIcon className="w-3.5 h-3.5 text-icloud-text-secondary" strokeWidth={1.5} />
              </button>

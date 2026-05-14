@@ -29,6 +29,12 @@ Thumbs.db
 # TypeScript cache
 *.tsbuildinfo
 
+# Vite / Vitest emitted JS files (source is .ts)
+vite.config.js
+vite.config.d.ts
+vitest.config.js
+vitest.config.d.ts
+
 # OS files
 .DS_Store
 .DS_Store?

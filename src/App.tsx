@@ -345,9 +345,15 @@ function App() {
 
   useEffect(() => {
     if (!moreMenuOpen) return
-    const handleClickOutside = () => setMoreMenuOpen(false)
-    document.addEventListener('click', handleClickOutside)
-    return () => document.removeEventListener('click', handleClickOutside)
+    let listener: (() => void) | null = null
+    const timer = setTimeout(() => {
+      listener = () => setMoreMenuOpen(false)
+      document.addEventListener('click', listener)
+    }, 0)
+    return () => {
+      clearTimeout(timer)
+      if (listener) document.removeEventListener('click', listener)
+    }
   }, [moreMenuOpen])
 
   // Keyboard shortcuts
@@ -549,7 +555,6 @@ function App() {
           expandedSections={expandedSections}
           customFolderTree={customFolderTree}
           hasNewMail={hasNewMail}
-          esConnected={pushConnected}
           isOffline={isOffline}
           quota={quota ?? null}
           isMobile={isMobile}
