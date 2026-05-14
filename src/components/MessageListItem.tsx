@@ -198,7 +198,7 @@ function MessageListItemComponent({
           <div className={`text-[13px] mb-1 truncate leading-tight ${unread ? 'font-bold text-icloud-text-primary' : 'font-semibold text-icloud-text-primary opacity-90'}`}>{subject}</div>
           {sanitizedSearchSnippet ? (
             <div 
-              className={`text-[13px] line-clamp-2 leading-snug tracking-tight ${selected || isMultiSelected ? 'text-icloud-text-primary' : 'text-icloud-text-secondary'} [&_mark]:bg-[#FFD60A]/40 [&_mark]:text-icloud-text-primary dark:[&_mark]:text-white [&_mark]:rounded-sm [&_mark]:px-0.5`}
+              className={`text-[13px] line-clamp-2 leading-snug tracking-tight ${selected || isMultiSelected ? 'text-icloud-text-primary' : 'text-icloud-text-secondary'} [&_mark]:bg-icloud-yellow/40 [&_mark]:text-icloud-text-primary dark:[&_mark]:text-white [&_mark]:rounded-sm [&_mark]:px-0.5`}
               dangerouslySetInnerHTML={{ __html: sanitizedSearchSnippet }}
             />
           ) : (

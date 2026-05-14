@@ -52,10 +52,10 @@ export function AccountSwitcher({ className = '' }: AccountSwitcherProps) {
       'bg-icloud-green',
       'bg-icloud-orange',
       'bg-icloud-red',
-      'bg-[#5856D6]',
-      'bg-[#ff2d55]',
-      'bg-[#5AC8FA]',
-      'bg-[#af52de]',
+      'bg-icloud-system-purple',
+      'bg-icloud-system-pink',
+      'bg-icloud-system-blue',
+      'bg-icloud-system-magenta',
     ];
     let hash = 0;
     for (let i = 0; i < name.length; i++) {
@@ -257,10 +257,10 @@ export function CompactAccountSwitcher({ className = '' }: AccountSwitcherProps)
       'bg-icloud-green',
       'bg-icloud-orange',
       'bg-icloud-red',
-      'bg-[#5856D6]',
-      'bg-[#ff2d55]',
-      'bg-[#5AC8FA]',
-      'bg-[#af52de]',
+      'bg-icloud-system-purple',
+      'bg-icloud-system-pink',
+      'bg-icloud-system-blue',
+      'bg-icloud-system-magenta',
     ];
     let hash = 0;
     for (let i = 0; i < name.length; i++) {

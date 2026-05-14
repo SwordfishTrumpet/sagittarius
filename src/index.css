@@ -77,6 +77,11 @@
 
   --icloud-selection-bg: #0071e3;
   --icloud-selection-text: #ffffff;
+
+  --icloud-system-purple: #5856D6;
+  --icloud-system-pink: #ff2d55;
+  --icloud-system-blue: #5AC8FA;
+  --icloud-system-magenta: #af52de;
 }
 
 /* ── Dark Mode ── */
@@ -111,6 +116,11 @@
 
   --icloud-shadow-color: rgba(0, 0, 0, 0.65);
   --icloud-shadow-standard: 0 11px 34px rgba(0, 0, 0, 0.65);
+
+  --icloud-system-purple: #5856D6;
+  --icloud-system-pink: #ff2d55;
+  --icloud-system-blue: #5AC8FA;
+  --icloud-system-magenta: #af52de;
 
   --icloud-scrollbar-thumb: #48484a;
   --icloud-scrollbar-thumb-hover: #636366;
