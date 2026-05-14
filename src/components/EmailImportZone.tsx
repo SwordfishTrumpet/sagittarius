@@ -151,7 +151,7 @@ export function EmailImportZone({ mailboxId }: EmailImportZoneProps) {
     <>
       {isVisible && (
         <div
-          className="fixed inset-0 z-[60] bg-white/80 bg-icloud-bg-primary/80 backdrop-blur-xl flex flex-col items-center justify-center pointer-events-none"
+          className="fixed inset-0 z-[60] bg-white/80 bg-icloud-bg-primary/80 backdrop-blur-xl flex flex-col items-center justify-center pointer-events-none dark:bg-icloud-bg-layer2/80"
           aria-hidden="true"
         >
           {/* Dashed border drop area */}
@@ -159,7 +159,7 @@ export function EmailImportZone({ mailboxId }: EmailImportZoneProps) {
             className={`flex flex-col items-center justify-center gap-5 w-80 h-56 rounded-3xl border-2 border-dashed transition-all duration-200 ${
               isDragOver
                 ? 'border-icloud-accent dark:border-icloud-accent bg-icloud-accent/8'
-                : 'border-icloud-gray3 dark:border-icloud-gray2 bg-white/40 bg-icloud-bg-primary/40'
+                : 'border-icloud-gray3 dark:border-icloud-gray2 bg-white/40 bg-icloud-bg-primary/40 dark:bg-icloud-bg-layer2/40'
             }`}
           >
             <div

@@ -64,7 +64,7 @@ export function Login({ onLoginSuccess }: { onLoginSuccess: () => void }) {
 
   return (
     <div className="fixed inset-0 bg-icloud-bg-layer1 bg-icloud-bg-primary flex items-center justify-center z-50 p-4">
-      <div className="max-w-md w-full bg-white/80 bg-icloud-bg-primary/80 backdrop-blur-xl border border-icloud-border rounded-2xl shadow-2xl p-8 overflow-hidden relative">
+      <div className="max-w-md w-full bg-white/80 bg-icloud-bg-primary/80 backdrop-blur-xl border border-icloud-border rounded-2xl shadow-2xl p-8 overflow-hidden relative dark:bg-icloud-bg-layer2/80">
         {/* Apple Style Gradient Accent */}
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-icloud-accent to-purple-600" />
         
@@ -78,7 +78,7 @@ export function Login({ onLoginSuccess }: { onLoginSuccess: () => void }) {
 
         <form onSubmit={handleLogin} className="space-y-4">
           {lockoutSeconds && (
-            <div className="bg-orange-50 text-orange-700 text-sm py-3 px-4 rounded-xl border border-orange-200 flex items-center gap-2">
+            <div className="bg-icloud-orange/10 text-icloud-orange text-sm py-3 px-4 rounded-xl border border-icloud-orange/20 flex items-center gap-2">
               <Lock className="w-4 h-4" />
               <span>Account temporarily locked. Try again in {Math.ceil(lockoutSeconds / 60)} minutes.</span>
             </div>
@@ -125,7 +125,7 @@ export function Login({ onLoginSuccess }: { onLoginSuccess: () => void }) {
           </div>
 
           {error && (
-            <div id="login-error" role="alert" className="bg-red-50 text-red-500 text-xs py-2 px-3 rounded-lg border border-red-100 animate-in fade-in slide-in-from-top-1">
+            <div id="login-error" role="alert" className="bg-icloud-red/10 text-icloud-red text-xs py-2 px-3 rounded-lg border border-icloud-red/20 animate-in fade-in slide-in-from-top-1">
               {error}
             </div>
           )}

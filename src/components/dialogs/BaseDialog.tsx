@@ -37,7 +37,7 @@ export function BaseDialog({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className="bg-white/95 bg-icloud-bg-primary/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-icloud-border max-w-md w-full mx-4"
+        className="bg-white/95 bg-icloud-bg-primary/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-icloud-border max-w-md w-full mx-4 dark:bg-icloud-bg-layer2"
       >
         <div className="flex items-center justify-between px-6 py-4 border-b border-icloud-border">
           <h2 id={titleId} className="text-[17px] font-bold text-icloud-text-primary">

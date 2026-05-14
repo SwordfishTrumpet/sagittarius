@@ -122,7 +122,7 @@ export function AccountSwitcher({ className = '' }: AccountSwitcherProps) {
             absolute right-0 top-full mt-2 w-72
             bg-white/95 bg-icloud-bg-primary/95 backdrop-blur-xl
             rounded-xl shadow-2xl border border-icloud-border
-            py-2 z-50
+            py-2 z-50 dark:bg-icloud-bg-layer2
             animate-in fade-in slide-in-from-top-2 duration-150
           `}
           role="listbox"
@@ -298,7 +298,7 @@ export function CompactAccountSwitcher({ className = '' }: AccountSwitcherProps)
             absolute right-0 top-full mt-1 w-64
             bg-white/95 bg-icloud-bg-primary/95 backdrop-blur-xl
             rounded-lg shadow-xl border border-icloud-border
-            py-1 z-50
+            py-1 z-50 dark:bg-icloud-bg-layer2
           "
         >
           {accounts.map((account) => (

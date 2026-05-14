@@ -317,7 +317,7 @@ export function ContextMenu({ items, x, y, onClose }: ContextMenuProps) {
         left: `${adjustedPos.x}px`,
       }}
     >
-      <div className="bg-white/95 bg-icloud-bg-primary/95 backdrop-blur-xl border border-icloud-border rounded-lg shadow-lg overflow-hidden" role="menu" aria-label="Context menu" onKeyDown={handleMenuKeyDown}>
+      <div className="bg-white/95 bg-icloud-bg-primary/95 backdrop-blur-xl border border-icloud-border rounded-lg shadow-lg overflow-hidden dark:bg-icloud-bg-layer2" role="menu" aria-label="Context menu" onKeyDown={handleMenuKeyDown}>
         {items.map((item, index) => (
           <div key={item.id}>
             {item.divider && index > 0 && (
@@ -352,7 +352,7 @@ export function ContextMenu({ items, x, y, onClose }: ContextMenuProps) {
             {/* Submenu */}
             {activeSubmenu === item.id && item.submenu && item.submenu.length > 0 && (
               <div
-                className="fixed bg-white/95 bg-icloud-bg-primary/95 backdrop-blur-xl border border-icloud-border rounded-lg shadow-lg overflow-hidden py-1"
+                className="fixed bg-white/95 bg-icloud-bg-primary/95 backdrop-blur-xl border border-icloud-border rounded-lg shadow-lg overflow-hidden py-1 dark:bg-icloud-bg-layer2"
                 style={{
                   top: `${adjustedPos.y + submenuPos.top}px`,
                   left: `${adjustedPos.x + submenuPos.left + 4}px`,

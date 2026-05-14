@@ -745,7 +745,7 @@ export function CalendarView({ isOpen, onClose }: CalendarViewProps) {
   if (!hasCapability) {
     return (
       <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-icloud-bg-primary/30 backdrop-blur-sm">
-        <div className="bg-white/95 bg-icloud-bg-primary/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-icloud-border max-w-md w-full mx-4 p-8 text-center">
+        <div className="bg-white/95 bg-icloud-bg-primary/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-icloud-border max-w-md w-full mx-4 p-8 text-center dark:bg-icloud-bg-layer2">
           <AlertCircle className="w-12 h-12 text-icloud-orange mx-auto mb-4" strokeWidth={1.5} />
           <h2 className="text-[17px] font-bold text-icloud-text-primary mb-2">Calendar Not Available</h2>
           <p className="text-[14px] text-icloud-text-secondary  mb-6">

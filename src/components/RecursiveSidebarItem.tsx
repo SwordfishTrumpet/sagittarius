@@ -306,7 +306,7 @@ export function RecursiveSidebarItem({
         {isEditing && isCustomFolder && (
           <button
             onClick={handleDeleteClick}
-            className="flex items-center justify-center min-w-[24px] min-h-[24px] w-5 h-5 shrink-0 text-red-500 hover:opacity-70 transition-opacity"
+            className="flex items-center justify-center min-w-[24px] min-h-[24px] w-5 h-5 shrink-0 text-icloud-red hover:opacity-70 transition-opacity"
             title="Delete folder"
           >
             <MinusCircle className="w-4 h-4" strokeWidth={2} />
@@ -331,7 +331,7 @@ export function RecursiveSidebarItem({
               className={`text-[14px] leading-none font-medium flex-1 min-w-0 px-1 rounded border-0 outline-none ${
                 active
                   ? 'bg-white/20 dark:bg-white/10 text-white text-icloud-text-primary placeholder-white/60'
-                  : 'bg-white/10 text-icloud-text-primary placeholder-icloud-text-tertiary'
+                  : 'bg-white/10 dark:bg-white/5 text-icloud-text-primary placeholder-icloud-text-tertiary'
               }`}
               onClick={(e) => e.stopPropagation()}
             />
