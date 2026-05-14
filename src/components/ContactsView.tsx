@@ -203,7 +203,7 @@ function ContactDetail({
     <div className="flex-1 overflow-auto">
       {/* Header */}
       <div className="text-center p-8 border-b border-icloud-border">
-        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-icloud-accent to-[#5856D6] flex items-center justify-center text-[32px] font-bold text-white mx-auto mb-4 shadow-lg">
+        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-icloud-accent to-purple-600 flex items-center justify-center text-[32px] font-bold text-white mx-auto mb-4 shadow-lg">
           {initials}
         </div>
         <h2 className="text-[22px] font-semibold text-icloud-text-primary">{name}</h2>

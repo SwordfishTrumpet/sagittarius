@@ -52,7 +52,7 @@ export function DeleteFolderDialog({
           <button
             onClick={onConfirm}
             disabled={isLoading}
-            className="flex-1 px-4 py-2 bg-icloud-red text-white rounded-lg font-medium text-[13px] hover:bg-[#E61D0A] transition-colors disabled:opacity-50"
+            className="flex-1 px-4 py-2 bg-icloud-red text-white rounded-lg font-medium text-[13px] hover:bg-icloud-red/80 transition-colors disabled:opacity-50"
           >
             {isLoading ? 'Deleting...' : 'Delete'}
           </button>

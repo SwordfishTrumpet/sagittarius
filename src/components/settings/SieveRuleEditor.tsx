@@ -160,7 +160,7 @@ export function SieveRuleEditor({
               if (e.target.value.trim()) setNameError('');
             }}
             placeholder="My rule"
-            className={`w-full px-3 py-2 rounded-xl border text-[14px] bg-icloud-card placeholder-[#C7C7CC]   focus:outline-none focus:ring-2 focus:ring-icloud-accent transition ${
+            className={`w-full px-3 py-2 rounded-xl border text-[14px] bg-icloud-card placeholder-icloud-text-tertiary   focus:outline-none focus:ring-2 focus:ring-icloud-accent transition ${
               nameError ? 'border-[icloud-red]' : 'border-icloud-border'
             }`}
           />
@@ -243,7 +243,7 @@ export function SieveRuleEditor({
                   value={cond.value}
                   onChange={(e) => updateCondition(i, { value: e.target.value })}
                   placeholder={cond.field === 'size' ? 'bytes, e.g. 1048576' : 'value…'}
-                  className="flex-1 min-w-0 px-3 py-1.5 rounded-lg border border-icloud-border text-[13px] bg-icloud-card placeholder-[#C7C7CC]   focus:outline-none focus:ring-2 focus:ring-icloud-accent"
+                  className="flex-1 min-w-0 px-3 py-1.5 rounded-lg border border-icloud-border text-[13px] bg-icloud-card placeholder-icloud-text-tertiary   focus:outline-none focus:ring-2 focus:ring-icloud-accent"
                 />
 
                 {/* Remove */}
@@ -305,7 +305,7 @@ export function SieveRuleEditor({
                     value={action.value ?? ''}
                     onChange={(e) => updateAction(i, { value: e.target.value })}
                     placeholder={actionValuePlaceholder(action.type)}
-                    className="flex-1 min-w-0 px-3 py-1.5 rounded-lg border border-icloud-border text-[13px] bg-icloud-card placeholder-[#C7C7CC]   focus:outline-none focus:ring-2 focus:ring-icloud-accent"
+                    className="flex-1 min-w-0 px-3 py-1.5 rounded-lg border border-icloud-border text-[13px] bg-icloud-card placeholder-icloud-text-tertiary   focus:outline-none focus:ring-2 focus:ring-icloud-accent"
                   />
                 ) : (
                   <span className="flex-1" />
@@ -370,7 +370,7 @@ export function SieveRuleEditor({
           type="button"
           onClick={handleSave}
           disabled={isSaving}
-          className="px-4 py-2 text-[13px] font-semibold text-white bg-icloud-accent hover:bg-[#0051D5] rounded-xl transition-colors disabled:opacity-60 flex items-center gap-2 shadow-sm"
+          className="px-4 py-2 text-[13px] font-semibold text-white bg-icloud-accent hover:bg-icloud-accent-hover rounded-xl transition-colors disabled:opacity-60 flex items-center gap-2 shadow-sm"
         >
           {isSaving && (
             <RefreshCw className="w-3.5 h-3.5 animate-spin" strokeWidth={2} />

@@ -331,7 +331,7 @@ export function RecursiveSidebarItem({
               className={`text-[14px] leading-none font-medium flex-1 min-w-0 px-1 rounded border-0 outline-none ${
                 active
                   ? 'bg-white/20 dark:bg-white/10 text-white text-icloud-text-primary placeholder-white/60'
-                  : 'bg-white/10 text-icloud-text-primary placeholder-[#1C1C1E]/40'
+                  : 'bg-white/10 text-icloud-text-primary placeholder-icloud-text-tertiary'
               }`}
               onClick={(e) => e.stopPropagation()}
             />

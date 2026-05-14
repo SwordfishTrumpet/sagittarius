@@ -163,28 +163,15 @@ body {
   margin: 0;
   padding: 0 0 0 12px;
   border-left: 2px solid var(--icloud-accent);
-  color: #3a3a3c;
-}
-
-.dark .ProseMirror blockquote {
-  border-left-color: var(--icloud-accent);
-  color: #a1a1a6;
+  color: var(--icloud-text-secondary);
 }
 
 .ProseMirror blockquote blockquote {
-  border-left-color: #8e8e93;
-}
-
-.dark .ProseMirror blockquote blockquote {
-  border-left-color: #636366;
+  border-left-color: var(--icloud-gray2);
 }
 
 .ProseMirror blockquote blockquote blockquote {
-  border-left-color: #c7c7cc;
-}
-
-.dark .ProseMirror blockquote blockquote blockquote {
-  border-left-color: #48484a;
+  border-left-color: var(--icloud-gray3);
 }
 
 .resize-handle {

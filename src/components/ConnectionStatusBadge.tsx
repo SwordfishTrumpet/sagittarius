@@ -31,7 +31,7 @@ function getBadgeConfig({
         ? `${pendingCount} queued change${pendingCount === 1 ? '' : 's'} will sync once you reconnect.`
         : 'Showing cached mail until the network returns.',
       icon: <WifiOff className="h-3.5 w-3.5" strokeWidth={1.75} />,
-      className: 'bg-icloud-orange/10 text-icloud-orange border-[#FF9500]/15',
+      className: 'bg-icloud-orange/10 text-icloud-orange border-icloud-orange/15',
       count: pendingCount > 0 ? pendingCount : undefined,
     }
   }
@@ -63,7 +63,7 @@ function getBadgeConfig({
       label: 'Reconnecting',
       detail: 'Live push updates are degraded while Sagittarius reconnects in the background.',
       icon: <AlertCircle className="h-3.5 w-3.5" strokeWidth={1.75} />,
-      className: 'bg-icloud-orange/10 text-icloud-orange border-[#FF9500]/15',
+      className: 'bg-icloud-orange/10 text-icloud-orange border-icloud-orange/15',
     }
   }
 
@@ -80,7 +80,7 @@ function getBadgeConfig({
     label: 'Manual sync',
     detail: 'This server does not expose push updates, so refresh happens without a live connection.',
     icon: <WifiOff className="h-3.5 w-3.5" strokeWidth={1.75} />,
-    className: 'bg-[#8E8E93]/10 text-icloud-text-secondary border-[#8E8E93]/15',
+    className: 'bg-icloud-text-tertiary/10 text-icloud-text-secondary border-icloud-text-tertiary/15',
   }
 }
 

@@ -210,7 +210,7 @@ export function BlobMigrationDialog({
                   <button
                     onClick={handleMigrate}
                     disabled={!canMigrate}
-                    className="flex-1 px-4 py-3 bg-icloud-accent hover:bg-[#0051D5] disabled:bg-[#C7C7CC] disabled:cursor-not-allowed rounded-xl text-[15px] font-medium text-white transition-colors"
+                    className="flex-1 px-4 py-3 bg-icloud-accent hover:bg-icloud-accent-hover disabled:bg-icloud-gray3 disabled:cursor-not-allowed rounded-xl text-[15px] font-medium text-white transition-colors"
                   >
                     {isMigrating ? 'Migrating...' : 'Migrate'}
                   </button>
@@ -218,7 +218,7 @@ export function BlobMigrationDialog({
               ) : (
                 <button
                   onClick={handleClose}
-                  className="w-full px-4 py-3 bg-icloud-accent hover:bg-[#0051D5] rounded-xl text-[15px] font-medium text-white transition-colors"
+                  className="w-full px-4 py-3 bg-icloud-accent hover:bg-icloud-accent-hover rounded-xl text-[15px] font-medium text-white transition-colors"
                 >
                   Done
                 </button>

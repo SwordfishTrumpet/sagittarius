@@ -363,10 +363,10 @@ describe('getDeduplicationStatusText', () => {
 
 describe('getDeduplicationStatusColor', () => {
   it('should return correct status colors', () => {
-    expect(getDeduplicationStatusColor(0)).toBe('#34C759')
-    expect(getDeduplicationStatusColor(1)).toBe('#34C759')
-    expect(getDeduplicationStatusColor(2)).toBe('#FF9500')
-    expect(getDeduplicationStatusColor(3)).toBe('#FF9500')
-    expect(getDeduplicationStatusColor(4)).toBe('#FF3B30')
+    expect(getDeduplicationStatusColor(0)).toBe('var(--icloud-green)')
+    expect(getDeduplicationStatusColor(1)).toBe('var(--icloud-green)')
+    expect(getDeduplicationStatusColor(2)).toBe('var(--icloud-orange)')
+    expect(getDeduplicationStatusColor(3)).toBe('var(--icloud-orange)')
+    expect(getDeduplicationStatusColor(4)).toBe('var(--icloud-red)')
   })
 })

@@ -429,7 +429,7 @@ export function getDeduplicationStatusText(referenceCount: number): string {
  * Get color for deduplication status
  */
 export function getDeduplicationStatusColor(referenceCount: number): string {
-  if (referenceCount <= 1) return '#34C759'; // Green - unique
-  if (referenceCount <= 3) return '#FF9500'; // Orange - light duplication
-  return '#FF3B30'; // Red - heavy duplication
+  if (referenceCount <= 1) return 'var(--icloud-green)';
+  if (referenceCount <= 3) return 'var(--icloud-orange)';
+  return 'var(--icloud-red)';
 }

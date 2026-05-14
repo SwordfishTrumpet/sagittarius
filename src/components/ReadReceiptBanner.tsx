@@ -40,7 +40,7 @@ export function ReadReceiptBanner({
           </button>
           <button
             onClick={onSendReceipt}
-            className="px-3 py-1.5 text-[12px] font-semibold text-white bg-icloud-accent hover:bg-[#0051D5] rounded-lg transition-colors shadow-sm"
+            className="px-3 py-1.5 text-[12px] font-semibold text-white bg-icloud-accent hover:bg-icloud-accent-hover rounded-lg transition-colors shadow-sm"
           >
             Send Receipt
           </button>

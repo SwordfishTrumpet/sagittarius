@@ -89,7 +89,7 @@ export function PullToRefresh({ children, onRefresh, enabled = true }: PullToRef
           <div className="w-5 h-5 border-2 border-icloud-accent border-t-transparent rounded-full animate-spin" />
         ) : (
           <div
-            className="w-5 h-5 border-2 border-[#8E8E93] border-t-transparent rounded-full transition-transform"
+            className="w-5 h-5 border-2 border-icloud-text-tertiary border-t-transparent rounded-full transition-transform"
             style={{
               transform: `rotate(${(pullDistance / PULL_THRESHOLD) * 360}deg)`,
               opacity: pullDistance / PULL_THRESHOLD,

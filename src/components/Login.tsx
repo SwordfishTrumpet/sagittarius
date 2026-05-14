@@ -66,7 +66,7 @@ export function Login({ onLoginSuccess }: { onLoginSuccess: () => void }) {
     <div className="fixed inset-0 bg-icloud-bg-layer1 bg-icloud-bg-primary flex items-center justify-center z-50 p-4">
       <div className="max-w-md w-full bg-white/80 bg-icloud-bg-primary/80 backdrop-blur-xl border border-icloud-border rounded-2xl shadow-2xl p-8 overflow-hidden relative">
         {/* Apple Style Gradient Accent */}
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-icloud-accent to-[#5856D6]" />
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-icloud-accent to-purple-600" />
         
         <div className="flex flex-col items-center mb-8">
           <div className="w-24 h-24 bg-icloud-card shadow-md rounded-2xl flex items-center justify-center mb-6 border border-icloud-border">

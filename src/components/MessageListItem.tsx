@@ -167,7 +167,7 @@ function MessageListItemComponent({
       className={`px-5 py-3.5 border-b border-icloud-border transition-all relative cursor-default group focus:outline-none focus:ring-2 focus:ring-icloud-accent focus:ring-inset ${
         selected ? 'bg-icloud-accent/10 dark:bg-icloud-accent/15 z-10 shadow-[inset_0_0_0_0.5px_rgba(0,122,255,0.15)] dark:shadow-[inset_0_0_0_0.5px_rgba(10,132,255,0.20)]' :
         isMultiSelected ? 'bg-icloud-accent/5 dark:bg-icloud-accent/8 z-10' :
-        isDragging ? 'opacity-40 bg-gray-100 dark:bg-gray-800' : 'bg-icloud-bg-primary hover:bg-[#F9F9F9] dark:hover:bg-white/[0.06]'
+        isDragging ? 'opacity-40 bg-gray-100 dark:bg-gray-800' : 'bg-icloud-bg-primary hover:bg-icloud-bg-layer1 dark:hover:bg-white/[0.06]'
       }`}
     >
       {unread && (
@@ -186,7 +186,7 @@ function MessageListItemComponent({
             <Paperclip className="w-3.5 h-3.5  text-icloud-text-secondary shrink-0" strokeWidth={1.75} />
           )}
           {threadCount && threadCount > 1 && (
-            <span className="text-[11px] font-bold bg-[#8E8E93]/20 dark:bg-[#8E8E93]/30 text-icloud-text-secondary px-1.5 py-0.5 rounded-md min-w-[18px] text-center">
+            <span className="text-[11px] font-bold bg-icloud-text-tertiary/15 dark:bg-icloud-text-tertiary/20 text-icloud-text-secondary px-1.5 py-0.5 rounded-md min-w-[18px] text-center">
               {threadCount}
             </span>
           )}
@@ -209,7 +209,7 @@ function MessageListItemComponent({
           onClick={onToggleFlag}
           aria-label={flagged ? 'Remove flag' : 'Add flag'}
           aria-pressed={flagged}
-          className={`shrink-0 mt-1 transition-all focus:outline-none focus:ring-2 focus:ring-[#FF9500] rounded min-w-[24px] min-h-[24px] flex items-center justify-center ${flagged ? 'text-icloud-orange opacity-100' : ' text-icloud-text-secondary opacity-40 hover:opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-40'}`}
+          className={`shrink-0 mt-1 transition-all focus:outline-none focus:ring-2 focus:ring-icloud-orange rounded min-w-[24px] min-h-[24px] flex items-center justify-center ${flagged ? 'text-icloud-orange opacity-100' : ' text-icloud-text-secondary opacity-40 hover:opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-40'}`}
         >
            <Star className={`w-3.5 h-3.5 ${flagged ? 'fill-current' : ''}`} strokeWidth={2} />
          </button>
