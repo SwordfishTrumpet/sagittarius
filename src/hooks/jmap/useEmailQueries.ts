@@ -77,6 +77,9 @@ export function useThreads(
       if (mailboxId && mailboxId !== 'all' && mailboxId !== 'flagged') {
         mailboxConditions.push({ inMailbox: mailboxId })
       }
+      if (mailboxId === 'all') {
+        mailboxConditions.push({ notHasKeyword: '$trashed' })
+      }
       if (mailboxId === 'flagged') {
         mailboxConditions.push({ hasKeyword: '$flagged' })
       }
@@ -167,6 +170,9 @@ export function useThreads(
           const snippetFilter: Record<string, unknown> = {}
           if (mailboxId && mailboxId !== 'all' && mailboxId !== 'flagged') {
             snippetFilter.inMailbox = mailboxId
+          }
+          if (mailboxId === 'all') {
+            snippetFilter.notHasKeyword = '$trashed'
           }
           if (mailboxId === 'flagged') {
             snippetFilter.hasKeyword = '$flagged'

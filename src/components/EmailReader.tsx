@@ -113,7 +113,7 @@ export function EmailReader({
 
       // Sanitize with DOMPurify FIRST (security)
       let sanitized = DOMPurify.sanitize(html, {
-        ADD_ATTR: ['target', 'data-blocked-src', 'data-cid-src', 'data-blocked-style', 'data-sagittarius-quote']
+        ADD_ATTR: ['target', 'data-blocked-src', 'data-blocked-srcset', 'data-cid-src', 'data-blocked-style', 'data-sagittarius-quote']
       });
 
       // Resolve CID inline images AFTER sanitization (VULN-002 fix: now uses safe DOM parsing)
