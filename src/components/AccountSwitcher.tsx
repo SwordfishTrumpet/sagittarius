@@ -48,14 +48,14 @@ export function AccountSwitcher({ className = '' }: AccountSwitcherProps) {
   // Generate consistent color based on account name
   const getAvatarColor = (name: string): string => {
     const colors = [
-      'bg-blue-500',
-      'bg-green-500',
-      'bg-purple-500',
-      'bg-orange-500',
-      'bg-pink-500',
-      'bg-teal-500',
-      'bg-indigo-500',
-      'bg-red-500',
+      'bg-icloud-accent',
+      'bg-icloud-green',
+      'bg-icloud-orange',
+      'bg-icloud-red',
+      'bg-[#5856D6]',
+      'bg-[#ff2d55]',
+      'bg-[#5AC8FA]',
+      'bg-[#af52de]',
     ];
     let hash = 0;
     for (let i = 0; i < name.length; i++) {
@@ -77,11 +77,11 @@ export function AccountSwitcher({ className = '' }: AccountSwitcherProps) {
         disabled={isSwitching}
         className={`
           flex items-center gap-2 px-3 py-2 rounded-lg
-          text-sm font-medium text-gray-700
-          hover:bg-gray-100 active:bg-gray-200
+          text-sm font-medium text-icloud-text-primary
+          hover:bg-icloud-text-primary/5 active:bg-icloud-text-primary/10
           transition-colors duration-150
           disabled:opacity-50 disabled:cursor-not-allowed
-          ${isOpen ? 'bg-gray-100' : ''}
+          ${isOpen ? 'bg-icloud-text-primary/5' : ''}
         `}
         aria-expanded={isOpen}
         aria-haspopup="listbox"
@@ -101,14 +101,14 @@ export function AccountSwitcher({ className = '' }: AccountSwitcherProps) {
         )}
 
         {/* Account Name */}
-        <span className="max-w-[150px] truncate">
+        <span className="max-w-[150px] truncate text-icloud-text-primary">
           {activeAccount?.name || 'Select Account'}
         </span>
 
         {/* Dropdown Chevron */}
         <ChevronDown
           className={`
-            w-4 h-4 text-gray-400
+            w-4 h-4 text-icloud-text-secondary
             transition-transform duration-200
             ${isOpen ? 'rotate-180' : ''}
           `}
@@ -121,7 +121,7 @@ export function AccountSwitcher({ className = '' }: AccountSwitcherProps) {
           className={`
             absolute right-0 top-full mt-2 w-72
             bg-white/95 bg-icloud-bg-primary/95 backdrop-blur-xl
-            rounded-xl shadow-2xl border border-gray-200/50 border-icloud-border
+            rounded-xl shadow-2xl border border-icloud-border
             py-2 z-50
             animate-in fade-in slide-in-from-top-2 duration-150
           `}
@@ -129,8 +129,8 @@ export function AccountSwitcher({ className = '' }: AccountSwitcherProps) {
           aria-label="Available accounts"
         >
           {/* Header */}
-          <div className="px-4 py-2 border-b border-gray-100 border-icloud-border">
-            <p className="text-xs font-semibold text-gray-500  uppercase tracking-wider">
+          <div className="px-4 py-2 border-b border-icloud-border">
+            <p className="text-xs font-semibold text-icloud-text-secondary uppercase tracking-wider">
               Switch Account
             </p>
           </div>
@@ -150,8 +150,8 @@ export function AccountSwitcher({ className = '' }: AccountSwitcherProps) {
           </div>
 
           {/* Footer Info */}
-          <div className="px-4 py-2 border-t border-gray-100 border-icloud-border mt-1">
-            <p className="text-xs text-gray-400 text-icloud-text-secondary">
+          <div className="px-4 py-2 border-t border-icloud-border mt-1">
+            <p className="text-xs text-icloud-text-secondary">
               {accounts.length} account{accounts.length !== 1 ? 's' : ''} available
             </p>
           </div>
@@ -183,8 +183,8 @@ function AccountItem({
       onClick={onSelect}
       className={`
         w-full px-4 py-3 flex items-center gap-3
-        hover:bg-blue-50 transition-colors duration-150
-        ${isActive ? 'bg-blue-50/50' : ''}
+        hover:bg-icloud-text-primary/5 transition-colors duration-150
+        ${isActive ? 'bg-icloud-accent/5' : ''}
       `}
       role="option"
       aria-selected={isActive}
@@ -203,19 +203,19 @@ function AccountItem({
       {/* Account Info */}
       <div className="flex-1 min-w-0 text-left">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-900 truncate">
+          <span className="text-sm font-medium text-icloud-text-primary truncate">
             {account.name}
           </span>
           {account.isReadOnly && (
-            <Lock className="w-3 h-3 text-gray-400 shrink-0" aria-label="Read-only" />
+            <Lock className="w-3 h-3 text-icloud-text-secondary shrink-0" aria-label="Read-only" />
           )}
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="text-xs text-gray-500 truncate">
+          <span className="text-xs text-icloud-text-secondary truncate">
             {account.email}
           </span>
           {!account.isPersonal && (
-            <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded-full">
+            <span className="text-[10px] px-1.5 py-0.5 bg-icloud-text-tertiary/15 text-icloud-text-secondary rounded-full">
               Shared
             </span>
           )}
@@ -224,7 +224,7 @@ function AccountItem({
 
       {/* Active Indicator */}
       {isActive && (
-        <Check className="w-5 h-5 text-blue-500 shrink-0" aria-label="Active account" />
+        <Check className="w-5 h-5 text-icloud-accent shrink-0" aria-label="Active account" />
       )}
     </button>
   );
@@ -253,14 +253,14 @@ export function CompactAccountSwitcher({ className = '' }: AccountSwitcherProps)
 
   const getAvatarColor = (name: string): string => {
     const colors = [
-      'bg-blue-500',
-      'bg-green-500',
-      'bg-purple-500',
-      'bg-orange-500',
-      'bg-pink-500',
-      'bg-teal-500',
-      'bg-indigo-500',
-      'bg-red-500',
+      'bg-icloud-accent',
+      'bg-icloud-green',
+      'bg-icloud-orange',
+      'bg-icloud-red',
+      'bg-[#5856D6]',
+      'bg-[#ff2d55]',
+      'bg-[#5AC8FA]',
+      'bg-[#af52de]',
     ];
     let hash = 0;
     for (let i = 0; i < name.length; i++) {
@@ -273,7 +273,7 @@ export function CompactAccountSwitcher({ className = '' }: AccountSwitcherProps)
     <div ref={containerRef} className={`relative ${className}`}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1 p-1 rounded-lg hover:bg-gray-100 transition-colors"
+        className="flex items-center gap-1 p-1 rounded-lg hover:bg-icloud-text-primary/5 transition-colors"
         aria-label="Switch account"
         aria-expanded={isOpen}
       >
@@ -286,10 +286,10 @@ export function CompactAccountSwitcher({ className = '' }: AccountSwitcherProps)
         >
           {getInitials(activeAccount?.name || '??')}
         </div>
-        <span className="text-xs font-medium text-gray-700 max-w-[100px] truncate">
+        <span className="text-xs font-medium text-icloud-text-primary max-w-[100px] truncate">
           {activeAccount?.name}
         </span>
-        <ChevronDown className="w-3 h-3 text-gray-400" />
+        <ChevronDown className="w-3 h-3 text-icloud-text-secondary" />
       </button>
 
       {isOpen && (
@@ -297,7 +297,7 @@ export function CompactAccountSwitcher({ className = '' }: AccountSwitcherProps)
           className="
             absolute right-0 top-full mt-1 w-64
             bg-white/95 bg-icloud-bg-primary/95 backdrop-blur-xl
-            rounded-lg shadow-xl border border-gray-200/50 border-icloud-border
+            rounded-lg shadow-xl border border-icloud-border
             py-1 z-50
           "
         >
@@ -310,8 +310,8 @@ export function CompactAccountSwitcher({ className = '' }: AccountSwitcherProps)
               }}
               className={`
                 w-full px-3 py-2 flex items-center gap-2
-                hover:bg-blue-50 transition-colors
-                ${account.id === activeAccount?.id ? 'bg-blue-50/50' : ''}
+                hover:bg-icloud-text-primary/5 transition-colors
+                ${account.id === activeAccount?.id ? 'bg-icloud-accent/5' : ''}
               `}
             >
               <div
@@ -323,11 +323,11 @@ export function CompactAccountSwitcher({ className = '' }: AccountSwitcherProps)
               >
                 {getInitials(account.name)}
               </div>
-              <span className="text-sm text-gray-700 flex-1 text-left truncate">
+              <span className="text-sm text-icloud-text-primary flex-1 text-left truncate">
                 {account.name}
               </span>
               {account.id === activeAccount?.id && (
-                <Check className="w-4 h-4 text-blue-500" />
+                <Check className="w-4 h-4 text-icloud-accent" />
               )}
             </button>
           ))}

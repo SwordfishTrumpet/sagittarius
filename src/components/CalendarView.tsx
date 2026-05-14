@@ -273,7 +273,7 @@ function MonthView({
           return (
             <div
               key={idx}
-              className={`min-h-[100px] border-b border-r border-icloud-border p-1 cursor-pointer hover:bg-icloud-bg-layer1 dark:hover:bg-white/5 transition-colors ${
+              className={`min-h-[100px] border-b border-r border-icloud-border p-1 cursor-pointer hover:bg-icloud-bg-layer1 dark:hover:bg-white/[0.06] transition-colors ${
                 !isCurrentMonth ? 'bg-icloud-bg-primary/50 dark:bg-icloud-bg-primary/50' : ''
               }`}
               onClick={() => onSelectDate(day)}
@@ -768,7 +768,7 @@ export function CalendarView({ isOpen, onClose }: CalendarViewProps) {
   return (
     <div ref={calendarContainerRef} tabIndex={-1} className="fixed inset-0 z-[10000] flex bg-icloud-bg-layer1">
       {/* Sidebar */}
-      <aside className="w-64 bg-white/70 bg-icloud-bg-primary/70 backdrop-blur-xl border-r border-icloud-border flex flex-col">
+      <aside className="w-64 bg-icloud-bg-sidebar border-r border-icloud-border flex flex-col">
         <header className="px-4 py-4 border-b border-icloud-border flex items-center justify-between">
           <h2 className="text-[17px] font-bold text-icloud-text-primary">Calendar</h2>
           <button
@@ -833,7 +833,7 @@ export function CalendarView({ isOpen, onClose }: CalendarViewProps) {
       {/* Main content */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="px-6 py-4 bg-white/70 bg-icloud-bg-primary/70 backdrop-blur-xl border-b border-icloud-border flex items-center justify-between">
+        <header className="px-6 py-4 bg-icloud-bg-sidebar border-b border-icloud-border flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1">
               <button

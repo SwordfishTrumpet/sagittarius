@@ -203,7 +203,7 @@ function ContactDetail({
     <div className="flex-1 overflow-auto">
       {/* Header */}
       <div className="text-center p-8 border-b border-icloud-border">
-        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-icloud-accent to-purple-600 flex items-center justify-center text-[32px] font-bold text-white mx-auto mb-4 shadow-lg">
+        <div className="w-24 h-24 rounded-full bg-icloud-accent flex items-center justify-center text-[32px] font-bold text-white mx-auto mb-4 shadow-icloud">
           {initials}
         </div>
         <h2 className="text-[22px] font-semibold text-icloud-text-primary">{name}</h2>
@@ -694,7 +694,7 @@ export function ContactsView({ isOpen, onClose }: ContactsViewProps) {
   return (
     <div ref={contactsContainerRef} role="dialog" aria-modal="true" aria-labelledby="contacts-view-title" tabIndex={-1} className="fixed inset-0 z-[10000] flex bg-icloud-bg-layer1">
       {/* Sidebar */}
-      <aside className="w-64 bg-white/70 bg-icloud-bg-primary/70 backdrop-blur-xl border-r border-icloud-border flex flex-col">
+      <aside className="w-64 bg-icloud-bg-sidebar border-r border-icloud-border flex flex-col">
         <header className="px-4 py-4 border-b border-icloud-border flex items-center justify-between">
           <h2 id="contacts-view-title" className="text-[17px] font-bold text-icloud-text-primary">Contacts</h2>
           <button
@@ -735,7 +735,7 @@ export function ContactsView({ isOpen, onClose }: ContactsViewProps) {
       </aside>
 
       {/* Contact list */}
-      <div className="w-80 bg-white/50 bg-icloud-bg-primary/50 backdrop-blur-xl border-r border-icloud-border flex flex-col">
+      <div className="w-80 bg-icloud-bg-sidebar border-r border-icloud-border flex flex-col">
         {/* Search */}
         <div className="p-3 border-b border-icloud-border">
           <div className="relative">
