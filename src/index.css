@@ -129,6 +129,10 @@
   --icloud-selection-text: #ffffff;
 }
 
+html.dark {
+  color-scheme: dark;
+}
+
 /* ── Base Styles ── */
 
 body {

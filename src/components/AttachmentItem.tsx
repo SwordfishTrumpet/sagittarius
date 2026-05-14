@@ -88,7 +88,7 @@ function AttachmentItemComponent({ attachment }: { attachment: any }) {
   
   return (
     <div 
-      className="flex items-center gap-4 p-3 bg-icloud-bg-layer1/50 bg-icloud-bg-primary/50 rounded-xl border border-icloud-border group hover:bg-white hover:bg-icloud-card hover:shadow-sm transition-all duration-200 cursor-pointer"
+      className="flex items-center gap-4 p-3 bg-icloud-bg-layer1/50 bg-icloud-bg-primary/50 rounded-xl border border-icloud-border group hover:bg-icloud-card hover:shadow-sm transition-all duration-200 cursor-pointer"
       onDoubleClick={handleOpen}
       title="Double-click to open"
     >

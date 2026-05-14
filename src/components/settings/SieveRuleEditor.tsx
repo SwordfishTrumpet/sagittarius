@@ -362,7 +362,7 @@ export function SieveRuleEditor({
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 text-[13px] font-medium text-icloud-text-secondary  bg-white border border-icloud-border rounded-xl hover:bg-icloud-bg-layer1 dark:hover:bg-icloud-text-primary/10 transition-colors"
+          className="px-4 py-2 text-[13px] font-medium text-icloud-text-secondary bg-white dark:bg-icloud-bg-layer2 border border-icloud-border rounded-xl hover:bg-icloud-bg-layer1 dark:hover:bg-icloud-text-primary/10 transition-colors"
         >
           Cancel
         </button>
