@@ -57,6 +57,51 @@ describe('Privacy Utility — External Image Blocking', () => {
       expect(result.count).toBe(0);
       expect(result.modifiedHtml).toContain('Just plain text');
     });
+
+    it('should block images with srcset attribute', () => {
+      const html = '<img src="https://example.com/image.jpg" srcset="https://example.com/image-hd.jpg 2x">';
+      const result = blockExternalImages(html);
+      expect(result.count).toBe(1);
+      expect(result.modifiedHtml).toContain('data-blocked-src');
+      expect(result.modifiedHtml).toContain('data-blocked-srcset');
+      expect(result.modifiedHtml).not.toMatch(/\ssrcset="/);
+    });
+
+    it('should block images that only have external srcset (no external src)', () => {
+      const html = '<img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" srcset="https://example.com/image.jpg 1x">';
+      const result = blockExternalImages(html);
+      expect(result.count).toBe(1);
+      expect(result.modifiedHtml).toMatch(/\bsrc="data:image\/svg\+xml/);
+      expect(result.modifiedHtml).toContain('data-blocked-srcset');
+      expect(result.modifiedHtml).not.toMatch(/\ssrcset="/);
+    });
+
+    it('should block <source srcset> inside <picture> elements', () => {
+      const html = `
+        <picture>
+          <source srcset="https://example.com/image.webp" type="image/webp">
+          <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="">
+        </picture>
+      `;
+      const result = blockExternalImages(html);
+      expect(result.count).toBe(1);
+      expect(result.modifiedHtml).toContain('data-blocked-srcset="https://example.com/image.webp"');
+      expect(result.modifiedHtml).not.toMatch(/\ssrcset="/);
+    });
+
+    it('should block both img and source in picture when both are external', () => {
+      const html = `
+        <picture>
+          <source srcset="https://example.com/image.webp" type="image/webp">
+          <img src="https://example.com/image.jpg" alt="">
+        </picture>
+      `;
+      const result = blockExternalImages(html);
+      expect(result.count).toBe(2);
+      expect(result.modifiedHtml).toContain('data-blocked-src="https://example.com/image.jpg"');
+      expect(result.modifiedHtml).toContain('data-blocked-srcset');
+      expect(result.modifiedHtml).not.toMatch(/\ssrcset="https:\/\/example\.com\/image\.webp"/);
+    });
   });
 
   describe('unblockExternalImages', () => {
@@ -66,6 +111,27 @@ describe('Privacy Utility — External Image Blocking', () => {
       const unblocked = unblockExternalImages(blocked.modifiedHtml);
       expect(unblocked).toContain('https://example.com/image.png');
     });
+
+    it('should restore srcset on blocked images', () => {
+      const html = '<img src="https://example.com/image.jpg" srcset="https://example.com/image-hd.jpg 2x">';
+      const blocked = blockExternalImages(html);
+      const unblocked = unblockExternalImages(blocked.modifiedHtml);
+      expect(unblocked).toContain('srcset="https://example.com/image-hd.jpg 2x"');
+      expect(unblocked).toContain('src="https://example.com/image.jpg"');
+    });
+
+    it('should restore source srcset inside picture elements', () => {
+      const html = `
+        <picture>
+          <source srcset="https://example.com/image.webp" type="image/webp">
+          <img src="https://example.com/image.jpg" alt="">
+        </picture>
+      `;
+      const blocked = blockExternalImages(html);
+      const unblocked = unblockExternalImages(blocked.modifiedHtml);
+      expect(unblocked).toContain('srcset="https://example.com/image.webp"');
+      expect(unblocked).toContain('src="https://example.com/image.jpg"');
+    });
   });
 
   describe('countExternalImages', () => {
@@ -73,6 +139,23 @@ describe('Privacy Utility — External Image Blocking', () => {
       const html = '<img src="https://example.com/img1.png"><img src="https://example.com/img2.png">';
       const count = countExternalImages(html);
       expect(count).toBe(2);
+    });
+
+    it('should count external images in srcset attributes', () => {
+      const html = '<img src="https://example.com/img1.png" srcset="https://example.com/img1-hd.jpg 2x">';
+      const count = countExternalImages(html);
+      expect(count).toBe(2); // src + srcset = 2 URLs
+    });
+
+    it('should count external images in source srcset inside picture', () => {
+      const html = `
+        <picture>
+          <source srcset="https://example.com/img.webp" type="image/webp">
+          <img src="https://example.com/img.jpg" alt="">
+        </picture>
+      `;
+      const count = countExternalImages(html);
+      expect(count).toBe(2); // source srcset + img src = 2 URLs
     });
 
     it('should return 0 for no external images', () => {

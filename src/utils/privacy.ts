@@ -10,6 +10,25 @@ export interface BlockedImageInfo {
 }
 
 /**
+ * Parse a srcset attribute value and return individual candidate URLs.
+ * srcset format: "url1 1x, url2 2x, url3 100w, url4 100w 200h"
+ */
+function parseSrcset(srcset: string): string[] {
+  if (!srcset) return [];
+  return srcset
+    .split(',')
+    .map(part => part.trim().split(/\s+/)[0])
+    .filter(Boolean);
+}
+
+/**
+ * Check if a srcset string contains any external URLs
+ */
+function containsExternalUrlInSrcset(srcset: string): boolean {
+  return parseSrcset(srcset).some(url => isExternalImage(url));
+}
+
+/**
  * Check if an image source is external (not local or blob)
  * External images: http://, https://, protocol-relative //
  * Local/Safe: data:, blob:, relative paths, absolute paths
@@ -33,15 +52,38 @@ function isExternalImage(src: string): boolean {
 
 /**
  * Extract all image tags from HTML and identify external ones
+ * Checks img[src], img[srcset], and source[srcset] inside picture
  */
 function findExternalImages(html: string): string[] {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
+  const found: string[] = [];
+
   const images = Array.from(doc.querySelectorAll('img'));
-  
-  return images
-    .map(img => img.getAttribute('src'))
-    .filter((src): src is string => src !== null && isExternalImage(src));
+  images.forEach(img => {
+    const src = img.getAttribute('src');
+    if (src && isExternalImage(src)) {
+      found.push(src);
+    }
+    const srcset = img.getAttribute('srcset');
+    if (srcset) {
+      parseSrcset(srcset).forEach(url => {
+        if (isExternalImage(url)) found.push(url);
+      });
+    }
+  });
+
+  const sources = Array.from(doc.querySelectorAll('source'));
+  sources.forEach(source => {
+    const srcset = source.getAttribute('srcset');
+    if (srcset) {
+      parseSrcset(srcset).forEach(url => {
+        if (isExternalImage(url)) found.push(url);
+      });
+    }
+  });
+
+  return found;
 }
 
 /**
@@ -61,22 +103,56 @@ export function blockExternalImages(html: string): BlockedImageInfo {
   const images = Array.from(doc.querySelectorAll('img'));
   images.forEach(img => {
     const src = img.getAttribute('src');
-    if (!src || !isExternalImage(src)) return;
+    const srcset = img.getAttribute('srcset');
+    const hasExternalSrc = src && isExternalImage(src);
+    const hasExternalSrcset = srcset && containsExternalUrlInSrcset(srcset);
+
+    if (!hasExternalSrc && !hasExternalSrcset) return;
 
     blockedCount += 1;
 
-    // Use explicit width/height attributes or fallback to default
-    // (DOMParser context returns 0 for img.width/img.height since image isn't loaded)
-    const explicitWidth = img.getAttribute('width');
-    const explicitHeight = img.getAttribute('height');
-    const width = explicitWidth || '120';
-    const height = explicitHeight || '80';
-    const style = img.getAttribute('style') || '';
-    const stylePrefix = style && !style.trim().endsWith(';') ? `${style};` : style;
+    if (hasExternalSrc) {
+      // Use explicit width/height attributes or fallback to default
+      // (DOMParser context returns 0 for img.width/img.height since image isn't loaded)
+      const explicitWidth = img.getAttribute('width');
+      const explicitHeight = img.getAttribute('height');
+      const width = explicitWidth || '120';
+      const height = explicitHeight || '80';
+      const style = img.getAttribute('style') || '';
+      const stylePrefix = style && !style.trim().endsWith(';') ? `${style};` : style;
 
-    img.setAttribute('data-blocked-src', src);
-    img.setAttribute('src', getPlaceholder(width, height));
-    img.setAttribute('style', `${stylePrefix}border:1px dashed var(--icloud-text-tertiary);border-radius:8px;`);
+      img.setAttribute('data-blocked-src', src);
+      img.setAttribute('src', getPlaceholder(width, height));
+      img.setAttribute('style', `${stylePrefix}border:1px dashed var(--icloud-text-tertiary);border-radius:8px;`);
+    } else {
+      // Only srcset is external, not src — still need a placeholder
+      const explicitWidth = img.getAttribute('width');
+      const explicitHeight = img.getAttribute('height');
+      const width = explicitWidth || '120';
+      const height = explicitHeight || '80';
+      const style = img.getAttribute('style') || '';
+      const stylePrefix = style && !style.trim().endsWith(';') ? `${style};` : style;
+
+      img.setAttribute('data-blocked-srcset', srcset);
+      img.setAttribute('src', getPlaceholder(width, height));
+      img.setAttribute('style', `${stylePrefix}border:1px dashed var(--icloud-text-tertiary);border-radius:8px;`);
+    }
+
+    if (hasExternalSrcset) {
+      img.setAttribute('data-blocked-srcset', srcset || img.getAttribute('data-blocked-srcset') || '');
+      img.removeAttribute('srcset');
+    }
+  });
+
+  // Block <source srcset> inside <picture> elements
+  const sources = Array.from(doc.querySelectorAll('source'));
+  sources.forEach(source => {
+    const srcset = source.getAttribute('srcset');
+    if (!srcset || !containsExternalUrlInSrcset(srcset)) return;
+
+    blockedCount += 1;
+    source.setAttribute('data-blocked-srcset', srcset);
+    source.removeAttribute('srcset');
   });
 
   const styledElements = Array.from(doc.querySelectorAll<HTMLElement>('[style]'));
@@ -111,7 +187,7 @@ export function unblockExternalImages(html: string): string {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
   
-  // Restore blocked images
+  // Restore blocked images (src was replaced with placeholder)
   const images = Array.from(doc.querySelectorAll('img[data-blocked-src]'));
   images.forEach(img => {
     const blockedSrc = img.getAttribute('data-blocked-src');
@@ -121,6 +197,32 @@ export function unblockExternalImages(html: string): string {
       // Remove the dashed border we added
       const style = img.getAttribute('style') || '';
       img.setAttribute('style', style.replace(/;?border:1px dashed var\(--icloud-text-tertiary\);border-radius:8px;?/g, ''));
+    }
+  });
+
+  // Restore blocked images (srcset was cleared)
+  const srcsetImages = Array.from(doc.querySelectorAll('img[data-blocked-srcset]'));
+  srcsetImages.forEach(img => {
+    const blockedSrcset = img.getAttribute('data-blocked-srcset');
+    if (blockedSrcset) {
+      img.setAttribute('srcset', blockedSrcset);
+      img.removeAttribute('data-blocked-srcset');
+      // If src was also replaced (no data-blocked-src, but placeholder was set),
+      // restore it only if we have a saved src via data-blocked-src
+      // srcset-only case: clear the placeholder src too
+      if (!img.hasAttribute('data-blocked-src') && img.getAttribute('src')?.startsWith('data:image/svg+xml')) {
+        img.removeAttribute('src');
+      }
+    }
+  });
+
+  // Restore blocked <source> srcset attributes
+  const sources = Array.from(doc.querySelectorAll('source[data-blocked-srcset]'));
+  sources.forEach(source => {
+    const blockedSrcset = source.getAttribute('data-blocked-srcset');
+    if (blockedSrcset) {
+      source.setAttribute('srcset', blockedSrcset);
+      source.removeAttribute('data-blocked-srcset');
     }
   });
 
