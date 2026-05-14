@@ -144,16 +144,16 @@ export function useSieveActions() {
     onSuccess: invalidate,
   });
 
-  // Activate a specific Sieve script (set isActive: true)
+  // Activate a specific Sieve script (RFC 9661 §5.4)
   const activateScript = useMutation({
     mutationFn: async (id: string) => {
       return jmapClient.request(
         [
           [
-            'SieveScript/set',
+            'SieveScript/activate',
             {
               accountId,
-              update: { [id]: { isActive: true } },
+              id,
             },
             '0',
           ],

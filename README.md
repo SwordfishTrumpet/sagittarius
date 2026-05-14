@@ -10,7 +10,7 @@ A high-performance, server-agnostic JMAP web client with a modern interface insp
 [![TypeScript Strict](https://img.shields.io/badge/TypeScript-Strict-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React 18](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![Vitest](https://img.shields.io/badge/Tests-1217%20passing-6E9F18?style=flat-square&logo=vitest&logoColor=white)](package.json)
+[![Vitest](https://img.shields.io/badge/Tests-1264%20passing-6E9F18?style=flat-square&logo=vitest&logoColor=white)](package.json)
 [![WCAG 2.2 AA](https://img.shields.io/badge/WCAG-2.2%20AA-1a73e8?style=flat-square)]()
 [![License MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
@@ -139,6 +139,7 @@ See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for complete configuration examples.
 | **Advanced Search** | `from:`, `to:`, `has:attachment` syntax with highlighted snippets |
 | **Quick Filters** | One-click filtering for Unread, Flagged, To Me, Attachments |
 | **Quota Display** | Storage usage indicator in sidebar |
+| **Sharing** | Share calendars and address books with other users (RFC 9670) |
 
 ### 🔒 Security & Privacy
 
@@ -147,7 +148,8 @@ See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for complete configuration examples.
 | **Image Blocking** | External images blocked until explicit per-sender approval |
 | **HTML Sanitization** | DOMPurify processes all message content |
 | **Sandboxed Iframes** | Email isolation prevents style leakage |
-| **Read Receipts** | MDN support per RFC 8098 |
+ | **S/MIME Verification** | RFC 9219 signature status badges for signed/verified/failed emails |
+| **Read Receipts** | MDN support per RFC 9007 |
 | **Conflict Detection** | RFC 8620 `ifInState` validation prevents concurrent edit overwrites |
 | **No Telemetry** | Zero analytics or tracking — your data stays local |
 
@@ -159,6 +161,13 @@ See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for complete configuration examples.
 | **Monospaced Font Selection** | Choose from 6 coding fonts (Fira Code, JetBrains Mono, etc.) |
 | **OLED-Optimized Dark Mode** | Pure black background for power-efficient displays |
 | **Glassmorphic UI** | Translucent effects in both light and dark modes |
+
+### 📡 Real-Time & Sharing
+
+| Feature | Description |
+|---------|-------------|
+| **Push Notifications** | RFC 9749 WebPush with VAPID — browser notifications via service worker |
+| **Sharing** | RFC 9670 — Share calendars and address books with granular permissions |
 
 ### ⚙️ Server Integration
 
@@ -180,10 +189,13 @@ Sagittarius intelligently respects your server's JMAP capability limits for a be
 |------------|-----------------|
 | **Core (RFC 8620)** | `maxObjectsInGet/Set` — Chunked batch operations, `maxSizeUpload` — Per-file upload limit |
 | **Mail (RFC 8621)** | `maxSizeAttachmentsPerEmail` — Total attachment size with live indicator, `maxMailboxDepth` — Folder nesting validation, `mayCreateTopLevelMailbox` — Controls root folder creation |
-| **Sieve (RFC 9266)** | `maxNumberScripts` — Warns at filter limit, `maxSizeScript` — Rejects oversized scripts |
+| **Sieve (RFC 9661)** | `maxNumberScripts` — Warns at filter limit, `maxSizeScript` — Rejects oversized scripts |
 | **Calendar (draft-ietf-jmap-calendars-26)** | `maxCalendarsPerEvent` — Calendar limit per event, `maxParticipantsPerEvent` — Attendee limit warnings, `mayCreateCalendar` — Controls calendar creation, `minDateTime`/`maxDateTime` — Date range enforcement |
 | **Contacts (RFC 9610)** | `mayCreateAddressBook` — Controls address book creation |
 | **Blob (RFC 9404)** | `maxDataSources` — Validates blob upload data sources |
+| **Sharing (RFC 9670)** | `maxPrincipals` — Limits sharing search results |
+| **WebPush (RFC 9749)** | VAPID-based push subscription management |
+| **S/MIME (RFC 9219)** | Signature verification via `Email/parseSmime` |
 
 **Benefits:**
 - Prevents operations that would fail server-side
@@ -260,10 +272,13 @@ Sagittarius implements standard JMAP capabilities:
 | `urn:ietf:params:jmap:vacationresponse` | Out-of-office configuration |
 | `urn:ietf:params:jmap:quota` | Storage limit monitoring |
 | `urn:ietf:params:jmap:sieve` | Server-side mail filters (optional) |
-| `urn:ietf:params:jmap:mdn` | Read receipt handling (RFC 8098) |
+| `urn:ietf:params:jmap:mdn` | Read receipt handling (RFC 9007) |
 | `urn:ietf:params:jmap:blob` | Blob upload/download (RFC 9404) |
 | `urn:ietf:params:jmap:calendars` | Calendar, CalendarEvent, ParticipantIdentity (draft-ietf-jmap-calendars-26) |
 | `urn:ietf:params:jmap:principals:availability` | Principal availability checks (draft-ietf-jmap-calendars-26) |
+| `urn:ietf:params:jmap:sharing` | Share calendars, address books (RFC 9670) |
+| `urn:ietf:params:jmap:webpush` | Browser push notifications with VAPID (RFC 9749) |
+| `urn:ietf:params:jmap:smime` | S/MIME signature verification (RFC 9219) |
 
 ---
 
@@ -307,9 +322,9 @@ npm run typecheck
 
 ## 📊 Stats
 
-- **1,217 Tests** passing across 107 test files
+- **1,264 Tests** passing across 117 test files
 - **TypeScript Strict Mode** — Zero `any` types
-- **Full RFC Compliance** — JMAP 8620/8621, 8887, 9404, 9553, 9610, draft-ietf-jmap-calendars-26
+- **Full RFC Compliance** — JMAP 8620/8621, 8887, 9404, 9553, 9610, 9661, 9670, 9749, 9219, 9007, draft-ietf-jmap-calendars-26
 - **WCAG 2.2 AA** accessibility compliant
 
 ---

@@ -137,6 +137,32 @@ export interface EmailBodyValue {
   isTruncated?: boolean;
 }
 
+export type SmimeStatus = 'none' | 'signed' | 'verified' | 'failed' | 'invalid';
+
+export interface SmimeCertificate {
+  subject: string;
+  issuer: string;
+  serialNumber?: string;
+  notBefore?: string;
+  notAfter?: string;
+  fingerprint?: string;
+}
+
+export interface EmailParseSmimeRequest {
+  accountId: string;
+  blobIds: string[];
+}
+
+export interface EmailParseSmimeResponse {
+  accountId: string;
+  parsed: Record<string, {
+    status: SmimeStatus;
+    certificate?: SmimeCertificate;
+    error?: string;
+  }>;
+  notParsed?: Record<string, { type: string; description?: string }>;
+}
+
 export interface Email {
   id: string;
   blobId: string;
@@ -174,6 +200,12 @@ export interface Email {
   searchSnippet?: string;
   /** Thread count when email represents a thread */
   threadCount?: number;
+  /** RFC 9219 S/MIME signature status */
+  smimeStatus?: SmimeStatus;
+  /** RFC 9219 S/MIME signature data */
+  smimeSignature?: string | null;
+  /** RFC 9219 S/MIME certificate info */
+  smimeCertificate?: SmimeCertificate | null;
 }
 
 export interface Thread {

@@ -71,7 +71,7 @@ docker run -p 8081:8081 -e JMAP_SERVER=https://mail.example.com ghcr.io/swordfis
 - 🛡️ **Image blocking** — external images blocked until approved
 - 🔐 **HTML sanitization** — DOMPurify processing
 - 📦 **Sandboxed rendering** — isolated iframes prevent style leakage
-- 👁️ **Read receipts** — MDN support (RFC 8098)
+- 👁️ **Read receipts** — MDN support (RFC 9007)
 - 🔇 **Zero telemetry** — no analytics, tracking, or data collection
 
 ### Server Integration

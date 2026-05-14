@@ -10,6 +10,7 @@ import { useFocusTrap } from '../hooks/useFocusTrap';
 import { useHasVacationCapability } from '../hooks/useVacation';
 import { useHasSieveCapability } from '../hooks/useSieve';
 import { useHasIdentityCapability } from '../hooks/jmap/useIdentities';
+import { useHasWebPushCapability, usePushSubscription } from '../hooks/usePushSubscription';
 import {
   isNotificationSoundEnabled,
   getNotificationVolume,
@@ -42,6 +43,10 @@ function GeneralSettings() {
   const [volume, setVolume] = useState(getNotificationVolume);
   const [permission, setPermission] = useState<NotificationPermission | 'unsupported'>(getNotificationPermission);
   const [isRequesting, setIsRequesting] = useState(false);
+  const hasWebPush = useHasWebPushCapability();
+  const { existingSubs, subscribe, permission: webPushPermission } = usePushSubscription();
+  const hasActiveSub = existingSubs && existingSubs.list && existingSubs.list.length > 0;
+  const isWebPushGranted = webPushPermission === 'granted';
 
   // Refresh permission state when component mounts
   useEffect(() => {
@@ -193,6 +198,35 @@ className={`px-3 py-1.5 text-[13px] font-medium rounded-lg transition-colors ${
           </div>
         )}
       </div>
+
+      {/* WebPush notification toggle (RFC 9749) */}
+      {hasWebPush && (
+        <div className="border-t border-icloud-border">
+          <div className="px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <Bell className="w-4 h-4 text-icloud-text-secondary" strokeWidth={1.5} />
+              <span className="text-[15px] text-icloud-text-primary">Push notifications</span>
+            </div>
+            {hasActiveSub ? (
+              <span className="text-[13px] text-icloud-green font-medium">Enabled</span>
+            ) : isWebPushGranted ? (
+              <button
+                onClick={() => subscribe.mutate()}
+                disabled={subscribe.isPending}
+                className={`px-3 py-1.5 text-[13px] font-medium rounded-lg transition-colors ${
+                  subscribe.isPending
+                    ? 'bg-icloud-border text-icloud-text-secondary cursor-wait'
+                    : 'bg-icloud-accent text-white hover:bg-icloud-accent-hover'
+                }`}
+              >
+                {subscribe.isPending ? 'Enabling...' : 'Enable'}
+              </button>
+            ) : (
+              <span className="text-[13px] text-icloud-text-tertiary">Allow notifications first</span>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Unsupported notice */}
       {!isSupported && (

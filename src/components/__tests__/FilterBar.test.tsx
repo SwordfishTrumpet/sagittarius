@@ -1,70 +1,112 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
-import { FilterBar } from '../FilterBar'
+import { FilterDialog } from '../FilterDialog'
+import type { FilterState } from '../../hooks/useListFilters'
 
-describe('FilterBar', () => {
-  it('renders all four filter buttons', () => {
-    render(<FilterBar activeFilters={new Set()} onToggleFilter={vi.fn()} />)
+const EMPTY_FILTERS: FilterState = {
+  unread: false,
+  flagged: false,
+  toMe: false,
+  attachments: false,
+  headerFilters: [],
+}
 
-    expect(screen.getByRole('button', { name: 'Filter Unread' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Filter Flagged' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Filter To Me' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Filter Attachments' })).toBeInTheDocument()
+describe('FilterDialog', () => {
+  it('renders all four checkbox filters', () => {
+    render(
+      <FilterDialog
+        isOpen={true}
+        onClose={vi.fn()}
+        currentFilters={EMPTY_FILTERS}
+        onApply={vi.fn()}
+        onClear={vi.fn()}
+      />
+    )
+
+    expect(screen.getByRole('checkbox', { name: 'Unread' })).toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: 'Flagged' })).toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: 'To Me' })).toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: 'Attachments' })).toBeInTheDocument()
   })
 
-  it('marks active filters with aria-pressed=true', () => {
-    render(<FilterBar activeFilters={new Set(['unread', 'flagged'])} onToggleFilter={vi.fn()} />)
+  it('shows header filter section', () => {
+    render(
+      <FilterDialog
+        isOpen={true}
+        onClose={vi.fn()}
+        currentFilters={EMPTY_FILTERS}
+        onApply={vi.fn()}
+        onClear={vi.fn()}
+      />
+    )
 
-    expect(screen.getByRole('button', { name: 'Filter Unread' })).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.getByRole('button', { name: 'Filter Flagged' })).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.getByRole('button', { name: 'Filter To Me' })).toHaveAttribute('aria-pressed', 'false')
-    expect(screen.getByRole('button', { name: 'Filter Attachments' })).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.getByText('Headers')).toBeInTheDocument()
+    expect(screen.getByText('Add Header Filter')).toBeInTheDocument()
   })
 
-  it('calls onToggleFilter when a filter button is clicked', async () => {
+  it('calls onApply with updated filters when Apply is clicked', async () => {
     const user = userEvent.setup()
-    const onToggleFilter = vi.fn()
+    const onApply = vi.fn()
 
-    render(<FilterBar activeFilters={new Set()} onToggleFilter={onToggleFilter} />)
+    render(
+      <FilterDialog
+        isOpen={true}
+        onClose={vi.fn()}
+        currentFilters={EMPTY_FILTERS}
+        onApply={onApply}
+        onClear={vi.fn()}
+      />
+    )
 
-    await user.click(screen.getByRole('button', { name: 'Filter Unread' }))
-    expect(onToggleFilter).toHaveBeenCalledWith('unread')
+    await user.click(screen.getByRole('checkbox', { name: 'Unread' }))
+    await user.click(screen.getByRole('button', { name: 'Apply' }))
 
-    await user.click(screen.getByRole('button', { name: 'Filter Flagged' }))
-    expect(onToggleFilter).toHaveBeenCalledWith('flagged')
-
-    await user.click(screen.getByRole('button', { name: 'Filter To Me' }))
-    expect(onToggleFilter).toHaveBeenCalledWith('toMe')
-
-    await user.click(screen.getByRole('button', { name: 'Filter Attachments' }))
-    expect(onToggleFilter).toHaveBeenCalledWith('attachments')
+    expect(onApply).toHaveBeenCalledWith({
+      unread: true,
+      flagged: false,
+      toMe: false,
+      attachments: false,
+      headerFilters: [],
+    })
   })
 
-  it('applies active styling to selected filters', () => {
-    render(<FilterBar activeFilters={new Set(['unread'])} onToggleFilter={vi.fn()} />)
-
-    const unreadButton = screen.getByRole('button', { name: 'Filter Unread' })
-    const flaggedButton = screen.getByRole('button', { name: 'Filter Flagged' })
-
-    // Active filter should have blue background class
-    expect(unreadButton.className).toContain('bg-icloud-accent')
-    expect(unreadButton.className).toContain('text-white')
-
-    // Inactive filter should have gray background class
-    expect(flaggedButton.className).toContain('bg-icloud-bg-layer1')
-    expect(flaggedButton.className).toContain('text-icloud-text-secondary')
-  })
-
-  it('supports keyboard navigation between filters', async () => {
+  it('calls onClear when Clear All is clicked', async () => {
     const user = userEvent.setup()
-    render(<FilterBar activeFilters={new Set()} onToggleFilter={vi.fn()} />)
+    const onClear = vi.fn()
 
-    const firstButton = screen.getByRole('button', { name: 'Filter Unread' })
-    firstButton.focus()
+    render(
+      <FilterDialog
+        isOpen={true}
+        onClose={vi.fn()}
+        currentFilters={{ unread: true, flagged: false, toMe: false, attachments: false, headerFilters: [] }}
+        onApply={vi.fn()}
+        onClear={onClear}
+      />
+    )
 
-    await user.keyboard('{Tab}')
-    // After tab, focus should move to next button
-    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Filter Flagged' }))
+    await user.click(screen.getByText('Clear All'))
+    expect(onClear).toHaveBeenCalledOnce()
+  })
+
+  it('allows adding and removing header filter rows', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <FilterDialog
+        isOpen={true}
+        onClose={vi.fn()}
+        currentFilters={EMPTY_FILTERS}
+        onApply={vi.fn()}
+        onClear={vi.fn()}
+      />
+    )
+
+    await user.click(screen.getByText('Add Header Filter'))
+    expect(screen.getByPlaceholderText('Header name (e.g. List-Id)')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Value contains... (leave empty for exists)')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Remove header filter' }))
+    expect(screen.queryByPlaceholderText('Header name (e.g. List-Id)')).not.toBeInTheDocument()
   })
 })

@@ -19,6 +19,13 @@ import type {
 } from '../types/jmap-blob';
 import type { ContactsCapability } from '../types/jmap-contacts';
 import type { CalendarsCapability } from '../types/jmap-calendar';
+import type { SharingCapability, PrincipalGetResponse, PrincipalQueryResponse } from '../types/jmap-sharing';
+import type {
+  PushSubscription,
+  PushSubscriptionGetResponse,
+  PushSubscriptionSetResponse,
+} from '../types/jmap-webpush';
+import type { EmailParseSmimeResponse } from '../types/jmap';
 
 // Re-export JMAPSession from types for backward compatibility
 export type { JMAPSession } from '../types/jmap';
@@ -756,6 +763,139 @@ class JMAPClient {
    */
   getCalendarCapability(): CalendarsCapability | null {
     return this.getAccountCapability('urn:ietf:params:jmap:calendars') as CalendarsCapability | null;
+  }
+
+  // ============ RFC 9670 JMAP Sharing Methods ============
+
+  hasSharingCapability(): boolean {
+    return this.hasCapability('urn:ietf:params:jmap:sharing');
+  }
+
+  getSharingCapability(): SharingCapability | null {
+    return this.getAccountCapability('urn:ietf:params:jmap:sharing') as SharingCapability | null;
+  }
+
+  async getPrincipals(ids: string[] | null, accountId?: string): Promise<PrincipalGetResponse> {
+    const targetAccountId = accountId ?? this.getPrimaryAccount();
+    if (!targetAccountId) throw new Error('No account specified');
+
+    const response = await this.request(
+      [['Principal/get', { accountId: targetAccountId, ids }, 'principalGet0']],
+      ['urn:ietf:params:jmap:sharing']
+    );
+
+    const methodRes = response.methodResponses[0];
+    if (!methodRes || methodRes[0] === 'error') {
+      const error = methodRes?.[1] as { description?: string } | undefined;
+      throw new Error(error?.description || 'Principal/get failed');
+    }
+
+    return methodRes[1] as PrincipalGetResponse;
+  }
+
+  async queryPrincipals(filter?: { text?: string; email?: string; type?: string }, accountId?: string): Promise<PrincipalQueryResponse> {
+    const targetAccountId = accountId ?? this.getPrimaryAccount();
+    if (!targetAccountId) throw new Error('No account specified');
+
+    const response = await this.request(
+      [['Principal/query', { accountId: targetAccountId, filter }, 'principalQuery0']],
+      ['urn:ietf:params:jmap:sharing']
+    );
+
+    const methodRes = response.methodResponses[0];
+    if (!methodRes || methodRes[0] === 'error') {
+      const error = methodRes?.[1] as { description?: string } | undefined;
+      throw new Error(error?.description || 'Principal/query failed');
+    }
+
+    return methodRes[1] as PrincipalQueryResponse;
+  }
+
+  // ============ RFC 9749 JMAP WebPush Methods ============
+
+  hasWebPushCapability(): boolean {
+    return this.hasCapability('urn:ietf:params:jmap:webpush');
+  }
+
+  async getPushSubscriptions(ids: string[] | null, accountId?: string): Promise<PushSubscriptionGetResponse> {
+    const targetAccountId = accountId ?? this.getPrimaryAccount();
+    if (!targetAccountId) throw new Error('No account specified');
+
+    const response = await this.request(
+      [['PushSubscription/get', { accountId: targetAccountId, ids }, 'pushSubGet0']],
+      ['urn:ietf:params:jmap:webpush']
+    );
+
+    const methodRes = response.methodResponses[0];
+    if (!methodRes || methodRes[0] === 'error') {
+      const error = methodRes?.[1] as { description?: string } | undefined;
+      throw new Error(error?.description || 'PushSubscription/get failed');
+    }
+
+    return methodRes[1] as PushSubscriptionGetResponse;
+  }
+
+  async createPushSubscription(
+    subscription: Omit<PushSubscription, 'id'>,
+    accountId?: string
+  ): Promise<PushSubscriptionSetResponse> {
+    const targetAccountId = accountId ?? this.getPrimaryAccount();
+    if (!targetAccountId) throw new Error('No account specified');
+
+    const response = await this.request(
+      [['PushSubscription/set', { accountId: targetAccountId, create: { 'new-1': subscription } }, 'pushSubSet0']],
+      ['urn:ietf:params:jmap:webpush']
+    );
+
+    const methodRes = response.methodResponses[0];
+    if (!methodRes || methodRes[0] === 'error') {
+      const error = methodRes?.[1] as { description?: string } | undefined;
+      throw new Error(error?.description || 'PushSubscription/set failed');
+    }
+
+    return methodRes[1] as PushSubscriptionSetResponse;
+  }
+
+  async destroyPushSubscriptions(ids: string[], accountId?: string): Promise<PushSubscriptionSetResponse> {
+    const targetAccountId = accountId ?? this.getPrimaryAccount();
+    if (!targetAccountId) throw new Error('No account specified');
+
+    const response = await this.request(
+      [['PushSubscription/set', { accountId: targetAccountId, destroy: ids }, 'pushSubDestroy0']],
+      ['urn:ietf:params:jmap:webpush']
+    );
+
+    const methodRes = response.methodResponses[0];
+    if (!methodRes || methodRes[0] === 'error') {
+      const error = methodRes?.[1] as { description?: string } | undefined;
+      throw new Error(error?.description || 'PushSubscription/destroy failed');
+    }
+
+    return methodRes[1] as PushSubscriptionSetResponse;
+  }
+
+  // ============ RFC 9219 S/MIME Methods ============
+
+  hasSmimeCapability(): boolean {
+    return this.hasCapability('urn:ietf:params:jmap:smime');
+  }
+
+  async parseSmime(blobIds: string[], accountId?: string): Promise<EmailParseSmimeResponse> {
+    const targetAccountId = accountId ?? this.getPrimaryAccount();
+    if (!targetAccountId) throw new Error('No account specified');
+
+    const response = await this.request(
+      [['Email/parseSmime', { accountId: targetAccountId, blobIds }, 'parseSmime0']],
+      ['urn:ietf:params:jmap:smime']
+    );
+
+    const methodRes = response.methodResponses[0];
+    if (!methodRes || methodRes[0] === 'error') {
+      const error = methodRes?.[1] as { description?: string } | undefined;
+      throw new Error(error?.description || 'Email/parseSmime failed');
+    }
+
+    return methodRes[1] as EmailParseSmimeResponse;
   }
 }
 
