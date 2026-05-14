@@ -111,7 +111,7 @@ function GeneralSettings() {
         {isSupported && !isPermissionGranted && (
           <div className="px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <BellOff className="w-4 h-4 text-icloud-text-secondary dark:text-[#636366]" strokeWidth={1.5} />
+              <BellOff className="w-4 h-4 text-icloud-text-secondary" strokeWidth={1.5} />
               <span className="text-[15px] text-icloud-text-primary">Desktop notifications</span>
             </div>
             <button
@@ -119,7 +119,7 @@ function GeneralSettings() {
               disabled={isPermissionDenied || isRequesting}
               className={`px-3 py-1.5 text-[13px] font-medium rounded-lg transition-colors ${
                 isPermissionDenied
-                  ? 'bg-icloud-border dark:bg-[#3A3A3C] text-icloud-text-secondary dark:text-[#636366] cursor-not-allowed'
+                  ? 'bg-icloud-border dark:bg-icloud-gray5 text-icloud-text-secondary cursor-not-allowed'
                   : 'bg-icloud-accent text-white hover:bg-[#0051D5]'
               }`}
             >
@@ -296,10 +296,10 @@ export function Settings({ isOpen, onClose, isMobile = false }: SettingsProps) {
             </p>
             <button
               onClick={onClose}
-              className="w-7 h-7 rounded-full bg-icloud-border dark:bg-[#3A3A3C] hover:bg-icloud-divider dark:hover:bg-[#48484A] flex items-center justify-center transition-colors"
+              className="w-7 h-7 rounded-full bg-icloud-border bg-icloud-card hover:bg-icloud-divider flex items-center justify-center transition-colors"
               aria-label="Close settings"
             >
-              <X size={13} strokeWidth={2} className="text-[#636366] text-icloud-text-secondary" />
+              <X size={13} strokeWidth={2} className="text-icloud-text-secondary" />
             </button>
           </div>
           <div role="tablist" aria-orientation={isMobile ? 'horizontal' : 'vertical'} className={isMobile ? 'flex gap-1 px-2 overflow-x-auto' : ''}>

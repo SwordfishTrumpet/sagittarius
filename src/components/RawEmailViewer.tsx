@@ -40,12 +40,12 @@ function renderHeaders(headers: { name: string; value: string }[] | undefined) {
         {headers.map((h, i) => (
           <tr
             key={i}
-            className={i % 2 === 0 ? 'bg-icloud-card' : 'bg-[#F9F9FB] bg-icloud-bg-primary'}
+            className={i % 2 === 0 ? 'bg-icloud-card' : 'bg-icloud-bg-layer1'}
           >
             <td className="px-3 sm:px-4 py-2 font-semibold text-icloud-text-primary align-top whitespace-nowrap w-28 sm:w-52 border-r border-icloud-border">
               {h.name}
             </td>
-            <td className="px-4 py-2 text-[#3A3A3C] break-all font-mono">
+            <td className="px-4 py-2 text-icloud-text-primary break-all font-mono">
               {h.value}
             </td>
           </tr>
@@ -111,10 +111,10 @@ function MimeNode({
             <span className="text-icloud-text-secondary ml-2">charset={part.charset}</span>
           )}
           {part.name && (
-            <span className="text-[#636366] ml-2">&quot;{part.name}&quot;</span>
+            <span className="text-icloud-text-secondary ml-2">&quot;{part.name}&quot;</span>
           )}
           {part.size !== undefined && (
-            <span className="text-[#C7C7CC] ml-2">
+            <span className="text-icloud-text-tertiary ml-2">
               ({part.size.toLocaleString()} bytes)
             </span>
           )}
@@ -228,7 +228,7 @@ export function RawEmailViewer({ blobId, onClose }: RawEmailViewerProps) {
             className="w-8 h-8 rounded-full bg-icloud-border bg-icloud-card hover:bg-icloud-divider   flex items-center justify-center transition-colors"
             aria-label="Close"
           >
-            <X size={14} strokeWidth={2} className="text-[#636366]" />
+            <X size={14} strokeWidth={2} className="text-icloud-text-secondary" />
           </button>
         </div>
 
@@ -247,7 +247,7 @@ export function RawEmailViewer({ blobId, onClose }: RawEmailViewerProps) {
               className={`px-3.5 py-1.5 text-[13px] font-medium rounded-lg transition-colors ${
                 activeTab === tab.id
                   ? 'bg-icloud-accent text-white shadow-sm'
-                  : 'text-[#636366] hover:bg-icloud-bg-layer1 dark:hover:bg-white/5'
+                  : 'text-icloud-text-secondary hover:bg-icloud-bg-layer1 dark:hover:bg-white/5'
               }`}
             >
               {tab.label}

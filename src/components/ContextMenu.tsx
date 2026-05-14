@@ -335,7 +335,7 @@ export function ContextMenu({ items, x, y, onClose }: ContextMenuProps) {
               className={`w-full flex items-center gap-3 px-4 py-2.5 text-[13px] font-medium transition-colors relative ${
                 item.variant === 'destructive'
                   ? 'text-icloud-red hover:bg-icloud-red/10 disabled:text-icloud-red/40'
-                  : 'text-icloud-text-primary hover:bg-icloud-accent/10 disabled:text-icloud-text-secondary dark:disabled:text-[#636366]'
+                  : 'text-icloud-text-primary hover:bg-icloud-accent/10 disabled:text-icloud-text-tertiary'
               } ${item.disabled ? 'cursor-not-allowed' : 'cursor-default'}`}
             >
               {item.icon && (

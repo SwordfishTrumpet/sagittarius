@@ -490,7 +490,7 @@ function EventFormDialog({
             type="text"
             value={form.title}
             onChange={(e) => setForm({ ...form, title: e.target.value })}
-            className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[15px] focus:outline-none focus:ring-2 focus:ring-icloud-accent"
+            className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[15px] text-icloud-text-primary bg-icloud-card focus:outline-none focus:ring-2 focus:ring-icloud-accent"
             placeholder="Event title"
             required
           />
@@ -536,7 +536,7 @@ function EventFormDialog({
               type={form.isAllDay ? 'date' : 'datetime-local'}
               value={form.isAllDay ? form.start.slice(0, 10) : form.start}
               onChange={(e) => setForm({ ...form, start: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[14px] focus:outline-none focus:ring-2 focus:ring-icloud-accent"
+              className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[14px] text-icloud-text-primary bg-icloud-card focus:outline-none focus:ring-2 focus:ring-icloud-accent"
               required
             />
           </div>
@@ -548,7 +548,7 @@ function EventFormDialog({
               type={form.isAllDay ? 'date' : 'datetime-local'}
               value={form.isAllDay ? form.end.slice(0, 10) : form.end}
               onChange={(e) => setForm({ ...form, end: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[14px] focus:outline-none focus:ring-2 focus:ring-icloud-accent"
+              className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[14px] text-icloud-text-primary bg-icloud-card focus:outline-none focus:ring-2 focus:ring-icloud-accent"
               required
             />
           </div>
@@ -562,7 +562,7 @@ function EventFormDialog({
             type="text"
             value={form.location}
             onChange={(e) => setForm({ ...form, location: e.target.value })}
-            className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[15px] focus:outline-none focus:ring-2 focus:ring-icloud-accent"
+            className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[15px] text-icloud-text-primary bg-icloud-card focus:outline-none focus:ring-2 focus:ring-icloud-accent"
             placeholder="Add location"
           />
         </div>
@@ -574,7 +574,7 @@ function EventFormDialog({
           <textarea
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
-            className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[15px] focus:outline-none focus:ring-2 focus:ring-icloud-accent resize-none"
+            className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[15px] text-icloud-text-primary bg-icloud-card focus:outline-none focus:ring-2 focus:ring-icloud-accent resize-none"
             rows={3}
             placeholder="Add notes"
           />

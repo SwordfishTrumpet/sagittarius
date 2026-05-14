@@ -210,7 +210,7 @@ export function VirtualMessageList({
 
   if (!emails || emails.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-icloud-text-secondary dark:text-[#636366] p-10 text-center opacity-40">
+      <div className="flex flex-col items-center justify-center h-full text-icloud-text-tertiary p-10 text-center opacity-40">
         <Inbox className="w-10 h-10 mb-3 stroke-1" />
         <p className="text-sm">No messages</p>
       </div>

@@ -44,9 +44,9 @@ export function SieveSettings() {
       <div className="p-6">
         <h2 className="text-[17px] font-semibold text-icloud-text-primary mb-4">Filters</h2>
         <div className="bg-icloud-bg-layer1 bg-icloud-bg-primary/50 rounded-2xl px-5 py-8 text-center">
-          <Filter size={32} strokeWidth={1.5} className="mx-auto mb-3 text-[#C7C7CC] dark:text-[#636366]" />
+          <Filter size={32} strokeWidth={1.5} className="mx-auto mb-3 text-icloud-text-tertiary" />
           <p className="text-[15px] text-icloud-text-secondary ">Sieve filters are not supported</p>
-          <p className="text-[13px] text-[#C7C7CC] mt-1">
+          <p className="text-[13px] text-icloud-text-tertiary mt-1">
             Your server does not advertise the JMAP Sieve capability.
           </p>
         </div>
@@ -161,9 +161,9 @@ export function SieveSettings() {
       {/* Script list */}
       {!scripts || scripts.length === 0 ? (
         <div className="bg-icloud-bg-layer1 rounded-2xl px-5 py-10 text-center">
-          <Filter size={32} strokeWidth={1.5} className="mx-auto mb-3 text-[#C7C7CC]" />
+          <Filter size={32} strokeWidth={1.5} className="mx-auto mb-3 text-icloud-text-tertiary" />
           <p className="text-[15px] text-icloud-text-secondary font-medium">No filter rules yet</p>
-          <p className="text-[13px] text-[#C7C7CC] mt-1">
+          <p className="text-[13px] text-icloud-text-tertiary mt-1">
             Create a rule to automatically sort, flag, or redirect messages.
           </p>
         </div>

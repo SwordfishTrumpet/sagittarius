@@ -220,7 +220,7 @@ function DuplicateItem({ group, onClick }: DuplicateItemProps) {
         <div className="text-[11px] font-medium text-icloud-green">
           Save {formatBytes(group.potentialSavings)}
         </div>
-        <ChevronRight className="w-4 h-4 text-[#C7C7CC] group-hover:text-icloud-accent transition-colors ml-auto" strokeWidth={2} />
+        <ChevronRight className="w-4 h-4 text-icloud-text-tertiary group-hover:text-icloud-accent transition-colors ml-auto" strokeWidth={2} />
       </div>
     </button>
   );
