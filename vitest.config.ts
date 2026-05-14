@@ -7,19 +7,8 @@ const cpuCount = cpus().length
 export default defineConfig({
   plugins: [react()],
   test: {
-    // Use vmThreads for better performance with many test files
-    pool: 'vmThreads',
-    poolOptions: {
-      vmThreads: {
-        // Use multiple threads for parallel execution
-        singleThread: false,
-        // Let Vitest determine optimal thread count
-        maxThreads: Math.min(8, cpuCount),
-        minThreads: 2,
-      },
-    },
-    // Run test files in parallel
-    fileParallelism: true,
+    // Use multiple threads for parallel execution
+    maxThreads: Math.min(8, cpuCount),
     // Globals for testing library
     globals: true,
     // Environment setup

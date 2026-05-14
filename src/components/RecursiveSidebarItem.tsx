@@ -439,7 +439,7 @@ function RootDropZone({ onReparent }: { onReparent?: (draggedId: string, newPare
 
   return (
     <div
-      ref={drop}
+      ref={drop as unknown as React.Ref<HTMLDivElement>}
       className={`h-6 rounded-lg transition-all ${
         isOver && canDrop
           ? 'bg-icloud-accent/10 ring-1 ring-icloud-accent/30'

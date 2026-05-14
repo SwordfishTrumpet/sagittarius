@@ -12,6 +12,7 @@ import { logger } from '../../utils/logger';
 import type {
   Calendar,
   CalendarEvent,
+  CalendarNotification,
   CalendarFilter,
   CalendarEventFilter,
   CalendarGetResponse,
@@ -799,7 +800,7 @@ export function useCalendarEventNotificationQuery(
     queryFn: async () => {
       if (!accountId) throw new Error('No account available');
 
-      const request: CalendarEventNotificationQueryRequest = {
+      const request: Record<string, unknown> = {
         accountId,
         filter: filter || null,
       };

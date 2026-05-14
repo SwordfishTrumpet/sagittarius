@@ -218,7 +218,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
     setBodyHtml(nextHtml)
 
     if (typeof editor.commands.setContent === 'function') {
-      editor.commands.setContent(nextHtml, false)
+      editor.commands.setContent(nextHtml)
       return
     }
 
@@ -439,7 +439,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
     if (isEmptyOrSignature && editor) {
       const newBody = template.body;
       setBodyHtml(newBody);
-      editor.commands.setContent(newBody, false);
+      editor.commands.setContent(newBody);
     }
   }, [editor, to, cc, bcc, subject]);
 

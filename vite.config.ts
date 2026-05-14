@@ -51,38 +51,6 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     build: {
-      modulePreload: false,
-      rollupOptions: {
-        output: {
-          manualChunks: {
-            // Core React runtime — very stable, cached long-term
-            'vendor-react': ['react', 'react-dom'],
-            // Rich text editor — only needed when composing
-            'vendor-editor': [
-              '@tiptap/react',
-              '@tiptap/starter-kit',
-              '@tiptap/extension-placeholder',
-              '@tiptap/extension-underline',
-              '@tiptap/extension-link',
-            ],
-            // UI framework libs — animations, icons, drag-and-drop, virtual scroll
-            'vendor-ui': [
-              'framer-motion',
-              'lucide-react',
-              'react-dnd',
-              'react-dnd-html5-backend',
-              'react-virtuoso',
-              'sonner',
-            ],
-            // Data & utility libs
-            'vendor-util': [
-              '@tanstack/react-query',
-              'date-fns',
-              'dompurify',
-            ],
-          },
-        },
-      },
     },
     server: {
       host: '0.0.0.0',

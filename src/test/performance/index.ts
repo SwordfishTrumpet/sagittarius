@@ -127,12 +127,13 @@ export async function runQuickBenchmarks(): Promise<BenchmarkSuiteResults> {
 }
 
 // Auto-run if executed directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+declare const process: { argv: string[]; exit: (code: number) => void } | undefined
+if (import.meta.url === `file://${process?.argv?.[1] ?? ''}`) {
   runAllBenchmarks().then((results) => {
     // Exit with error code if any benchmarks failed
-    process.exit(results.summary.failed > 0 ? 1 : 0);
+    process?.exit?.(results.summary.failed > 0 ? 1 : 0);
   }).catch((error) => {
     console.error('Benchmark suite failed:', error);
-    process.exit(1);
+    process?.exit?.(1);
   });
 }
