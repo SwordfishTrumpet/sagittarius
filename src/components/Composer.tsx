@@ -612,9 +612,9 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
           <button
             onClick={handleCloseWithSave}
             aria-label="Close and save draft"
-            className="w-7 h-7 rounded-full bg-icloud-border dark:bg-[#3A3A3C] hover:bg-icloud-divider dark:hover:bg-[#48484A] flex items-center justify-center transition-colors"
+            className="w-7 h-7 rounded-full bg-icloud-border bg-icloud-card hover:bg-icloud-divider flex items-center justify-center transition-colors"
           >
-            <X size={12} strokeWidth={2.5} className="text-[#636366] text-icloud-text-secondary" />
+            <X size={12} strokeWidth={2.5} className="text-icloud-text-secondary" />
           </button>
 
           {/* Title */}
@@ -713,7 +713,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
               id="composer-to"
               value={to} 
               onChange={e => setTo(e.target.value)} 
-              className="flex-1 border-none focus:ring-2 focus:ring-icloud-accent focus:outline-none text-[14px] py-1 bg-transparent text-icloud-text-primary placeholder:text-icloud-text-secondary dark:placeholder:text-[#636366]" 
+              className="flex-1 border-none focus:ring-2 focus:ring-icloud-accent focus:outline-none text-[14px] py-1 bg-transparent text-icloud-text-primary placeholder:text-icloud-text-tertiary" 
               placeholder="Recipients"
               aria-required="true"
               aria-invalid={!to && false ? 'true' : 'false'}
@@ -851,7 +851,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
                   <div key={a.blobId} className="flex items-center gap-1.5 px-2.5 py-1 bg-icloud-accent/[0.08] dark:bg-icloud-accent/[0.15] border border-icloud-accent/[0.15] dark:border-icloud-accent/[0.20] rounded-full text-[12px] font-medium text-icloud-accent animate-in zoom-in-95 duration-200">
                     <Paperclip className="w-3 h-3" strokeWidth={1.5} />
                     <span className="max-w-[120px] truncate">{a.name}</span>
-                    <span className="text-[#005FCC] dark:text-[#64B5FF] text-[11px]">{(a.size / 1024).toFixed(0)}K</span>
+                    <span className="text-icloud-accent text-[11px]">{(a.size / 1024).toFixed(0)}K</span>
                     <button aria-label={`Remove attachment ${a.name}`} onClick={() => removeAttachment(a.blobId)} className="p-1 min-w-[24px] min-h-[24px] flex items-center justify-center hover:bg-icloud-accent/[0.15] dark:hover:bg-icloud-accent/[0.20] rounded-full transition-colors">
                       <X className="w-3 h-3" />
                     </button>
@@ -863,7 +863,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
                 const totalSize = attachments.reduce((sum, a) => sum + a.size, 0);
                 const isNearLimit = totalSize > maxAttachmentsSizeMB * 1024 * 1024 * 0.8;
                 return (
-                  <div className={`mt-2 text-[11px] ${isNearLimit ? 'text-icloud-orange dark:text-[#FF9F0A] font-medium' : 'text-icloud-text-secondary dark:text-[#636366]'}`}>
+                  <div className={`mt-2 text-[11px] ${isNearLimit ? 'text-icloud-orange font-medium' : 'text-icloud-text-tertiary'}`}>
                     Total: {(totalSize / 1024 / 1024).toFixed(1)} MB of {maxAttachmentsSizeMB} MB
                     {isNearLimit && ' (approaching limit)'}
                   </div>
@@ -901,7 +901,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
           <button onClick={handleDiscardDraft} aria-label="Discard draft" className="p-1.5 hover:bg-icloud-red/10 rounded-lg  text-icloud-text-secondary hover:text-icloud-red hover:text-icloud-red transition-colors" title="Discard draft">
             <Trash2 className="w-4 h-4" strokeWidth={1.5} />
           </button>
-          <span className="text-[11px] text-[#C7C7CC] dark:text-[#636366] font-medium">
+          <span className="text-[11px] text-icloud-text-tertiary font-medium">
             Draft
           </span>
           <div className="w-7" />

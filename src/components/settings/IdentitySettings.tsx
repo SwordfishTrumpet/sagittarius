@@ -55,7 +55,7 @@ function IdentityForm({ initial = EMPTY_FORM, onSave, onCancel, isSaving }: Iden
           value={form.name}
           onChange={set('name')}
           placeholder="Your Name"
-          className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-[#C7C7CC] dark:placeholder:text-[#636366] bg-transparent focus:ring-2 focus:ring-icloud-accent focus:outline-none rounded"
+          className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-icloud-text-tertiary bg-transparent focus:ring-2 focus:ring-icloud-accent focus:outline-none rounded"
         />
       </div>
 
@@ -69,7 +69,7 @@ function IdentityForm({ initial = EMPTY_FORM, onSave, onCancel, isSaving }: Iden
           value={form.email}
           onChange={set('email')}
           placeholder="you@example.com"
-          className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-[#C7C7CC] dark:placeholder:text-[#636366] bg-transparent focus:ring-2 focus:ring-icloud-accent focus:outline-none rounded"
+          className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-icloud-text-tertiary bg-transparent focus:ring-2 focus:ring-icloud-accent focus:outline-none rounded"
         />
       </div>
 
@@ -83,7 +83,7 @@ function IdentityForm({ initial = EMPTY_FORM, onSave, onCancel, isSaving }: Iden
           value={form.replyTo}
           onChange={set('replyTo')}
           placeholder="replies@example.com"
-          className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-[#C7C7CC] dark:placeholder:text-[#636366] bg-transparent focus:ring-2 focus:ring-icloud-accent focus:outline-none rounded"
+          className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-icloud-text-tertiary bg-transparent focus:ring-2 focus:ring-icloud-accent focus:outline-none rounded"
         />
       </div>
 
@@ -97,7 +97,7 @@ function IdentityForm({ initial = EMPTY_FORM, onSave, onCancel, isSaving }: Iden
           onChange={set('textSignature')}
           rows={4}
           placeholder="-- &#10;Your signature"
-          className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-[#C7C7CC] dark:placeholder:text-[#636366] bg-transparent focus:outline-none resize-none font-mono text-[13px]"
+          className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-icloud-text-tertiary bg-transparent focus:outline-none resize-none font-mono text-[13px]"
         />
       </div>
 
@@ -193,7 +193,7 @@ export function IdentitySettings() {
       ) : identities.length === 0 && !showAddForm ? (
         <div className="bg-icloud-bg-layer1 rounded-2xl px-5 py-8 text-center">
           <p className="text-[15px] text-icloud-text-secondary">No identities configured</p>
-          <p className="text-[13px] text-[#C7C7CC] mt-1">Click "Add Identity" to get started</p>
+          <p className="text-[13px] text-icloud-text-tertiary mt-1">Click "Add Identity" to get started</p>
         </div>
       ) : (
         <div className="space-y-2">

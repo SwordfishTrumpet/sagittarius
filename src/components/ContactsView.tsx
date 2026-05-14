@@ -401,7 +401,7 @@ function ContactFormDialog({
               type="text"
               value={form.givenName}
               onChange={(e) => setForm({ ...form, givenName: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[15px] focus:outline-none focus:ring-2 focus:ring-icloud-accent"
+              className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[15px] text-icloud-text-primary bg-icloud-card focus:outline-none focus:ring-2 focus:ring-icloud-accent"
               placeholder="John"
             />
           </div>
@@ -413,7 +413,7 @@ function ContactFormDialog({
               type="text"
               value={form.surname}
               onChange={(e) => setForm({ ...form, surname: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[15px] focus:outline-none focus:ring-2 focus:ring-icloud-accent"
+              className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[15px] text-icloud-text-primary bg-icloud-card focus:outline-none focus:ring-2 focus:ring-icloud-accent"
               placeholder="Appleseed"
             />
           </div>
@@ -426,7 +426,7 @@ function ContactFormDialog({
           <select
             value={form.addressBookId}
             onChange={(e) => setForm({ ...form, addressBookId: e.target.value })}
-            className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[15px] focus:outline-none focus:ring-2 focus:ring-icloud-accent bg-icloud-card"
+            className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[15px] text-icloud-text-primary focus:outline-none focus:ring-2 focus:ring-icloud-accent bg-icloud-card"
             required
           >
             {addressBooks.map((ab) => (
@@ -445,8 +445,8 @@ function ContactFormDialog({
             type="email"
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
-            className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[15px] focus:outline-none focus:ring-2 focus:ring-icloud-accent"
-            placeholder="john@example.com"
+              className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[15px] text-icloud-text-primary bg-icloud-card focus:outline-none focus:ring-2 focus:ring-icloud-accent"
+              placeholder="john@example.com"
           />
         </div>
 
@@ -458,8 +458,8 @@ function ContactFormDialog({
             type="tel"
             value={form.phone}
             onChange={(e) => setForm({ ...form, phone: e.target.value })}
-            className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[15px] focus:outline-none focus:ring-2 focus:ring-icloud-accent"
-            placeholder="+1 (555) 123-4567"
+              className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[15px] text-icloud-text-primary bg-icloud-card focus:outline-none focus:ring-2 focus:ring-icloud-accent"
+              placeholder="+1 (555) 123-4567"
           />
         </div>
 
@@ -471,8 +471,8 @@ function ContactFormDialog({
             type="text"
             value={form.title}
             onChange={(e) => setForm({ ...form, title: e.target.value })}
-            className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[15px] focus:outline-none focus:ring-2 focus:ring-icloud-accent"
-            placeholder="Software Engineer"
+              className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[15px] text-icloud-text-primary bg-icloud-card focus:outline-none focus:ring-2 focus:ring-icloud-accent"
+              placeholder="Software Engineer"
           />
         </div>
 
@@ -484,8 +484,8 @@ function ContactFormDialog({
             type="text"
             value={form.organization}
             onChange={(e) => setForm({ ...form, organization: e.target.value })}
-            className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[15px] focus:outline-none focus:ring-2 focus:ring-icloud-accent"
-            placeholder="Acme Inc."
+              className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[15px] text-icloud-text-primary bg-icloud-card focus:outline-none focus:ring-2 focus:ring-icloud-accent"
+              placeholder="Acme Inc."
           />
         </div>
 
@@ -496,7 +496,7 @@ function ContactFormDialog({
           <textarea
             value={form.address}
             onChange={(e) => setForm({ ...form, address: e.target.value })}
-            className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[15px] focus:outline-none focus:ring-2 focus:ring-icloud-accent resize-none"
+            className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[15px] text-icloud-text-primary bg-icloud-card focus:outline-none focus:ring-2 focus:ring-icloud-accent resize-none"
             rows={2}
             placeholder="123 Main St, City, State"
           />
@@ -509,7 +509,7 @@ function ContactFormDialog({
           <textarea
             value={form.notes}
             onChange={(e) => setForm({ ...form, notes: e.target.value })}
-            className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[15px] focus:outline-none focus:ring-2 focus:ring-icloud-accent resize-none"
+            className="w-full px-3 py-2 rounded-lg border border-icloud-border text-[15px] text-icloud-text-primary bg-icloud-card focus:outline-none focus:ring-2 focus:ring-icloud-accent resize-none"
             rows={3}
             placeholder="Additional notes..."
           />
@@ -749,7 +749,7 @@ export function ContactsView({ isOpen, onClose }: ContactsViewProps) {
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search contacts"
               aria-label="Search contacts"
-              className="w-full pl-9 pr-3 py-2 rounded-lg bg-icloud-bg-layer1 text-[14px] placeholder-icloud-text-secondary focus:outline-none focus:ring-2 focus:ring-icloud-accent"
+              className="w-full pl-9 pr-3 py-2 rounded-lg bg-icloud-bg-layer1 text-[14px] text-icloud-text-primary placeholder-icloud-text-secondary focus:outline-none focus:ring-2 focus:ring-icloud-accent"
             />
           </div>
         </div>

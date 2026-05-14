@@ -118,7 +118,7 @@ export function VacationSettings() {
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               placeholder="Out of Office"
-              className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-[#C7C7CC] bg-transparent focus:ring-2 focus:ring-icloud-accent focus:outline-none rounded"
+              className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-icloud-text-tertiary bg-transparent focus:ring-2 focus:ring-icloud-accent focus:outline-none rounded"
             />
           </div>
 
@@ -132,7 +132,7 @@ export function VacationSettings() {
               onChange={(e) => setTextBody(e.target.value)}
               rows={5}
               placeholder="I'm currently out of office and will reply when I return."
-              className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-[#C7C7CC] bg-transparent focus:ring-2 focus:ring-icloud-accent focus:outline-none resize-none rounded"
+              className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-icloud-text-tertiary bg-transparent focus:ring-2 focus:ring-icloud-accent focus:outline-none resize-none rounded"
             />
           </div>
 

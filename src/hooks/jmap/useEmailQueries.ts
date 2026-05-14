@@ -257,25 +257,31 @@ async function fetchEmailDetail(accountId: string, emailId: string, threadId?: s
 
     const selectedEmail = emails.find((email: Email) => email.id === emailId)
     if (selectedEmail && (!selectedEmail.keywords || !selectedEmail.keywords['$seen'])) {
-      suppressNewMailNotification()
-      jmapClient.request([
-        ['Email/set', {
-          accountId,
-          update: {
-            [emailId]: {
-              'keywords/$seen': true,
+      // Check if the user explicitly marked this email as unread by looking
+      // at the current cached detail data. If the cache already shows $seen: false,
+      // skip auto-read to avoid racing with the "Mark as Unread" action.
+      const currentCached = queryClient?.getQueryData<Email[]>(['emailDetail', accountId, emailId, threadId ?? null])
+      const hasPendingUnread = currentCached?.some(e => e.id === emailId && !e.keywords?.['$seen'])
+      if (!hasPendingUnread) {
+        suppressNewMailNotification()
+        jmapClient.request([
+          ['Email/set', {
+            accountId,
+            update: {
+              [emailId]: {
+                'keywords/$seen': true,
+              },
             },
-          },
-        }, '0'],
-      ]).then(() => {
-        if (queryClient) {
-          queryClient.invalidateQueries({ queryKey: ['threads'] })
-          queryClient.invalidateQueries({ queryKey: ['mailboxes'] })
-        }
-      }).catch((err) => {
-        // Log but don't throw - marking as read is non-critical
-        logger.warn('Failed to mark email as read:', err)
-      })
+          }, '0'],
+        ]).then(() => {
+          if (queryClient) {
+            queryClient.invalidateQueries({ queryKey: ['threads'] })
+            queryClient.invalidateQueries({ queryKey: ['mailboxes'] })
+          }
+        }).catch((err) => {
+          logger.warn('Failed to mark email as read:', err)
+        })
+      }
     }
 
     return emails

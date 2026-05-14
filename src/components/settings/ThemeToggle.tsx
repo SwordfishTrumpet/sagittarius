@@ -43,7 +43,7 @@ export function ThemeToggle() {
           </button>
         ))}
       </div>
-      <p className="text-[12px] text-icloud-text-secondary dark:text-[#636366] px-1">
+      <p className="text-[12px] text-icloud-text-secondary px-1">
         {mode === 'auto' 
           ? 'Automatically switches between light and dark based on your system settings.'
           : mode === 'light'

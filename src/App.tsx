@@ -271,25 +271,40 @@ function App() {
     }
   }, [emails, handleForward])
 
-  const handleArchiveFromId = useCallback((emailId: string) => {
-    setSelectedEmailId(emailId)
-    setSelectedEmailIds(new Set([emailId]))
-    // Yield to React so state updates flush, then invoke latest handler
-    requestAnimationFrame(() => handleArchive())
-  }, [handleArchive, setSelectedEmailId, setSelectedEmailIds])
-
-  const handleDeleteFromId = useCallback((emailId: string) => {
-    setSelectedEmailId(emailId)
-    setSelectedEmailIds(new Set([emailId]))
-    // Yield to React so state updates flush, then invoke latest handler
-    requestAnimationFrame(() => handleDelete())
-  }, [handleDelete, setSelectedEmailId, setSelectedEmailIds])
-
   // Animated email moves
   const { removingEmailIds, moveEmailsToFolder } = useAnimatedEmailMoves({
     onMoveAsync: moveEmail.mutateAsync,
     onMoveBulkAsync: moveEmailBulk.mutateAsync,
   })
+
+  const handleArchiveFromId = useCallback((emailId: string) => {
+    setSelectedEmailId(emailId)
+    setSelectedEmailIds(new Set([emailId]))
+    resetSelection()
+    if (!mailboxes) return
+    const archiveBox = mailboxes.find((m: Mailbox) => m.role === 'archive' || m.name.toLowerCase() === 'archive')
+    if (archiveBox) {
+      moveEmailsToFolder([emailId], archiveBox.id, 'Archive')
+    }
+  }, [mailboxes, moveEmailsToFolder, setSelectedEmailId, setSelectedEmailIds, resetSelection])
+
+  const handleDeleteFromId = useCallback((emailId: string) => {
+    setSelectedEmailId(emailId)
+    setSelectedEmailIds(new Set([emailId]))
+    resetSelection()
+    // Direct delete logic — avoids stale closure via requestAnimationFrame
+    if (!mailboxes) return
+    const trashBox = mailboxes.find((m: Mailbox) => 
+      m.role === 'trash' || m.name.toLowerCase() === 'trash' || m.name.toLowerCase() === 'deleted items'
+    )
+    if (trashBox && selectedMailboxId === trashBox.id) {
+      destroyEmail.mutate({ emailId })
+    } else if (trashBox) {
+      moveEmailsToFolder([emailId], trashBox.id, 'Trash')
+    } else {
+      destroyEmail.mutate({ emailId })
+    }
+  }, [mailboxes, selectedMailboxId, destroyEmail, moveEmailsToFolder, setSelectedEmailId, setSelectedEmailIds, resetSelection])
 
   // Mobile swipe handlers - work directly with emailId, not selectedEmailId
   const handleSwipeArchive = useCallback((emailId: string) => {

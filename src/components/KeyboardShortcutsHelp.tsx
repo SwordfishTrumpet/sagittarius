@@ -90,7 +90,7 @@ export function KeyboardShortcutsHelp({ isOpen, onClose, isMobile = false }: Key
                 className="w-7 h-7 rounded-full bg-icloud-border bg-icloud-card hover:bg-icloud-divider   flex items-center justify-center transition-colors"
                 aria-label="Close keyboard shortcuts"
               >
-                <X size={12} strokeWidth={2.5} className="text-[#636366]" />
+                <X size={12} strokeWidth={2.5} className="text-icloud-text-secondary" />
               </button>
             </div>
 
@@ -98,7 +98,7 @@ export function KeyboardShortcutsHelp({ isOpen, onClose, isMobile = false }: Key
             {isMobile && (
               <div className="mb-6 p-3 bg-icloud-bg-layer1 rounded-lg flex items-start gap-3">
                 <Smartphone className="w-5 h-5 text-icloud-accent shrink-0 mt-0.5" />
-                <p className="text-[13px] text-[#636366]">
+                <p className="text-[13px] text-icloud-text-secondary">
                   These shortcuts work when using an external keyboard with your mobile device. 
                   Tap on screen elements for touch-based navigation.
                 </p>
@@ -115,7 +115,7 @@ export function KeyboardShortcutsHelp({ isOpen, onClose, isMobile = false }: Key
                   <div className="space-y-2">
                     {group.shortcuts.map((shortcut, i) => (
                       <div key={i} className="flex items-center justify-between gap-3">
-                        <span className="text-[13px] text-[#3A3A3C]">{shortcut.desc}</span>
+                        <span className="text-[13px] text-icloud-text-primary">{shortcut.desc}</span>
                         <div className="flex items-center gap-1 shrink-0">
                           {shortcut.keys.map((key, ki) => (
                             <kbd

@@ -142,7 +142,7 @@ export function ScheduleSendPicker({ onSchedule, onCancel, maxDelaySeconds }: Sc
           className="w-6 h-6 rounded-full bg-icloud-border bg-icloud-card hover:bg-icloud-divider   flex items-center justify-center transition-colors"
           aria-label="Close schedule picker"
         >
-          <X size={11} strokeWidth={2} className="text-[#636366]" />
+          <X size={11} strokeWidth={2} className="text-icloud-text-secondary" />
         </button>
       </div>
 
@@ -164,7 +164,7 @@ export function ScheduleSendPicker({ onSchedule, onCancel, maxDelaySeconds }: Sc
                   {typeof opt.sublabel === 'function' ? opt.sublabel() : opt.sublabel}
                 </p>
               </div>
-              <ChevronRight size={14} strokeWidth={1.5} className="text-[#C7C7CC]" />
+              <ChevronRight size={14} strokeWidth={1.5} className="text-icloud-text-tertiary" />
             </button>
           );
         })}

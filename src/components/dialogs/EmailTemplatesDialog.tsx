@@ -182,7 +182,7 @@ export function EmailTemplatesDialog({
               </div>
             ) : filteredTemplates.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center">
-                <FileText className="w-12 h-12 text-[#C7C7CC] mb-3" strokeWidth={1.5} />
+                <FileText className="w-12 h-12 text-icloud-text-tertiary mb-3" strokeWidth={1.5} />
                 <p className="text-[15px] text-icloud-text-secondary">
                   {searchQuery ? 'No templates match your search' : 'No templates yet'}
                 </p>
@@ -215,7 +215,7 @@ export function EmailTemplatesDialog({
                             {template.subject}
                           </p>
                           {template.to && (
-                            <p className="text-[12px] text-[#C7C7CC] truncate mt-0.5">
+                            <p className="text-[12px] text-icloud-text-tertiary truncate mt-0.5">
                               To: {template.to}
                             </p>
                           )}
@@ -315,7 +315,7 @@ export function EmailTemplatesDialog({
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
                 placeholder="e.g., Meeting Request"
-                className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-[#C7C7CC] bg-transparent focus:ring-2 focus:ring-icloud-accent focus:outline-none rounded"
+                className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-icloud-text-tertiary bg-transparent focus:ring-2 focus:ring-icloud-accent focus:outline-none rounded"
               />
             </FormField>
           </FormSection>
@@ -327,7 +327,7 @@ export function EmailTemplatesDialog({
                 value={formSubject}
                 onChange={(e) => setFormSubject(e.target.value)}
                 placeholder="e.g., Meeting request: {{topic}}"
-                className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-[#C7C7CC] bg-transparent focus:ring-2 focus:ring-icloud-accent focus:outline-none rounded"
+                className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-icloud-text-tertiary bg-transparent focus:ring-2 focus:ring-icloud-accent focus:outline-none rounded"
               />
             </FormField>
           </FormSection>
@@ -339,7 +339,7 @@ export function EmailTemplatesDialog({
                 onChange={(e) => setFormBody(e.target.value)}
                 rows={6}
                 placeholder="Enter email body text..."
-                className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-[#C7C7CC] bg-transparent focus:ring-2 focus:ring-icloud-accent focus:outline-none resize-none rounded"
+                className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-icloud-text-tertiary bg-transparent focus:ring-2 focus:ring-icloud-accent focus:outline-none resize-none rounded"
               />
             </FormField>
           </FormSection>
@@ -356,7 +356,7 @@ export function EmailTemplatesDialog({
                   value={formTo}
                   onChange={(e) => setFormTo(e.target.value)}
                   placeholder="Default recipient(s)"
-                  className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-[#C7C7CC] bg-transparent focus:ring-2 focus:ring-icloud-accent focus:outline-none rounded"
+                  className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-icloud-text-tertiary bg-transparent focus:ring-2 focus:ring-icloud-accent focus:outline-none rounded"
                 />
               </FormField>
             </FormSection>
@@ -369,7 +369,7 @@ export function EmailTemplatesDialog({
                 value={formCc}
                 onChange={(e) => setFormCc(e.target.value)}
                 placeholder="Default CC recipient(s)"
-                className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-[#C7C7CC] bg-transparent focus:ring-2 focus:ring-icloud-accent focus:outline-none rounded"
+                className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-icloud-text-tertiary bg-transparent focus:ring-2 focus:ring-icloud-accent focus:outline-none rounded"
               />
             </FormField>
           </FormSection>
@@ -381,7 +381,7 @@ export function EmailTemplatesDialog({
                 value={formBcc}
                 onChange={(e) => setFormBcc(e.target.value)}
                 placeholder="Default BCC recipient(s)"
-                className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-[#C7C7CC] bg-transparent focus:ring-2 focus:ring-icloud-accent focus:outline-none rounded"
+                className="w-full px-4 pb-3 pt-1 text-[15px] text-icloud-text-primary placeholder:text-icloud-text-tertiary bg-transparent focus:ring-2 focus:ring-icloud-accent focus:outline-none rounded"
               />
             </FormField>
           </FormSection>
