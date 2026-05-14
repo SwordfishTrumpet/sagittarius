@@ -56,7 +56,6 @@ const baseProps = {
   expandedSections: { mailboxes: true, folders: true },
   customFolderTree: [],
   hasNewMail: false,
-  esConnected: true,
   isOffline: false,
   quota: null,
   onToggleSidebarCollapsed: vi.fn(),
@@ -105,9 +104,9 @@ describe('Sidebar', () => {
     expect(screen.queryByText('user@example.com')).not.toBeInTheDocument()
   })
 
-  it('shows offline cache status when disconnected from the network', () => {
+  it('does not show offline cache status in footer when disconnected', () => {
     render(<Sidebar {...baseProps} isSidebarCollapsed={false} isOffline />)
 
-    expect(screen.getByText('Offline cache')).toBeInTheDocument()
+    expect(screen.queryByText('Offline cache')).not.toBeInTheDocument()
   })
 })
