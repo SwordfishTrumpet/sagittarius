@@ -15,7 +15,7 @@ function createWrapper() {
 
 const EMPTY_FILTERS: FilterState = {
   unread: false,
-  flagged: false,
+  starred: false,
   toMe: false,
   attachments: false,
   headerFilters: [],
@@ -53,16 +53,16 @@ describe('useListFilters', () => {
     expect(result.current.activeFilterCount).toBe(1)
   })
 
-  it('builds SearchFilter with isFlagged for flagged filter', () => {
+  it('builds SearchFilter with isFlagged for starred filter', () => {
     const { result } = renderHook(() => useListFilters({ userEmail: 'me@example.com' }), {
       wrapper: createWrapper(),
     })
 
     act(() => {
-      result.current.applyFilters({ ...EMPTY_FILTERS, flagged: true })
+      result.current.applyFilters({ ...EMPTY_FILTERS, starred: true })
     })
 
-    expect(result.current.activeFilters.flagged).toBe(true)
+    expect(result.current.activeFilters.starred).toBe(true)
     expect(result.current.dialogSearchFilter).toEqual({ isFlagged: true })
   })
 
@@ -108,7 +108,7 @@ describe('useListFilters', () => {
     })
 
     act(() => {
-      result.current.applyFilters({ ...EMPTY_FILTERS, unread: true, flagged: true })
+      result.current.applyFilters({ ...EMPTY_FILTERS, unread: true, starred: true })
     })
 
     expect(result.current.dialogSearchFilter).toEqual({
@@ -176,7 +176,7 @@ describe('useListFilters', () => {
     act(() => {
       result.current.applyFilters({
         unread: true,
-        flagged: false,
+  starred: false,
         toMe: false,
         attachments: false,
         headerFilters: [{ id: '1', headerName: 'List-Id', value: 'newsletter' }],
@@ -196,7 +196,7 @@ describe('useListFilters', () => {
     })
 
     act(() => {
-      result.current.applyFilters({ ...EMPTY_FILTERS, unread: true, flagged: true })
+      result.current.applyFilters({ ...EMPTY_FILTERS, unread: true, starred: true })
     })
     expect(result.current.hasActiveFilters).toBe(true)
 

@@ -16,7 +16,7 @@ interface MessageListItemProps {
   selected?: boolean;
   isMultiSelected?: boolean;
   threadCount?: number;
-  flagged?: boolean;
+  starred?: boolean;
   hasAttachment?: boolean;
   emailId: string;
   isSent?: boolean;
@@ -24,7 +24,7 @@ interface MessageListItemProps {
   senderDomain?: string;
   onClick: (e: React.MouseEvent<HTMLDivElement>) => void;
   onDoubleClick?: () => void;
-  onToggleFlag: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  onToggleStar: (e: React.MouseEvent<HTMLButtonElement>) => void;
   onContextMenu?: (e: React.MouseEvent<HTMLDivElement> | { clientX: number; clientY: number; preventDefault: () => void }) => void;
   isRemoving?: boolean;
 }
@@ -39,7 +39,7 @@ function MessageListItemComponent({
   selected = false,
   isMultiSelected = false,
   threadCount,
-  flagged = false,
+  starred = false,
   hasAttachment = false,
   emailId,
   isSent = false,
@@ -47,7 +47,7 @@ function MessageListItemComponent({
   senderDomain,
   onClick,
   onDoubleClick,
-  onToggleFlag,
+  onToggleStar,
   onContextMenu,
   isRemoving = false,
 }: MessageListItemProps) {
@@ -176,7 +176,7 @@ function MessageListItemComponent({
       exit={{ opacity: 0, x: 100 }}
       transition={{ duration: 0.3, ease: 'easeOut' }}
       tabIndex={0}
-      aria-label={`${sender}, ${subject}, ${date}${unread ? ', unread' : ''}${flagged ? ', flagged' : ''}`}
+      aria-label={`${sender}, ${subject}, ${date}${unread ? ', unread' : ''}${starred ? ', starred' : ''}`}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
@@ -234,12 +234,12 @@ function MessageListItemComponent({
           )}
         </div>
         <button
-          onClick={onToggleFlag}
-          aria-label={flagged ? 'Remove star' : 'Add star'}
-          aria-pressed={flagged}
-          className={`shrink-0 mt-1 transition-all focus:outline-none focus:ring-2 focus:ring-icloud-orange rounded min-w-[24px] min-h-[24px] flex items-center justify-center ${flagged ? 'text-icloud-orange opacity-100' : ' text-icloud-text-secondary opacity-40 hover:opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-40'}`}
+          onClick={onToggleStar}
+          aria-label={starred ? 'Remove star' : 'Add star'}
+          aria-pressed={starred}
+          className={`shrink-0 mt-1 transition-all focus:outline-none focus:ring-2 focus:ring-icloud-orange rounded min-w-[24px] min-h-[24px] flex items-center justify-center ${starred ? 'text-icloud-orange opacity-100' : ' text-icloud-text-secondary opacity-40 hover:opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-40'}`}
         >
-           <Star className={`w-3.5 h-3.5 ${flagged ? 'fill-current' : ''}`} strokeWidth={2} />
+           <Star className={`w-3.5 h-3.5 ${starred ? 'fill-current' : ''}`} strokeWidth={2} />
          </button>
        </div>
      </motion.div>

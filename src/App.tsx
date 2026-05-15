@@ -129,8 +129,8 @@ function App() {
   const { updateKeywords, destroyEmail } = useEmailActions()
 
   // Memoized handlers to prevent unnecessary re-renders
-  const handleToggleFlag = useCallback((emailId: string, flagged: boolean) => {
-    updateKeywords.mutate({ emailId, keywords: { '$flagged': !flagged } })
+  const handleToggleStar = useCallback((emailId: string, starred: boolean) => {
+    updateKeywords.mutate({ emailId, keywords: { '$flagged': !starred } })
   }, [updateKeywords])
 
   // Handler for marking email as unread
@@ -442,7 +442,7 @@ function App() {
         toast.error(`Failed to load email: ${error instanceof Error ? error.message : 'Unknown error'}`)
       }
     },
-    onToggleFlag: handleToggleFlag,
+    onToggleStar: handleToggleStar,
     onArchive: handleArchive,
     onDelete: handleDelete,
     onShowShortcutsHelp: () => setShowShortcutsHelp(true),
@@ -526,11 +526,11 @@ function App() {
     }
   }, [mailboxes, moveEmailsToFolder]);
 
-  // Memoized handler for toggling flag on the currently selected email
-  const handleToggleSelectedFlag = useCallback(() => {
+  // Memoized handler for toggling star on the currently selected email
+  const handleToggleSelectedStar = useCallback(() => {
     if (selectedEmailId && selectedEmailDetail) {
-      const isFlagged = !!selectedEmailDetail.keywords?.['$flagged']
-      updateKeywords.mutate({ emailId: selectedEmailId, keywords: { '$flagged': !isFlagged } })
+      const isStarred = !!selectedEmailDetail.keywords?.['$flagged']
+      updateKeywords.mutate({ emailId: selectedEmailId, keywords: { '$flagged': !isStarred } })
     }
   }, [selectedEmailId, selectedEmailDetail, updateKeywords])
 
@@ -651,7 +651,7 @@ function App() {
           <MessageListHeader
             title={
               selectedMailboxId === 'all' ? 'All Mail' :
-              selectedMailboxId === 'flagged' ? 'Flagged' :
+      selectedMailboxId === 'flagged' ? 'Starred' :
               mailboxes?.find((m: Mailbox) => m.id === selectedMailboxId)?.name || 'Messages'
             }
             isSidebarCollapsed={isSidebarCollapsed}
@@ -682,7 +682,7 @@ function App() {
             mailboxes={mailboxes || []}
             onToggleSelection={toggleEmailSelection}
             onSelectEmail={handleSelectEmail}
-            onToggleFlag={handleToggleSelectedFlag}
+            onToggleStar={handleToggleSelectedStar}
             formatMessageDate={formatMessageDate}
             removingEmailIds={removingEmailIds}
             scrollToEmailId={scrollToEmailId}
@@ -734,7 +734,7 @@ function App() {
               onReply={() => { if (selectedEmailDetail) handleReply(selectedEmailDetail) }}
               onReplyAll={() => { if (selectedEmailDetail) handleReplyAll(selectedEmailDetail) }}
               onForward={() => { if (selectedEmailDetail) handleForward(selectedEmailDetail) }}
-              onToggleFlag={handleToggleSelectedFlag}
+              onToggleStar={handleToggleSelectedStar}
               onArchive={handleArchive}
               onDelete={handleDelete}
               onMarkUnread={handleMarkUnread}

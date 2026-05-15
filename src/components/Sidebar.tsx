@@ -264,7 +264,7 @@ export function Sidebar({
                 />
                 <SidebarItem 
                   icon={<Star className="w-[18px] h-[18px]" strokeWidth={1.5} />} 
-                  label="Flagged" 
+                  label="Starred" 
                   active={selectedMailboxId === 'flagged'} 
                   onClick={() => onSelectMailbox('flagged')} 
                 />

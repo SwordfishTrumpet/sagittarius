@@ -19,7 +19,7 @@ interface VirtualMessageListProps {
   mailboxes: Mailbox[];
   onToggleSelection: (emailId: string, ctrlKey: boolean, shiftKey: boolean) => void;
   onSelectEmail?: (emailId: string, threadId: string | null) => void; // For mobile navigation
-  onToggleFlag: (emailId: string, flagged: boolean) => void;
+  onToggleStar: (emailId: string, starred: boolean) => void;
   formatMessageDate: (date: string) => string;
   removingEmailIds?: Set<string>;
   scrollToEmailId?: string | null;
@@ -48,7 +48,7 @@ export function VirtualMessageList({
   mailboxes,
   onToggleSelection,
   onSelectEmail,
-  onToggleFlag,
+  onToggleStar,
   formatMessageDate,
   removingEmailIds: externalRemovingIds,
   scrollToEmailId,
@@ -104,7 +104,7 @@ export function VirtualMessageList({
         id: 'flag',
         label: isFlagged ? 'Unstar' : 'Star',
         icon: <SFStar className={`${iconClass} ${isFlagged ? 'text-icloud-orange' : ''}`} strokeWidth={iconStroke} filled={isFlagged} />,
-        onSelect: () => onToggleFlag(contextMenu.emailId, isFlagged),
+        onSelect: () => onToggleStar(contextMenu.emailId, isFlagged),
         divider: true,
       },
       {
@@ -122,7 +122,7 @@ export function VirtualMessageList({
         onSelect: () => onDelete?.(contextMenu.emailId),
       },
     ];
-  }, [contextMenu, emails, onReply, onReplyAll, onForward, onToggleFlag, onArchive, onDelete]);
+  }, [contextMenu, emails, onReply, onReplyAll, onForward, onToggleStar, onArchive, onDelete]);
 
   // Handle context menu open from message item
   const handleContextMenu = useCallback(
@@ -184,13 +184,13 @@ export function VirtualMessageList({
     [onOpenDraft]
   );
 
-  // Handle flag toggle with event propagation stop
-  const handleToggleFlag = useCallback(
+  // Handle star toggle with event propagation stop
+  const handleToggleStar = useCallback(
     (email: Email, e: React.MouseEvent<HTMLButtonElement>) => {
       e.stopPropagation();
-      onToggleFlag(email.id, !!email.keywords?.['$flagged']);
+      onToggleStar(email.id, !!email.keywords?.['$flagged']);
     },
-    [onToggleFlag]
+    [onToggleStar]
   );
 
   if (isLoading && !isRefetching) {
@@ -248,12 +248,12 @@ export function VirtualMessageList({
                 isMultiSelected={selectedEmailIds.has(email.id)}
                 selectedEmailIds={selectedEmailIds}
                 threadCount={email.threadCount}
-                flagged={!!email.keywords?.['$flagged']}
+                starred={!!email.keywords?.['$flagged']}
                 hasAttachment={!!email.hasAttachment}
                 isSent={email.isSent}
                 onClick={(e) => handleItemClick(email, e)}
                 onDoubleClick={() => handleItemDoubleClick(email)}
-                onToggleFlag={(e) => handleToggleFlag(email, e)}
+                onToggleStar={(e) => handleToggleStar(email, e)}
                 onContextMenu={(e) => handleContextMenu(email.id, e)}
                 isRemoving={removingEmailIds.has(email.id)}
               />

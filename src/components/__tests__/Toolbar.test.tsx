@@ -33,7 +33,7 @@ const defaultProps = {
   onReply: vi.fn(),
   onReplyAll: vi.fn(),
   onForward: vi.fn(),
-  onToggleFlag: vi.fn(),
+  onToggleStar: vi.fn(),
   onArchive: vi.fn(),
   onDelete: vi.fn(),
   onToggleMoreMenu: vi.fn(),
@@ -86,16 +86,16 @@ describe('Toolbar', () => {
     expect(defaultProps.onReply).toHaveBeenCalledTimes(1)
   })
 
-  it('calls onToggleFlag when Star button is clicked', async () => {
+  it('calls onToggleStar when Star button is clicked', async () => {
     const user = userEvent.setup()
     render(<Toolbar {...defaultProps} />)
     await user.click(screen.getByRole('button', { name: 'Star' }))
-    expect(defaultProps.onToggleFlag).toHaveBeenCalledTimes(1)
+    expect(defaultProps.onToggleStar).toHaveBeenCalledTimes(1)
   })
 
   it('shows "Unstar" label when email is starred', () => {
-    const flaggedEmail = createTestEmail({ keywords: { $seen: true, $flagged: true } })
-    render(<Toolbar {...defaultProps} selectedEmail={flaggedEmail} />)
+    const starredEmail = createTestEmail({ keywords: { $seen: true, $flagged: true } })
+    render(<Toolbar {...defaultProps} selectedEmail={starredEmail} />)
     expect(screen.getByRole('button', { name: 'Unstar' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Unstar' })).toHaveAttribute('aria-pressed', 'true')
   })

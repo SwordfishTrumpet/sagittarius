@@ -9,7 +9,7 @@ const baseProps = {
   selectedEmailIds: new Set<string>(),
   searchTerm: '',
   showFilterDialog: false,
-  activeFilters: { unread: false, flagged: false, toMe: false, attachments: false, headerFilters: [] },
+  activeFilters: { unread: false, starred: false, toMe: false, attachments: false, headerFilters: [] },
   hasActiveFilters: false,
   activeFilterCount: 0,
   onShowSidebar: vi.fn(),

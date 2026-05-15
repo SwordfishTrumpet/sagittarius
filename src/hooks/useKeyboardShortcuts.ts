@@ -25,7 +25,7 @@ interface KeyboardShortcutsConfig {
   onReply: () => void
   onReplyAll: () => void
   onForward: () => void
-  onToggleFlag: (emailId: string, currentFlagged: boolean) => void
+  onToggleStar: (emailId: string, currentStarred: boolean) => void
   onArchive: () => void
   onDelete: () => void
   onShowShortcutsHelp: () => void
@@ -56,7 +56,7 @@ export function useKeyboardShortcuts(config: KeyboardShortcutsConfig) {
     onReply,
     onReplyAll,
     onForward,
-    onToggleFlag,
+    onToggleStar,
     onArchive,
     onDelete,
     onShowShortcutsHelp,
@@ -77,7 +77,7 @@ export function useKeyboardShortcuts(config: KeyboardShortcutsConfig) {
     onReply,
     onReplyAll,
     onForward,
-    onToggleFlag,
+    onToggleStar,
     onArchive,
     onDelete,
     onShowShortcutsHelp,
@@ -99,7 +99,7 @@ export function useKeyboardShortcuts(config: KeyboardShortcutsConfig) {
       onReply,
       onReplyAll,
       onForward,
-      onToggleFlag,
+      onToggleStar,
       onArchive,
       onDelete,
       onShowShortcutsHelp,
@@ -108,7 +108,7 @@ export function useKeyboardShortcuts(config: KeyboardShortcutsConfig) {
     onSelectAll, onClearSelection, onToggleSidebar, onCompose,
     onCloseShortcutsHelp, onCloseRawViewer, onCloseSettings, onCloseComposer,
     onCloseMoreMenu, onNavigateEmail, onReply, onReplyAll, onForward,
-    onToggleFlag, onArchive, onDelete, onShowShortcutsHelp,
+    onToggleStar, onArchive, onDelete, onShowShortcutsHelp,
   ]);
 
   // Use a ref for selectedEmailIds to avoid stale closure issues
@@ -187,7 +187,7 @@ export function useKeyboardShortcuts(config: KeyboardShortcutsConfig) {
             break;
           case 's':
             if (selectedEmailId && selectedEmail) {
-              cbs.onToggleFlag(selectedEmailId, !!selectedEmail.keywords?.['$flagged']);
+              cbs.onToggleStar(selectedEmailId, !!selectedEmail.keywords?.['$flagged']);
             }
             e.preventDefault();
             break;

@@ -329,7 +329,7 @@ export function AdvancedSearchModal({
                   className="w-4 h-4 rounded border-icloud-gray2 text-icloud-accent cursor-pointer"
                 />
                 <span className="text-[13px] font-medium text-icloud-text-primary">
-                  Flagged Only
+                  Starred Only
                 </span>
               </label>
 

@@ -6,7 +6,7 @@ import type { FilterState } from '../../hooks/useListFilters'
 
 const EMPTY_FILTERS: FilterState = {
   unread: false,
-  flagged: false,
+  starred: false,
   toMe: false,
   attachments: false,
   headerFilters: [],
@@ -25,7 +25,7 @@ describe('FilterDialog', () => {
     )
 
     expect(screen.getByRole('checkbox', { name: 'Unread' })).toBeInTheDocument()
-    expect(screen.getByRole('checkbox', { name: 'Flagged' })).toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: 'Starred' })).toBeInTheDocument()
     expect(screen.getByRole('checkbox', { name: 'To Me' })).toBeInTheDocument()
     expect(screen.getByRole('checkbox', { name: 'Attachments' })).toBeInTheDocument()
   })
@@ -64,7 +64,7 @@ describe('FilterDialog', () => {
 
     expect(onApply).toHaveBeenCalledWith({
       unread: true,
-      flagged: false,
+      starred: false,
       toMe: false,
       attachments: false,
       headerFilters: [],
@@ -79,7 +79,7 @@ describe('FilterDialog', () => {
       <FilterDialog
         isOpen={true}
         onClose={vi.fn()}
-        currentFilters={{ unread: true, flagged: false, toMe: false, attachments: false, headerFilters: [] }}
+        currentFilters={{ unread: true, starred: false, toMe: false, attachments: false, headerFilters: [] }}
         onApply={vi.fn()}
         onClear={onClear}
       />
