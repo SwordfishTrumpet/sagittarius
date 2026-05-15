@@ -7,16 +7,24 @@ const {
   toastSuccess,
   toastInfo,
   moveEmailMutate,
+  moveEmailMutateAsync,
   moveEmailBulkMutate,
+  moveEmailBulkMutateAsync,
   destroyEmailMutate,
+  destroyEmailMutateAsync,
   destroyEmailBulkMutate,
+  destroyEmailBulkMutateAsync,
 } = vi.hoisted(() => ({
   toastSuccess: vi.fn(),
   toastInfo: vi.fn(),
   moveEmailMutate: vi.fn(),
+  moveEmailMutateAsync: vi.fn(() => Promise.resolve()),
   moveEmailBulkMutate: vi.fn(),
+  moveEmailBulkMutateAsync: vi.fn(() => Promise.resolve()),
   destroyEmailMutate: vi.fn(),
+  destroyEmailMutateAsync: vi.fn(() => Promise.resolve()),
   destroyEmailBulkMutate: vi.fn(),
+  destroyEmailBulkMutateAsync: vi.fn(() => Promise.resolve()),
 }))
 
 vi.mock('sonner', () => ({
@@ -28,24 +36,30 @@ vi.mock('sonner', () => ({
 
 vi.mock('../jmap/useEmailMutations', () => ({
   useEmailActions: () => ({
-    moveEmail: { mutate: moveEmailMutate },
-    moveEmailBulk: { mutate: moveEmailBulkMutate },
-    destroyEmail: { mutate: destroyEmailMutate },
-    destroyEmailBulk: { mutate: destroyEmailBulkMutate },
+    moveEmail: { mutate: moveEmailMutate, mutateAsync: moveEmailMutateAsync },
+    moveEmailBulk: { mutate: moveEmailBulkMutate, mutateAsync: moveEmailBulkMutateAsync },
+    destroyEmail: { mutate: destroyEmailMutate, mutateAsync: destroyEmailMutateAsync },
+    destroyEmailBulk: { mutate: destroyEmailBulkMutate, mutateAsync: destroyEmailBulkMutateAsync },
   }),
 }))
+
+const flushPromises = () => new Promise(resolve => setTimeout(resolve, 0))
 
 describe('useEmailBulkActions', () => {
   beforeEach(() => {
     toastSuccess.mockReset()
     toastInfo.mockReset()
     moveEmailMutate.mockReset()
+    moveEmailMutateAsync.mockReset().mockReturnValue(Promise.resolve())
     moveEmailBulkMutate.mockReset()
+    moveEmailBulkMutateAsync.mockReset().mockReturnValue(Promise.resolve())
     destroyEmailMutate.mockReset()
+    destroyEmailMutateAsync.mockReset().mockReturnValue(Promise.resolve())
     destroyEmailBulkMutate.mockReset()
+    destroyEmailBulkMutateAsync.mockReset().mockReturnValue(Promise.resolve())
   })
 
-  it('uses moveEmailBulk for archive undo when mailbox restore matches', () => {
+  it('uses moveEmailBulk for archive undo when mailbox restore matches', async () => {
     const resetSelection = vi.fn()
     const { result } = renderHook(() => useEmailBulkActions({
       emails: [
@@ -63,7 +77,9 @@ describe('useEmailBulkActions', () => {
       result.current.handleArchive()
     })
 
-    expect(moveEmailBulkMutate).toHaveBeenNthCalledWith(1, {
+    await act(async () => { await flushPromises() })
+
+    expect(moveEmailBulkMutateAsync).toHaveBeenNthCalledWith(1, {
       emailIds: ['email-1', 'email-2'],
       mailboxIds: { 'mailbox-archive': true },
     })
@@ -74,14 +90,14 @@ describe('useEmailBulkActions', () => {
       undoAction.onClick()
     })
 
-    expect(moveEmailBulkMutate).toHaveBeenNthCalledWith(2, {
+    expect(moveEmailBulkMutate).toHaveBeenNthCalledWith(1, {
       emailIds: ['email-1', 'email-2'],
       mailboxIds: { 'mailbox-inbox': true },
     })
     expect(moveEmailMutate).not.toHaveBeenCalled()
   })
 
-  it('uses moveEmailBulk for delete when NOT in trash (move to trash)', () => {
+  it('uses moveEmailBulk for delete when NOT in trash (move to trash)', async () => {
     const { result } = renderHook(() => useEmailBulkActions({
       emails: [
         createTestEmail({ id: 'email-1', mailboxIds: { 'mailbox-inbox': true } }),
@@ -90,7 +106,7 @@ describe('useEmailBulkActions', () => {
       mailboxes: [createTestMailbox({ id: 'mailbox-trash', role: 'trash', name: 'Trash' })],
       selectedEmailId: null,
       selectedEmailIds: new Set(['email-1', 'email-2']),
-      selectedMailboxId: 'mailbox-inbox', // NOT in trash
+      selectedMailboxId: 'mailbox-inbox',
       resetSelection: vi.fn(),
     }))
 
@@ -98,24 +114,26 @@ describe('useEmailBulkActions', () => {
       result.current.handleDelete()
     })
 
+    await act(async () => { await flushPromises() })
+
     const undoAction = toastSuccess.mock.calls[0][1].action
     act(() => {
       undoAction.onClick()
     })
 
-    expect(moveEmailBulkMutate).toHaveBeenNthCalledWith(1, {
+    expect(moveEmailBulkMutateAsync).toHaveBeenNthCalledWith(1, {
       emailIds: ['email-1', 'email-2'],
       mailboxIds: { 'mailbox-trash': true },
     })
-    expect(moveEmailBulkMutate).toHaveBeenNthCalledWith(2, {
+    expect(moveEmailBulkMutate).toHaveBeenNthCalledWith(1, {
       emailIds: ['email-1', 'email-2'],
       mailboxIds: { 'mailbox-inbox': true },
     })
     expect(moveEmailMutate).not.toHaveBeenCalled()
-    expect(destroyEmailBulkMutate).not.toHaveBeenCalled()
+    expect(destroyEmailBulkMutateAsync).not.toHaveBeenCalled()
   })
 
-  it('uses destroyEmailBulk for permanent delete when IN trash', () => {
+  it('uses destroyEmailBulk for permanent delete when IN trash', async () => {
     const resetSelection = vi.fn()
     const { result } = renderHook(() => useEmailBulkActions({
       emails: [
@@ -125,7 +143,7 @@ describe('useEmailBulkActions', () => {
       mailboxes: [createTestMailbox({ id: 'mailbox-trash', role: 'trash', name: 'Trash' })],
       selectedEmailId: null,
       selectedEmailIds: new Set(['email-1', 'email-2']),
-      selectedMailboxId: 'mailbox-trash', // IN trash
+      selectedMailboxId: 'mailbox-trash',
       resetSelection,
     }))
 
@@ -133,20 +151,21 @@ describe('useEmailBulkActions', () => {
       result.current.handleDelete()
     })
 
-    expect(destroyEmailBulkMutate).toHaveBeenCalledWith({
+    await act(async () => { await flushPromises() })
+
+    expect(destroyEmailBulkMutateAsync).toHaveBeenCalledWith({
       emailIds: ['email-1', 'email-2'],
     })
-    expect(moveEmailBulkMutate).not.toHaveBeenCalled()
+    expect(moveEmailBulkMutateAsync).not.toHaveBeenCalled()
     expect(resetSelection).toHaveBeenCalledTimes(1)
 
-    // Verify toast shows "permanently deleted" message
     expect(toastSuccess).toHaveBeenCalledWith(
       '2 messages permanently deleted',
       expect.any(Object)
     )
   })
 
-  it('uses destroyEmail for single email permanent delete when IN trash', () => {
+  it('uses destroyEmail for single email permanent delete when IN trash', async () => {
     const resetSelection = vi.fn()
     const { result } = renderHook(() => useEmailBulkActions({
       emails: [
@@ -155,7 +174,7 @@ describe('useEmailBulkActions', () => {
       mailboxes: [createTestMailbox({ id: 'mailbox-trash', role: 'trash', name: 'Deleted Items' })],
       selectedEmailId: 'email-1',
       selectedEmailIds: new Set(),
-      selectedMailboxId: 'mailbox-trash', // IN trash (Deleted Items)
+      selectedMailboxId: 'mailbox-trash',
       resetSelection,
     }))
 
@@ -163,16 +182,42 @@ describe('useEmailBulkActions', () => {
       result.current.handleDelete()
     })
 
-    expect(destroyEmailMutate).toHaveBeenCalledWith({
+    await act(async () => { await flushPromises() })
+
+    expect(destroyEmailMutateAsync).toHaveBeenCalledWith({
       emailId: 'email-1',
     })
-    expect(moveEmailMutate).not.toHaveBeenCalled()
+    expect(moveEmailMutateAsync).not.toHaveBeenCalled()
     expect(resetSelection).toHaveBeenCalledTimes(1)
 
-    // Verify toast shows "permanently deleted" message
     expect(toastSuccess).toHaveBeenCalledWith(
       '1 message permanently deleted',
       expect.any(Object)
     )
+  })
+
+  it('does not show success toast when mutation fails', async () => {
+    moveEmailBulkMutateAsync.mockReturnValue(Promise.reject(new Error('Server error')))
+
+    const { result } = renderHook(() => useEmailBulkActions({
+      emails: [
+        createTestEmail({ id: 'email-1', mailboxIds: { 'mailbox-inbox': true } }),
+        createTestEmail({ id: 'email-2', mailboxIds: { 'mailbox-inbox': true } }),
+      ],
+      mailboxes: [createTestMailbox({ id: 'mailbox-trash', role: 'trash', name: 'Trash' })],
+      selectedEmailId: null,
+      selectedEmailIds: new Set(['email-1', 'email-2']),
+      selectedMailboxId: 'mailbox-inbox',
+      resetSelection: vi.fn(),
+    }))
+
+    act(() => {
+      result.current.handleDelete()
+    })
+
+    await act(async () => { await flushPromises() })
+
+    expect(moveEmailBulkMutateAsync).toHaveBeenCalled()
+    expect(toastSuccess).not.toHaveBeenCalled()
   })
 })

@@ -81,20 +81,20 @@ export function useEmailBulkActions({
         }
       })
 
-      if (idsToArchive.length === 1) {
-        moveEmail.mutate({ emailId: idsToArchive[0], mailboxIds: { [archiveBox.id]: true } })
-      } else {
-        moveEmailBulk.mutate({ emailIds: idsToArchive, mailboxIds: { [archiveBox.id]: true } })
-      }
+      const mutationPromise = idsToArchive.length === 1
+        ? moveEmail.mutateAsync({ emailId: idsToArchive[0], mailboxIds: { [archiveBox.id]: true } })
+        : moveEmailBulk.mutateAsync({ emailIds: idsToArchive, mailboxIds: { [archiveBox.id]: true } })
 
       resetSelection()
 
-      toast.success(`${idsToArchive.length} message${idsToArchive.length > 1 ? 's' : ''} archived`, {
-        action: {
-          label: 'Undo',
-          onClick: () => restoreMailboxSelection(idsToArchive, originalMailboxIds)
-        }
-      })
+      mutationPromise.then(() => {
+        toast.success(`${idsToArchive.length} message${idsToArchive.length > 1 ? 's' : ''} archived`, {
+          action: {
+            label: 'Undo',
+            onClick: () => restoreMailboxSelection(idsToArchive, originalMailboxIds)
+          }
+        })
+      }).catch(() => {})
     }
   }
 
@@ -104,23 +104,22 @@ export function useEmailBulkActions({
 
     // If already in trash, permanently delete
     if (isInTrashMailbox()) {
-      if (idsToDelete.length === 1) {
-        destroyEmail.mutate({ emailId: idsToDelete[0] })
-      } else {
-        destroyEmailBulk.mutate({ emailIds: idsToDelete })
-      }
+      const destroyPromise = idsToDelete.length === 1
+        ? destroyEmail.mutateAsync({ emailId: idsToDelete[0] })
+        : destroyEmailBulk.mutateAsync({ emailIds: idsToDelete })
 
       resetSelection()
 
-      toast.success(`${idsToDelete.length} message${idsToDelete.length > 1 ? 's' : ''} permanently deleted`, {
-        action: {
-          label: 'Undo',
-          onClick: () => {
-            // Cannot undo permanent deletion - show info toast
-            toast.info('Cannot undo permanent deletion')
+      destroyPromise.then(() => {
+        toast.success(`${idsToDelete.length} message${idsToDelete.length > 1 ? 's' : ''} permanently deleted`, {
+          action: {
+            label: 'Undo',
+            onClick: () => {
+              toast.info('Cannot undo permanent deletion')
+            }
           }
-        }
-      })
+        })
+      }).catch(() => {})
       return
     }
 
@@ -135,20 +134,20 @@ export function useEmailBulkActions({
         }
       })
 
-      if (idsToDelete.length === 1) {
-        moveEmail.mutate({ emailId: idsToDelete[0], mailboxIds: { [trashBox.id]: true } })
-      } else {
-        moveEmailBulk.mutate({ emailIds: idsToDelete, mailboxIds: { [trashBox.id]: true } })
-      }
+      const mutationPromise = idsToDelete.length === 1
+        ? moveEmail.mutateAsync({ emailId: idsToDelete[0], mailboxIds: { [trashBox.id]: true } })
+        : moveEmailBulk.mutateAsync({ emailIds: idsToDelete, mailboxIds: { [trashBox.id]: true } })
 
       resetSelection()
 
-      toast.success(`${idsToDelete.length} message${idsToDelete.length > 1 ? 's' : ''} moved to Trash`, {
-        action: {
-          label: 'Undo',
-          onClick: () => restoreMailboxSelection(idsToDelete, originalMailboxIds)
-        }
-      })
+      mutationPromise.then(() => {
+        toast.success(`${idsToDelete.length} message${idsToDelete.length > 1 ? 's' : ''} moved to Trash`, {
+          action: {
+            label: 'Undo',
+            onClick: () => restoreMailboxSelection(idsToDelete, originalMailboxIds)
+          }
+        })
+      }).catch(() => {})
     }
   }
 
