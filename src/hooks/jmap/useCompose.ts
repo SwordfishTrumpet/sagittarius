@@ -110,6 +110,7 @@ export function useCompose() {
       interface JMAPError {
         type: string
         description?: string
+        properties?: string[]
       }
       
       interface JMAPMethodResult {
@@ -137,12 +138,14 @@ export function useCompose() {
         const methodResult = result as JMAPMethodResult
         if (methodResult.notCreated && Object.keys(methodResult.notCreated).length > 0) {
           const firstError = Object.values(methodResult.notCreated)[0] as JMAPError
-          throw new Error(`Failed to create: ${firstError?.type || 'Unknown error'}`)
+          const props = firstError.properties?.length ? ` (properties: ${firstError.properties.join(', ')})` : ''
+          throw new Error(`Failed to create: ${firstError.type}${props}${firstError.description ? ` — ${firstError.description}` : ''}`)
         }
         // Check for notUpdated errors from onSuccessUpdateEmail patch
         if (methodResult.notUpdated && Object.keys(methodResult.notUpdated).length > 0) {
           const firstError = Object.values(methodResult.notUpdated)[0] as JMAPError
-          throw new Error(`Failed to move email to Sent: ${firstError?.type || 'Unknown error'}`)
+          const props = firstError.properties?.length ? ` (properties: ${firstError.properties.join(', ')})` : ''
+          throw new Error(`Failed to move email to Sent: ${firstError.type}${props}${firstError.description ? ` — ${firstError.description}` : ''}`)
         }
       }
 

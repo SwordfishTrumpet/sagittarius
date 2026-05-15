@@ -202,6 +202,13 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
     }
   }, [editor, isQuoteCollapsed]);
 
+  // Close schedule picker when user starts typing in composer fields
+  useEffect(() => {
+    if (showSchedulePicker) {
+      setShowSchedulePicker(false);
+    }
+  }, [to, subject, bodyHtml]);
+
   useEffect(() => {
     if (!selectedIdentityId && identities && identities.length > 0) {
       const draftFromEmail = draftEmail?.from?.[0]?.email;
@@ -437,7 +444,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
         onClose();
       },
       onError: (err: Error) => {
-        toast.error(`Sending failed: ${err.message}`);
+        toast.error(err.message);
       }
     });
   };
