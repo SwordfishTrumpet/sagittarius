@@ -1,6 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { toast } from 'sonner'
-import { toastOperationError } from '../utils/toastHelpers'
 
 interface UseAnimatedEmailMovesOptions {
   onMoveAsync: (variables: { emailId: string; mailboxIds: Record<string, boolean> }) => Promise<unknown>
@@ -80,8 +79,8 @@ export function useAnimatedEmailMoves({
         }
 
         toast.success(`Moved ${emailIds.length > 1 ? emailIds.length + ' messages' : '1 message'} to ${folderName}`)
-      } catch (err) {
-        toastOperationError('email.move', err instanceof Error ? err : undefined)
+      } catch {
+        // Mutation's onError already shows error toast and rolls back cache.
       } finally {
         isExecutingRef.current = false
 
