@@ -15,7 +15,7 @@ export interface ToolbarProps {
   onReply: () => void
   onReplyAll: () => void
   onForward: () => void
-  onToggleFlag: () => void
+  onToggleStar: () => void
   onArchive: () => void
   onDelete: () => void
   onMarkUnread?: () => void
@@ -36,7 +36,7 @@ export function Toolbar({
   onReply,
   onReplyAll,
   onForward,
-  onToggleFlag,
+  onToggleStar,
   onArchive,
   onDelete,
   onMarkUnread,
@@ -75,7 +75,7 @@ export function Toolbar({
                 label={selectedEmail?.keywords?.['$flagged'] ? 'Unstar' : 'Star'}
                 pressed={!!selectedEmail?.keywords?.['$flagged']}
                 disabled={!selectedEmailId} 
-                onClick={onToggleFlag}
+                onClick={onToggleStar}
               />
               {!isMobile && <div aria-hidden="true" className="w-[1px] h-7 bg-icloud-divider self-center"></div>}
               <ActionButton 

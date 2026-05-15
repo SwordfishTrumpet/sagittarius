@@ -10,7 +10,7 @@ export interface HeaderFilterEntry {
 
 export interface FilterState {
   unread: boolean
-  flagged: boolean
+  starred: boolean
   toMe: boolean
   attachments: boolean
   headerFilters: HeaderFilterEntry[]
@@ -34,7 +34,7 @@ interface UseListFiltersReturn {
 
 const EMPTY_FILTERS: FilterState = {
   unread: false,
-  flagged: false,
+  starred: false,
   toMe: false,
   attachments: false,
   headerFilters: [],
@@ -81,7 +81,7 @@ export function useListFilters({ userEmail }: UseListFiltersOptions): UseListFil
     if (activeFilters.unread) {
       filter.isUnread = true
     }
-    if (activeFilters.flagged) {
+    if (activeFilters.starred) {
       filter.isFlagged = true
     }
     if (activeFilters.toMe && userEmail) {
@@ -104,14 +104,14 @@ export function useListFilters({ userEmail }: UseListFiltersOptions): UseListFil
 
   const hasActiveFilters =
     activeFilters.unread ||
-    activeFilters.flagged ||
+    activeFilters.starred ||
     activeFilters.toMe ||
     activeFilters.attachments ||
     activeFilters.headerFilters.length > 0
 
   const activeFilterCount =
     (activeFilters.unread ? 1 : 0) +
-    (activeFilters.flagged ? 1 : 0) +
+    (activeFilters.starred ? 1 : 0) +
     (activeFilters.toMe ? 1 : 0) +
     (activeFilters.attachments ? 1 : 0) +
     activeFilters.headerFilters.length

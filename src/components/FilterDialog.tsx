@@ -45,7 +45,7 @@ function Checkbox({
 
 export function FilterDialog({ isOpen, onClose, currentFilters, onApply, onClear }: FilterDialogProps) {
   const [unread, setUnread] = useState(false)
-  const [flagged, setFlagged] = useState(false)
+  const [starred, setStarred] = useState(false)
   const [toMe, setToMe] = useState(false)
   const [attachments, setAttachments] = useState(false)
   const [headerFilters, setHeaderFilters] = useState<HeaderFilterEntry[]>([])
@@ -53,7 +53,7 @@ export function FilterDialog({ isOpen, onClose, currentFilters, onApply, onClear
   useEffect(() => {
     if (isOpen) {
       setUnread(currentFilters.unread)
-      setFlagged(currentFilters.flagged)
+      setStarred(currentFilters.starred)
       setToMe(currentFilters.toMe)
       setAttachments(currentFilters.attachments)
       setHeaderFilters(
@@ -81,8 +81,8 @@ export function FilterDialog({ isOpen, onClose, currentFilters, onApply, onClear
   }, [])
 
   const handleApply = useCallback(() => {
-    onApply({ unread, flagged, toMe, attachments, headerFilters })
-  }, [unread, flagged, toMe, attachments, headerFilters, onApply])
+    onApply({ unread, starred, toMe, attachments, headerFilters })
+  }, [unread, starred, toMe, attachments, headerFilters, onApply])
 
   const handleClear = useCallback(() => {
     onClear()
@@ -93,7 +93,7 @@ export function FilterDialog({ isOpen, onClose, currentFilters, onApply, onClear
       <div className="p-6 space-y-5">
         <div className="space-y-1">
           <Checkbox checked={unread} onChange={() => setUnread(prev => !prev)} label="Unread" />
-          <Checkbox checked={flagged} onChange={() => setFlagged(prev => !prev)} label="Flagged" />
+          <Checkbox checked={starred} onChange={() => setStarred(prev => !prev)} label="Starred" />
           <Checkbox checked={toMe} onChange={() => setToMe(prev => !prev)} label="To Me" />
           <Checkbox checked={attachments} onChange={() => setAttachments(prev => !prev)} label="Attachments" />
         </div>

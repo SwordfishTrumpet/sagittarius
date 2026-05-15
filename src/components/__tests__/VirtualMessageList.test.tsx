@@ -54,7 +54,7 @@ describe('VirtualMessageList draft behavior', () => {
         selectedEmailIds={new Set()}
         mailboxes={[]}
         onToggleSelection={onToggleSelection}
-        onToggleFlag={vi.fn()}
+        onToggleStar={vi.fn()}
         formatMessageDate={() => 'Apr 1'}
         onOpenDraft={onOpenDraft}
       />,
@@ -92,7 +92,7 @@ describe('VirtualMessageList context menu', () => {
     selectedEmailIds: new Set<string>(),
     mailboxes: mockMailboxes,
     onToggleSelection: vi.fn(),
-    onToggleFlag: vi.fn(),
+    onToggleStar: vi.fn(),
     formatMessageDate: () => 'Apr 1',
   }
 
@@ -182,11 +182,11 @@ describe('VirtualMessageList context menu', () => {
     expect(onDelete).toHaveBeenCalledWith('email-1')
   })
 
-  it('calls onToggleFlag when Star is clicked in context menu', async () => {
+  it('calls onToggleStar when Star is clicked in context menu', async () => {
     const user = userEvent.setup()
-    const onToggleFlag = vi.fn()
+    const onToggleStar = vi.fn()
 
-    render(<VirtualMessageList {...defaultProps} onToggleFlag={onToggleFlag} />)
+    render(<VirtualMessageList {...defaultProps} onToggleStar={onToggleStar} />)
 
     const emailRow = screen.getByLabelText(/Test Subject/)
     await user.pointer({ target: emailRow, keys: '[MouseRight]' })
@@ -194,12 +194,12 @@ describe('VirtualMessageList context menu', () => {
     const starButton = await screen.findByRole('menuitem', { name: 'Star' })
     await user.click(starButton)
 
-    expect(onToggleFlag).toHaveBeenCalledWith('email-1', false)
+    expect(onToggleStar).toHaveBeenCalledWith('email-1', false)
   })
 
-  it('calls onToggleFlag with correct flagged state when unstarring', async () => {
+  it('calls onToggleStar with correct starred state when unstarring', async () => {
     const user = userEvent.setup()
-    const onToggleFlag = vi.fn()
+    const onToggleStar = vi.fn()
 
     const starredEmail = createTestEmail({
       id: 'email-2',
@@ -214,7 +214,7 @@ describe('VirtualMessageList context menu', () => {
       <VirtualMessageList
         {...defaultProps}
         emails={[starredEmail]}
-        onToggleFlag={onToggleFlag}
+        onToggleStar={onToggleStar}
       />
     )
 
@@ -224,7 +224,7 @@ describe('VirtualMessageList context menu', () => {
     const unstarButton = await screen.findByRole('menuitem', { name: 'Unstar' })
     await user.click(unstarButton)
 
-    expect(onToggleFlag).toHaveBeenCalledWith('email-2', true)
+    expect(onToggleStar).toHaveBeenCalledWith('email-2', true)
   })
 
   it('does not call handlers when actions are not provided', async () => {
