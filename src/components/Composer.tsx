@@ -148,6 +148,11 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
 
   const [bodyHtml, setBodyHtml] = useState<string>(() => draftEmail ? initialDraftBody : (restoredDraft ? restoredDraft.body : initialContent));
 
+  // Detect whether the content contains a quoted block (for showing the toggle)
+  const hasQuotedContent = useMemo(() => {
+    return initialContent.includes('data-sagittarius-quote="1"') || initialContent.includes('id="quoted-content"');
+  }, [initialContent]);
+
   // Get max delayed send from capabilities
   const maxDelayedSend = (() => {
     try {
@@ -173,7 +178,10 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
     },
     onCreate: ({ editor }) => {
       setBodyHtml(editor.getHTML());
-      if (initialReplyContent) {
+      if (draftEmail) {
+        // Position cursor at end for draft editing so user can continue typing
+        focusTimeoutRef.current = setTimeout(() => editor.commands.focus('end'), 50);
+      } else if (initialReplyContent) {
         // Position cursor at start (above quoted text) for replies
         focusTimeoutRef.current = setTimeout(() => editor.commands.focus('start'), 50);
       }
@@ -700,7 +708,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
                 id="composer-from"
                 value={selectedIdentity?.id || ''}
                 onChange={(e) => setSelectedIdentityId(e.target.value)}
-                className="flex-1 border-none focus:ring-2 focus:ring-icloud-accent focus:outline-none text-[14px] py-1 bg-transparent cursor-pointer appearance-none text-icloud-text-primary"
+                className="flex-1 border-none focus:ring-2 focus:ring-icloud-accent focus:outline-none text-[14px] py-1 pl-3 bg-transparent cursor-pointer appearance-none text-icloud-text-primary"
               >
                 {identities.map((identity: any) => (
                   <option key={identity.id} value={identity.id}>
@@ -722,7 +730,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
               id="composer-to"
               value={to} 
               onChange={e => setTo(e.target.value)} 
-              className="flex-1 border-none focus:ring-2 focus:ring-icloud-accent focus:outline-none text-[14px] py-1 bg-transparent text-icloud-text-primary placeholder:text-icloud-text-tertiary" 
+              className="flex-1 border-none focus:ring-2 focus:ring-icloud-accent focus:outline-none text-[14px] py-1 pl-3 bg-transparent text-icloud-text-primary placeholder:text-icloud-text-tertiary" 
               placeholder="Recipients"
               aria-required="true"
               aria-invalid={!to && false ? 'true' : 'false'}
@@ -751,7 +759,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
                     id="composer-cc"
                     value={cc} 
                     onChange={e => setCc(e.target.value)} 
-                    className="flex-1 border-none focus:ring-2 focus:ring-icloud-accent focus:outline-none text-[14px] py-1 bg-transparent text-icloud-text-primary" 
+                    className="flex-1 border-none focus:ring-2 focus:ring-icloud-accent focus:outline-none text-[14px] py-1 pl-3 bg-transparent text-icloud-text-primary" 
                   />
                 </div>
                 <div className="px-5 py-2 border-b border-icloud-border flex items-center gap-2 animate-in fade-in duration-200 shrink-0">
@@ -760,7 +768,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
                     id="composer-bcc"
                     value={bcc} 
                     onChange={e => setBcc(e.target.value)} 
-                    className="flex-1 border-none focus:ring-2 focus:ring-icloud-accent focus:outline-none text-[14px] py-1 bg-transparent text-icloud-text-primary" 
+                    className="flex-1 border-none focus:ring-2 focus:ring-icloud-accent focus:outline-none text-[14px] py-1 pl-3 bg-transparent text-icloud-text-primary" 
                   />
                 </div>
               </>
@@ -774,7 +782,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
               id="composer-subject"
               value={subject} 
               onChange={e => setSubject(e.target.value)} 
-              className="flex-1 border-none focus:ring-2 focus:ring-icloud-accent focus:outline-none text-[14px] py-1 font-semibold bg-transparent text-icloud-text-primary" 
+              className="flex-1 border-none focus:ring-2 focus:ring-icloud-accent focus:outline-none text-[14px] py-1 pl-3 font-semibold bg-transparent text-icloud-text-primary" 
               aria-required="true"
               aria-invalid={!subject && false ? 'true' : 'false'}
             />
@@ -887,7 +895,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
           </div>
 
           {/* Quoted text toggle */}
-          {replyTo && initialReplyContent && (
+          {hasQuotedContent && (
             <div className="px-5 border-t border-icloud-border shrink-0">
               <button
                 onClick={() => setIsQuoteCollapsed(!isQuoteCollapsed)}
