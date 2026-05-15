@@ -153,13 +153,8 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
     return initialContent.includes('data-sagittarius-quote="1"') || initialContent.includes('id="quoted-content"');
   }, [initialContent]);
 
-  // Get max delayed send from capabilities
-  const maxDelayedSend = (() => {
-    try {
-      const cap = jmapClient.getAccountCapability?.('urn:ietf:params:jmap:submission');
-      return (cap as any)?.maxDelayedSend ?? 0;
-    } catch { return 0; }
-  })();
+  // Delayed send disabled — server rejects the sendAt property
+  const maxDelayedSend = 0;
 
   const editor = useEditor({
     extensions: [
