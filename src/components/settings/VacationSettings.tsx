@@ -144,7 +144,7 @@ export function VacationSettings() {
                 type="datetime-local"
                 value={fromDate}
                 onChange={(e) => setFromDate(e.target.value)}
-                className="text-[14px] text-icloud-accent bg-transparent focus:ring-2 focus:ring-icloud-accent focus:outline-none rounded"
+                className="text-[14px] text-icloud-accent bg-transparent focus:ring-2 focus:ring-icloud-accent focus:outline-none rounded px-3"
               />
             </div>
             <div className="px-4 py-3 flex items-center justify-between gap-4">
@@ -153,7 +153,7 @@ export function VacationSettings() {
                 type="datetime-local"
                 value={toDate}
                 onChange={(e) => setToDate(e.target.value)}
-                className="text-[14px] text-icloud-accent bg-transparent focus:ring-2 focus:ring-icloud-accent focus:outline-none rounded"
+                className="text-[14px] text-icloud-accent bg-transparent focus:ring-2 focus:ring-icloud-accent focus:outline-none rounded px-3"
               />
             </div>
           </div>
