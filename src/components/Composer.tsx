@@ -437,7 +437,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
         onClose();
       },
       onError: (err: Error) => {
-        toastOperationError('email.send', err);
+        toast.error(`Sending failed: ${err.message}`);
       }
     });
   };
