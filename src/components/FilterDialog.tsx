@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Check, Plus, X } from 'lucide-react'
 import { BaseDialog } from './dialogs/BaseDialog'
 import type { FilterState, HeaderFilterEntry } from '../hooks/useListFilters'
@@ -36,7 +36,7 @@ function Checkbox({
           checked ? 'bg-icloud-accent border-icloud-accent' : 'border-icloud-text-tertiary'
         }`}
       >
-        {checked && <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />}
+        {checked && <Check className="w-3.5 h-3.5 text-white" strokeWidth={2.5} />}
       </button>
       <span className="text-[14px] text-icloud-text-primary font-medium select-none">{label}</span>
     </label>
@@ -49,7 +49,6 @@ export function FilterDialog({ isOpen, onClose, currentFilters, onApply, onClear
   const [toMe, setToMe] = useState(false)
   const [attachments, setAttachments] = useState(false)
   const [headerFilters, setHeaderFilters] = useState<HeaderFilterEntry[]>([])
-  const headerInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (isOpen) {
@@ -89,8 +88,6 @@ export function FilterDialog({ isOpen, onClose, currentFilters, onApply, onClear
     onClear()
   }, [onClear])
 
-  const hasAnyHeaderWithName = headerFilters.some(hf => hf.headerName.trim().length > 0)
-
   return (
     <BaseDialog isOpen={isOpen} onClose={onClose} title="Filter Messages" titleId="filter-dialog-title">
       <div className="p-6 space-y-5">
@@ -110,7 +107,6 @@ export function FilterDialog({ isOpen, onClose, currentFilters, onApply, onClear
             <div key={hf.id} className="flex items-start gap-2">
               <div className="flex-1 space-y-2">
                 <input
-                  ref={hf === headerFilters[headerFilters.length - 1] ? headerInputRef : undefined}
                   type="text"
                   value={hf.headerName}
                   onChange={e => updateHeaderName(hf.id, e.target.value)}
@@ -131,7 +127,7 @@ export function FilterDialog({ isOpen, onClose, currentFilters, onApply, onClear
                 className="min-w-[36px] min-h-[36px] flex items-center justify-center text-icloud-text-secondary hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors mt-1"
                 aria-label="Remove header filter"
               >
-                <X className="w-4 h-4" strokeWidth={1.5} />
+                <X className="w-4 h-4" strokeWidth={1.25} />
               </button>
             </div>
           ))}
@@ -141,7 +137,7 @@ export function FilterDialog({ isOpen, onClose, currentFilters, onApply, onClear
             onClick={addHeaderFilter}
             className="flex items-center gap-1.5 text-[13px] text-icloud-accent font-medium hover:bg-icloud-accent/5 rounded-lg px-3 py-2 transition-colors min-h-[36px]"
           >
-            <Plus className="w-4 h-4" strokeWidth={1.5} />
+            <Plus className="w-4 h-4" strokeWidth={1.25} />
             Add Header Filter
           </button>
         </div>

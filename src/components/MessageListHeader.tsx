@@ -1,12 +1,13 @@
 import { Search, Filter, Square, ChevronRight, X, Menu } from 'lucide-react'
 import { FilterDialog } from './FilterDialog'
 import type { FilterState } from '../hooks/useListFilters'
+import type { Email } from '../types/jmap'
 
 export interface MessageListHeaderProps {
   title: string
   isSidebarCollapsed: boolean
   isMobile?: boolean
-  emails: any[] | undefined
+  emails: Email[] | undefined
   selectedEmailIds: Set<string>
   searchTerm: string
   showFilterDialog: boolean

@@ -68,17 +68,35 @@ export function buildJMAPFilter(
   if (filter.isDraft === true) keywordConditions.push('$draft');
   if (filter.isAnswered === true) keywordConditions.push('$answered');
 
+  const keywordConditionsForExtra: string[] = [];
   if (keywordConditions.length === 1) {
     jmapFilter.hasKeyword = keywordConditions[0];
   } else if (keywordConditions.length > 1) {
-    // Multiple hasKeyword conditions require allOf wrapping per RFC 8620 §5.5
-    const existing = { ...jmapFilter };
-    const conditions = keywordConditions.map((kw) => ({ hasKeyword: kw }));
-    // Merge existing filter conditions with keyword conditions under allOf
-    return { allOf: [existing, ...conditions] };
+    keywordConditionsForExtra.push(...keywordConditions);
   }
 
-  return jmapFilter;
+  // Collect extra conditions that need allOf wrapping (header filters + overflow keywords)
+  const extraConditions: EmailFilterCondition[] = [];
+
+  if (keywordConditionsForExtra.length > 0) {
+    extraConditions.push(...keywordConditionsForExtra.map((kw) => ({ hasKeyword: kw })));
+  }
+
+  // Header filters — RFC 8621 §4.4.1: FilterCondition "header" is String[]
+  // Each header filter needs its own condition (multiple headers don't fit in one)
+  if (filter.headerFilters && filter.headerFilters.length > 0) {
+    for (const hf of filter.headerFilters) {
+      const header: string[] = [hf.headerName];
+      if (hf.value) header.push(hf.value);
+      extraConditions.push({ header });
+    }
+  }
+
+  if (extraConditions.length === 0) return jmapFilter;
+  if (Object.keys(jmapFilter).length === 0) {
+    return extraConditions.length === 1 ? extraConditions[0] : { allOf: extraConditions };
+  }
+  return { allOf: [jmapFilter, ...extraConditions] };
 }
 
 /**
@@ -143,7 +161,8 @@ export function hasActiveFilters(filter: SearchFilter | null | undefined): boole
     filter.isUnread === true ||
     filter.isFlagged === true ||
     filter.isDraft === true ||
-    filter.isAnswered === true
+    filter.isAnswered === true ||
+    (filter.headerFilters !== undefined && filter.headerFilters.length > 0)
   );
 }
 

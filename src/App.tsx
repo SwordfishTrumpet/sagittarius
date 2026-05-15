@@ -90,7 +90,7 @@ function App() {
     activeFilters,
     hasActiveFilters,
     activeFilterCount,
-    quickJMAPFilter,
+    dialogSearchFilter,
     showFilterDialog,
     openFilterDialog,
     closeFilterDialog,
@@ -102,7 +102,7 @@ function App() {
   const { data: emails, isLoading: emailsLoading, isRefetching: emailsRefetching, refetch: refetchEmails } = useThreads(
     selectedMailboxId || undefined,
     debouncedSearchTerm,
-    quickJMAPFilter
+    dialogSearchFilter
   )
 
   // Email selection state

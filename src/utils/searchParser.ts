@@ -94,6 +94,18 @@ export function parseSearchQuery(query: string): ParsedQuery {
     remaining = remaining.replace(afterMatch[0], '').trim();
   }
 
+  // Extract header:Name or header:Name:value — RFC 8621 §4.4.1 FilterCondition "header" is String[]
+  // Supports `header:List-Id` (existence check) and `header:List-Id:some-value` (value contains)
+  const headerRegex = /header:([^\s:]+)(?::(\S+))?/i;
+  const headerMatch = remaining.match(headerRegex);
+  if (headerMatch) {
+    const headerName = headerMatch[1];
+    const headerValue = headerMatch[2] || undefined;
+    if (!filters.headerFilters) filters.headerFilters = [];
+    filters.headerFilters.push({ headerName, value: headerValue });
+    remaining = remaining.replace(headerMatch[0], '').trim();
+  }
+
   return {
     text: remaining,
     filters,
@@ -178,6 +190,20 @@ export function filterToPills(filters: SearchFilter): SearchPill[] {
     });
   }
 
+  if (filters.headerFilters) {
+    for (const hf of filters.headerFilters) {
+      const label = hf.value
+        ? `Header: ${hf.headerName}: ${hf.value}`
+        : `Header: ${hf.headerName}`;
+      pills.push({
+        id: `header-${hf.headerName}-${hf.value || ''}`,
+        type: 'header',
+        label,
+        value: `${hf.headerName}:${hf.value || ''}`,
+      });
+    }
+  }
+
   if (filters.before || filters.after) {
     const dateLabel = [
       filters.after ? filters.after.toLocaleDateString() : 'Any',
@@ -229,6 +255,9 @@ export function removeFilter(filters: SearchFilter, filterType: string): SearchF
     case 'date':
       delete updated.before;
       delete updated.after;
+      break;
+    case 'header':
+      delete updated.headerFilters;
       break;
   }
 
