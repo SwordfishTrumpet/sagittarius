@@ -11,6 +11,7 @@ import { useHasVacationCapability } from '../hooks/useVacation';
 import { useHasSieveCapability } from '../hooks/useSieve';
 import { useHasIdentityCapability } from '../hooks/jmap/useIdentities';
 import { useHasWebPushCapability, usePushSubscription } from '../hooks/usePushSubscription';
+import { useBIMIPreference } from '../hooks/useBIMIPreference';
 import {
   isNotificationSoundEnabled,
   getNotificationVolume,
@@ -47,6 +48,7 @@ function GeneralSettings() {
   const { existingSubs, subscribe, permission: webPushPermission } = usePushSubscription();
   const hasActiveSub = existingSubs && existingSubs.list && existingSubs.list.length > 0;
   const isWebPushGranted = webPushPermission === 'granted';
+  const { showSenderIcons, setShowSenderIcons } = useBIMIPreference();
 
   // Refresh permission state when component mounts
   useEffect(() => {
@@ -108,6 +110,17 @@ function GeneralSettings() {
         <ThemeToggle />
         <div className="border-t border-icloud-border" />
         <FontSelector />
+        <div className="border-t border-icloud-border" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <span className="text-[15px] text-icloud-text-primary">Sender icons (BIMI)</span>
+          </div>
+          <IOSToggle
+            checked={showSenderIcons}
+            onChange={setShowSenderIcons}
+            ariaLabel="Show sender brand icons"
+          />
+        </div>
       </div>
 
       <h3 className="text-[15px] font-semibold text-icloud-text-primary mt-6 mb-3">Notifications</h3>

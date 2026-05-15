@@ -244,6 +244,7 @@ export function VirtualMessageList({
               <MessageListItem
                 emailId={email.id}
                 sender={email.from?.[0]?.name || email.from?.[0]?.email || 'Unknown'}
+                senderDomain={email.from?.[0]?.email?.split('@')[1] || ''}
                 subject={email.subject || '(No Subject)'}
                 snippet={email.preview}
                 searchSnippet={email.searchSnippet}

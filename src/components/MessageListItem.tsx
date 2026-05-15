@@ -1,8 +1,10 @@
-import { useRef, useCallback, useEffect, useMemo, memo } from 'react';
+import { useRef, useCallback, useEffect, useMemo, memo, useState } from 'react';
 import { Square, Send, Star, Paperclip } from 'lucide-react';
 import { useDrag } from 'react-dnd';
 import { motion } from 'framer-motion';
 import DOMPurify from 'dompurify';
+import { getBIMILogoUrl } from '../utils/bimi';
+import { useBIMIPreference } from '../hooks/useBIMIPreference';
 
 interface MessageListItemProps {
   sender: string;
@@ -19,6 +21,7 @@ interface MessageListItemProps {
   emailId: string;
   isSent?: boolean;
   selectedEmailIds?: Set<string>;
+  senderDomain?: string;
   onClick: (e: React.MouseEvent<HTMLDivElement>) => void;
   onDoubleClick?: () => void;
   onToggleFlag: (e: React.MouseEvent<HTMLButtonElement>) => void;
@@ -41,6 +44,7 @@ function MessageListItemComponent({
   emailId,
   isSent = false,
   selectedEmailIds,
+  senderDomain,
   onClick,
   onDoubleClick,
   onToggleFlag,
@@ -129,6 +133,21 @@ function MessageListItemComponent({
     return DOMPurify.sanitize(searchSnippet, { ALLOWED_TAGS: ['mark'] });
   }, [searchSnippet]);
 
+  const { showSenderIcons } = useBIMIPreference();
+  const [bimiLogoUrl, setBimiLogoUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!showSenderIcons || !senderDomain) {
+      setBimiLogoUrl(null);
+      return;
+    }
+    let cancelled = false;
+    getBIMILogoUrl(senderDomain).then((url) => {
+      if (!cancelled) setBimiLogoUrl(url);
+    });
+    return () => { cancelled = true; };
+  }, [senderDomain, showSenderIcons]);
+
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'EMAIL',
     item: () => {
@@ -179,6 +198,15 @@ function MessageListItemComponent({
             <Square className="w-4 h-4 fill-icloud-accent fill-icloud-accent text-icloud-accent flex-shrink-0" strokeWidth={2} />
           )}
           {isSent && <Send className="w-3 h-3  text-icloud-text-secondary shrink-0" strokeWidth={2} />}
+          {bimiLogoUrl && (
+            <img
+              src={bimiLogoUrl}
+              alt=""
+              className="w-4 h-4 rounded-sm shrink-0"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+              loading="lazy"
+            />
+          )}
           <span className={`text-[15px] truncate ${unread ? 'font-bold text-icloud-text-primary' : 'font-semibold text-icloud-text-primary'}`}>{sender}</span>
         </div>
         <div className="flex items-center gap-2">

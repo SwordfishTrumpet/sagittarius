@@ -11,6 +11,7 @@ This document describes the shared patterns and utilities available in Sagittari
 - [UI Components](#ui-components)
 - [Toast Helpers](#toast-helpers)
 - [Auth Utilities](#auth-utilities)
+- [BIMI Sender Icons](#bimi-sender-icons)
 
 ---
 
@@ -879,3 +880,27 @@ export function isContactGroup(contact: ContactCard): boolean {
   return contact.kind === 'group';
 }
 ```
+
+## BIMI Sender Icons
+
+Brand Indicators for Message Identification (BIMI) allows display of verified brand logos next to authenticated emails. Sagittarius implements BIMI via client-side DNS-over-HTTPS lookups.
+
+**Files:**
+- `src/utils/bimi.ts` — BIMI DNS resolver with in-memory cache (1-hour TTL). Queries `default._bimi.<domain>` TXT records via Cloudflare DoH.
+- `src/hooks/useBIMIPreference.ts` — localStorage-backed toggle (`sagittarius:bimi-enabled`, default `true`).
+- Settings toggle in General → Appearance → "Sender icons (BIMI)".
+
+**Usage in components:**
+```tsx
+import { getBIMILogoUrl } from '../utils/bimi';
+
+const [logoUrl, setLogoUrl] = useState<string | null>(null);
+useEffect(() => {
+  if (!domain) return;
+  let cancelled = false;
+  getBIMILogoUrl(domain).then(url => { if (!cancelled) setLogoUrl(url); });
+  return () => { cancelled = true; };
+}, [domain]);
+```
+
+The BIMI lookup is fully client-side (no backend needed) via Cloudflare's DNS-over-HTTPS API which supports CORS. If a domain has no BIMI record, no icon is shown (matching iCloud Mail behavior exactly). The preference is persisted in localStorage.
