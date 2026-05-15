@@ -71,10 +71,6 @@ export function upsertIdentitySignature(bodyHtml: string, identity?: SignatureId
   container.querySelectorAll(`${SIGNATURE_SELECTOR}, ${SIGNATURE_SPACER_SELECTOR}`).forEach((node) => node.remove())
 
   const signatureMarkup = buildIdentitySignatureMarkup(identity)
-  if (!signatureMarkup) {
-    return container.innerHTML
-  }
-
   const quoteNode = container.querySelector(QUOTE_SELECTOR)
 
   if (!hasMeaningfulContentBefore(container, quoteNode)) {
@@ -87,6 +83,10 @@ export function upsertIdentitySignature(bodyHtml: string, identity?: SignatureId
     } else {
       container.appendChild(spacer)
     }
+  }
+
+  if (!signatureMarkup) {
+    return container.innerHTML
   }
 
   const signature = documentForParsing.createElement('div')
