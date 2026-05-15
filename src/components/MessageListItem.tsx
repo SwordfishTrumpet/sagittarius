@@ -235,7 +235,7 @@ function MessageListItemComponent({
         </div>
         <button
           onClick={onToggleFlag}
-          aria-label={flagged ? 'Remove flag' : 'Add flag'}
+          aria-label={flagged ? 'Remove star' : 'Add star'}
           aria-pressed={flagged}
           className={`shrink-0 mt-1 transition-all focus:outline-none focus:ring-2 focus:ring-icloud-orange rounded min-w-[24px] min-h-[24px] flex items-center justify-center ${flagged ? 'text-icloud-orange opacity-100' : ' text-icloud-text-secondary opacity-40 hover:opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-40'}`}
         >

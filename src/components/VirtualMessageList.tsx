@@ -1,7 +1,7 @@
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { useMemo, useRef, useCallback, useEffect, useState } from 'react';
 import { Inbox } from 'lucide-react';
-import { SFReply, SFReplyAll, SFForward, SFFlag, SFArchive, SFTrash } from './SFIcon';
+import { SFReply, SFReplyAll, SFForward, SFStar, SFArchive, SFTrash } from './SFIcon';
 import { MessageListItem } from './MessageListItem';
 import { SwipeableRow } from './SwipeableRow';
 import { ContextMenu, ContextMenuItemConfig } from './ContextMenu';
@@ -102,8 +102,8 @@ export function VirtualMessageList({
       },
       {
         id: 'flag',
-        label: isFlagged ? 'Unflag' : 'Flag',
-        icon: <SFFlag className={`${iconClass} ${isFlagged ? 'text-icloud-orange' : ''}`} strokeWidth={iconStroke} filled={isFlagged} />,
+        label: isFlagged ? 'Unstar' : 'Star',
+        icon: <SFStar className={`${iconClass} ${isFlagged ? 'text-icloud-orange' : ''}`} strokeWidth={iconStroke} filled={isFlagged} />,
         onSelect: () => onToggleFlag(contextMenu.emailId, isFlagged),
         divider: true,
       },
@@ -121,14 +121,8 @@ export function VirtualMessageList({
         variant: 'destructive' as const,
         onSelect: () => onDelete?.(contextMenu.emailId),
       },
-      {
-        id: 'move-to-folder',
-        label: 'Move to Folder…',
-        divider: true,
-        onSelect: () => onMoveToFolder?.(contextMenu.emailId),
-      },
     ];
-  }, [contextMenu, emails, onReply, onReplyAll, onForward, onToggleFlag, onArchive, onDelete, onMoveToFolder]);
+  }, [contextMenu, emails, onReply, onReplyAll, onForward, onToggleFlag, onArchive, onDelete]);
 
   // Handle context menu open from message item
   const handleContextMenu = useCallback(

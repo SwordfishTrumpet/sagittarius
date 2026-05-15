@@ -182,7 +182,7 @@ describe('VirtualMessageList context menu', () => {
     expect(onDelete).toHaveBeenCalledWith('email-1')
   })
 
-  it('calls onToggleFlag when Flag is clicked in context menu', async () => {
+  it('calls onToggleFlag when Star is clicked in context menu', async () => {
     const user = userEvent.setup()
     const onToggleFlag = vi.fn()
 
@@ -191,20 +191,20 @@ describe('VirtualMessageList context menu', () => {
     const emailRow = screen.getByLabelText(/Test Subject/)
     await user.pointer({ target: emailRow, keys: '[MouseRight]' })
 
-    const flagButton = await screen.findByRole('menuitem', { name: 'Flag' })
-    await user.click(flagButton)
+    const starButton = await screen.findByRole('menuitem', { name: 'Star' })
+    await user.click(starButton)
 
     expect(onToggleFlag).toHaveBeenCalledWith('email-1', false)
   })
 
-  it('calls onToggleFlag with correct flagged state when unflagging', async () => {
+  it('calls onToggleFlag with correct flagged state when unstarring', async () => {
     const user = userEvent.setup()
     const onToggleFlag = vi.fn()
 
-    const flaggedEmail = createTestEmail({
+    const starredEmail = createTestEmail({
       id: 'email-2',
       threadId: 'thread-2',
-      subject: 'Flagged Email',
+      subject: 'Starred Email',
       preview: 'Preview',
       receivedAt: '2026-04-01T10:00:00.000Z',
       keywords: { '$flagged': true },
@@ -213,16 +213,16 @@ describe('VirtualMessageList context menu', () => {
     render(
       <VirtualMessageList
         {...defaultProps}
-        emails={[flaggedEmail]}
+        emails={[starredEmail]}
         onToggleFlag={onToggleFlag}
       />
     )
 
-    const emailRow = screen.getByLabelText(/Flagged Email/)
+    const emailRow = screen.getByLabelText(/Starred Email/)
     await user.pointer({ target: emailRow, keys: '[MouseRight]' })
 
-    const unflagButton = await screen.findByRole('menuitem', { name: 'Unflag' })
-    await user.click(unflagButton)
+    const unstarButton = await screen.findByRole('menuitem', { name: 'Unstar' })
+    await user.click(unstarButton)
 
     expect(onToggleFlag).toHaveBeenCalledWith('email-2', true)
   })

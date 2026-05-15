@@ -51,7 +51,7 @@ describe('Toolbar', () => {
     expect(screen.getByRole('button', { name: 'Reply' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Reply All' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Forward' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Flag' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Star' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Archive' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Trash' })).toBeInTheDocument()
   })
@@ -60,7 +60,7 @@ describe('Toolbar', () => {
     render(<Toolbar {...defaultProps} selectedEmailId={null} selectedEmail={null} />)
     expect(screen.getByRole('button', { name: 'Reply' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Forward' })).toBeDisabled()
-    expect(screen.getByRole('button', { name: 'Flag' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Star' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Archive' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Trash' })).toBeDisabled()
   })
@@ -86,18 +86,18 @@ describe('Toolbar', () => {
     expect(defaultProps.onReply).toHaveBeenCalledTimes(1)
   })
 
-  it('calls onToggleFlag when Flag button is clicked', async () => {
+  it('calls onToggleFlag when Star button is clicked', async () => {
     const user = userEvent.setup()
     render(<Toolbar {...defaultProps} />)
-    await user.click(screen.getByRole('button', { name: 'Flag' }))
+    await user.click(screen.getByRole('button', { name: 'Star' }))
     expect(defaultProps.onToggleFlag).toHaveBeenCalledTimes(1)
   })
 
-  it('shows "Unflag" label when email is flagged', () => {
+  it('shows "Unstar" label when email is starred', () => {
     const flaggedEmail = createTestEmail({ keywords: { $seen: true, $flagged: true } })
     render(<Toolbar {...defaultProps} selectedEmail={flaggedEmail} />)
-    expect(screen.getByRole('button', { name: 'Unflag' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Unflag' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'Unstar' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Unstar' })).toHaveAttribute('aria-pressed', 'true')
   })
 
   it('hides Reply All in mobile mode', () => {
