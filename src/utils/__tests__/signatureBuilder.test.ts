@@ -79,14 +79,14 @@ describe('signatureBuilder', () => {
       expect(next).not.toContain('Old')
     })
 
-    it('removes prior signature markup when next identity has no signature', () => {
+    it('removes prior signature markup but keeps spacer when next identity has no signature and quote exists', () => {
       const next = upsertIdentitySignature(
         '<p data-sagittarius-signature-spacer="1"><br></p><div data-sagittarius-signature="1">Old</div><div id="quoted-content" data-sagittarius-quote="1"></div>',
         { id: 'identity-2', textSignature: '' },
       )
 
       expect(next).not.toContain('data-sagittarius-signature="1"')
-      expect(next).not.toContain('data-sagittarius-signature-spacer="1"')
+      expect(next).toContain('data-sagittarius-signature-spacer="1"')
     })
 
     it('adds spacer when body has no content before quote', () => {
@@ -97,6 +97,16 @@ describe('signatureBuilder', () => {
 
       expect(next).toContain('data-sagittarius-signature-spacer="1"')
       expect(next).toContain('data-sagittarius-signature="1"')
+    })
+
+    it('adds spacer for quoted content even when identity has no signature', () => {
+      const next = upsertIdentitySignature(
+        '<div data-sagittarius-quote="1"><p>Quoted</p></div>',
+        { textSignature: '' },
+      )
+
+      expect(next).toContain('data-sagittarius-signature-spacer="1"')
+      expect(next).not.toContain('data-sagittarius-signature="1"')
     })
 
     it('does not add spacer when body has content before quote', () => {

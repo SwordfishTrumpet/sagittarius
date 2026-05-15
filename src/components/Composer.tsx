@@ -185,6 +185,15 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
     },
   });
 
+  // Sync collapsed quoted text state to editor DOM whenever it changes or editor mounts
+  useEffect(() => {
+    if (!editor) return;
+    const el = editor.view?.dom?.querySelector('#quoted-content') as HTMLElement | null;
+    if (el) {
+      el.style.display = isQuoteCollapsed ? 'none' : '';
+    }
+  }, [editor, isQuoteCollapsed]);
+
   useEffect(() => {
     if (!selectedIdentityId && identities && identities.length > 0) {
       const draftFromEmail = draftEmail?.from?.[0]?.email;
@@ -377,7 +386,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
 
     const htmlContent = (() => {
       // Ensure quoted content is visible before extracting HTML
-      const quotedEl = document.querySelector('.ProseMirror #quoted-content') as HTMLElement;
+      const quotedEl = editor?.view?.dom?.querySelector('#quoted-content') as HTMLElement | null;
       if (quotedEl) quotedEl.style.display = '';
       return editor.getHTML();
     })();
@@ -881,12 +890,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
           {replyTo && initialReplyContent && (
             <div className="px-5 border-t border-icloud-border shrink-0">
               <button
-                onClick={() => {
-                  const next = !isQuoteCollapsed;
-                  setIsQuoteCollapsed(next);
-                  const el = document.querySelector('.ProseMirror #quoted-content') as HTMLElement;
-                  if (el) el.style.display = next ? 'none' : '';
-                }}
+                onClick={() => setIsQuoteCollapsed(!isQuoteCollapsed)}
                 className="py-1.5 text-[12px] text-icloud-accent font-medium hover:underline transition-colors flex items-center gap-1"
               >
                 <ChevronDown className={`w-3 h-3 transition-transform ${isQuoteCollapsed ? '' : 'rotate-180'}`} strokeWidth={2} />
