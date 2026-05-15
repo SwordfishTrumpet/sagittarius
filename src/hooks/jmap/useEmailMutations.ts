@@ -3,6 +3,7 @@ import { jmapClient } from '../../api/jmap'
 import { stateManager } from '../../api/stateManager'
 import { assertSuccessfulJmapResponse, isDeferredMutationResult, runDeferredAwareMutation } from '../../utils/offlineSyncQueue'
 import { chunkForSet } from '../../utils/capabilityUtils'
+import { toastOperationError } from '../../utils/toastHelpers'
 import type { Email } from '../../types/jmap'
 import {
   invalidateEmailQueries,
@@ -316,6 +317,7 @@ export function useEmailActions(): EmailActionsReturn {
       return { previousThreads, previousEmails }
     },
     onError: (_err, _newData, context: { previousThreads?: QuerySnapshot; previousEmails?: QuerySnapshot } | undefined) => {
+      toastOperationError('email.move')
       rollbackQueries(queryClient, context?.previousThreads)
       rollbackQueries(queryClient, context?.previousEmails)
     },
@@ -398,6 +400,7 @@ export function useEmailActions(): EmailActionsReturn {
       return { previousThreads, previousEmails }
     },
     onError: (_err, _newData, context: { previousThreads?: QuerySnapshot; previousEmails?: QuerySnapshot } | undefined) => {
+      toastOperationError('email.move')
       rollbackQueries(queryClient, context?.previousThreads)
       rollbackQueries(queryClient, context?.previousEmails)
     },
