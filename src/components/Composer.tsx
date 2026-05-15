@@ -179,8 +179,8 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
     onCreate: ({ editor }) => {
       setBodyHtml(editor.getHTML());
       if (draftEmail) {
-        // Position cursor at end for draft editing so user can continue typing
-        focusTimeoutRef.current = setTimeout(() => editor.commands.focus('end'), 50);
+        // Position cursor at top so user can start typing above existing content
+        focusTimeoutRef.current = setTimeout(() => editor.commands.focus('start'), 50);
       } else if (initialReplyContent) {
         // Position cursor at start (above quoted text) for replies
         focusTimeoutRef.current = setTimeout(() => editor.commands.focus('start'), 50);
@@ -398,7 +398,9 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
       if (quotedEl) quotedEl.style.display = '';
       return editor.getHTML();
     })();
-    const scheduleAt = scheduledDate ? scheduledDate.toISOString() : (sendAt || undefined);
+    // JMAP spec requires UTCDate format: YYYY-MM-DDTHH:MM:SSZ (no fractional seconds)
+    const toUTCDate = (d: Date) => d.toISOString().replace(/\.\d+Z$/, 'Z');
+    const scheduleAt = scheduledDate ? toUTCDate(scheduledDate) : (sendAt ? sendAt.replace(/\.\d+Z$/, 'Z') : undefined);
 
     composeMutation.mutate({
       to: parseRecipients(to),
