@@ -2,7 +2,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useListFilters } from '../useListFilters'
-import type { FilterState, HeaderFilterEntry } from '../useListFilters'
+import type { FilterState } from '../useListFilters'
 
 function createWrapper() {
   const queryClient = new QueryClient({
@@ -34,11 +34,11 @@ describe('useListFilters', () => {
     expect(result.current.activeFilters).toEqual(EMPTY_FILTERS)
     expect(result.current.hasActiveFilters).toBe(false)
     expect(result.current.activeFilterCount).toBe(0)
-    expect(result.current.quickJMAPFilter).toBeUndefined()
+    expect(result.current.dialogSearchFilter).toBeUndefined()
     expect(result.current.showFilterDialog).toBe(false)
   })
 
-  it('builds single condition for unread filter via applyFilters', () => {
+  it('builds SearchFilter with isUnread for unread filter via applyFilters', () => {
     const { result } = renderHook(() => useListFilters({ userEmail: 'me@example.com' }), {
       wrapper: createWrapper(),
     })
@@ -48,12 +48,12 @@ describe('useListFilters', () => {
     })
 
     expect(result.current.activeFilters.unread).toBe(true)
-    expect(result.current.quickJMAPFilter).toEqual({ notHasKeyword: '$seen' })
+    expect(result.current.dialogSearchFilter).toEqual({ isUnread: true })
     expect(result.current.hasActiveFilters).toBe(true)
     expect(result.current.activeFilterCount).toBe(1)
   })
 
-  it('builds single condition for flagged filter', () => {
+  it('builds SearchFilter with isFlagged for flagged filter', () => {
     const { result } = renderHook(() => useListFilters({ userEmail: 'me@example.com' }), {
       wrapper: createWrapper(),
     })
@@ -63,10 +63,10 @@ describe('useListFilters', () => {
     })
 
     expect(result.current.activeFilters.flagged).toBe(true)
-    expect(result.current.quickJMAPFilter).toEqual({ hasKeyword: '$flagged' })
+    expect(result.current.dialogSearchFilter).toEqual({ isFlagged: true })
   })
 
-  it('builds single condition for toMe filter with userEmail', () => {
+  it('builds SearchFilter with to for toMe filter with userEmail', () => {
     const { result } = renderHook(() => useListFilters({ userEmail: 'me@example.com' }), {
       wrapper: createWrapper(),
     })
@@ -75,7 +75,7 @@ describe('useListFilters', () => {
       result.current.applyFilters({ ...EMPTY_FILTERS, toMe: true })
     })
 
-    expect(result.current.quickJMAPFilter).toEqual({ to: 'me@example.com' })
+    expect(result.current.dialogSearchFilter).toEqual({ to: 'me@example.com' })
   })
 
   it('ignores toMe filter when userEmail is empty', () => {
@@ -87,10 +87,10 @@ describe('useListFilters', () => {
       result.current.applyFilters({ ...EMPTY_FILTERS, toMe: true })
     })
 
-    expect(result.current.quickJMAPFilter).toBeUndefined()
+    expect(result.current.dialogSearchFilter).toBeUndefined()
   })
 
-  it('builds single condition for attachments filter', () => {
+  it('builds SearchFilter with hasAttachment for attachments filter', () => {
     const { result } = renderHook(() => useListFilters({ userEmail: 'me@example.com' }), {
       wrapper: createWrapper(),
     })
@@ -99,10 +99,10 @@ describe('useListFilters', () => {
       result.current.applyFilters({ ...EMPTY_FILTERS, attachments: true })
     })
 
-    expect(result.current.quickJMAPFilter).toEqual({ hasAttachment: true })
+    expect(result.current.dialogSearchFilter).toEqual({ hasAttachment: true })
   })
 
-  it('builds allOf filter when multiple filters active', () => {
+  it('merges multiple fields into a single SearchFilter when multiple filters active', () => {
     const { result } = renderHook(() => useListFilters({ userEmail: 'me@example.com' }), {
       wrapper: createWrapper(),
     })
@@ -111,12 +111,13 @@ describe('useListFilters', () => {
       result.current.applyFilters({ ...EMPTY_FILTERS, unread: true, flagged: true })
     })
 
-    expect(result.current.quickJMAPFilter).toEqual({
-      allOf: [{ notHasKeyword: '$seen' }, { hasKeyword: '$flagged' }],
+    expect(result.current.dialogSearchFilter).toEqual({
+      isUnread: true,
+      isFlagged: true,
     })
   })
 
-  it('includes header filter conditions', () => {
+  it('includes header filters as headerFilters array', () => {
     const { result } = renderHook(() => useListFilters({ userEmail: 'me@example.com' }), {
       wrapper: createWrapper(),
     })
@@ -128,14 +129,14 @@ describe('useListFilters', () => {
       })
     })
 
-    expect(result.current.quickJMAPFilter).toEqual({
-      header: ['List-Id', 'newsletter'],
+    expect(result.current.dialogSearchFilter).toEqual({
+      headerFilters: [{ headerName: 'List-Id', value: 'newsletter' }],
     })
     expect(result.current.hasActiveFilters).toBe(true)
     expect(result.current.activeFilterCount).toBe(1)
   })
 
-  it('builds header exists condition when value is empty', () => {
+  it('omits value from header filter when empty (header existence check)', () => {
     const { result } = renderHook(() => useListFilters({ userEmail: 'me@example.com' }), {
       wrapper: createWrapper(),
     })
@@ -147,8 +148,8 @@ describe('useListFilters', () => {
       })
     })
 
-    expect(result.current.quickJMAPFilter).toEqual({
-      header: ['X-Spam-Status'],
+    expect(result.current.dialogSearchFilter).toEqual({
+      headerFilters: [{ headerName: 'X-Spam-Status' }],
     })
   })
 
@@ -164,10 +165,10 @@ describe('useListFilters', () => {
       })
     })
 
-    expect(result.current.quickJMAPFilter).toBeUndefined()
+    expect(result.current.dialogSearchFilter).toBeUndefined()
   })
 
-  it('combines header filters with boolean filters', () => {
+  it('combines header filters with boolean filters in single SearchFilter', () => {
     const { result } = renderHook(() => useListFilters({ userEmail: 'me@example.com' }), {
       wrapper: createWrapper(),
     })
@@ -182,16 +183,14 @@ describe('useListFilters', () => {
       })
     })
 
-    expect(result.current.quickJMAPFilter).toEqual({
-      allOf: [
-        { notHasKeyword: '$seen' },
-        { header: ['List-Id', 'newsletter'] },
-      ],
+    expect(result.current.dialogSearchFilter).toEqual({
+      isUnread: true,
+      headerFilters: [{ headerName: 'List-Id', value: 'newsletter' }],
     })
     expect(result.current.activeFilterCount).toBe(2)
   })
 
-  it('clearFilters removes all active filters', () => {
+  it('clearFilters removes all active filters and resets dialogSearchFilter', () => {
     const { result } = renderHook(() => useListFilters({ userEmail: 'me@example.com' }), {
       wrapper: createWrapper(),
     })
@@ -206,7 +205,7 @@ describe('useListFilters', () => {
     })
 
     expect(result.current.activeFilters).toEqual(EMPTY_FILTERS)
-    expect(result.current.quickJMAPFilter).toBeUndefined()
+    expect(result.current.dialogSearchFilter).toBeUndefined()
     expect(result.current.hasActiveFilters).toBe(false)
   })
 

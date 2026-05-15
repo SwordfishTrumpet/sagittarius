@@ -121,6 +121,56 @@ describe('filterBuilder — RFC 8621 §4.4.1 Compliance', () => {
       });
     });
 
+    it('should convert headerFilters to "header" String[] conditions (§4.4.1)', () => {
+      const filter = buildJMAPFilter({
+        headerFilters: [{ headerName: 'List-Id', value: 'newsletter' }],
+      });
+      expect(filter).toEqual({ header: ['List-Id', 'newsletter'] });
+    });
+
+    it('should handle headerFilters without value (exists only)', () => {
+      const filter = buildJMAPFilter({
+        headerFilters: [{ headerName: 'X-Spam-Status' }],
+      });
+      expect(filter).toEqual({ header: ['X-Spam-Status'] });
+    });
+
+    it('should use allOf when header filters combined with other conditions', () => {
+      const filter = buildJMAPFilter({
+        from: 'alice@example.com',
+        headerFilters: [{ headerName: 'List-Id', value: 'newsletter' }],
+      });
+      expect(filter).toHaveProperty('allOf');
+      expect(Array.isArray((filter as { allOf: unknown[] }).allOf)).toBe(true);
+      const allOf = (filter as { allOf: unknown[] }).allOf;
+      expect(allOf).toContainEqual({ from: 'alice@example.com' });
+      expect(allOf).toContainEqual({ header: ['List-Id', 'newsletter'] });
+    });
+
+    it('should use allOf when multiple header filters are active', () => {
+      const filter = buildJMAPFilter({
+        headerFilters: [
+          { headerName: 'List-Id', value: 'newsletter' },
+          { headerName: 'X-Custom', value: 'value' },
+        ],
+      });
+      expect(filter).toHaveProperty('allOf');
+      const allOf = (filter as { allOf: unknown[] }).allOf;
+      expect(allOf).toContainEqual({ header: ['List-Id', 'newsletter'] });
+      expect(allOf).toContainEqual({ header: ['X-Custom', 'value'] });
+    });
+
+    it('should use allOf when header filters combined with keyword filters', () => {
+      const filter = buildJMAPFilter({
+        isFlagged: true,
+        headerFilters: [{ headerName: 'List-Id', value: 'newsletter' }],
+      });
+      expect(filter).toHaveProperty('allOf');
+      const allOf = (filter as { allOf: unknown[] }).allOf;
+      expect(allOf).toContainEqual({ hasKeyword: '$flagged' });
+      expect(allOf).toContainEqual({ header: ['List-Id', 'newsletter'] });
+    });
+
     it('should use allOf when multiple keyword filters are active (isFlagged + isDraft)', () => {
       // RFC 8621 §4.4.1: hasKeyword is a single String, so multiple keyword
       // conditions must use allOf (RFC 8620 §5.5 FilterOperator)
@@ -218,6 +268,7 @@ describe('filterBuilder — RFC 8621 §4.4.1 Compliance', () => {
       expect(hasActiveFilters({ hasAttachment: true } as SearchFilter)).toBe(true);
       expect(hasActiveFilters({ isUnread: true } as SearchFilter)).toBe(true);
       expect(hasActiveFilters({ isFlagged: true } as SearchFilter)).toBe(true);
+      expect(hasActiveFilters({ headerFilters: [{ headerName: 'List-Id' }] } as SearchFilter)).toBe(true);
     });
   });
 

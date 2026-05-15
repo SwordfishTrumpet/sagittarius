@@ -441,69 +441,104 @@ if (isBasicAuth(authHeader)) {
 
 ---
 
-## JMAP Filter Types
+## Filter Architecture
 
-RFC 8621 §4.4 defines the filter types for Email/query. Use these types instead of `any` when building filters:
+Filters in Sagittarius flow through a **unified pipeline** using `SearchFilter` as the common intermediate representation:
 
-```typescript
-import type { EmailFilter, EmailFilterCondition, EmailFilterOperator } from '../types/jmap';
-
-// Building filter conditions
-const mailboxConditions: EmailFilter[] = [];
-if (mailboxId) {
-  mailboxConditions.push({ inMailbox: mailboxId });
-}
-
-// Combining with operators
-const filter: EmailFilter = {
-  allOf: [
-    { inMailbox: inboxId },
-    { hasKeyword: '$flagged' },
-    { text: searchTerm }
-  ]
-};
-
-// Complex nested filters
-const complexFilter: EmailFilter = {
-  anyOf: [
-    { from: 'sender@example.com' },
-    { 
-      allOf: [
-        { to: 'me@example.com' },
-        { hasAttachment: true }
-      ]
-    }
-  ]
-};
+```
+User input (search bar + filter dialog)
+           ↓
+    SearchFilter  (src/types/search.ts)
+           ↓
+    filterBuilder.buildJMAPFilter()  (src/utils/filterBuilder.ts)
+           ↓
+    EmailFilter  →  JMAP Email/query
 ```
 
-### Key Filter Properties
+Both the **search bar** (structured syntax like `from:alice has:attachment`) and the **Filter Dialog** (checkboxes for Unread, Flagged, To Me, Attachments) produce `SearchFilter` objects. These are merged together and converted to `EmailFilter` via a single call to `buildJMAPFilter()` in `useThreads()`.
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `inMailbox` | `string` | Must be in this mailbox |
-| `hasKeyword` | `string` | Has keyword (e.g., `$seen`, `$flagged`) |
-| `notHasKeyword` | `string` | Does not have keyword |
-| `from` | `string` | From field contains |
-| `to` | `string` | To field contains |
-| `subject` | `string` | Subject contains |
-| `text` | `string` | Any text field contains |
-| `hasAttachment` | `boolean` | Has attachments |
-| `after` | `string` | Received on or after (ISO date) |
-| `before` | `string` | Received on or before (ISO date) |
+### SearchFilter (src/types/search.ts)
 
-### Type-Safe Hook Parameters
+The unified filter type used across search and dialog:
 
-When creating hooks that accept filters, use the `EmailFilter` type:
+| Field | Type | Description | Set by |
+|-------|------|-------------|--------|
+| `from` | `string` | From field contains | Search: `from:email`, Dialog: — |
+| `to` | `string` | To field contains | Search: `to:email`, Dialog: To Me |
+| `cc` | `string` | Cc field contains | Search: `cc:email` |
+| `subject` | `string` | Subject contains | Search: `subject:text` |
+| `text` | `string` | Free-text search | Search: remaining text |
+| `before` | `Date` | Received before (ISO date) | Search: `before:YYYY-MM-DD` |
+| `after` | `Date` | Received after (ISO date) | Search: `after:YYYY-MM-DD` |
+| `hasAttachment` | `boolean` | Has attachments | Search: `has:attachment`, Dialog: Attachments |
+| `isUnread` | `boolean` | Unread (lacks $seen) | Search: `is:unread`, Dialog: Unread |
+| `isFlagged` | `boolean` | Flagged ($flagged) | Search: `is:flagged`, Dialog: Flagged |
+| `isDraft` | `boolean` | Draft ($draft) | Search: `is:draft` |
+| `isAnswered` | `boolean` | Answered ($answered) | Search: `is:answered` |
+| `headerFilters` | `{headerName, value?}[]` | Arbitrary header match | Search: `header:Name:value`, Dialog: Header section |
+
+### Search Syntax
+
+The search bar parses structured queries (see `src/utils/searchParser.ts`):
+
+| Syntax | Example |
+|--------|---------|
+| `from:email` | `from:alice@example.com` |
+| `to:email` | `to:bob@example.com` |
+| `cc:email` | `cc:carol@example.com` |
+| `subject:text` | `subject:"quarterly review"` |
+| `has:attachment` | `has:attachment` |
+| `is:unread` | `is:unread` |
+| `is:flagged` | `is:flagged` |
+| `is:draft` | `is:draft` |
+| `is:answered` | `is:answered` |
+| `before:YYYY-MM-DD` | `before:2024-12-31` |
+| `after:YYYY-MM-DD` | `after:2024-01-01` |
+| `header:Name` | `header:List-Id` (existence check) |
+| `header:Name:value` | `header:List-Id:newsletter` (value contains) |
+
+### JMAP Filter Builder (src/utils/filterBuilder.ts)
+
+`buildJMAPFilter()` converts `SearchFilter` to RFC 8621 `EmailFilter`:
+
+```typescript
+import { buildJMAPFilter, mergeFiltersAND, mergeFiltersOR, negateFilter } from '../../utils/filterBuilder';
+
+const jmapFilter = buildJMAPFilter({
+  from: 'alice@example.com',
+  isUnread: true,
+  headerFilters: [{ headerName: 'List-Id', value: 'newsletter' }],
+});
+// → { allOf: [{ from: 'alice@example.com' }, { notHasKeyword: '$seen' }, { header: ['List-Id', 'newsletter'] }] }
+```
+
+Key behaviors:
+- **Simple conditions** combine into a single `EmailFilterCondition` (e.g., `{ from, subject, hasAttachment }`)
+- **Multiple keywords** require `allOf` wrapping since `hasKeyword` is a single string per RFC 8621 §4.4.1
+- **Header filters** each get their own condition (RFC 8621 §4.4.1 `header` is `String[2]`)
+- **Multiple extra conditions** (keywords + headers) are wrapped in `allOf` per RFC 8620 §5.5
+- The `COMMON_FILTERS` object provides ready-made filters for common use cases
+
+### Hook Pattern: useThreads
+
+The unified hook consumes both sources:
 
 ```typescript
 export function useThreads(
   mailboxId?: string,
   searchTerm?: string,
-  quickFilters?: EmailFilter,  // Instead of Record<string, any>
+  dialogFilter?: SearchFilter,
 ) {
-  // ... implementation
+  // Merges parsed search + dialog filters at SearchFilter level
+  // Calls buildJMAPFilter() ONCE on the merged result
+  // Combines with mailbox conditions via allOf
 }
+```
+
+The `useListFilters` hook produces the `SearchFilter` for the dialog:
+
+```typescript
+const { dialogSearchFilter, activeFilters, hasActiveFilters } = useListFilters({ userEmail })
 ```
 
 ---

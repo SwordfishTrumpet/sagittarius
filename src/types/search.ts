@@ -23,11 +23,14 @@ export interface SearchFilter {
   threadTo?: string;          // Thread has email to this recipient
   threadSubject?: string;     // Thread has email with this subject
   threadHasAttachment?: boolean; // Thread has emails with attachments
+
+  // Arbitrary header filters — RFC 8621 §4.4.1
+  headerFilters?: { headerName: string; value?: string }[];
 }
 
 export interface SearchPill {
   id: string;
-  type: 'from' | 'to' | 'cc' | 'subject' | 'date' | 'attachment' | 'unread' | 'flagged' | 'draft' | 'text' |
+  type: 'from' | 'to' | 'cc' | 'subject' | 'date' | 'attachment' | 'unread' | 'flagged' | 'draft' | 'text' | 'header' |
         'threadFrom' | 'threadTo' | 'threadSubject' | 'threadAttachment';
   label: string;
   value: string;

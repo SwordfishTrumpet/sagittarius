@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import type { EmailFilter, EmailFilterCondition } from '../types/jmap'
+import type { SearchFilter } from '../types/search'
 
 export interface HeaderFilterEntry {
   id: string
@@ -24,7 +24,7 @@ interface UseListFiltersReturn {
   activeFilters: FilterState
   hasActiveFilters: boolean
   activeFilterCount: number
-  quickJMAPFilter: EmailFilter | undefined
+  dialogSearchFilter: SearchFilter | undefined
   showFilterDialog: boolean
   openFilterDialog: () => void
   closeFilterDialog: () => void
@@ -74,34 +74,32 @@ export function useListFilters({ userEmail }: UseListFiltersOptions): UseListFil
     }
   }, [activeFilters, queryClient])
 
-  // Build JMAP filter from active filters
-  const quickJMAPFilter = useMemo(() => {
-    const conditions: EmailFilterCondition[] = []
+  // Build SearchFilter from dialog FilterState
+  const dialogSearchFilter = useMemo(() => {
+    const filter: Partial<SearchFilter> = {}
 
     if (activeFilters.unread) {
-      conditions.push({ notHasKeyword: '$seen' })
+      filter.isUnread = true
     }
     if (activeFilters.flagged) {
-      conditions.push({ hasKeyword: '$flagged' })
+      filter.isFlagged = true
     }
     if (activeFilters.toMe && userEmail) {
-      conditions.push({ to: userEmail })
+      filter.to = userEmail
     }
     if (activeFilters.attachments) {
-      conditions.push({ hasAttachment: true })
+      filter.hasAttachment = true
     }
 
-    for (const hf of activeFilters.headerFilters) {
-      if (hf.headerName.trim()) {
-        const header: string[] = [hf.headerName.trim()]
-        if (hf.value.trim()) header.push(hf.value.trim())
-        conditions.push({ header })
-      }
+    const validHeaderFilters = activeFilters.headerFilters.filter(hf => hf.headerName.trim())
+    if (validHeaderFilters.length > 0) {
+      filter.headerFilters = validHeaderFilters.map(hf => ({
+        headerName: hf.headerName.trim(),
+        value: hf.value.trim() || undefined,
+      }))
     }
 
-    if (conditions.length === 0) return undefined
-    if (conditions.length === 1) return conditions[0]
-    return { allOf: conditions }
+    return Object.keys(filter).length > 0 ? (filter as SearchFilter) : undefined
   }, [activeFilters, userEmail])
 
   const hasActiveFilters =
@@ -122,7 +120,7 @@ export function useListFilters({ userEmail }: UseListFiltersOptions): UseListFil
     activeFilters,
     hasActiveFilters,
     activeFilterCount,
-    quickJMAPFilter,
+    dialogSearchFilter,
     showFilterDialog,
     openFilterDialog,
     closeFilterDialog,

@@ -150,6 +150,40 @@ describe('searchParser', () => {
       const result = parseSearchQuery('before:2024-01');
       expect(result.filters.before).toBeUndefined();
     });
+
+    it('should parse header:Name (existence check)', () => {
+      const result = parseSearchQuery('header:List-Id');
+      expect(result.filters.headerFilters).toHaveLength(1);
+      expect(result.filters.headerFilters![0].headerName).toBe('List-Id');
+      expect(result.filters.headerFilters![0].value).toBeUndefined();
+      expect(result.text).toBe('');
+    });
+
+    it('should parse header:Name:value (value contains)', () => {
+      const result = parseSearchQuery('header:List-Id:newsletter');
+      expect(result.filters.headerFilters).toHaveLength(1);
+      expect(result.filters.headerFilters![0].headerName).toBe('List-Id');
+      expect(result.filters.headerFilters![0].value).toBe('newsletter');
+      expect(result.text).toBe('');
+    });
+
+    it('should parse header filter with free text', () => {
+      const result = parseSearchQuery('hello header:X-Custom:world test');
+      expect(result.filters.headerFilters).toHaveLength(1);
+      expect(result.filters.headerFilters![0].headerName).toBe('X-Custom');
+      expect(result.filters.headerFilters![0].value).toBe('world');
+      expect(result.text).toContain('hello');
+      expect(result.text).toContain('test');
+    });
+
+    it('should parse header filter alongside other filters', () => {
+      const result = parseSearchQuery('from:alice@example.com header:List-Id:newsletter has:attachment');
+      expect(result.filters.from).toBe('alice@example.com');
+      expect(result.filters.headerFilters).toHaveLength(1);
+      expect(result.filters.headerFilters![0].headerName).toBe('List-Id');
+      expect(result.filters.headerFilters![0].value).toBe('newsletter');
+      expect(result.filters.hasAttachment).toBe(true);
+    });
   });
 
   describe('filterToPills', () => {
@@ -275,6 +309,28 @@ describe('searchParser', () => {
       expect(pills[0].label).toMatch(/Any/);
     });
 
+    it('should create header pill for header:Name (existence)', () => {
+      const pills = filterToPills({
+        headerFilters: [{ headerName: 'List-Id' }],
+      });
+      expect(pills).toHaveLength(1);
+      expect(pills[0]).toMatchObject({
+        type: 'header',
+        label: 'Header: List-Id',
+      });
+    });
+
+    it('should create header pill for header:Name:value', () => {
+      const pills = filterToPills({
+        headerFilters: [{ headerName: 'List-Id', value: 'newsletter' }],
+      });
+      expect(pills).toHaveLength(1);
+      expect(pills[0]).toMatchObject({
+        type: 'header',
+        label: 'Header: List-Id: newsletter',
+      });
+    });
+
     it('should convert multiple filters to pills', () => {
       const pills = filterToPills({
         from: 'alice@example.com',
@@ -352,6 +408,16 @@ describe('searchParser', () => {
       const result = removeFilter(filters, 'from');
       expect(filters.from).toBe('alice@example.com'); // original unchanged
       expect(result.from).toBeUndefined(); // copy is changed
+    });
+
+    it('should remove header filter', () => {
+      const filters = {
+        from: 'alice@example.com',
+        headerFilters: [{ headerName: 'List-Id', value: 'newsletter' }],
+      };
+      const result = removeFilter(filters, 'header');
+      expect(result.from).toBe('alice@example.com');
+      expect(result.headerFilters).toBeUndefined();
     });
 
     it('should return unchanged object for unknown filter type', () => {
