@@ -72,7 +72,7 @@ export function Toolbar({
               {!isMobile && <div aria-hidden="true" className="w-[1px] h-7 bg-icloud-divider self-center"></div>}
               <ActionButton 
                 icon={<SFStar className={`${iconSize} ${selectedEmail?.keywords?.['$flagged'] ? 'text-icloud-orange' : ''}`} filled={!!selectedEmail?.keywords?.['$flagged']} />} 
-                label={selectedEmail?.keywords?.['$flagged'] ? 'Unflag' : 'Flag'}
+                label={selectedEmail?.keywords?.['$flagged'] ? 'Unstar' : 'Star'}
                 pressed={!!selectedEmail?.keywords?.['$flagged']}
                 disabled={!selectedEmailId} 
                 onClick={onToggleFlag}

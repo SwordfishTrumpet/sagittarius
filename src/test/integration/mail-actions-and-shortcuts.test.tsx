@@ -80,7 +80,7 @@ describe('mail actions and shortcuts', () => {
     const message = await screen.findByRole('option', { name: /Quarterly update/ })
     await user.click(within(message).getByText('Quarterly update'))
     await screen.findByText('First message body')
-    await user.click(screen.getByRole('button', { name: 'Flag' }))
+    await user.click(screen.getByRole('button', { name: 'Star' }))
 
     await waitFor(() => {
       const bodies = getJmapRequestBodies(['Email/set'])
