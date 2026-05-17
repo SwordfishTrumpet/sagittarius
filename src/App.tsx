@@ -98,11 +98,20 @@ function App() {
     clearFilters,
   } = useListFilters({ userEmail })
 
+  const allMailExcludeIds = useMemo(() => {
+    if (!mailboxes) return undefined
+    const EXCLUDE_ROLES = new Set(['trash', 'spam', 'junk'])
+    return mailboxes
+      .filter((m: Mailbox) => m.role && EXCLUDE_ROLES.has(m.role as string))
+      .map((m: Mailbox) => m.id)
+  }, [mailboxes])
+
   // Email threads
   const { data: emails, isLoading: emailsLoading, isRefetching: emailsRefetching, refetch: refetchEmails } = useThreads(
     selectedMailboxId || undefined,
     debouncedSearchTerm,
-    dialogSearchFilter
+    dialogSearchFilter,
+    selectedMailboxId === 'all' ? allMailExcludeIds : undefined,
   )
 
   // Email selection state

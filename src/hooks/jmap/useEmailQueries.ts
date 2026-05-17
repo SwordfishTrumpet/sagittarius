@@ -66,12 +66,13 @@ export function useThreads(
   mailboxId?: string,
   searchTerm?: string,
   dialogFilter?: SearchFilter,
+  excludeMailboxIds?: string[],
 ) {
   const accountId = jmapClient.getPrimaryAccount()
 
   return useQuery({
-    queryKey: ['threads', accountId, mailboxId, searchTerm, dialogFilter ? JSON.stringify(dialogFilter) : undefined],
-    queryFn: async () => fetchWithOfflineCache(['threads', accountId, mailboxId, searchTerm, dialogFilter ? JSON.stringify(dialogFilter) : undefined], async () => {
+    queryKey: ['threads', accountId, mailboxId, searchTerm, dialogFilter ? JSON.stringify(dialogFilter) : undefined, excludeMailboxIds],
+    queryFn: async () => fetchWithOfflineCache(['threads', accountId, mailboxId, searchTerm, dialogFilter ? JSON.stringify(dialogFilter) : undefined, excludeMailboxIds], async () => {
       if (!mailboxId && !searchTerm && !dialogFilter) return []
 
       const mailboxConditions: EmailFilter[] = []
@@ -79,7 +80,9 @@ export function useThreads(
         mailboxConditions.push({ inMailbox: mailboxId })
       }
       if (mailboxId === 'all') {
-        mailboxConditions.push({ notHasKeyword: '$trashed' })
+        if (excludeMailboxIds && excludeMailboxIds.length > 0) {
+          mailboxConditions.push({ inMailboxOtherThan: excludeMailboxIds })
+        }
       }
       if (mailboxId === 'flagged') {
         mailboxConditions.push({ hasKeyword: '$flagged' })
@@ -187,7 +190,9 @@ export function useThreads(
             snippetFilter.inMailbox = mailboxId
           }
           if (mailboxId === 'all') {
-            snippetFilter.notHasKeyword = '$trashed'
+            if (excludeMailboxIds && excludeMailboxIds.length > 0) {
+              snippetFilter.inMailboxOtherThan = excludeMailboxIds
+            }
           }
           if (mailboxId === 'flagged') {
             snippetFilter.hasKeyword = '$flagged'
