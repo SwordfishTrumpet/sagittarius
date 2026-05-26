@@ -8,7 +8,8 @@ export default defineConfig({
   plugins: [react()],
   test: {
     // Use multiple threads for parallel execution
-    maxThreads: Math.min(8, cpuCount),
+    pool: 'threads',
+    maxWorkers: Math.min(8, cpuCount),
     // Globals for testing library
     globals: true,
     // Environment setup

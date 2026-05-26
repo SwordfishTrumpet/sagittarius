@@ -21,6 +21,21 @@ const MAX_FOLDER_DEPTH = 10;
 
 type DropPosition = 'before' | 'inside' | 'after' | null;
 
+/** Drag item shape for react-dnd in this component */
+interface DragItem {
+  id: string;
+  ids?: string[];
+  allNodes?: MailboxNode[];
+  parentId?: string | null;
+}
+
+/** Minimal monitor interface for react-dnd callbacks (avoiding internal types) */
+interface DragMonitor {
+  isOver(options?: { shallow?: boolean }): boolean;
+  getClientOffset(): { x: number; y: number } | null;
+  getItemType(): string | symbol | null;
+}
+
 interface RecursiveSidebarItemProps {
   node: MailboxNode;
   icon: React.ReactNode;
@@ -91,7 +106,7 @@ export function RecursiveSidebarItem({
   const [dropPosition, setDropPosition] = useState<DropPosition>(null);
 
   // Determine drop position based on mouse Y within the element
-  const getDropPosition = (monitor: any): DropPosition => {
+  const getDropPosition = (monitor: DragMonitor): DropPosition => {
     if (!itemRef.current || !monitor.isOver({ shallow: true })) return null;
     const hoverBoundingRect = itemRef.current.getBoundingClientRect();
     const hoverHeight = hoverBoundingRect.bottom - hoverBoundingRect.top;
@@ -108,7 +123,7 @@ export function RecursiveSidebarItem({
   const [{ isOver, canDrop }, drop] = useDrop(
     () => ({
       accept: ['EMAIL', 'MAILBOX'],
-      canDrop: (item: any, monitor) => {
+      canDrop: (item: DragItem, monitor: DragMonitor) => {
         const type = monitor.getItemType();
         if (type === 'MAILBOX') {
           // Can't drop on self
@@ -119,7 +134,7 @@ export function RecursiveSidebarItem({
         }
         return true;
       },
-      hover: (item: any, monitor) => {
+      hover: (item: DragItem, monitor: DragMonitor) => {
         const type = monitor.getItemType();
         if (type === 'MAILBOX') {
           setDropPosition(getDropPosition(monitor));
@@ -127,7 +142,7 @@ export function RecursiveSidebarItem({
           setDropPosition('inside');
         }
       },
-      drop: (item: any, monitor) => {
+      drop: (item: DragItem, monitor: DragMonitor) => {
         const type = monitor.getItemType();
         if (type === 'MAILBOX') {
           const pos = getDropPosition(monitor);
@@ -420,11 +435,11 @@ function RootDropZone({ onReparent }: { onReparent?: (draggedId: string, newPare
   const [{ isOver, canDrop }, drop] = useDrop(
     () => ({
       accept: 'MAILBOX',
-      canDrop: (item: any) => {
+      canDrop: (item: DragItem) => {
         // Only accept folders that are currently nested (have a parentId)
         return item.parentId != null;
       },
-      drop: (item: any) => {
+      drop: (item: DragItem) => {
         if (onReparent) {
           onReparent(item.id, null);
         }

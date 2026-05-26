@@ -10,7 +10,7 @@ A high-performance, server-agnostic JMAP web client with a modern interface insp
 [![TypeScript Strict](https://img.shields.io/badge/TypeScript-Strict-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React 18](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![Vitest](https://img.shields.io/badge/Tests-1264%20passing-6E9F18?style=flat-square&logo=vitest&logoColor=white)](package.json)
+[![Vitest](https://img.shields.io/badge/Tests-1296%20passing-6E9F18?style=flat-square&logo=vitest&logoColor=white)](package.json)
 [![WCAG 2.2 AA](https://img.shields.io/badge/WCAG-2.2%20AA-1a73e8?style=flat-square)]()
 [![License MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
@@ -158,8 +158,7 @@ See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for complete configuration examples.
 | Feature | Description |
 |---------|-------------|
 | **Light/Dark/Auto Theme** | Manual or system-preference-based theme selection |
-| **Monospaced Font Selection** | Choose from 6 coding fonts (Fira Code, JetBrains Mono, etc.) |
-| **OLED-Optimized Dark Mode** | Pure black background for power-efficient displays |
+| **Interface Font Selection** | Choose from 6 hacker-loved fonts (JetBrains Mono, Inter, Oxanium, IBM Plex Sans/Serif, or iCloud Default) |
 | **Glassmorphic UI** | Translucent effects in both light and dark modes |
 
 ### 📡 Real-Time & Sharing
@@ -322,7 +321,7 @@ npm run typecheck
 
 ## 📊 Stats
 
-- **1,264 Tests** passing across 117 test files
+- **1,296 Tests** passing across 118 test files
 - **TypeScript Strict Mode** — Zero `any` types
 - **Full RFC Compliance** — JMAP 8620/8621, 8887, 9404, 9553, 9610, 9661, 9670, 9749, 9219, 9007, draft-ietf-jmap-calendars-26
 - **WCAG 2.2 AA** accessibility compliant

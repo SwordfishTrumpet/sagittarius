@@ -82,6 +82,22 @@ vi.mock('../../hooks/useSieve', () => ({
   useHasSieveCapability: () => true,
 }))
 
+// Mock the push subscription hook
+vi.mock('../../hooks/usePushSubscription', () => ({
+  useHasWebPushCapability: () => true,
+  usePushSubscription: () => ({
+    existingSubs: null,
+    subscribe: { mutate: vi.fn() },
+    unsubscribe: { mutate: vi.fn() },
+    permission: 'default',
+    requestPermission: vi.fn().mockResolvedValue('granted'),
+  }),
+  useNotificationPermission: () => ({
+    permission: 'default',
+    requestPermission: vi.fn().mockResolvedValue('granted'),
+  }),
+}))
+
 describe('Settings', () => {
   const defaultProps = {
     isOpen: true,

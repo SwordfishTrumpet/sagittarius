@@ -208,7 +208,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
     if (!selectedIdentityId && identities && identities.length > 0) {
       const draftFromEmail = draftEmail?.from?.[0]?.email;
       if (draftFromEmail) {
-        const matchingIdentity = identities.find((identity: any) => identity.email === draftFromEmail);
+        const matchingIdentity = identities.find((identity: Identity) => identity.email === draftFromEmail);
         if (matchingIdentity) {
           setSelectedIdentityId(matchingIdentity.id)
           return
@@ -371,9 +371,10 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
       if (!validation.isValid) {
         toast.error(validation.error);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Check for 413 Payload Too Large
-      if (err.message?.includes('413') || err.message?.toLowerCase().includes('too large')) {
+      const errMessage = err instanceof Error ? err.message : String(err);
+      if (errMessage.includes('413') || errMessage.toLowerCase().includes('too large')) {
         toast.error(`Upload failed: File too large. Check that your reverse proxy (nginx/Apache) allows uploads up to ${maxUploadMB} MB. See deployment documentation.`);
       } else {
         toastOperationError('attachment.upload');
@@ -714,7 +715,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
                 onChange={(e) => setSelectedIdentityId(e.target.value)}
                 className="flex-1 border-none focus:ring-2 focus:ring-icloud-accent focus:outline-none text-[14px] py-1 pl-3 bg-transparent cursor-pointer appearance-none text-icloud-text-primary"
               >
-                {identities.map((identity: any) => (
+                {identities.map((identity: Identity) => (
                   <option key={identity.id} value={identity.id}>
                     {identity.name ? `${identity.name} <${identity.email}>` : identity.email}
                   </option>
@@ -738,7 +739,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
               placeholder="Recipients"
               aria-required="true"
               aria-invalid={!to && false ? 'true' : 'false'}
-              autoFocus 
+              autoFocus
               autoComplete="email"
             />
             {!showCcBcc && (

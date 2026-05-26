@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - CRUD operations via `useAddressBookActions` and `useContactCardActions`
   - Sharing support (RFC 9670) with `AddressBookRights`
   - 21 new tests for full coverage
-- **RFC 8984 JSCalendar** — Calendar and event management
+- **draft-ietf-jmap-calendars-26 / RFC 8984 JSCalendar** — Calendar and event management
   - Calendar, CalendarEvent, and recurrence support
   - Participant and alert handling
 - **Monospaced font selection** — Choose from 6 coding fonts in Settings → Appearance
@@ -68,7 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Type Safety
 - Complete TypeScript strict mode compliance
-- Eliminated all `any` type violations
+- Resolved remaining `any` type issues across codebase
 - Comprehensive JMAP type definitions in `src/types/jmap.ts`
 - Shared test utilities with `createTestEmail()` and `createTestMailbox()`
 

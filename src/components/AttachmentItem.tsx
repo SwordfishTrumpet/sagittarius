@@ -2,9 +2,13 @@ import { useState, useEffect, useRef, memo } from 'react'
 import { Download, ExternalLink, FileIcon } from 'lucide-react'
 import { jmapClient } from '../api/jmap'
 import { logger } from '../utils/logger'
+import type { EmailBodyPart } from '../types/jmap'
 
-function AttachmentItemComponent({ attachment }: { attachment: any }) {
-  const downloadUrl = jmapClient.getBlobUrl(attachment.blobId, attachment.type, attachment.name);
+function AttachmentItemComponent({ attachment }: { attachment: EmailBodyPart }) {
+  const blobId = attachment.blobId ?? '';
+  const name = attachment.name ?? 'unnamed';
+  const size = attachment.size ?? 0;
+  const downloadUrl = blobId ? jmapClient.getBlobUrl(blobId, attachment.type, name) : '';
   const isImage = attachment.type.startsWith('image/');
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
   const revokeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -58,7 +62,7 @@ function AttachmentItemComponent({ attachment }: { attachment: any }) {
     } else {
       const a = document.createElement('a');
       a.href = blobUrl;
-      a.download = attachment.name;
+      a.download = name;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -94,15 +98,15 @@ function AttachmentItemComponent({ attachment }: { attachment: any }) {
     >
       <div className="w-10 h-10 rounded-lg bg-icloud-card border border-icloud-border flex items-center justify-center text-icloud-accent shrink-0 overflow-hidden shadow-sm">
         {isImage && thumbnailUrl ? (
-          <img src={thumbnailUrl} alt={attachment.name} className="w-full h-full object-cover" />
+          <img src={thumbnailUrl} alt={name} className="w-full h-full object-cover" />
         ) : (
           <FileIcon className="w-5 h-5" strokeWidth={1.5} />
         )}
       </div>
       <div className="flex-1 min-w-0">
-        <div className="font-semibold text-[13px] text-icloud-text-primary truncate">{attachment.name}</div>
+        <div className="font-semibold text-[13px] text-icloud-text-primary truncate">{name}</div>
         <div className="text-[11px]  font-medium uppercase tracking-tight">
-          {(attachment.size / 1024).toFixed(0)} KB · {attachment.type.split('/')[1]?.toUpperCase() || 'FILE'}
+          {(size / 1024).toFixed(0)} KB · {attachment.type.split('/')[1]?.toUpperCase() || 'FILE'}
         </div>
       </div>
       <div className="flex items-center gap-1 opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 transition-opacity">
@@ -110,7 +114,7 @@ function AttachmentItemComponent({ attachment }: { attachment: any }) {
           onClick={handleDownload}
           className="p-2 text-icloud-accent hover:bg-icloud-bg-layer1 rounded-full transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
           title="Download"
-          aria-label={`Download ${attachment.name}`}
+          aria-label={`Download ${name}`}
         >
           <Download className="w-4 h-4" />
         </button>
@@ -118,7 +122,7 @@ function AttachmentItemComponent({ attachment }: { attachment: any }) {
           onClick={(e) => { e.stopPropagation(); handleOpen(); }}
           className="p-2  hover:bg-icloud-bg-layer1 rounded-full transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
           title="Open in New Tab"
-          aria-label={`Open ${attachment.name} in new tab`}
+          aria-label={`Open ${name} in new tab`}
         >
           <ExternalLink className="w-4 h-4" />
         </button>

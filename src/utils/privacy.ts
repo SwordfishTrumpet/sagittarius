@@ -133,7 +133,7 @@ export function blockExternalImages(html: string): BlockedImageInfo {
       const style = img.getAttribute('style') || '';
       const stylePrefix = style && !style.trim().endsWith(';') ? `${style};` : style;
 
-      img.setAttribute('data-blocked-srcset', srcset);
+      img.setAttribute('data-blocked-srcset', srcset ?? '');
       img.setAttribute('src', getPlaceholder(width, height));
       img.setAttribute('style', `${stylePrefix}border:1px dashed var(--icloud-text-tertiary);border-radius:8px;`);
     }
