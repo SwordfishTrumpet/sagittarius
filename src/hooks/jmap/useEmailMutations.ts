@@ -24,7 +24,7 @@ function buildEmailSetArgs(args: Record<string, unknown>): Record<string, unknow
   }
 }
 
-function updateEmailStateFromResponse(response: unknown): void {
+export function updateEmailStateFromResponse(response: unknown): void {
   if (!response || typeof response !== 'object' || !('methodResponses' in response)) return
   const methodResponses = (response as { methodResponses: Array<[string, unknown, string]> }).methodResponses
   for (const [method, result] of methodResponses) {
@@ -460,6 +460,7 @@ export function useEmailActions(): EmailActionsReturn {
       return { previousThreads, previousEmails }
     },
     onError: (_err, _newData, context: { previousThreads?: QuerySnapshot; previousEmails?: QuerySnapshot } | undefined) => {
+      toastOperationError('email.delete')
       rollbackQueries(queryClient, context?.previousThreads)
       rollbackQueries(queryClient, context?.previousEmails)
     },
@@ -529,6 +530,7 @@ export function useEmailActions(): EmailActionsReturn {
       return { previousThreads, previousEmails }
     },
     onError: (_err, _newData, context: { previousThreads?: QuerySnapshot; previousEmails?: QuerySnapshot } | undefined) => {
+      toastOperationError('email.delete')
       rollbackQueries(queryClient, context?.previousThreads)
       rollbackQueries(queryClient, context?.previousEmails)
     },

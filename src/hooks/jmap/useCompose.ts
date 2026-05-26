@@ -8,6 +8,7 @@ import {
   jmapRequest,
   suppressNewMailNotification,
 } from './queryCacheUtils'
+import { updateEmailStateFromResponse } from './useEmailMutations'
 import { asMailboxGet, type Mailbox } from '../../types/jmap'
 
 export function useCompose() {
@@ -156,6 +157,7 @@ export function useCompose() {
     },
     onSuccess: (result) => {
       if (isDeferredMutationResult(result)) return
+      updateEmailStateFromResponse(result)
       invalidateEmailQueries(queryClient)
     },
   })
