@@ -92,7 +92,7 @@ docker run -p 8081:8081 -e JMAP_SERVER=https://mail.example.com ghcr.io/swordfis
   <img src="https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite">
 </p>
 
-- **Frontend:** React 18, TypeScript (Strict), Tailwind CSS
+- **Frontend:** React 19, TypeScript 6 (Strict), Tailwind CSS 4
 - **State Management:** TanStack Query (React Query), React Context
 - **Editor:** Tiptap (ProseMirror-based rich text)
 - **Virtualization:** react-virtuoso (10,000+ emails)
@@ -137,10 +137,15 @@ See [`src/test/performance/`](src/test/performance/) for benchmark suite.
 - Mobile responsive
 - Accessibility (WCAG 2.2 AA)
 
-### 🚧 In Progress
+### ✅ Complete (v1.1)
 - Email templates
-- Contact management (RFC 9610)
-- Calendar integration (RFC 8984)
+- Contact management (RFC 9610 + RFC 9553 JSContact)
+- Calendar integration (draft-ietf-jmap-calendars-26 + RFC 8984 JSCalendar)
+- WebPush notifications (RFC 9749)
+- JMAP Sharing (RFC 9670)
+- S/MIME verification (RFC 9219)
+- Multi-account support
+- Monospaced font selection
 
 ### 📋 Planned
 - End-to-end encryption (OpenPGP)

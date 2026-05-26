@@ -22,6 +22,28 @@ vi.mock('../../hooks/useSieve', () => ({
   useHasSieveCapability: () => true,
 }))
 
+vi.mock('../../hooks/usePushSubscription', () => ({
+  useHasWebPushCapability: () => true,
+  usePushSubscription: () => ({
+    existingSubs: null,
+    subscribe: { mutate: vi.fn() },
+    unsubscribe: { mutate: vi.fn() },
+    permission: 'default',
+    requestPermission: vi.fn().mockResolvedValue('granted'),
+  }),
+  useNotificationPermission: () => ({
+    permission: 'default',
+    requestPermission: vi.fn().mockResolvedValue('granted'),
+  }),
+}))
+
+vi.mock('../../hooks/useBIMIPreference', () => ({
+  useBIMIPreference: () => ({
+    showSenderIcons: true,
+    setShowSenderIcons: vi.fn(),
+  }),
+}))
+
 describe('Settings accessibility', () => {
   it('renders without axe violations and supports keyboard tab switching', async () => {
     const user = userEvent.setup()

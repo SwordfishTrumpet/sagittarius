@@ -103,8 +103,9 @@ export function SieveSettings() {
       }
 
       setEditingId(null);
-    } catch (err: any) {
-      toast.error(`Failed to save rule: ${err?.message ?? 'Unknown error'}`);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      toast.error(`Failed to save rule: ${message}`);
     } finally {
       setIsSaving(false);
     }

@@ -1,37 +1,21 @@
-/**
- * useFontPreference Hook
- * Manages monospace font selection with localStorage persistence
- */
-
 import { useState, useEffect, useCallback } from 'react';
 import {
-  type MonospaceFontId,
-  DEFAULT_MONOSPACE_FONT,
+  type ThemeFontId,
+  DEFAULT_THEME_FONT,
   FONT_STORAGE_KEY,
   getFontById,
   isValidFontId,
 } from '../utils/monospaceFonts';
 
 export interface UseFontPreferenceReturn {
-  /** Currently selected font ID */
-  fontId: MonospaceFontId;
-  /** Set the active font ID */
-  setFontId: (id: MonospaceFontId) => void;
-  /** Full font metadata for the active font */
+  fontId: ThemeFontId;
+  setFontId: (id: ThemeFontId) => void;
   font: ReturnType<typeof getFontById>;
 }
 
-/**
- * Hook for managing monospace font preference.
- *
- * Features:
- * - Persist font selection to localStorage
- * - Apply CSS custom property `--font-mono` to :root
- * - Dynamically inject Google Fonts link tags for non-system fonts
- */
 export function useFontPreference(): UseFontPreferenceReturn {
-  const [fontId, setFontIdState] = useState<MonospaceFontId>(() => {
-    if (typeof window === 'undefined') return DEFAULT_MONOSPACE_FONT;
+  const [fontId, setFontIdState] = useState<ThemeFontId>(() => {
+    if (typeof window === 'undefined') return DEFAULT_THEME_FONT;
     try {
       const stored = localStorage.getItem(FONT_STORAGE_KEY);
       if (stored && isValidFontId(stored)) {
@@ -40,18 +24,26 @@ export function useFontPreference(): UseFontPreferenceReturn {
     } catch {
       // Silently fail if localStorage is unavailable
     }
-    return DEFAULT_MONOSPACE_FONT;
+    return DEFAULT_THEME_FONT;
   });
 
-  // Apply CSS variable and load external font resources
   useEffect(() => {
     const root = document.documentElement;
     const font = getFontById(fontId);
 
-    // Set CSS custom property for app-wide usage
-    root.style.setProperty('--font-mono', font.family);
+    // Set UI font
+    root.style.setProperty('--font-ui', font.family);
 
-    // Inject Google Fonts stylesheet for non-system fonts
+    // For monospace elements, use the font if it's monospace, otherwise system default
+    if (font.category === 'mono') {
+      root.style.setProperty('--font-mono', font.family);
+    } else {
+      root.style.setProperty(
+        '--font-mono',
+        'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace'
+      );
+    }
+
     if (font.googleFontName) {
       const linkId = `google-font-${font.id}`;
       let link = document.getElementById(linkId) as HTMLLinkElement | null;
@@ -65,7 +57,7 @@ export function useFontPreference(): UseFontPreferenceReturn {
     }
   }, [fontId]);
 
-  const setFontId = useCallback((id: MonospaceFontId) => {
+  const setFontId = useCallback((id: ThemeFontId) => {
     setFontIdState(id);
     try {
       localStorage.setItem(FONT_STORAGE_KEY, id);

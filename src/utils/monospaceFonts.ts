@@ -1,80 +1,79 @@
-/**
- * Monospace font definitions and utilities
- */
-
-export type MonospaceFontId =
-  | 'system'
-  | 'fira-code'
+export type ThemeFontId =
+  | 'icloud-default'
   | 'jetbrains-mono'
-  | 'source-code-pro'
-  | 'cascadia-code'
-  | 'ubuntu-mono';
+  | 'inter'
+  | 'oxanium'
+  | 'ibm-plex-sans'
+  | 'ibm-plex-serif';
 
-export interface MonospaceFont {
-  id: MonospaceFontId;
+export type FontCategory = 'sans' | 'serif' | 'mono';
+
+export interface ThemeFont {
+  id: ThemeFontId;
   name: string;
   family: string;
-  ligatures: boolean;
+  category: FontCategory;
   weights: number[];
   googleFontName?: string;
 }
 
-export const MONOSPACE_FONTS: MonospaceFont[] = [
+export const THEME_FONTS: ThemeFont[] = [
   {
-    id: 'system',
-    name: 'System Default',
-    family: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-    ligatures: false,
-    weights: [400, 500, 600],
-  },
-  {
-    id: 'fira-code',
-    name: 'Fira Code',
-    family: "'Fira Code', monospace",
-    ligatures: true,
-    weights: [400, 500, 600],
-    googleFontName: 'Fira+Code',
+    id: 'icloud-default',
+    name: 'iCloud Default',
+    family: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", sans-serif',
+    category: 'sans',
+    weights: [400, 500, 600, 700],
   },
   {
     id: 'jetbrains-mono',
     name: 'JetBrains Mono',
     family: "'JetBrains Mono', monospace",
-    ligatures: true,
+    category: 'mono',
     weights: [400, 500, 600],
     googleFontName: 'JetBrains+Mono',
   },
   {
-    id: 'source-code-pro',
-    name: 'Source Code Pro',
-    family: "'Source Code Pro', monospace",
-    ligatures: false,
-    weights: [400, 500, 600],
-    googleFontName: 'Source+Code+Pro',
+    id: 'inter',
+    name: 'Inter',
+    family: "'Inter', sans-serif",
+    category: 'sans',
+    weights: [400, 500, 600, 700],
+    googleFontName: 'Inter',
   },
   {
-    id: 'cascadia-code',
-    name: 'Cascadia Code',
-    family: "'Cascadia Code', 'Cascadia Mono', monospace",
-    ligatures: true,
-    weights: [400, 500, 600],
+    id: 'oxanium',
+    name: 'Oxanium',
+    family: "'Oxanium', sans-serif",
+    category: 'sans',
+    weights: [400, 500, 600, 700],
+    googleFontName: 'Oxanium',
   },
   {
-    id: 'ubuntu-mono',
-    name: 'Ubuntu Mono',
-    family: "'Ubuntu Mono', monospace",
-    ligatures: false,
-    weights: [400, 500, 600],
-    googleFontName: 'Ubuntu+Mono',
+    id: 'ibm-plex-sans',
+    name: 'IBM Plex Sans',
+    family: "'IBM Plex Sans', sans-serif",
+    category: 'sans',
+    weights: [400, 500, 600, 700],
+    googleFontName: 'IBM+Plex+Sans',
+  },
+  {
+    id: 'ibm-plex-serif',
+    name: 'IBM Plex Serif',
+    family: "'IBM Plex Serif', serif",
+    category: 'serif',
+    weights: [400, 500, 600, 700],
+    googleFontName: 'IBM+Plex+Serif',
   },
 ];
 
-export const DEFAULT_MONOSPACE_FONT: MonospaceFontId = 'system';
-export const FONT_STORAGE_KEY = 'sagittarius-monospace-font';
+export const DEFAULT_THEME_FONT: ThemeFontId = 'icloud-default';
+export const FONT_STORAGE_KEY = 'sagittarius-interface-font';
 
-export function getFontById(id: MonospaceFontId): MonospaceFont {
-  return MONOSPACE_FONTS.find((f) => f.id === id) || MONOSPACE_FONTS[0];
+export function getFontById(id: ThemeFontId): ThemeFont {
+  return THEME_FONTS.find((f) => f.id === id) || THEME_FONTS[0];
 }
 
-export function isValidFontId(id: string): id is MonospaceFontId {
-  return MONOSPACE_FONTS.some((f) => f.id === id);
+export function isValidFontId(id: string): id is ThemeFontId {
+  return THEME_FONTS.some((f) => f.id === id);
 }

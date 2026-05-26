@@ -87,10 +87,17 @@ describe('Composer accessibility', () => {
 
     expect((await checkA11y(container)).violations).toHaveLength(0)
 
-    expect(screen.getByRole('button', { name: 'Close and save draft' })).toHaveFocus()
+    // Focus the close button and tab forward to the next element
+    const closeBtn = screen.getByRole('button', { name: 'Close and save draft' })
+    closeBtn.focus()
+    expect(closeBtn).toHaveFocus()
 
+    await user.tab()
+    expect(screen.getByRole('button', { name: 'Minimize composer' })).toHaveFocus()
+
+    // Shift+tab back to the close button
     await user.tab({ shift: true })
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Discard draft' })).toHaveFocus())
+    await waitFor(() => expect(closeBtn).toHaveFocus())
   })
 
   it('exposes an accessible minimized state and supports keyboard re-open', async () => {

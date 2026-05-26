@@ -113,7 +113,7 @@ Use the public Fastmail JMAP test server:
 For pure UI work without a backend, you can mock JMAP responses:
 
 ```typescript
-// In src/api/jmapClient.ts, temporarily override:
+// In src/api/jmap.ts, temporarily override:
 if (import.meta.env.DEV && import.meta.env.VITE_MOCK_JMAP === 'true') {
   // Return mock responses
 }
@@ -303,8 +303,8 @@ User Action → React Component → Custom Hook → JMAP Client → Server
    - Request deduplication
 
 2. **JMAP Client Abstraction**
-   - `src/api/jmapClient.ts` — Singleton client
-   - `src/api/types.ts` — RFC-compliant type definitions
+   - `src/api/jmap.ts` — Singleton client
+   - `src/types/jmap.ts` — RFC-compliant type definitions
    - All server communication goes through JMAP methods
 
 3. **Hook-Based Data Access**
@@ -323,8 +323,7 @@ User Action → React Component → Custom Hook → JMAP Client → Server
 ```
 src/
 ├── api/                    # JMAP communication
-│   ├── jmapClient.ts      # Main client singleton
-│   ├── types.ts           # JMAP type definitions
+│   ├── jmap.ts            # Main client singleton
 │   ├── websocket.ts       # WebSocket push (RFC 8887)
 │   └── eventsource.ts     # EventSource push
 ├── components/            # React components

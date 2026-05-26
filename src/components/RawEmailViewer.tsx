@@ -318,13 +318,13 @@ export function RawEmailViewer({ blobId, onClose }: RawEmailViewerProps) {
                   ) : email.htmlBody || email.textBody ? (
                     /* Fallback: flat list of body parts */
                     <div className="space-y-1">
-                      {(email.htmlBody ?? []).map((p: any, i: number) => (
+                      {(email.htmlBody ?? []).map((p: EmailBodyPart, i: number) => (
                         <MimeNode key={`html-${i}`} part={{ ...p, type: 'text/html' }} />
                       ))}
-                      {(email.textBody ?? []).map((p: any, i: number) => (
+                      {(email.textBody ?? []).map((p: EmailBodyPart, i: number) => (
                         <MimeNode key={`text-${i}`} part={{ ...p, type: 'text/plain' }} />
                       ))}
-                      {(email.attachments ?? []).map((a: any, i: number) => (
+                      {(email.attachments ?? []).map((a: EmailBodyPart, i: number) => (
                         <MimeNode key={`att-${i}`} part={a} />
                       ))}
                     </div>
