@@ -3,6 +3,7 @@ import { jmapClient, type JMAPResponse } from '../../api/jmap'
 import { fetchWithOfflineCache } from '../../utils/offlineCache'
 import { logger } from '../../utils/logger'
 import { suppressNewMailNotification } from './queryCacheUtils'
+import { updateEmailStateFromResponse } from './useEmailMutations'
 import { parseSearchQuery } from '../../utils/searchParser'
 import { buildJMAPFilter, mergeFiltersAND } from '../../utils/filterBuilder'
 import type { Email, Thread, SearchSnippet, EmailFilter } from '../../types/jmap'
@@ -302,7 +303,8 @@ async function fetchEmailDetail(accountId: string, emailId: string, threadId?: s
               },
             },
           }, '0'],
-        ]).then(() => {
+        ]).then((resp) => {
+          updateEmailStateFromResponse(resp)
           if (queryClient) {
             queryClient.invalidateQueries({ queryKey: ['threads'] })
             queryClient.invalidateQueries({ queryKey: ['mailboxes'] })

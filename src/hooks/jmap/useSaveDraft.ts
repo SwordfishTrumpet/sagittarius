@@ -8,6 +8,7 @@ import {
   jmapRequest,
   suppressNewMailNotification,
 } from './queryCacheUtils'
+import { updateEmailStateFromResponse } from './useEmailMutations'
 import { asMailboxGet, type Mailbox } from '../../types/jmap'
 
 // Type guards for JMAP response validation
@@ -166,6 +167,7 @@ export function useSaveDraft() {
     },
     onSuccess: (result) => {
       if (isDeferredMutationResult(result)) return
+      updateEmailStateFromResponse(result)
       invalidateEmailQueries(queryClient)
     },
   })

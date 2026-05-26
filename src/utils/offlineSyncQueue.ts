@@ -1,5 +1,6 @@
 import Dexie, { type Table } from 'dexie'
 import { jmapClient } from '../api/jmap'
+import { stateManager } from '../api/stateManager'
 import type {
   DeferredMutation,
   DeferredMutationPayload,
@@ -207,6 +208,16 @@ export async function replayDeferredMutations() {
       try {
         const response = await jmapClient.request(record.payload.requests as OfflineJmapRequest[])
         assertSuccessfulJmapResponse(response)
+        // Sync Email state from replayed Email/set responses
+        if (response && typeof response === 'object' && 'methodResponses' in response) {
+          const methodResponses = (response as JMAPResponse).methodResponses
+          for (const [method, result] of methodResponses) {
+            if (method === 'Email/set' && result && typeof result === 'object' && 'newState' in (result as Record<string, unknown>)) {
+              stateManager.setState('Email', (result as Record<string, string>).newState)
+              break
+            }
+          }
+        }
         await removeMutation(record.id)
         syncedCount += 1
       } catch (error) {
