@@ -148,6 +148,7 @@ export function useThreads(
         }, '1'],
       ])
 
+      updateEmailStateFromResponse(getEmailsResponse)
       const emailResult = extractMethodResult<EmailGetResult>(getEmailsResponse, 0, 'Email/get')
       const latestEmails = emailResult.list
       if (!latestEmails || latestEmails.length === 0) return []
@@ -277,6 +278,7 @@ async function fetchEmailDetail(accountId: string, emailId: string, threadId?: s
       }, '1'],
     ])
 
+    updateEmailStateFromResponse(response)
     const emailResult = extractMethodResult<EmailGetResult>(response, 0, 'Email/get')
     const list = emailResult.list
     if (!list) return []
@@ -343,6 +345,7 @@ export async function fetchEmailWithBody(emailId: string): Promise<Email | null>
       }, '0'],
     ])
 
+    updateEmailStateFromResponse(response)
     const emailResult = extractMethodResult<EmailGetResult>(response, 0, 'Email/get')
     return emailResult.list?.[0] || null
   })
