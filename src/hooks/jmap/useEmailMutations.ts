@@ -28,9 +28,20 @@ export function updateEmailStateFromResponse(response: unknown): void {
   if (!response || typeof response !== 'object' || !('methodResponses' in response)) return
   const methodResponses = (response as { methodResponses: Array<[string, unknown, string]> }).methodResponses
   for (const [method, result] of methodResponses) {
-    if (method === 'Email/set' && result && typeof result === 'object' && 'newState' in result) {
-      stateManager.setState('Email', (result as { newState: string }).newState)
-      break
+    if (result && typeof result === 'object') {
+      const r = result as Record<string, unknown>
+      if (method === 'Email/set' && typeof r.newState === 'string') {
+        stateManager.setState('Email', r.newState)
+        break
+      }
+      if (method === 'Email/get' && typeof r.state === 'string') {
+        stateManager.setState('Email', r.state)
+        break
+      }
+      if (method === 'Email/changes' && typeof r.newState === 'string') {
+        stateManager.setState('Email', r.newState)
+        break
+      }
     }
   }
 }
