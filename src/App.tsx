@@ -348,9 +348,13 @@ function App() {
   }, [queryClient, resetSelection, clearFilters, isMobile])
 
   // Mobile navigation helpers
-  const navigateToMailboxList = useCallback(() => {
-    setMobileView('mailboxes')
-  }, [])
+  const handleShowSidebar = useCallback(() => {
+    if (isMobile) {
+      setMobileView('mailboxes')
+    } else {
+      expandSidebar()
+    }
+  }, [isMobile, expandSidebar])
 
   const navigateToEmailList = useCallback(() => {
     setMobileView('list')
@@ -665,7 +669,7 @@ function App() {
             activeFilters={activeFilters}
             hasActiveFilters={hasActiveFilters}
             activeFilterCount={activeFilterCount}
-            onShowSidebar={navigateToMailboxList}
+            onShowSidebar={handleShowSidebar}
             onSelectAll={selectAllEmails}
             onClearSelection={clearSelection}
             onOpenFilterDialog={openFilterDialog}
@@ -684,7 +688,7 @@ function App() {
             mailboxes={mailboxes || []}
             onToggleSelection={toggleEmailSelection}
             onSelectEmail={handleSelectEmail}
-            onToggleStar={handleToggleSelectedStar}
+            onToggleStar={handleToggleStar}
             formatMessageDate={formatMessageDate}
             removingEmailIds={removingEmailIds}
             scrollToEmailId={scrollToEmailId}
