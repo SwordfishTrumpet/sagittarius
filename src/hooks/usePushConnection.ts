@@ -51,7 +51,7 @@ export function usePushConnection(hasSession: boolean): UsePushConnectionResult 
   const clearNewMail = useCallback(() => {
     wsPush.clearNewMail()
     esPush.clearNewMail()
-  }, [esPush, wsPush])
+  }, [])
 
   return {
     pushEnabled: prefersWebSocketPush || hasEventSourcePush,

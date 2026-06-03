@@ -10,7 +10,10 @@ const EXPANSION_STATE_KEY = 'sagittarius_mailbox_expansion';
 
 export function useMailboxExpansion(mailboxTree: MailboxNode[]) {
   const [treeState, setTreeState] = useState<MailboxNode[]>(mailboxTree);
+  const treeStateRef = useRef(treeState);
   const persistenceAppliedRef = useRef(false);
+
+  treeStateRef.current = treeState;
 
   // Load persisted expansion state on mount, and update when mailboxTree changes
   useEffect(() => {
@@ -40,33 +43,33 @@ export function useMailboxExpansion(mailboxTree: MailboxNode[]) {
 
   const toggleExpanded = useCallback(
     (mailboxId: string) => {
-      const updated = toggleMailboxExpanded(treeState, mailboxId);
+      const updated = toggleMailboxExpanded(treeStateRef.current, mailboxId);
       setTreeState(updated);
       persistExpansionState(updated);
     },
-    [treeState]
+    []
   );
 
   const expandPath = useCallback(
     (mailboxId: string) => {
-      const updated = expandMailboxPath(treeState, mailboxId);
+      const updated = expandMailboxPath(treeStateRef.current, mailboxId);
       setTreeState(updated);
       persistExpansionState(updated);
     },
-    [treeState]
+    []
   );
 
   const expandAll = useCallback(() => {
-    const updated = recursivelyExpand(treeState, true);
+    const updated = recursivelyExpand(treeStateRef.current, true);
     setTreeState(updated);
     persistExpansionState(updated);
-  }, [treeState]);
+  }, []);
 
   const collapseAll = useCallback(() => {
-    const updated = recursivelyExpand(treeState, false);
+    const updated = recursivelyExpand(treeStateRef.current, false);
     setTreeState(updated);
     persistExpansionState(updated);
-  }, [treeState]);
+  }, []);
 
   return {
     mailboxTree: treeState,

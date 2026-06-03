@@ -561,7 +561,7 @@ function App() {
               onClick={() => {
                 void replayQueue().then(({ syncedCount }) => {
                   if (syncedCount > 0) toast.success(`Synced ${syncedCount} queued change${syncedCount === 1 ? '' : 's'}`)
-                })
+                }).catch(() => { /* replay errors handled internally */ })
               }}
               disabled={isOffline || isReplaying || pendingCount === 0}
               className="rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold text-white transition-colors hover:bg-white/25 disabled:cursor-not-allowed disabled:opacity-50"

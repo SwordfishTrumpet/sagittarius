@@ -43,7 +43,6 @@ function attachBasicAuthFromAccessToken(proxyReq: { getHeader: (name: string) =>
   }
 }
 
-// https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   const jmapServer = env.VITE_JMAP_SERVER || 'http://localhost:8080';
@@ -51,6 +50,26 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     build: {
+      modulePreload: false,
+      rollupOptions: {
+        output: {
+          manualChunks(id: string) {
+            if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/') || id.includes('node_modules/scheduler/')) {
+              return 'vendor-react'
+            }
+            if (id.includes('node_modules/@tiptap/') || id.includes('node_modules/tiptap')) {
+              return 'vendor-editor'
+            }
+            if (id.includes('node_modules/framer-motion') || id.includes('node_modules/lucide-react') || id.includes('node_modules/react-dnd') || id.includes('node_modules/react-virtuoso') || id.includes('node_modules/sonner')) {
+              return 'vendor-ui'
+            }
+            if (id.includes('node_modules/@tanstack/react-query') || id.includes('node_modules/date-fns') || id.includes('node_modules/dompurify')) {
+              return 'vendor-util'
+            }
+          },
+        },
+      },
+      chunkSizeWarningLimit: 600,
     },
     server: {
       host: '0.0.0.0',
@@ -61,11 +80,6 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           ws: true,
           configure: (proxy, _options) => {
-            // Inject Authorization header from access_token query param.
-            // EventSource (SSE) cannot send custom headers, so the client
-            // passes Base64 credentials as ?access_token=<b64>.  The proxy
-            // converts that into a proper Authorization header before
-            // forwarding to the JMAP backend.
             proxy.on('proxyReq', (proxyReq, req, _res) => {
               logDebug(`${req.method} ${redactProxyUrl(req.url)}`)
               attachBasicAuthFromAccessToken(proxyReq, req.url)
@@ -75,9 +89,6 @@ export default defineConfig(({ mode }) => {
               attachBasicAuthFromAccessToken(proxyReq, req.url)
             })
 
-            // Strip WWW-Authenticate from 401 responses so the browser does
-            // NOT pop its native Basic Auth dialog.  The app handles auth
-            // entirely through its own login screen.
             proxy.on('proxyRes', (proxyRes, req, _res) => {
               logDebug(`HTTP ${proxyRes.statusCode} ${redactProxyUrl(req.url)}`)
 

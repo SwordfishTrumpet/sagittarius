@@ -20,7 +20,7 @@ import { isDeferredMutationResult } from '../utils/offlineSyncQueue';
 import { useSaveDraft } from '../hooks/jmap/useSaveDraft';
 import { useAttachmentLimits } from '../hooks/useCapabilityLimits';
 import { toastOperationError } from '../utils/toastHelpers';
-import type { Email, Identity, EmailAddress, Attachment, EmailTemplate } from '../types/jmap';
+import type { Email, Identity, EmailAddress, Attachment, EmailTemplate, EmailBodyPart } from '../types/jmap';
 import type { ReplyContext } from '../hooks/useComposerState';
 
 /** Local recipient format used in composer */
@@ -34,6 +34,11 @@ interface ComposerProps {
   replyTo?: ReplyContext;
   draftEmail?: Email;
   isMobile?: boolean;
+}
+
+function toAttachment(bodyPart: EmailBodyPart): Attachment | null {
+  if (!bodyPart.blobId || !bodyPart.name || !bodyPart.type || !bodyPart.size) return null
+  return { blobId: bodyPart.blobId, name: bodyPart.name, type: bodyPart.type, size: bodyPart.size, partId: bodyPart.partId }
 }
 
 export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: ComposerProps) {
@@ -73,7 +78,13 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
     return `Re: ${replyTo.subject || ''}`;
   });
   const [showCcBcc, setShowCcBcc] = useState<boolean>(() => draftEmail ? Boolean(draftEmail.cc?.length || draftEmail.bcc?.length) : (restoredDraft ? (restoredDraft.showCcBcc || Boolean(restoredDraft.cc || restoredDraft.bcc)) : false));
-  const [attachments, setAttachments] = useState<Attachment[]>(() => draftEmail ? (draftEmail.attachments as Attachment[] || []) : (restoredDraft ? restoredDraft.attachments : []));
+  const [attachments, setAttachments] = useState<Attachment[]>(() => {
+    if (draftEmail) {
+      const mapped: Attachment[] = draftEmail.attachments?.map(toAttachment).filter((a): a is Attachment => a !== null) ?? []
+      return mapped
+    }
+    return restoredDraft ? restoredDraft.attachments.slice(0) : []
+  });
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 

@@ -59,17 +59,19 @@ export function useAnimatedEmailMoves({
 
     // Schedule the actual move
     const timerId = window.setTimeout(async () => {
-      // Only execute if this is still the most recent operation
-      if (operationCounterRef.current !== currentOperation) {
-        pendingTimersRef.current.delete(timerId)
-        return
-      }
-      
       pendingTimersRef.current.delete(timerId)
 
       // Prevent multiple concurrent executions
-      if (isExecutingRef.current) return
+      // Check both the operation counter AND the executing ref atomically
+      if (isExecutingRef.current || operationCounterRef.current !== currentOperation) return
       isExecutingRef.current = true
+
+      // Double-check after acquiring the lock to handle race where
+      // a newer operation was started while we were waiting
+      if (operationCounterRef.current !== currentOperation) {
+        isExecutingRef.current = false
+        return
+      }
 
       try {
         if (emailIds.length === 1) {

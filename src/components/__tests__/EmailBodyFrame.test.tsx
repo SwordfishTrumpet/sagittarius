@@ -82,6 +82,46 @@ describe('EmailBodyFrame helpers', () => {
     expect(doc.body.innerHTML).toContain('Goedendag,<br><br>Bedankt!')
   })
 
+  it('preserves standalone breaks in empty elements (Apple Mail blank line pattern)', () => {
+    const doc = new DOMParser().parseFromString(
+      '<body><div>Hi Arjan,</div><div><br></div><div>Deze bijlage is bij het verzenden van de vorige factuur niet meegekomen.</div><div><br></div><div>Bij dezen.</div><div><br></div><div>Groet,<br>Remco</div></body>',
+      'text/html',
+    )
+
+    stripDisplayArtifacts(doc.body)
+
+    // Blank line divs should retain their <br>
+    expect(doc.body.innerHTML).toContain('<div><br></div>')
+    // Inline <br> inside content div should be preserved
+    expect(doc.body.innerHTML).toContain('Groet,<br>Remco')
+  })
+
+  it('preserves standalone breaks with multiple BR children', () => {
+    const doc = new DOMParser().parseFromString(
+      '<body><p style="margin:0">Hello</p><p style="margin:0"><br></p><p style="margin:0"><br><br></p><p style="margin:0">World</p></body>',
+      'text/html',
+    )
+
+    stripDisplayArtifacts(doc.body)
+
+    // Single <br> in empty <p> preserved
+    expect(doc.body.innerHTML).toContain('<p style="margin:0"><br></p>')
+    // Multiple <br> in empty <p> collapsed to just one
+    expect(doc.body.innerHTML).toContain('<p style="margin:0"><br></p>')  
+  })
+
+  it('still removes BR between sibling structural elements', () => {
+    const doc = new DOMParser().parseFromString(
+      '<body><div><br><p>Hello</p><br><p>World</p><br></div></body>',
+      'text/html',
+    )
+
+    stripDisplayArtifacts(doc.body)
+
+    expect(doc.body.innerHTML).not.toContain('<div><br><p')
+    expect(doc.body.innerHTML).not.toContain('</p><br><p')
+  })
+
   it('collapses spacer-heavy intercom-style html', () => {
     const doc = new DOMParser().parseFromString(
       `<body><br><br><br><br><br><br><div style="color:transparent;visibility:hidden;opacity:0;font-size:0px;border:0;max-height:1px;width:1px;margin:0;padding:0;display:none!important;line-height:0px!important;"><img src="x"></div><br><br><table><tbody><tr><td><br><br><br><table id="reply_email"><tbody><tr><td><div><br><p style="margin:0">Hi,</p><br><p style="margin:0"><br></p><br><p style="margin:0">Thank you for reaching out!</p><br><p style="margin:0"><br></p><br><p style="margin:0">We'll take a look.</p><br></div><br></td></tr></tbody></table><br><br><table><tbody><tr><td><div dir="ltr"><div><br><span>On Thu wrote:</span><br><blockquote><br><div><br><p>Hi Support,</p><br><br><p>Why are ads not blocked for me?</p><br></div><br></blockquote><br></div></div><br></td></tr></tbody></table></td></tr></tbody></table></body>`,
