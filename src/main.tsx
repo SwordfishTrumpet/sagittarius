@@ -36,6 +36,8 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
 if (import.meta.env.DEV) {
   void import('@axe-core/react').then(({ default: axe }) => {
     axe(React, ReactDOM, 1000);
+  }).catch((err) => {
+    logger.warn('[a11y] Failed to load @axe-core/react:', err);
   });
 }
 

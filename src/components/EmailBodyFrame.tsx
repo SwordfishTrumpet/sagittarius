@@ -104,7 +104,15 @@ export function stripDisplayArtifacts(root: ParentNode): void {
       )
 
       if (shouldRemoveEntireRun) {
-        breakRun.forEach(node => node.remove())
+        // Preserve at least one <br> when ALL meaningful siblings are breaks —
+        // this is a blank-line design pattern (e.g. Apple Mail <div><br></div>).
+        // Without this, blank lines from external mail clients collapse to zero height.
+        const everySiblingIsBreak = childNodes.every(child => isBreak(child) || isWhitespaceText(child))
+        if (everySiblingIsBreak && breakRun.length > 0) {
+          breakRun.slice(1).forEach(node => node.remove())
+        } else {
+          breakRun.forEach(node => node.remove())
+        }
       } else {
         breakRun.slice(2).forEach(node => node.remove())
       }

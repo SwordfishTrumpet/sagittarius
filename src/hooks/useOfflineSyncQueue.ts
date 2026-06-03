@@ -16,12 +16,17 @@ export function useOfflineSyncQueue() {
   const replayLockRef = useRef(false)
   const mountedRef = useRef(false)
   const lastOnlineRef = useRef(isOnline)
+  const pendingCountRef = useRef(pendingCount)
+  const isOnlineRef = useRef(isOnline)
+
+  pendingCountRef.current = pendingCount
+  isOnlineRef.current = isOnline
 
   const refreshPendingCount = useCallback(async () => {
     setPendingCount(await getDeferredMutationCount())
   }, [])
 
-  const replayQueue = useCallback(async () => {
+  const replayQueueImpl = useCallback(async () => {
     if (replayLockRef.current) {
       return { syncedCount: 0, errors: [] as Array<{ id: string; error: string }> }
     }
@@ -44,15 +49,21 @@ export function useOfflineSyncQueue() {
     }
   }, [queryClient, refreshPendingCount])
 
+  const replayQueueRef = useRef(replayQueueImpl)
+  replayQueueRef.current = replayQueueImpl
+
+  const refreshPendingCountRef = useRef(refreshPendingCount)
+  refreshPendingCountRef.current = refreshPendingCount
+
   useEffect(() => {
     let cancelled = false
 
     const bootstrap = async () => {
-      await refreshPendingCount()
+      await refreshPendingCountRef.current()
       if (!cancelled && typeof navigator !== 'undefined' && navigator.onLine) {
         const count = await getDeferredMutationCount()
         if (!cancelled && count > 0) {
-          await replayQueue()
+          await replayQueueRef.current()
         }
       }
     }
@@ -62,30 +73,30 @@ export function useOfflineSyncQueue() {
     return () => {
       cancelled = true
     }
-  }, [refreshPendingCount, replayQueue])
+  }, [])
 
   useEffect(() => subscribeOfflineQueueChanges(() => {
-    void refreshPendingCount()
-  }), [refreshPendingCount])
+    void refreshPendingCountRef.current()
+  }), [])
 
   useEffect(() => {
     if (!mountedRef.current) {
       mountedRef.current = true
-      lastOnlineRef.current = isOnline
+      lastOnlineRef.current = isOnlineRef.current
       return
     }
 
-    if (!lastOnlineRef.current && isOnline && pendingCount > 0) {
-      void replayQueue()
+    if (!lastOnlineRef.current && isOnlineRef.current && pendingCountRef.current > 0) {
+      void replayQueueRef.current()
     }
 
-    lastOnlineRef.current = isOnline
-  }, [isOnline, pendingCount, replayQueue])
+    lastOnlineRef.current = isOnlineRef.current
+  }, [isOnline])
 
   return {
     pendingCount,
     isReplaying,
-    replayQueue,
+    replayQueue: replayQueueImpl,
     refreshPendingCount,
   }
 }

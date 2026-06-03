@@ -68,6 +68,11 @@ export async function applyChanges(
     return null;
   }
 
+  if (!changesResponse.methodResponses?.length) {
+    logger.warn(`[applyChanges] ${type}/changes returned empty methodResponses`);
+    return null;
+  }
+
   const [methodName, methodResult] = changesResponse.methodResponses[0];
 
   // cannotCalculateChanges or any other error → full fetch needed
@@ -107,6 +112,11 @@ export async function applyChanges(
     } catch (err) {
       logger.warn(`[applyChanges] ${type}/get request failed:`, err);
       // Return null so the caller falls back to a full refresh
+      return null;
+    }
+
+    if (!getResponse.methodResponses?.length) {
+      logger.warn(`[applyChanges] ${type}/get returned empty methodResponses`);
       return null;
     }
 

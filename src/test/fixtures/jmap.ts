@@ -1,10 +1,10 @@
+import type { JMAPGetResponse, JMAPQueryResponse, JMAPSetResponse } from '../../types/jmap'
+import type { Mailbox, Email, Identity, Thread, JMAPAccount } from '../../types/jmap'
 import type { JMAPSession } from '../../api/jmap'
 
-type PartialRecord<T> = {
-  [K in keyof T]?: T[K]
-}
+type OverrideRecord = Record<string, unknown>
 
-export function wrapMethodResponse(method: string, result: any, callId = '0'): [string, any, string] {
+export function wrapMethodResponse(method: string, result: unknown, callId = '0'): [string, unknown, string] {
   return [method, result, callId]
 }
 
@@ -57,7 +57,7 @@ export function makeSession(overrides: Partial<JMAPSession> = {}): JMAPSession {
   }
 }
 
-export function makeMailboxList(overrides: Array<PartialRecord<any>> = []) {
+export function makeMailboxList(overrides: OverrideRecord[] = []): JMAPGetResponse<Mailbox> {
   const base = [
     { id: 'mailbox-inbox', name: 'Inbox', role: 'inbox', sortOrder: 10, totalEmails: 12, unreadEmails: 3 },
     { id: 'mailbox-sent', name: 'Sent', role: 'sent', sortOrder: 20, totalEmails: 5, unreadEmails: 0 },
@@ -72,23 +72,35 @@ export function makeMailboxList(overrides: Array<PartialRecord<any>> = []) {
     list: base.map((mailbox, index) => ({
       ...mailbox,
       ...(overrides[index] || {}),
-    })),
+    })) as Mailbox[],
     notFound: [],
   }
 }
 
-export function makeEmailList(mailboxId: string, count = 3, overrides: Array<PartialRecord<any>> = []) {
-  const emails = Array.from({ length: count }, (_, index) => {
+interface EmailListFixtures {
+  emails: Email[]
+  query: JMAPQueryResponse
+  get: JMAPGetResponse<Email>
+}
+
+export function makeEmailList(mailboxId: string, count = 3, overrides: OverrideRecord[] = []): EmailListFixtures {
+  const emails: Email[] = Array.from({ length: count }, (_, index) => {
     const emailNumber = index + 1
     return {
       id: `email-${emailNumber}`,
+      blobId: `blob-email-${emailNumber}`,
       threadId: `thread-${emailNumber}`,
       mailboxIds: { [mailboxId]: true },
-      from: [{ name: `Sender ${emailNumber}`, email: `sender${emailNumber}@example.com` }],
-      subject: `Test subject ${emailNumber}`,
+      keywords: (index === 0 ? {} : { '$seen': true }) as Record<string, boolean>,
+      size: 1024,
       preview: `Preview text ${emailNumber}`,
+      subject: `Test subject ${emailNumber}`,
       receivedAt: `2025-01-0${Math.min(emailNumber, 9)}T12:00:00.000Z`,
-      keywords: index === 0 ? {} : { '$seen': true },
+      from: [{ name: `Sender ${emailNumber}`, email: `sender${emailNumber}@example.com` }],
+      to: [{ name: 'User', email: 'user@example.com' }],
+      cc: null,
+      bcc: null,
+      replyTo: null,
       hasAttachment: false,
       ...(overrides[index] || {}),
     }
@@ -114,34 +126,41 @@ export function makeEmailList(mailboxId: string, count = 3, overrides: Array<Par
   }
 }
 
-export function makeEmailDetail(emailId: string, overrides: PartialRecord<any> = {}) {
-  const email = {
+interface EmailDetailFixtures {
+  email: Email
+  result: JMAPGetResponse<Email>
+}
+
+export function makeEmailDetail(emailId: string, overrides: OverrideRecord = {}): EmailDetailFixtures {
+  const email: Email = {
     id: emailId,
+    blobId: `blob-${emailId}`,
     threadId: `thread-${emailId}`,
     mailboxIds: { 'mailbox-inbox': true },
+    keywords: {},
+    size: 2048,
+    preview: `Preview of ${emailId}`,
+    subject: `Detailed ${emailId}`,
+    receivedAt: '2025-01-01T12:00:00.000Z',
     from: [{ name: 'Alice Example', email: 'alice@example.com' }],
     to: [{ name: 'User Example', email: 'user@example.com' }],
     cc: [],
     bcc: [],
-    subject: `Detailed ${emailId}`,
-    receivedAt: '2025-01-01T12:00:00.000Z',
+    replyTo: null,
+    hasAttachment: false,
+    attachments: [],
+    htmlBody: [{ partId: 'body-1', type: 'text/html' }],
+    textBody: [],
     bodyValues: {
       'body-1': {
         value: '<p>Hello from the integration test.</p>',
         isTruncated: false,
       },
     },
-    htmlBody: [{ partId: 'body-1', type: 'text/html' }],
-    textBody: [],
-    keywords: {},
-    hasAttachment: false,
-    attachments: [],
     bodyStructure: {
       partId: 'body-1',
       type: 'text/html',
     },
-    blobId: `blob-${emailId}`,
-    'header:Disposition-Notification-To:asText': null,
     ...overrides,
   }
 
@@ -156,7 +175,7 @@ export function makeEmailDetail(emailId: string, overrides: PartialRecord<any> =
   }
 }
 
-export function makeThreadList(emails: any[]) {
+export function makeThreadList(emails: Email[]): JMAPGetResponse<Thread> {
   const threadMap = new Map<string, string[]>()
 
   emails.forEach((email) => {
@@ -173,7 +192,12 @@ export function makeThreadList(emails: any[]) {
   }
 }
 
-export function makeSubmissionSuccess() {
+export interface SubmissionSetResult {
+  emailSet: JMAPSetResponse<{ id: string; threadId: string }>
+  submissionSet: JMAPSetResponse<{ id: string; emailId: string }>
+}
+
+export function makeSubmissionSuccess(): SubmissionSetResult {
   return {
     emailSet: {
       accountId: 'account-001',
@@ -200,7 +224,7 @@ export function makeSubmissionSuccess() {
   }
 }
 
-export function makeIdentityList(overrides: Array<PartialRecord<any>> = []) {
+export function makeIdentityList(overrides: OverrideRecord[] = []): JMAPGetResponse<Identity> {
   const base = [
     {
       id: 'identity-001',
@@ -220,7 +244,7 @@ export function makeIdentityList(overrides: Array<PartialRecord<any>> = []) {
     list: base.map((identity, index) => ({
       ...identity,
       ...(overrides[index] || {}),
-    })),
+    })) as Identity[],
     notFound: [],
   }
 }
