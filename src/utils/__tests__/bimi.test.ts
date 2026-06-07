@@ -8,26 +8,16 @@ beforeEach(() => {
   clearBIMICache();
 });
 
-function mockDNSResponse(data: string | null) {
-  if (data === null) {
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({}),
-    });
-  } else {
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: () =>
-        Promise.resolve({
-          Answer: [{ type: 16, data }],
-        }),
-    });
-  }
+function mockDNSResponse(logoUrl: string | null) {
+  mockFetch.mockResolvedValue({
+    ok: true,
+    json: () => Promise.resolve({ logoUrl }),
+  });
 }
 
 describe('getBIMILogoUrl', () => {
-  it('returns the BIMI logo URL from a valid TXT record', async () => {
-    mockDNSResponse('v=BIMI1; l=https://github.com/mail/logos/logo.svg; a=https://github.com/vmc.pem');
+  it('returns the BIMI logo URL from server response', async () => {
+    mockDNSResponse('https://github.com/mail/logos/logo.svg');
     const url = await getBIMILogoUrl('github.com');
     expect(url).toBe('https://github.com/mail/logos/logo.svg');
   });
@@ -44,44 +34,23 @@ describe('getBIMILogoUrl', () => {
     expect(url).toBeNull();
   });
 
-  it('returns null for non-200 DNS response', async () => {
+  it('returns null for non-200 server response', async () => {
     mockFetch.mockResolvedValue({ ok: false });
     const url = await getBIMILogoUrl('example.com');
     expect(url).toBeNull();
   });
 
-  it('returns null when TXT record has no l= parameter', async () => {
-    mockDNSResponse('v=BIMI1; a=https://example.com/cert.pem');
-    const url = await getBIMILogoUrl('example.com');
-    expect(url).toBeNull();
-  });
-
-  it('returns null when Answer array is present but empty', async () => {
+  it('returns null when server returns no logoUrl', async () => {
     mockFetch.mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ Answer: [] }),
+      json: () => Promise.resolve({}),
     });
     const url = await getBIMILogoUrl('example.com');
     expect(url).toBeNull();
   });
 
-  it('returns null when response has no Answer field', async () => {
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ Status: 0, TC: false }),
-    });
-    const url = await getBIMILogoUrl('example.com');
-    expect(url).toBeNull();
-  });
-
-  it('parses l= URL even when parameters are in different order', async () => {
-    mockDNSResponse('a=https://example.com/vmc.pem; l=https://cdn.example.com/logo.svg; v=BIMI1');
-    const url = await getBIMILogoUrl('example.com');
-    expect(url).toBe('https://cdn.example.com/logo.svg');
-  });
-
-  it('caches results and avoids duplicate DNS queries', async () => {
-    mockDNSResponse('v=BIMI1; l=https://example.com/logo.svg');
+  it('caches results and avoids duplicate requests', async () => {
+    mockDNSResponse('https://example.com/logo.svg');
     await getBIMILogoUrl('example.com');
     expect(mockFetch).toHaveBeenCalledTimes(1);
 
@@ -92,23 +61,22 @@ describe('getBIMILogoUrl', () => {
   });
 
   it('clears cache when clearBIMICache is called', async () => {
-    mockDNSResponse('v=BIMI1; l=https://example.com/logo.svg');
+    mockDNSResponse('https://example.com/logo.svg');
     await getBIMILogoUrl('example.com');
     clearBIMICache();
 
     mockFetch.mockClear();
-    mockDNSResponse('v=BIMI1; l=https://other.com/logo.svg');
+    mockDNSResponse('https://other.com/logo.svg');
     const url = await getBIMILogoUrl('example.com');
     expect(url).toBe('https://other.com/logo.svg');
     expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 
-  it('queries default._bimi.<domain> via DNS-over-HTTPS', async () => {
-    mockDNSResponse('v=BIMI1; l=https://example.com/logo.svg');
+  it('queries the server-side BIMI proxy endpoint', async () => {
+    mockDNSResponse('https://example.com/logo.svg');
     await getBIMILogoUrl('example.com');
 
     const calledUrl = mockFetch.mock.calls[0][0];
-    expect(calledUrl).toContain('default._bimi.example.com');
-    expect(calledUrl).toContain('type=TXT');
+    expect(calledUrl).toBe('/api/bimi-dns?domain=example.com');
   });
 });
