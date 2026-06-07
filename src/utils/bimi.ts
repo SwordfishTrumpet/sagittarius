@@ -1,5 +1,4 @@
 const CACHE_TTL = 3600000
-const DOH_URL = 'https://cloudflare-dns.com/dns-query'
 
 interface CacheEntry {
   url: string | null
@@ -12,33 +11,13 @@ function isExpired(entry: CacheEntry): boolean {
   return Date.now() - entry.timestamp > CACHE_TTL
 }
 
-function parseBIMIRecord(txtData: string): string | null {
-  const match = txtData.match(/;\s*l\s*=\s*([^;\s]+)/i)
-  return match ? match[1] : null
-}
-
 async function queryDNS(domain: string): Promise<string | null> {
-  const bimiDomain = `default._bimi.${domain}`
-  const url = `${DOH_URL}?name=${encodeURIComponent(bimiDomain)}&type=TXT`
-
-  const response = await fetch(url, {
-    headers: { Accept: 'application/dns-json' },
+  const response = await fetch(`/api/bimi-dns?domain=${encodeURIComponent(domain)}`, {
     signal: AbortSignal.timeout(5000),
   })
-
   if (!response.ok) return null
-
   const data = await response.json()
-  if (!data.Answer) return null
-
-  for (const answer of data.Answer) {
-    if (answer.type === 16 && typeof answer.data === 'string') {
-      const logoUrl = parseBIMIRecord(answer.data)
-      if (logoUrl) return logoUrl
-    }
-  }
-
-  return null
+  return data.logoUrl ?? null
 }
 
 export async function getBIMILogoUrl(domain: string): Promise<string | null> {

@@ -116,7 +116,7 @@ app.use((req, res, next) => {
       "style-src 'self' 'unsafe-inline'",           // Tailwind CSS uses inline styles
       "img-src 'self' data: blob: https: http:",    // inline images, blob previews, remote images
       "font-src 'self'",
-      "connect-src 'self' https://cloudflare-dns.com", // BIMI DNS-over-HTTPS lookups
+      "connect-src 'self'",                         // BIMI DNS proxied server-side
       "media-src 'self' blob:",                     // audio notifications
       "frame-ancestors 'none'",                     // no embedding
       "base-uri 'self'",
@@ -208,6 +208,28 @@ sseProxy.on('proxyRes', (proxyRes, req, res) => {
 
   // Pipe the rest of the response
   proxyRes.pipe(res);
+});
+
+// ── BIMI DNS proxy (server-side DNS lookup avoids third-party DoH) ──
+import dns from 'dns';
+
+app.get('/api/bimi-dns', (req, res) => {
+  const domain = req.query.domain;
+  if (!domain || typeof domain !== 'string') {
+    return res.status(400).json({ error: 'Missing domain' });
+  }
+  const bimiDomain = `default._bimi.${domain}`;
+  dns.resolveTxt(bimiDomain, (err, records) => {
+    if (err || !records || records.length === 0) {
+      return res.json({ logoUrl: null });
+    }
+    for (const txt of records) {
+      const data = txt.join('');
+      const match = data.match(/;\s*l\s*=\s*([^;\s]+)/i);
+      if (match) return res.json({ logoUrl: match[1] });
+    }
+    res.json({ logoUrl: null });
+  });
 });
 
 // ── JMAP reverse proxy ──────────────────────────────────────────────
