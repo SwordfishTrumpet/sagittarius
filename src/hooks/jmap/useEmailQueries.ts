@@ -128,7 +128,7 @@ export function useThreads(
         ? {}
         : allConditions.length === 1
           ? allConditions[0]
-          : { allOf: allConditions }
+          : Object.assign({}, ...allConditions)
 
       const queryResponse = await jmapClient.request([
         ['Email/query', {

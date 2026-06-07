@@ -203,7 +203,7 @@ describe('mail actions and shortcuts', () => {
     await waitFor(() => {
       const queryBodies = getJmapRequestBodies(['Email/query'])
       const searchQuery = queryBodies[queryBodies.length - 1]
-      expect(searchQuery.methodCalls[0][1].filter.allOf[2].text).toBe('Quarterly')
+      expect(searchQuery.methodCalls[0][1].filter.text).toBe('Quarterly')
     })
     await waitFor(() => {
       expect(screen.getAllByRole('option')).toHaveLength(1)

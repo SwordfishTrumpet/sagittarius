@@ -94,9 +94,9 @@ export function buildJMAPFilter(
 
   if (extraConditions.length === 0) return jmapFilter;
   if (Object.keys(jmapFilter).length === 0) {
-    return extraConditions.length === 1 ? extraConditions[0] : { allOf: extraConditions };
+    return extraConditions.length === 1 ? extraConditions[0] : Object.assign({}, ...extraConditions);
   }
-  return { allOf: [jmapFilter, ...extraConditions] };
+  return Object.assign({}, jmapFilter, ...extraConditions);
 }
 
 /**
@@ -112,9 +112,9 @@ export function mergeFiltersAND(
   if (validFilters.length === 0) return {};
   if (validFilters.length === 1) return validFilters[0];
 
-  return {
-    allOf: validFilters,
-  };
+  // Merge flat conditions into a single object to avoid allOf
+  // (some servers don't support FilterOperator)
+  return Object.assign({}, ...validFilters);
 }
 
 /**
