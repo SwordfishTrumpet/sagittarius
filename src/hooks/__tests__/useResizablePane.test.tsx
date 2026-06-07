@@ -5,7 +5,6 @@ import { useResizablePane } from '../useResizablePane';
 
 // Mock setPointerCapture and releasePointerCapture
 beforeEach(() => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Element.prototype.setPointerCapture = vi.fn((_pointerId: number) => {});
   Element.prototype.releasePointerCapture = vi.fn((_pointerId: number) => {});
 });

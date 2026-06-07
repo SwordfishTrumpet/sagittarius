@@ -137,12 +137,12 @@ describe('toastHelpers', () => {
     })
 
     it('falls back to network.default for unknown category', () => {
-      toastOperationError('nonexistent.action' as any)
+      toastOperationError('nonexistent.action' as unknown as Parameters<typeof toastOperationError>[0])
       expect(toast.error).toHaveBeenCalledWith('Something went wrong. Please try again.')
     })
 
     it('falls back to network.default for unknown action', () => {
-      toastOperationError('identity.unknown' as any)
+      toastOperationError('identity.unknown' as unknown as Parameters<typeof toastOperationError>[0])
       expect(toast.error).toHaveBeenCalledWith('Something went wrong. Please try again.')
     })
   })

@@ -88,6 +88,10 @@ export function useThreads(
       if (mailboxId === 'flagged') {
         mailboxConditions.push({ hasKeyword: '$flagged' })
       }
+      // Exclude snoozed emails from all views except flagged
+      if (mailboxId !== 'flagged') {
+        mailboxConditions.push({ notHasKeyword: '$snoozed' })
+      }
 
       // Build a single effective search filter from both searchTerm and dialogFilter
       let effectiveSearchFilter: EmailFilter | null = null
@@ -198,6 +202,9 @@ export function useThreads(
           }
           if (mailboxId === 'flagged') {
             snippetFilter.hasKeyword = '$flagged'
+          }
+          if (mailboxId !== 'flagged') {
+            snippetFilter.notHasKeyword = '$snoozed'
           }
           
           // Copy condition fields into snippet filter (handle allOf wrapping)

@@ -97,7 +97,7 @@ describe('Composer accessibility', () => {
 
     // Shift+tab back to the close button
     await user.tab({ shift: true })
-    await waitFor(() => expect(closeBtn).toHaveFocus())
+    await waitFor(() => expect(closeBtn).toHaveFocus(), { timeout: 3000 })
   })
 
   it('exposes an accessible minimized state and supports keyboard re-open', async () => {

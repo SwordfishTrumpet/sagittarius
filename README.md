@@ -8,9 +8,11 @@ A high-performance, server-agnostic JMAP web client with an interface inspired b
 [![CI](https://img.shields.io/badge/CI-passing-brightgreen?style=flat-square&logo=github-actions&logoColor=white)](.github/workflows/ci.yml)
 [![JMAP RFC 8620/8621](https://img.shields.io/badge/JMAP-RFC%208620%20%2F%208621-4A90D9?style=flat-square)](https://jmap.io/)
 [![TypeScript Strict](https://img.shields.io/badge/TypeScript-Strict-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![React 18](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![Vitest](https://img.shields.io/badge/Tests-1,298%20passing-6E9F18?style=flat-square&logo=vitest&logoColor=white)](package.json)
+[![React 19](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Vite 8](https://img.shields.io/badge/Vite-8-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![TypeScript 6](https://img.shields.io/badge/TypeScript-6-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Vitest](https://img.shields.io/badge/Tests-1,303%20passing-6E9F18?style=flat-square&logo=vitest&logoColor=white)](package.json)
 [![WCAG 2.2 AA](https://img.shields.io/badge/WCAG-2.2%20AA-1a73e8?style=flat-square)]()
 [![License MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
@@ -91,8 +93,8 @@ Every component meets WCAG 2.2 Level AA compliance through systematic implementa
 
 ### Prerequisites
 
-- Node.js 18+
-- npm 9+
+- Node.js 22+
+- npm 10+
 - A JMAP-compliant mail server
 
 ### Installation
@@ -188,6 +190,7 @@ See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for complete configuration examples.
 | **Email Templates** | Save, edit, delete, duplicate reusable email formats stored per-account |
 | **Batch Selection** | Multi-select with Shift/Cmd+Click and Select All |
 | **Flagging (Starring)** | Toggle star (`\$flagged` keyword) on individual emails |
+| **Conversation Snooze** | Temporarily remove emails from inbox with timed reappearance via `\$snoozed` keyword, `sessionStorage`-backed timers, and `SnoozePicker` time selection (Later Today, Tomorrow, Weekend, Next Week, Custom) |
 | **Drag-and-Drop Organization** | Move emails between folders from the message list |
 | **Email Import** | Drag & drop `.eml` files → blob upload → `Email/import` |
 | **Email Parse (Raw Viewer)** | Raw email viewer with headers, text/html body, and MIME structure tree |
@@ -346,9 +349,9 @@ See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for complete configuration examples.
   <a href="https://www.framer.com/motion/"><img src="https://img.shields.io/badge/Framer_Motion-0055FF?style=for-the-badge&logo=framer&logoColor=white" alt="Framer Motion"></a>
 </p>
 
-- **[React 18](https://react.dev/)** — Vite-powered for fast HMR and optimized builds
-- **[TypeScript](https://www.typescriptlang.org/)** — Strict mode for full type safety
-- **[Tailwind CSS](https://tailwindcss.com/)** — Utility-first styling with iCloud-inspired design system
+  - **[React 19](https://react.dev/)** — Vite 8-powered for fast HMR and optimized builds
+- **[TypeScript 6](https://www.typescriptlang.org/)** — Strict mode for full type safety
+- **[Tailwind CSS 4](https://tailwindcss.com/)** — Utility-first styling with iCloud-inspired design system
 - **[TanStack Query](https://tanstack.com/query/latest)** — Server state management with aggressive caching and background sync
 - **[Tiptap](https://tiptap.dev/)** — Rich text editing with extensible plugin system
 - **[react-virtuoso](https://virtuoso.dev/)** — Virtual scrolling for 10,000+ emails
@@ -375,8 +378,8 @@ src/
 
 ## 📊 Stats
 
-- **1,298 Tests** passing across 118 test files
-- **TypeScript Strict Mode** — Full type safety
+- **1,303 Tests** passing across 118 test files (all passing)
+- **TypeScript 6 Strict Mode** — Full type safety (0 errors)
 - **Full RFC Compliance** — JMAP 8620/8621, 8887, 9404, 9553, 9610, 9661, 9670, 9749, 9219, 9007, draft-ietf-jmap-calendars-26
 - **WCAG 2.2 AA** accessibility compliant
 

@@ -12,7 +12,7 @@ describe('Search controls accessibility', () => {
 
     const pills = render(
       <SearchFilterPills
-        pills={[{ id: 'from', label: 'from:alice@example.com', type: 'from', value: 'alice@example.com' }] as any}
+        pills={[{ id: 'from', label: 'from:alice@example.com', type: 'from', value: 'alice@example.com' }]}
         onRemove={() => {}}
       />,
     )

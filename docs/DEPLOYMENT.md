@@ -32,6 +32,8 @@ npm ci --production
 JMAP_SERVER=https://mail.example.com PORT=8081 node server.js
 ```
 
+> **Quick start:** A [`deploy.sh`](../deploy.sh) script is included in the project root for one-command deploy on fresh Ubuntu/Debian servers. It installs dependencies, builds, sets up systemd, and configures Nginx with Let's Encrypt.
+
 ### Systemd Service
 
 Create `/etc/systemd/system/sagittarius.service`:
@@ -147,6 +149,8 @@ server {
 }
 ```
 
+> **Pre-built config:** An [`nginx-webmail.conf`](../nginx-webmail.conf) is included in the project root — a complete, production-ready configuration with SSL, WebSocket proxying, CSP headers, and gzip. Copy and customize it to your domain.
+
 ### Important Notes
 
 - Ensure CORS headers allow your domain on the JMAP server
@@ -195,6 +199,11 @@ docker run -d \
   -e JMAP_SERVER=https://mail.example.com \
   -e PORT=8081 \
   --restart always \
+  --health-cmd "wget --no-verbose --tries=1 --spider http://localhost:8081/health || exit 1" \
+  --health-interval 30s \
+  --health-timeout 5s \
+  --health-retries 3 \
+  --health-start-period 10s \
   sagittarius:latest
 ```
 
@@ -203,8 +212,6 @@ docker run -d \
 Create `docker-compose.yml`:
 
 ```yaml
-version: '3.8'
-
 services:
   sagittarius:
     build: .
@@ -215,6 +222,12 @@ services:
       - JMAP_SERVER=https://mail.example.com
       - PORT=8081
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     # Optional: mount custom assets
     volumes:
       - ./custom-branding:/app/public/custom:ro
@@ -232,7 +245,7 @@ Create `Dockerfile`:
 
 ```dockerfile
 # Build stage
-FROM node:18-alpine AS builder
+FROM node:22-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
@@ -240,12 +253,15 @@ COPY . .
 RUN npm run build
 
 # Production stage
-FROM node:18-alpine
+FROM node:22-alpine
 WORKDIR /app
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/server.js ./
 COPY package*.json ./
 RUN npm ci --production && npm cache clean --force
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:8081/health || exit 1
 
 EXPOSE 8081
 ENV PORT=8081
@@ -412,6 +428,50 @@ sudo nginx -t && sudo systemctl reload nginx
 - [ ] Rate limiting on JMAP proxy
 - [ ] JMAP server validates `Origin` header
 - [ ] No sensitive data in browser logs (already handled by Sagittarius)
+
+---
+
+## Health Checks & Monitoring
+
+The built-in server exposes a health endpoint at `/health`:
+
+```bash
+curl http://localhost:8081/health
+# → {"status":"ok","uptime":12345}
+```
+
+### Docker Health Check
+
+Add to your `Dockerfile`:
+
+```dockerfile
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:8081/health || exit 1
+```
+
+### Prometheus / Grafana
+
+For metrics collection, point your Prometheus `scrape_configs` at the Node.js process metrics endpoint (requires `express-prom-bundle` or similar, not included by default). Basic monitoring can use:
+
+```bash
+# Watch process health with systemd
+sudo journalctl -u sagittarius -f
+
+# Monitor memory and CPU
+ps aux | grep sagittarius
+```
+
+### Logging
+
+Sagittarius logs to stdout by default. For production, forward logs to your preferred aggregator:
+
+```bash
+# Systemd journal (automatic)
+journalctl -u sagittarius -n 100 --no-pager
+
+# File-based logging (append --log-file to server startup)
+JMAP_SERVER=https://mail.example.com node server.js >> /var/log/sagittarius.log 2>&1
+```
 
 ---
 

@@ -76,6 +76,11 @@ if (typeof globalThis.sessionStorage === 'undefined') {
 }
 
 // Provide a minimal localStorage stub
+// jsdom doesn't implement elementFromPoint, which Tiptap 3.25+ placeholder extension uses
+if (typeof document !== 'undefined' && typeof document.elementFromPoint === 'undefined') {
+  document.elementFromPoint = () => null;
+}
+
 if (typeof globalThis.localStorage === 'undefined') {
   const store: Record<string, string> = {};
   globalThis.localStorage = {

@@ -78,8 +78,6 @@ export function useEventSource(enabled: boolean): UseEventSourceResult {
       eventSourceManager.disconnect();
       setIsConnected(false);
     };
-    // Only reconnect when enabled changes, not when jmapClient methods change
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled]);
 
   return { isConnected, hasNewMail, clearNewMail };

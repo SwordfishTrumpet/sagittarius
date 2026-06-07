@@ -84,8 +84,7 @@ describe('ContactsView', () => {
       isPending: false,
       error: null,
     });
-    // @ts-ignore mock window.confirm
-    window.confirm = vi.fn(() => true);
+    vi.spyOn(window, 'confirm').mockImplementation(() => true);
   });
 
   it('renders nothing when isOpen is false', () => {

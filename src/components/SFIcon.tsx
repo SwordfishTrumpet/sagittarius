@@ -90,6 +90,15 @@ export const SFTrash = memo(({ className, strokeWidth = 1.5 }: SFIconProps) => (
 SFTrash.displayName = 'SFTrash';
 
 /* ── Star (for Flag toggle in list) ────────────────────────────────── */
+/* ── Snooze ─────────────────────────────────────────────────────────── */
+export const SFSnooze = memo(({ className, strokeWidth = 1.5 }: SFIconProps) => (
+  <svg {...base} className={className} strokeWidth={strokeWidth}>
+    <path d="M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16z" />
+    <path d="M12 8v4l2.5 2.5" />
+  </svg>
+));
+SFSnooze.displayName = 'SFSnooze';
+
 export const SFStar = memo(({ className, strokeWidth = 1.5, filled = false }: SFIconProps) => (
   <svg {...base} className={className} strokeWidth={strokeWidth}
     fill={filled ? 'currentColor' : 'none'}

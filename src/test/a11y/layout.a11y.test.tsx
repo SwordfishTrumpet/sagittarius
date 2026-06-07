@@ -26,6 +26,7 @@ describe('App layout accessibility', () => {
     expect(screen.getByRole('main', { name: 'Message list' })).toBeInTheDocument()
     expect(screen.getByLabelText('Mailbox navigation')).toBeInTheDocument()
     expect(screen.getByLabelText('Email reading pane')).toBeInTheDocument()
+
     expect((await checkA11y(container)).violations).toHaveLength(0)
   })
 })
