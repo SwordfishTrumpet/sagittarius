@@ -169,7 +169,10 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
 
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        link: false,
+        underline: false,
+      }),
       UnderlineExtension,
       LinkExtension.configure({
         openOnClick: false,

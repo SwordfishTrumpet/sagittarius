@@ -195,10 +195,11 @@ class WebSocketManager {
       this._handleMessage(event.data);
     };
 
-    this.ws.onerror = (event: Event) => {
-      // The browser suppresses the actual error details for security reasons;
-      // the onclose handler that follows will trigger the reconnect.
-      logger.error('[JMAP WebSocket] Socket error:', event);
+    this.ws.onerror = (_event: Event) => {
+      // The browser suppresses the actual error details for security reasons.
+      // The onclose handler that follows will log the close code and trigger
+      // reconnection, so we only log at debug level here to avoid console noise.
+      logger.debug('[JMAP WebSocket] Socket error (details will be in onclose)');
     };
 
     this.ws.onclose = (event: CloseEvent) => {

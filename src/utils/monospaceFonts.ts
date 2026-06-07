@@ -2,7 +2,6 @@ export type ThemeFontId =
   | 'icloud-default'
   | 'jetbrains-mono'
   | 'inter'
-  | 'oxanium'
   | 'ibm-plex-sans'
   | 'ibm-plex-serif';
 
@@ -14,7 +13,6 @@ export interface ThemeFont {
   family: string;
   category: FontCategory;
   weights: number[];
-  googleFontName?: string;
 }
 
 export const THEME_FONTS: ThemeFont[] = [
@@ -31,7 +29,6 @@ export const THEME_FONTS: ThemeFont[] = [
     family: "'JetBrains Mono', monospace",
     category: 'mono',
     weights: [400, 500, 600],
-    googleFontName: 'JetBrains+Mono',
   },
   {
     id: 'inter',
@@ -39,15 +36,6 @@ export const THEME_FONTS: ThemeFont[] = [
     family: "'Inter', sans-serif",
     category: 'sans',
     weights: [400, 500, 600, 700],
-    googleFontName: 'Inter',
-  },
-  {
-    id: 'oxanium',
-    name: 'Oxanium',
-    family: "'Oxanium', sans-serif",
-    category: 'sans',
-    weights: [400, 500, 600, 700],
-    googleFontName: 'Oxanium',
   },
   {
     id: 'ibm-plex-sans',
@@ -55,7 +43,6 @@ export const THEME_FONTS: ThemeFont[] = [
     family: "'IBM Plex Sans', sans-serif",
     category: 'sans',
     weights: [400, 500, 600, 700],
-    googleFontName: 'IBM+Plex+Sans',
   },
   {
     id: 'ibm-plex-serif',
@@ -63,7 +50,6 @@ export const THEME_FONTS: ThemeFont[] = [
     family: "'IBM Plex Serif', serif",
     category: 'serif',
     weights: [400, 500, 600, 700],
-    googleFontName: 'IBM+Plex+Serif',
   },
 ];
 

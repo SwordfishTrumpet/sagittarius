@@ -42,7 +42,31 @@ const structuralTags = new Set([
 ])
 
 export function stripDisplayArtifacts(root: ParentNode): void {
-  root.querySelectorAll?.('title, meta, link').forEach(node => node.remove())
+  // Remove all potentially active content tags
+  root.querySelectorAll?.('title, meta, link, script, noscript, iframe, object, embed, form, input, button, textarea, select, isindex, applet, base').forEach(node => node.remove())
+
+  // Remove ALL event handler attributes (defense-in-depth — DOMPurify strips these too)
+  const allElements = Array.from(root.querySelectorAll?.('*') || [])
+  allElements.forEach(el => {
+    for (const attr of el.getAttributeNames()) {
+      if (attr.startsWith('on')) el.removeAttribute(attr)
+    }
+  })
+
+  // Remove javascript:, vbscript:, and dangerous data: URIs from ALL attributes
+  allElements.forEach(el => {
+    for (const attr of el.getAttributeNames()) {
+      const value = el.getAttribute(attr) || ''
+      if (
+        value.startsWith('javascript:') ||
+        value.startsWith('vbscript:') ||
+        value.startsWith('data:text/html') ||
+        value.startsWith('data:text/javascript')
+      ) {
+        el.removeAttribute(attr)
+      }
+    }
+  })
 
   const isWhitespaceText = (node: ChildNode | null): boolean => (
     node?.nodeType === Node.TEXT_NODE && !node.textContent?.replace(/\u00a0/g, '').trim()

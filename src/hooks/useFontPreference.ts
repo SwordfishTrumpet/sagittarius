@@ -7,6 +7,23 @@ import {
   isValidFontId,
 } from '../utils/monospaceFonts';
 
+// Self-hosted fonts via @fontsource — no CSP issues, no external requests
+import '@fontsource/inter/400.css';
+import '@fontsource/inter/500.css';
+import '@fontsource/inter/600.css';
+import '@fontsource/inter/700.css';
+import '@fontsource/jetbrains-mono/400.css';
+import '@fontsource/jetbrains-mono/500.css';
+import '@fontsource/jetbrains-mono/600.css';
+import '@fontsource/ibm-plex-sans/400.css';
+import '@fontsource/ibm-plex-sans/500.css';
+import '@fontsource/ibm-plex-sans/600.css';
+import '@fontsource/ibm-plex-sans/700.css';
+import '@fontsource/ibm-plex-serif/400.css';
+import '@fontsource/ibm-plex-serif/500.css';
+import '@fontsource/ibm-plex-serif/600.css';
+import '@fontsource/ibm-plex-serif/700.css';
+
 export interface UseFontPreferenceReturn {
   fontId: ThemeFontId;
   setFontId: (id: ThemeFontId) => void;
@@ -21,6 +38,8 @@ export function useFontPreference(): UseFontPreferenceReturn {
       if (stored && isValidFontId(stored)) {
         return stored;
       }
+      // Stale/removed font key — clean up
+      if (stored) localStorage.removeItem(FONT_STORAGE_KEY);
     } catch {
       // Silently fail if localStorage is unavailable
     }
@@ -44,17 +63,8 @@ export function useFontPreference(): UseFontPreferenceReturn {
       );
     }
 
-    if (font.googleFontName) {
-      const linkId = `google-font-${font.id}`;
-      let link = document.getElementById(linkId) as HTMLLinkElement | null;
-      if (!link) {
-        link = document.createElement('link');
-        link.id = linkId;
-        link.rel = 'stylesheet';
-        link.href = `https://fonts.googleapis.com/css2?family=${font.googleFontName}:wght@${font.weights.join(';')}&display=swap`;
-        document.head.appendChild(link);
-      }
-    }
+    // Self-hosted fonts are loaded via @fontsource imports above.
+    // No dynamic Google Fonts injection needed — eliminates CSP style-src issues.
   }, [fontId]);
 
   const setFontId = useCallback((id: ThemeFontId) => {
