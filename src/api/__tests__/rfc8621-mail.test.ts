@@ -674,28 +674,17 @@ describe('RFC 8621 — JMAP Mail Protocol', () => {
         isAnswered: true,
       });
 
-      // When multiple hasKeyword conditions exist, buildJMAPFilter wraps
-      // everything in allOf per RFC 8620 §5.5. The first element is the
-      // base filter with non-keyword conditions, followed by individual
-      // hasKeyword conditions.
-      expect(filter).toHaveProperty('allOf');
-      expect(Array.isArray((filter as { allOf: EmailFilterCondition[] }).allOf)).toBe(true);
-
-      // The base filter (first element) contains the non-keyword conditions
-      const base = (filter as { allOf: EmailFilterCondition[] }).allOf[0];
-      expect(base.from).toBe('alice@example.com');
-      expect(base.to).toBe('bob@example.com');
-      expect(base.cc).toBe('carol@example.com');
-      expect(base.subject).toBe('meeting');
-      expect(base.text).toBe('agenda');
-      expect(base.hasAttachment).toBe(true);
-      expect(base.notHasKeyword).toBe('$seen');
-
-      // The remaining elements are individual hasKeyword conditions
-      const keywords = (filter as { allOf: EmailFilterCondition[] }).allOf.slice(1).map((c: any) => c.hasKeyword);
-      expect(keywords).toContain('$flagged');
-      expect(keywords).toContain('$draft');
-      expect(keywords).toContain('$answered');
+      // All conditions merge into a single flat object (last hasKeyword wins)
+      const condition = filter as EmailFilterCondition;
+      expect(condition.from).toBe('alice@example.com');
+      expect(condition.to).toBe('bob@example.com');
+      expect(condition.cc).toBe('carol@example.com');
+      expect(condition.subject).toBe('meeting');
+      expect(condition.text).toBe('agenda');
+      expect(condition.hasAttachment).toBe(true);
+      expect(condition.notHasKeyword).toBe('$seen');
+      // Multiple hasKeyword conditions merge flat; last one wins
+      expect(condition.hasKeyword).toBe('$answered');
     });
 
     it('should map "from: me" to the user email address', async () => {
@@ -720,19 +709,14 @@ describe('RFC 8621 — JMAP Mail Protocol', () => {
       expect(new Date(asCondition(filter).before!).toISOString()).toBe(asCondition(filter).before);
     });
 
-    it('should wrap multiple hasKeyword conditions in allOf when isFlagged and isDraft both true', async () => {
+    it('should merge multiple hasKeyword conditions into a flat object (last wins)', async () => {
       const { buildJMAPFilter } = await import('../../utils/filterBuilder');
 
       // RFC 8621 §4.4.1: hasKeyword is a single String, so multiple keyword
-      // conditions need allOf wrapping per RFC 8620 §5.5
+      // conditions merge flat; last keyword wins
       const filter = buildJMAPFilter({ isFlagged: true, isDraft: true });
 
-      expect(filter).toHaveProperty('allOf');
-      const keywords = (filter as { allOf: EmailFilterCondition[] }).allOf
-        .filter((c: any) => c.hasKeyword)
-        .map((c: any) => c.hasKeyword);
-      expect(keywords).toContain('$flagged');
-      expect(keywords).toContain('$draft');
+      expect(filter).toEqual({ hasKeyword: '$draft' });
     });
 
     it('should return empty object for empty filter', async () => {

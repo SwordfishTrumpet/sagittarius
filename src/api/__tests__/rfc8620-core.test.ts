@@ -481,11 +481,11 @@ describe('RFC 8620 — JMAP Core Protocol', () => {
   // Section 5.5: Filter Operators
   // =========================================================================
   describe('§5.5 — Filter Operators', () => {
-    it('should use allOf for AND filter combination (§5.5)', async () => {
+    it('should merge flat filters for AND combination (server compat)', async () => {
       const { mergeFiltersAND } = await import('../../utils/filterBuilder');
 
       const result = mergeFiltersAND({ from: 'alice' }, { to: 'bob' });
-      expect(result).toEqual({ allOf: [{ from: 'alice' }, { to: 'bob' }] });
+      expect(result).toEqual({ from: 'alice', to: 'bob' });
     });
 
     it('should use anyOf for OR filter combination (§5.5)', async () => {

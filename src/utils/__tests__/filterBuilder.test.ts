@@ -135,55 +135,46 @@ describe('filterBuilder — RFC 8621 §4.4.1 Compliance', () => {
       expect(filter).toEqual({ header: ['X-Spam-Status'] });
     });
 
-    it('should use allOf when header filters combined with other conditions', () => {
+    it('should merge header filters with other conditions into a flat object', () => {
       const filter = buildJMAPFilter({
         from: 'alice@example.com',
         headerFilters: [{ headerName: 'List-Id', value: 'newsletter' }],
       });
-      expect(filter).toHaveProperty('allOf');
-      expect(Array.isArray((filter as { allOf: unknown[] }).allOf)).toBe(true);
-      const allOf = (filter as { allOf: unknown[] }).allOf;
-      expect(allOf).toContainEqual({ from: 'alice@example.com' });
-      expect(allOf).toContainEqual({ header: ['List-Id', 'newsletter'] });
+      expect(filter).toEqual({
+        from: 'alice@example.com',
+        header: ['List-Id', 'newsletter'],
+      });
     });
 
-    it('should use allOf when multiple header filters are active', () => {
+    it('should merge multiple header filters into a flat object (last wins)', () => {
       const filter = buildJMAPFilter({
         headerFilters: [
           { headerName: 'List-Id', value: 'newsletter' },
           { headerName: 'X-Custom', value: 'value' },
         ],
       });
-      expect(filter).toHaveProperty('allOf');
-      const allOf = (filter as { allOf: unknown[] }).allOf;
-      expect(allOf).toContainEqual({ header: ['List-Id', 'newsletter'] });
-      expect(allOf).toContainEqual({ header: ['X-Custom', 'value'] });
+      // Multiple header filters merge into a single object; last header wins
+      expect(filter).toEqual({ header: ['X-Custom', 'value'] });
     });
 
-    it('should use allOf when header filters combined with keyword filters', () => {
+    it('should merge header filters with keyword filters into a flat object', () => {
       const filter = buildJMAPFilter({
         isFlagged: true,
         headerFilters: [{ headerName: 'List-Id', value: 'newsletter' }],
       });
-      expect(filter).toHaveProperty('allOf');
-      const allOf = (filter as { allOf: unknown[] }).allOf;
-      expect(allOf).toContainEqual({ hasKeyword: '$flagged' });
-      expect(allOf).toContainEqual({ header: ['List-Id', 'newsletter'] });
+      expect(filter).toEqual({
+        hasKeyword: '$flagged',
+        header: ['List-Id', 'newsletter'],
+      });
     });
 
-    it('should use allOf when multiple keyword filters are active (isFlagged + isDraft)', () => {
+    it('should merge multiple keyword filters into a flat object (last wins)', () => {
       // RFC 8621 §4.4.1: hasKeyword is a single String, so multiple keyword
-      // conditions must use allOf (RFC 8620 §5.5 FilterOperator)
+      // conditions merge into a flat object; last keyword wins
       const filter = buildJMAPFilter({ isFlagged: true, isDraft: true });
 
-      // Should produce allOf wrapping separate hasKeyword conditions
-      expect(filter).toHaveProperty('allOf');
-      expect(Array.isArray((filter as { allOf: unknown[] }).allOf)).toBe(true);
-      const keywords = (filter as { allOf: unknown[] }).allOf
-        .filter((c: any) => c.hasKeyword)
-        .map((c: any) => c.hasKeyword);
-      expect(keywords).toContain('$flagged');
-      expect(keywords).toContain('$draft');
+      // Flat merge: only the last hasKeyword remains
+      expect(filter).toEqual({ hasKeyword: '$draft' });
     });
   });
 
@@ -199,10 +190,11 @@ describe('filterBuilder — RFC 8621 §4.4.1 Compliance', () => {
       expect(mergeFiltersAND({ from: 'alice' })).toEqual({ from: 'alice' });
     });
 
-    it('should wrap multiple filters in allOf (RFC 8620 §5.5)', () => {
+    it('should merge multiple flat filters into a single object', () => {
       const result = mergeFiltersAND({ from: 'alice' }, { to: 'bob' });
       expect(result).toEqual({
-        allOf: [{ from: 'alice' }, { to: 'bob' }],
+        from: 'alice',
+        to: 'bob',
       });
     });
 
