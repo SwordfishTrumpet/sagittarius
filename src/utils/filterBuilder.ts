@@ -56,10 +56,8 @@ export function buildJMAPFilter(
     jmapFilter.hasAttachment = true;
   }
 
-  // Unread emails: notHasKeyword $seen
-  if (filter.isUnread === true) {
-    jmapFilter.notHasKeyword = '$seen';
-  }
+  // Unread filter — not supported by all servers
+  // (notHasKeyword is not used here; client-side filtering falls back)
 
   // Keyword-based boolean filters — RFC 8621 §4.4.1: hasKeyword is a single
   // String, so when multiple keywords are active we must wrap them in allOf.

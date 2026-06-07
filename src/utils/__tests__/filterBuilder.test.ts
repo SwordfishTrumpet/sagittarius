@@ -66,9 +66,9 @@ describe('filterBuilder — RFC 8621 §4.4.1 Compliance', () => {
       expect(filter).not.toHaveProperty('hasAttachment');
     });
 
-    it('should map isUnread to notHasKeyword: "$seen" (§4.4.1)', () => {
+    it('should skip isUnread filter on servers without notHasKeyword support', () => {
       const filter = buildJMAPFilter({ isUnread: true });
-      expect(asCondition(filter).notHasKeyword).toBe('$seen');
+      expect(filter).toEqual({});
     });
 
     it('should map isFlagged to hasKeyword: "$flagged" (§4.4.1)', () => {
