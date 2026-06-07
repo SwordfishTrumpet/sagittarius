@@ -63,7 +63,7 @@ describe('useFontPreference', () => {
     expect(rootStyle.getPropertyValue('--font-mono')).toContain('JetBrains Mono');
   });
 
-  it('injects Google Fonts link for remote fonts', () => {
+  it('does not inject Google Fonts links (fonts are self-hosted via @fontsource)', () => {
     const { result } = renderHook(() => useFontPreference());
 
     act(() => {
@@ -71,19 +71,6 @@ describe('useFontPreference', () => {
     });
 
     const link = document.getElementById('google-font-inter') as HTMLLinkElement | null;
-    expect(link).not.toBeNull();
-    expect(link?.href).toContain('fonts.googleapis.com');
-    expect(link?.href).toContain('Inter');
-  });
-
-  it('does not inject Google Fonts link for system font', () => {
-    const { result } = renderHook(() => useFontPreference());
-
-    act(() => {
-      result.current.setFontId('icloud-default');
-    });
-
-    const link = document.getElementById('google-font-icloud-default');
     expect(link).toBeNull();
   });
 
