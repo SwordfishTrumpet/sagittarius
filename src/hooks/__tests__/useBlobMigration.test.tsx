@@ -16,6 +16,7 @@ import {
   isMigrationSuccessful,
   hasMigrationFailures,
   type BlobMigrationItem,
+  type BlobMigrationState,
 } from '../useBlobMigration';
 
 // Mock the JMAP client
@@ -365,29 +366,29 @@ describe('usePrepareAttachmentMigration', () => {
 describe('Migration State Type Guards', () => {
   describe('isMigrationComplete', () => {
     it('should return true for completed, failed, and partial states', () => {
-      expect(isMigrationComplete({ status: 'completed' } as any)).toBe(true);
-      expect(isMigrationComplete({ status: 'failed' } as any)).toBe(true);
-      expect(isMigrationComplete({ status: 'partial' } as any)).toBe(true);
-      expect(isMigrationComplete({ status: 'idle' } as any)).toBe(false);
-      expect(isMigrationComplete({ status: 'migrating' } as any)).toBe(false);
+      expect(isMigrationComplete({ status: 'completed' } as unknown as BlobMigrationState)).toBe(true);
+      expect(isMigrationComplete({ status: 'failed' } as unknown as BlobMigrationState)).toBe(true);
+      expect(isMigrationComplete({ status: 'partial' } as unknown as BlobMigrationState)).toBe(true);
+      expect(isMigrationComplete({ status: 'idle' } as unknown as BlobMigrationState)).toBe(false);
+      expect(isMigrationComplete({ status: 'migrating' } as unknown as BlobMigrationState)).toBe(false);
     });
   });
 
   describe('isMigrationSuccessful', () => {
     it('should return true only for completed state', () => {
-      expect(isMigrationSuccessful({ status: 'completed' } as any)).toBe(true);
-      expect(isMigrationSuccessful({ status: 'failed' } as any)).toBe(false);
-      expect(isMigrationSuccessful({ status: 'partial' } as any)).toBe(false);
-      expect(isMigrationSuccessful({ status: 'idle' } as any)).toBe(false);
+      expect(isMigrationSuccessful({ status: 'completed' } as unknown as BlobMigrationState)).toBe(true);
+      expect(isMigrationSuccessful({ status: 'failed' } as unknown as BlobMigrationState)).toBe(false);
+      expect(isMigrationSuccessful({ status: 'partial' } as unknown as BlobMigrationState)).toBe(false);
+      expect(isMigrationSuccessful({ status: 'idle' } as unknown as BlobMigrationState)).toBe(false);
     });
   });
 
   describe('hasMigrationFailures', () => {
     it('should return true for failed and partial states', () => {
-      expect(hasMigrationFailures({ status: 'failed' } as any)).toBe(true);
-      expect(hasMigrationFailures({ status: 'partial' } as any)).toBe(true);
-      expect(hasMigrationFailures({ status: 'completed' } as any)).toBe(false);
-      expect(hasMigrationFailures({ status: 'idle' } as any)).toBe(false);
+      expect(hasMigrationFailures({ status: 'failed' } as unknown as BlobMigrationState)).toBe(true);
+      expect(hasMigrationFailures({ status: 'partial' } as unknown as BlobMigrationState)).toBe(true);
+      expect(hasMigrationFailures({ status: 'completed' } as unknown as BlobMigrationState)).toBe(false);
+      expect(hasMigrationFailures({ status: 'idle' } as unknown as BlobMigrationState)).toBe(false);
     });
   });
 });

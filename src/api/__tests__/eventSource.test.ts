@@ -90,7 +90,7 @@ describe('eventSourceManager', () => {
       changed: { a1: { Mailbox: 'mailbox-state-1' } },
     })
 
-    expect((qc.invalidateQueries as any).mock.calls).toEqual([
+    expect(vi.mocked(qc.invalidateQueries).mock.calls).toEqual([
       [{ queryKey: ['mailboxes'] }],
     ])
   })

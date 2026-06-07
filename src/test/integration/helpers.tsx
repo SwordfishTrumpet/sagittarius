@@ -254,15 +254,17 @@ export function jsonResponse(body: any, options: Omit<MockFetchResponse, 'body'>
 export function storeAuthenticatedSession(session: JMAPSession, authHeader = `Basic ${btoa('user@example.com:password')}`) {
   sessionStorage.setItem('jmap_session', JSON.stringify(session))
   sessionStorage.setItem('jmap_auth', authHeader)
-  ;(jmapClient as any).session = session
-  ;(jmapClient as any).authHeader = authHeader
+  const client = jmapClient as unknown as { session: JMAPSession | null; authHeader: string | null }
+  client.session = session
+  client.authHeader = authHeader
 }
 
 function clearStoredSession() {
   sessionStorage.clear()
   localStorage.clear()
-  ;(jmapClient as any).session = null
-  ;(jmapClient as any).authHeader = null
+  const client = jmapClient as unknown as { session: JMAPSession | null; authHeader: string | null }
+  client.session = null
+  client.authHeader = null
 }
 
 export function renderApp() {

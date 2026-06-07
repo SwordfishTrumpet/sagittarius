@@ -1,7 +1,8 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { MoreHorizontal, Code, Eye, ChevronLeft, Keyboard } from 'lucide-react'
-import { SFReply, SFReplyAll, SFForward, SFStar, SFArchive, SFTrash } from './SFIcon'
+import { SFReply, SFReplyAll, SFForward, SFStar, SFArchive, SFTrash, SFSnooze } from './SFIcon'
 import { ActionButton } from './ActionButton'
+import { SnoozePicker } from './SnoozePicker'
 import type { Email } from '../types/jmap'
 
 export interface ToolbarProps {
@@ -18,6 +19,7 @@ export interface ToolbarProps {
   onToggleStar: () => void
   onArchive: () => void
   onDelete: () => void
+  onSnooze?: (emailId: string) => void
   onMarkUnread?: () => void
   onToggleMoreMenu: () => void
   onViewSource: (blobId: string) => void
@@ -39,12 +41,14 @@ export function Toolbar({
   onToggleStar,
   onArchive,
   onDelete,
+  onSnooze,
   onMarkUnread,
   onToggleMoreMenu,
   onViewSource,
   onCloseMoreMenu,
   onShowKeyboardShortcuts,
 }: ToolbarProps) {
+  const [snoozePickerOpen, setSnoozePickerOpen] = useState(false)
   return (
     <header role="toolbar" aria-label="Email actions" className={`border-b border-icloud-border flex items-center justify-between min-h-[52px] ${isMobile ? 'px-3 py-2' : 'px-6 py-2'}`}>
       <div className={`flex ${isMobile ? 'gap-3' : 'gap-7'}`}>
@@ -78,6 +82,22 @@ export function Toolbar({
                 onClick={onToggleStar}
               />
               {!isMobile && <div aria-hidden="true" className="w-[1px] h-7 bg-icloud-divider self-center"></div>}
+              {!isMobile && (
+                <div className="relative">
+                  <ActionButton
+                    icon={<SFSnooze className={iconSize} />}
+                    label="Snooze"
+                    disabled={!selectedEmailId}
+                    onClick={() => setSnoozePickerOpen(!snoozePickerOpen)}
+                  />
+                  {snoozePickerOpen && selectedEmailId && (
+                    <SnoozePicker
+                      emailId={selectedEmailId}
+                      onClose={() => setSnoozePickerOpen(false)}
+                    />
+                  )}
+                </div>
+              )}
               <ActionButton 
                 icon={<SFArchive className={iconSize} />} 
                 label="Archive" 

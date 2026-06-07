@@ -190,8 +190,7 @@ describe('signatureBuilder', () => {
 
       // Simulate SSR by clearing document and dynamically importing the module
       const originalDocument = globalThis.document
-      // @ts-expect-error - simulating SSR
-      globalThis.document = undefined
+      globalThis.document = undefined as unknown as typeof globalThis.document
 
       // Force re-import to test SSR behavior
       vi.resetModules()

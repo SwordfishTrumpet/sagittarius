@@ -198,6 +198,7 @@ export function EmailImportZone({ mailboxId }: EmailImportZoneProps) {
           className="hidden"
           onChange={handleFileChange}
           aria-hidden="true"
+          tabIndex={-1}
         />
         <button
           onClick={handleImportClick}
