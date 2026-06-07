@@ -113,9 +113,9 @@ app.use((req, res, next) => {
     [
       "default-src 'self'",
       "script-src 'self'",                          // No inline scripts in production
-      "style-src 'self' 'unsafe-inline'",           // Tailwind CSS uses inline styles
+      "style-src 'self' 'unsafe-inline'",           // Tailwind CSS + @fontsource fonts (self-hosted)
       "img-src 'self' data: blob: https: http:",    // inline images, blob previews, remote images
-      "font-src 'self'",
+      "font-src 'self'",                            // @fontsource fonts served from same origin
       "connect-src 'self'",                         // BIMI DNS proxied server-side
       "media-src 'self' blob:",                     // audio notifications
       "frame-ancestors 'none'",                     // no embedding
