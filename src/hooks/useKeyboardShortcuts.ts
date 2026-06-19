@@ -22,6 +22,7 @@ interface KeyboardShortcutsConfig {
   onCloseComposer: () => void
   onCloseMoreMenu: () => void
   onNavigateEmail: (direction: 'next' | 'prev') => void
+  onExtendSelectionEmail?: (direction: 'next' | 'prev') => void
   onReply: () => void
   onReplyAll: () => void
   onForward: () => void
@@ -53,6 +54,7 @@ export function useKeyboardShortcuts(config: KeyboardShortcutsConfig) {
     onCloseComposer,
     onCloseMoreMenu,
     onNavigateEmail,
+    onExtendSelectionEmail,
     onReply,
     onReplyAll,
     onForward,
@@ -74,6 +76,7 @@ export function useKeyboardShortcuts(config: KeyboardShortcutsConfig) {
     onCloseComposer,
     onCloseMoreMenu,
     onNavigateEmail,
+    onExtendSelectionEmail,
     onReply,
     onReplyAll,
     onForward,
@@ -96,6 +99,7 @@ export function useKeyboardShortcuts(config: KeyboardShortcutsConfig) {
       onCloseComposer,
       onCloseMoreMenu,
       onNavigateEmail,
+      onExtendSelectionEmail,
       onReply,
       onReplyAll,
       onForward,
@@ -164,13 +168,27 @@ export function useKeyboardShortcuts(config: KeyboardShortcutsConfig) {
       if (!isInputFocused()) {
         switch (e.key) {
           case 'j':
-          case 'ArrowDown':
             cbs.onNavigateEmail('next');
             e.preventDefault();
             break;
           case 'k':
-          case 'ArrowUp':
             cbs.onNavigateEmail('prev');
+            e.preventDefault();
+            break;
+          case 'ArrowDown':
+            if (e.shiftKey && cbs.onExtendSelectionEmail) {
+              cbs.onExtendSelectionEmail('next');
+            } else {
+              cbs.onNavigateEmail('next');
+            }
+            e.preventDefault();
+            break;
+          case 'ArrowUp':
+            if (e.shiftKey && cbs.onExtendSelectionEmail) {
+              cbs.onExtendSelectionEmail('prev');
+            } else {
+              cbs.onNavigateEmail('prev');
+            }
             e.preventDefault();
             break;
           case 'r':

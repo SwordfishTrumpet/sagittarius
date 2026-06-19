@@ -368,20 +368,33 @@ function App() {
 
   // Handle email selection with mobile navigation
   const handleSelectEmail = useCallback((emailId: string, threadId: string | null) => {
-    setSelectedEmailId(emailId)
-    setSelectedThreadId(threadId)
-    setSelectedEmailIds(new Set([emailId]))
+    toggleEmailSelection(emailId, false, false)
     // On mobile, navigate to reader when selecting an email
     if (isMobile) {
       setMobileView('reader')
     }
-  }, [isMobile])
+  }, [isMobile, toggleEmailSelection])
 
-  const { scrollToEmailId, navigateToNext, navigateToPrevious } = useEmailNavigation({
+  const { scrollToEmailId, setScrollToEmailId, navigateToNext, navigateToPrevious } = useEmailNavigation({
     emails,
     currentEmailId: selectedEmailId,
     onSelectEmail: handleSelectEmail,
   })
+
+  const handleExtendSelection = useCallback((direction: 'next' | 'prev') => {
+    if (!emails) return
+    const currentIndex = selectedEmailId
+      ? emails.findIndex((e) => e.id === selectedEmailId)
+      : -1
+    if (currentIndex === -1) return
+    const newIndex = direction === 'next'
+      ? Math.min(currentIndex + 1, emails.length - 1)
+      : Math.max(currentIndex - 1, 0)
+    if (newIndex !== currentIndex) {
+      toggleEmailSelection(emails[newIndex].id, false, true)
+      setScrollToEmailId(emails[newIndex].id)
+    }
+  }, [emails, selectedEmailId, toggleEmailSelection])
 
   useEffect(() => {
     if (!moreMenuOpen) return
@@ -421,6 +434,7 @@ function App() {
       if (direction === 'next') navigateToNext()
       else navigateToPrevious()
     },
+    onExtendSelectionEmail: handleExtendSelection,
     onReply: async () => { 
       if (!selectedEmailId) return
       try {

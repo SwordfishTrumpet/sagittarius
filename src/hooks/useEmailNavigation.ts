@@ -13,6 +13,7 @@ interface UseEmailNavigationReturn {
   navigateToPrevious: () => void
   navigateToEmail: (emailId: string) => void
   clearScrollTarget: () => void
+  setScrollToEmailId: (id: string | null) => void
 }
 
 /**
@@ -83,5 +84,6 @@ export function useEmailNavigation({
     navigateToPrevious,
     navigateToEmail,
     clearScrollTarget,
+    setScrollToEmailId,
   }
 }
