@@ -112,5 +112,15 @@ describe('logger', () => {
       expect(result).not.toContain('first');
       expect(result).not.toContain('second');
     });
+
+    it('should redact EVERY access_token in the malformed-URL fallback path (BUG-2026-052)', () => {
+      // A space in the host makes `new URL()` throw, forcing the regex
+      // fallback — which must replace every access_token, not just the first.
+      const url = 'http://exa mple.com?access_token=first&x=1&access_token=second';
+      const result = redactUrl(url);
+      expect(result).not.toContain('first');
+      expect(result).not.toContain('second');
+      expect(result).toContain('access_token=[REDACTED]');
+    });
   });
 });

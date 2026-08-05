@@ -29,6 +29,17 @@ export function useEventSource(enabled: boolean): UseEventSourceResult {
     setHasNewMail(false);
   }, []);
 
+  // Reset connection state when push is disabled (enabled flipped false).
+  // Deliberately NOT done inside the effect cleanup: cleanup runs after
+  // unmount too, and setting state there is a side effect on an unmounted
+  // component (React 19 StrictMode double-invokes effects in dev).
+  useEffect(() => {
+    if (!enabled) {
+      isConnectedRef.current = false;
+      setIsConnected(false);
+    }
+  }, [enabled]);
+
   useEffect(() => {
     if (!enabledRef.current) return;
 
@@ -76,7 +87,6 @@ export function useEventSource(enabled: boolean): UseEventSourceResult {
       unsubscribeNewMail();
       unsubscribeConnectionState();
       eventSourceManager.disconnect();
-      setIsConnected(false);
     };
   }, [enabled]);
 

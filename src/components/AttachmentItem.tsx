@@ -67,7 +67,7 @@ function AttachmentItemComponent({ attachment }: { attachment: EmailBodyPart }) 
       a.click();
       document.body.removeChild(a);
     }
-    revokeTimeoutRef.current = setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+    revokeTimeoutRef.current = setTimeout(() => URL.revokeObjectURL(blobUrl), 5 * 60_000);
   };
 
   const handleOpen = async () => {
@@ -92,7 +92,7 @@ function AttachmentItemComponent({ attachment }: { attachment: EmailBodyPart }) 
   
   return (
     <div 
-      className="flex items-center gap-4 p-3 bg-icloud-bg-layer1/50 bg-icloud-bg-primary/50 rounded-xl border border-icloud-border group hover:bg-icloud-card hover:shadow-sm transition-all duration-200 cursor-pointer"
+      className="flex items-center gap-4 p-3 bg-icloud-bg-layer1/50 rounded-xl border border-icloud-border group hover:bg-icloud-card hover:shadow-sm transition-all duration-200 cursor-pointer"
       onDoubleClick={handleOpen}
       title="Double-click to open"
     >

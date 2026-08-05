@@ -78,9 +78,23 @@ export function useFolderDialogs({ selectedMailboxId, setSelectedMailboxId, mail
   const handleMoveToFolder = () => {
     if (!selectedFolderId) return
     const customMailboxes = (mailboxes || []).filter((m: Mailbox) => !m.role)
+
+    // Reject moving a folder into itself or one of its descendants (would
+    // create a cyclic hierarchy).
+    const isDescendant = (mailboxId: string, ancestorId: string): boolean => {
+      const parentOf = (id: string): string | null =>
+        mailboxes?.find((m: Mailbox) => m.id === id)?.parentId ?? null
+      let current = parentOf(mailboxId)
+      while (current) {
+        if (current === ancestorId) return true
+        current = parentOf(current)
+      }
+      return false
+    }
+
     const folderNames = customMailboxes.map((m: Mailbox) => m.name).join(', ')
     const parentName = window.prompt(
-      `Enter the name of the parent folder to move "${selectedFolderName}" into.\nAvailable folders: ${folderNames || '(none)'}\nLeave empty to move to top level.`
+      `Enter the name of the parent custom folder to move "${selectedFolderName}" into.\nAvailable custom folders: ${folderNames || '(none)'}\nLeave empty to move to top level.`
     )
     if (parentName === null) return
     const newParentId = parentName.trim()
@@ -88,6 +102,10 @@ export function useFolderDialogs({ selectedMailboxId, setSelectedMailboxId, mail
       : null
     if (parentName.trim() && !newParentId) {
       toast.error(`Folder "${parentName}" not found`)
+      return
+    }
+    if (newParentId && (newParentId === selectedFolderId || isDescendant(newParentId, selectedFolderId))) {
+      toast.error('Cannot move a folder into itself or its own subfolder')
       return
     }
     onReparentMailbox?.(selectedFolderId, newParentId)

@@ -16,6 +16,31 @@ import {
 
 import type { UseMutateFunction, UseMutateAsyncFunction } from '@tanstack/react-query'
 
+// Emails the user has explicitly marked as unread. The auto-mark-read logic
+// in fetchEmailDetail consults this set instead of the stale $seen cache
+// value (a freshly-fetched unread email also has $seen: false in cache).
+const explicitlyMarkedUnreadIds = new Set<string>()
+
+/**
+ * Record that the user explicitly set the read state of an email.
+ * @param emailId The email ID
+ * @param isUnread true when the user marked it unread (skip auto-read)
+ */
+export function trackExplicitUnread(emailId: string, isUnread: boolean): void {
+  if (isUnread) {
+    explicitlyMarkedUnreadIds.add(emailId)
+  } else {
+    explicitlyMarkedUnreadIds.delete(emailId)
+  }
+}
+
+/**
+ * True when the user has explicitly marked this email as unread.
+ */
+export function isExplicitlyMarkedUnread(emailId: string): boolean {
+  return explicitlyMarkedUnreadIds.has(emailId)
+}
+
 function buildEmailSetArgs(args: Record<string, unknown>): Record<string, unknown> {
   const emailState = stateManager.getState('Email')
   return {
@@ -27,20 +52,20 @@ function buildEmailSetArgs(args: Record<string, unknown>): Record<string, unknow
 export function updateEmailStateFromResponse(response: unknown): void {
   if (!response || typeof response !== 'object' || !('methodResponses' in response)) return
   const methodResponses = (response as { methodResponses: Array<[string, unknown, string]> }).methodResponses
+  // Process ALL matching method responses (a single JMAP response can contain
+  // both Email/get and Email/set). Breaking after the first match missed state
+  // updates and could break incremental sync.
   for (const [method, result] of methodResponses) {
     if (result && typeof result === 'object') {
       const r = result as Record<string, unknown>
       if (method === 'Email/set' && typeof r.newState === 'string') {
         stateManager.setState('Email', r.newState)
-        break
       }
       if (method === 'Email/get' && typeof r.state === 'string') {
         stateManager.setState('Email', r.state)
-        break
       }
       if (method === 'Email/changes' && typeof r.newState === 'string') {
         stateManager.setState('Email', r.newState)
-        break
       }
     }
   }
@@ -89,6 +114,7 @@ export function useEmailActions(): EmailActionsReturn {
       const patch: Record<string, boolean | null> = {}
       for (const [key, value] of Object.entries(keywords)) {
         patch[`keywords/${key}`] = value ? true : null
+        if (key === '$seen') trackExplicitUnread(emailId, !value)
       }
       const requests = [
         jmapMethodCall('Email/set', buildEmailSetArgs({
@@ -174,6 +200,9 @@ export function useEmailActions(): EmailActionsReturn {
       const patch: Record<string, boolean | null> = {}
       for (const [key, value] of Object.entries(keywords)) {
         patch[`keywords/${key}`] = value ? true : null
+      }
+      if ('$seen' in keywords) {
+        for (const id of emailIds) trackExplicitUnread(id, keywords['$seen'] === false)
       }
 
       // Chunk email IDs to respect maxObjectsInSet server limit (RFC 8620)

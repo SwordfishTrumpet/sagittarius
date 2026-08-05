@@ -38,8 +38,11 @@ function attachBasicAuthFromAccessToken(proxyReq: { getHeader: (name: string) =>
     if (token && AUTH_TOKEN_RE.test(token) && token.length <= 512) {
       proxyReq.setHeader('Authorization', `Basic ${token}`)
     }
-  } catch {
-    // ignore parse errors
+  } catch (e) {
+    // Surface the parse failure so malformed access_token URLs are diagnosed
+    // server-side instead of failing silently with a downstream 401.
+    logError(`[auth] Failed to parse access_token from URL: ${e instanceof Error ? e.message : String(e)}`);
+    logDebug(`[auth] Raw URL path (sanitized): ${url.split('?')[0]}`);
   }
 }
 
@@ -103,12 +106,6 @@ export default defineConfig(({ mode }) => {
           }
         }
       }
-    },
-    test: {
-      globals: true,
-      environment: 'jsdom',
-      include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
-      setupFiles: ['src/test/setup.ts', 'src/test/a11y/setup.ts'],
     },
   };
 })

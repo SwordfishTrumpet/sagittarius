@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Mail, Paperclip } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
@@ -50,6 +51,7 @@ export function EmailReader({
   updateKeywords,
 }: EmailReaderProps) {
   const { isDark } = useTheme()
+  const queryClient = useQueryClient()
   const [remoteImageState, setRemoteImageState] = useState<Record<string, { showRemoteImages?: boolean; bannerDismissed?: boolean }>>({})
 
   const formatReceivedAt = (value: string | undefined): string => {
@@ -97,13 +99,26 @@ export function EmailReader({
       const emailState = remoteImageState[email.id];
 
       let html = '';
-      const isHtmlEmail = email.htmlBody && email.htmlBody.length > 0;
-      if (isHtmlEmail && email.htmlBody) {
-        const partId = email.htmlBody[0].partId;
-        html = (partId && email.bodyValues?.[partId]?.value) || '';
-      } else if (email.textBody && email.textBody.length > 0) {
-        const partId = email.textBody[0].partId;
-        html = `<pre style="font-family: inherit; white-space: pre-wrap; margin: 0;">${escapeHtml((partId && email.bodyValues?.[partId]?.value) || '')}</pre>`;
+      // Prefer HTML over plain text per RFC 8621 §4.1.1, and walk ALL body
+      // parts — multipart/alternative emails list several parts, and picking
+      // only [0] silently dropped content when the first part was empty.
+      if (email.htmlBody && email.htmlBody.length > 0) {
+        for (const part of email.htmlBody) {
+          const value = (part.partId && email.bodyValues?.[part.partId]?.value) || '';
+          if (value.trim()) {
+            html = value;
+            break;
+          }
+        }
+      }
+      if (!html.trim() && email.textBody && email.textBody.length > 0) {
+        for (const part of email.textBody) {
+          const value = (part.partId && email.bodyValues?.[part.partId]?.value) || '';
+          if (value.trim()) {
+            html = `<pre style="font-family: inherit; white-space: pre-wrap; margin: 0;">${escapeHtml(value)}</pre>`;
+            break;
+          }
+        }
       }
 
       // Handle empty body content as "no content"
@@ -176,7 +191,7 @@ export function EmailReader({
           <p className="text-lg font-medium text-icloud-red">Failed to load message</p>
           <p className="text-sm text-icloud-text-secondary mt-2 max-w-md">{emailDetailError?.message || 'An unexpected error occurred while loading the email.'}</p>
           <button
-            onClick={() => window.location.reload()}
+            onClick={() => { void queryClient.invalidateQueries({ queryKey: ['emailDetail'] }) }}
             className="mt-6 px-4 py-2 bg-icloud-accent text-white rounded-lg text-sm font-medium hover:bg-icloud-accent-hover transition-colors"
           >
             Retry
@@ -309,7 +324,7 @@ export function EmailReader({
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {visibleAttachments.map((attachment) => (
-                      <AttachmentItem key={attachment.blobId} attachment={attachment} />
+                      <AttachmentItem key={attachment.blobId ?? attachment.partId ?? `att-${index}`} attachment={attachment} />
                     ))}
                   </div>
                 </div>

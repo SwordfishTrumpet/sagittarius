@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import type { Email } from '../types/jmap'
 
-interface KeyboardShortcutsConfig {
+export interface KeyboardShortcutsConfig {
   emails: Email[] | undefined
   selectedMailboxId: string | null
   selectedEmailId: string | null
@@ -137,13 +137,15 @@ export function useKeyboardShortcuts(config: KeyboardShortcutsConfig) {
       // Use ref for selectedEmailIds to avoid stale closure issues
       const currentSelectedIds = selectedEmailIdsRef.current;
       
-      // CMD/CTRL + A to select all
-      if ((e.ctrlKey || e.metaKey) && e.key === 'a' && emails && selectedMailboxId) {
+      // CMD/CTRL + A to select all — but never steal select-all from inputs,
+      // editors, or contentEditable areas (e.g. the composer).
+      if ((e.ctrlKey || e.metaKey) && e.key === 'a' && emails && selectedMailboxId && !isInputFocused()) {
         e.preventDefault();
         cbs.onSelectAll();
       }
-      // CMD/CTRL + B to toggle sidebar
-      if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+      // CMD/CTRL + B to toggle sidebar — let the composer handle bold when
+      // the user is typing in an input or the rich-text editor.
+      if ((e.ctrlKey || e.metaKey) && e.key === 'b' && !isInputFocused()) {
         e.preventDefault();
         cbs.onToggleSidebar();
       }

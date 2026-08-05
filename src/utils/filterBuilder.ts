@@ -98,6 +98,15 @@ export function buildJMAPFilter(
 }
 
 /**
+ * True when a filter is an RFC 8620 §5.5 FilterOperator (allOf/anyOf/not)
+ * rather than a plain FilterCondition. Mixing operator keys into a
+ * condition object produces invalid JMAP.
+ */
+function isFilterOperator(filter: EmailFilter): boolean {
+  return 'allOf' in filter || 'anyOf' in filter || 'not' in filter;
+}
+
+/**
  * Merge multiple filters with AND logic (all conditions must match)
  * This is useful for combining mailbox filters with advanced search filters
  */
@@ -109,6 +118,13 @@ export function mergeFiltersAND(
 
   if (validFilters.length === 0) return {};
   if (validFilters.length === 1) return validFilters[0];
+
+  // If any operand is a FilterOperator, flattening would produce an invalid
+  // mix like { inMailbox: 'x', allOf: [...] } — RFC 8620 §5.5 says operators
+  // must be combined with other operators via allOf.
+  if (validFilters.some(isFilterOperator)) {
+    return { allOf: validFilters };
+  }
 
   // Merge flat conditions into a single object to avoid allOf
   // (some servers don't support FilterOperator)

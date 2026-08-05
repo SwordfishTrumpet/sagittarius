@@ -11,7 +11,7 @@
  * - Cross-account blob copy support
  */
 
-import React, { createContext, useContext, useCallback, useState, useEffect } from 'react';
+import React, { createContext, useContext, useCallback, useState, useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { jmapClient } from '../api/jmap';
 import type { JMAPAccount } from '../types/jmap';
@@ -114,6 +114,25 @@ export function AccountProvider({ children }: AccountProviderProps) {
   });
   
   const [isSwitching, setIsSwitching] = useState(false);
+  const switchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Keep jmapClient.getPrimaryAccount() in sync with the active account so
+  // every existing hook call site (which reads the client directly) targets
+  // the selected account without a 30+ call-site refactor.
+  useEffect(() => {
+    jmapClient.setActiveAccountId(activeAccountId);
+  }, [activeAccountId]);
+
+  // Clear any pending switch-timer on unmount to prevent a leaked timeout
+  // firing setIsSwitching on an unmounted provider.
+  useEffect(() => {
+    return () => {
+      if (switchTimerRef.current) {
+        clearTimeout(switchTimerRef.current);
+        switchTimerRef.current = null;
+      }
+    };
+  }, []);
   
   // Active account info
   const activeAccount = activeAccountId ? allAccounts[activeAccountId] 
@@ -147,7 +166,13 @@ export function AccountProvider({ children }: AccountProviderProps) {
     });
     
     // Reset switching state after a short delay
-    setTimeout(() => setIsSwitching(false), 100);
+    if (switchTimerRef.current) {
+      clearTimeout(switchTimerRef.current);
+    }
+    switchTimerRef.current = setTimeout(() => {
+      switchTimerRef.current = null;
+      setIsSwitching(false);
+    }, 100);
   }, [activeAccountId, allAccounts, queryClient]);
   
   // Get account by ID

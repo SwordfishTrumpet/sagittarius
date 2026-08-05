@@ -112,6 +112,10 @@ class EventSourceManager {
       if (!this._isConnected) {
         logger.warn('[EventSource] Connection timeout - no onopen event after 10s');
         es.close();
+        // Drop the stale EventSource reference so the next openConnection()
+        // creates a fresh instance (no duplicate objects/listeners).
+        if (this.es === es) this.es = null;
+        this.connectionTimeout = null;
         this._isConnected = false;
         this.notifyConnectionStateChange(false);
         this.scheduleReconnect();

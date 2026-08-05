@@ -14,7 +14,16 @@ const httpProxy = require('http-proxy');
 
 const PORT = process.env.PORT || 3000;
 const JMAP_SERVER = process.env.JMAP_SERVER || 'http://localhost:8080';
-const JMAP_HOST = process.env.JMAP_HOST || 'mail.example.com';
+// Derive the default Host header from JMAP_SERVER itself (host portion only),
+// so servers that validate Host never receive a hard-coded example domain.
+function defaultJmapHost(serverUrl) {
+  try {
+    return new URL(serverUrl).host;
+  } catch {
+    return 'localhost';
+  }
+}
+const JMAP_HOST = process.env.JMAP_HOST || defaultJmapHost(JMAP_SERVER);
 const DIST_DIR = path.join(__dirname, 'dist');
 const AUTH_TOKEN_RE = /^[A-Za-z0-9+/=]+$/;
 
@@ -35,8 +44,9 @@ function attachBasicAuthFromAccessToken(proxyReq, url) {
     if (token && AUTH_TOKEN_RE.test(token) && token.length <= 512) {
       proxyReq.setHeader('Authorization', `Basic ${token}`);
     }
-  } catch {
-    /* ignore parse errors */
+  } catch (e) {
+    logError('[auth] Failed to parse access_token from URL:', e.message);
+    logInfo('[auth] Raw URL path (sanitized):', url.split('?')[0]);
   }
 }
 
@@ -176,6 +186,16 @@ server.on('upgrade', (req, socket, head) => {
   } else {
     socket.destroy();
   }
+});
+
+server.on('error', (err) => {
+  // Never rethrow inside an 'error' event handler — log and exit cleanly.
+  if (err.code === 'EADDRINUSE') {
+    logError(`Port ${PORT} already in use. Is another instance running?`);
+    process.exit(1);
+  }
+  logError(`Server error on port ${PORT}:`, err.message);
+  process.exit(1);
 });
 
 server.listen(PORT, '0.0.0.0', () => {

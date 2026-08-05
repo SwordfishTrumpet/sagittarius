@@ -57,8 +57,9 @@ function attachBasicAuthFromAccessToken(proxyReq, url) {
     if (token && AUTH_TOKEN_RE.test(token) && token.length <= 512) {
       proxyReq.setHeader('Authorization', `Basic ${token}`);
     }
-  } catch {
-    /* ignore parse errors */
+  } catch (e) {
+    logError('[auth] Failed to parse access_token from URL:', e.message);
+    logInfo('[auth] Raw URL path (sanitized):', url.split('?')[0]);
   }
 }
 
@@ -114,7 +115,7 @@ app.use((req, res, next) => {
       "default-src 'self'",
       "script-src 'self'",                          // No inline scripts in production
       "style-src 'self' 'unsafe-inline'",           // Tailwind CSS + @fontsource fonts (self-hosted)
-      "img-src 'self' data: blob: https: http:",    // inline images, blob previews, remote images
+      "img-src 'self' data: blob: https:",          // inline images, blob previews, remote images (HTTPS only — no mixed content)
       "font-src 'self' data:",                      // @fontsource fonts (some inlined as data: URIs via Vite)
       "connect-src 'self'",                         // BIMI DNS proxied server-side
       "media-src 'self' blob:",                     // audio notifications
@@ -213,12 +214,58 @@ sseProxy.on('proxyRes', (proxyRes, req, res) => {
 // ── BIMI DNS proxy (server-side DNS lookup avoids third-party DoH) ──
 import dns from 'dns';
 
+// Strict domain validation: alphanumeric + hyphens, dot-separated labels,
+// max 253 chars, 1-10 labels, no leading/trailing dots (RFC 1035 subset).
+const DOMAIN_RE = /^(?=.{1,253}\.?$)(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.){1,9}[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$/;
+
+// Per-IP rate limiting: burst of 10 lookups, refill 5 per minute.
+const BIMI_LIMIT_BURST = 10;
+const BIMI_REFILL_MS = 12_000; // ~5 lookups/min sustained
+const bimiHits = new Map(); // ip -> { count, refillAt }
+
+function isBimiRateLimited(ip) {
+  const now = Date.now();
+  const entry = bimiHits.get(ip);
+  if (!entry || now >= entry.refillAt) {
+    bimiHits.set(ip, { count: 1, refillAt: now + BIMI_REFILL_MS });
+    return false;
+  }
+  entry.count += 1;
+  if (entry.count > BIMI_LIMIT_BURST) {
+    return true;
+  }
+  bimiHits.set(ip, entry);
+  return false;
+}
+
+// Cap the map size to avoid unbounded memory growth from spoofed IPs.
+function pruneBimiRateLimits() {
+  if (bimiHits.size <= 1000) return;
+  const now = Date.now();
+  for (const [ip, entry] of bimiHits) {
+    if (now >= entry.refillAt) bimiHits.delete(ip);
+  }
+}
+
 app.get('/api/bimi-dns', (req, res) => {
   const domain = req.query.domain;
   if (!domain || typeof domain !== 'string') {
     return res.status(400).json({ error: 'Missing domain' });
   }
-  const bimiDomain = `default._bimi.${domain}`;
+
+  // Reject malformed domains before touching DNS (anti-amplification).
+  const normalized = domain.toLowerCase();
+  if (normalized.length > 253 || !DOMAIN_RE.test(normalized)) {
+    return res.status(400).json({ error: 'Invalid domain' });
+  }
+
+  const ip = req.ip || req.socket?.remoteAddress || 'unknown';
+  pruneBimiRateLimits();
+  if (isBimiRateLimited(ip)) {
+    return res.status(429).json({ error: 'Rate limit exceeded' });
+  }
+
+  const bimiDomain = `default._bimi.${normalized}`;
   dns.resolveTxt(bimiDomain, (err, records) => {
     if (err || !records || records.length === 0) {
       return res.json({ logoUrl: null });
@@ -339,7 +386,8 @@ const server = createServer((req, res) => {
         req.headers['authorization'] = `Basic ${token}`;
       }
     } catch (e) {
-      // ignore parse errors
+      logError('[sse-direct] Failed to parse EventSource URL:', e.message);
+      logInfo('[sse-direct] Raw URL path (sanitized):', req.url.split('?')[0]);
     }
 
     sseProxy.web(req, res);
@@ -350,6 +398,19 @@ const server = createServer((req, res) => {
   app(req, res);
 });
 
+function handleServerError(err, port) {
+  // Never rethrow inside an 'error' event handler: an uncaught exception
+  // there would crash the process with a cryptic Node internals traceback.
+  // Log a descriptive message and exit with code 1 instead.
+  if (err.code === 'EADDRINUSE') {
+    logError(`Port ${port} already in use. Is another instance running?`);
+    process.exit(1);
+  }
+  logError(`Server error on port ${port}:`, err.message);
+  process.exit(1);
+}
+
+server.on('error', (err) => handleServerError(err, PORT));
 server.listen(PORT, '0.0.0.0', () => {
   logInfo(`listening on 0.0.0.0:${PORT}`);
   logInfo(`JMAP backend: ${JMAP_SERVER}`);
@@ -384,7 +445,8 @@ const proxyServer = createServer((req, res) => {
         req.headers['authorization'] = `Basic ${token}`;
       }
     } catch (e) {
-      // ignore parse errors
+      logError('[sse-direct] Failed to parse EventSource URL on proxy port:', e.message);
+      logInfo('[sse-direct] Raw URL path (sanitized):', req.url.split('?')[0]);
     }
 
     sseProxy.web(req, res);
@@ -395,11 +457,10 @@ const proxyServer = createServer((req, res) => {
   app(req, res);
 });
 
-proxyServer.listen(PROXY_PORT, '0.0.0.0', () => {
-  logInfo(`listening on 0.0.0.0:${PROXY_PORT} (reverse proxy upstream)`);
-});
+proxyServer.on('error', (err) => handleServerError(err, PROXY_PORT));
 
-// Also handle WebSocket on proxy port
+// Register the WebSocket upgrade handler BEFORE listen() so no upgrade
+// request arriving right after the port binds is rejected or dropped.
 proxyServer.on('upgrade', (req, socket, head) => {
   logInfo('[ws-upgrade] Port', PROXY_PORT, '- URL:', req.url, '- Headers:', JSON.stringify({
     upgrade: req.headers.upgrade,
@@ -412,6 +473,10 @@ proxyServer.on('upgrade', (req, socket, head) => {
     logInfo('[ws-upgrade] Rejected - not /jmap path');
     socket.destroy();
   }
+});
+
+proxyServer.listen(PROXY_PORT, '0.0.0.0', () => {
+  logInfo(`listening on 0.0.0.0:${PROXY_PORT} (reverse proxy upstream)`);
 });
 
 // Graceful shutdown

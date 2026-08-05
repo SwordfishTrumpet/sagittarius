@@ -1,5 +1,6 @@
-import { useCallback, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { useEmailActions } from './jmap/useEmailMutations'
 
 const SNOOZE_STORAGE_KEY = 'sagittarius_snoozed_emails'
@@ -28,6 +29,13 @@ export function useSnooze() {
   const timersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
 
   const snoozeEmail = useCallback((emailId: string, until: Date) => {
+    // Reject past dates: a past `until` would leave $snoozed: true forever
+    // because no timer would ever fire to unsnooze.
+    if (until.getTime() <= Date.now()) {
+      toast.error('Snooze time must be in the future')
+      return
+    }
+
     const records = getSnoozeRecords().filter(r => r.emailId !== emailId)
     records.push({ emailId, snoozedUntil: until.toISOString() })
     saveSnoozeRecords(records)
@@ -38,16 +46,14 @@ export function useSnooze() {
     if (existingTimer) clearTimeout(existingTimer)
 
     const timeUntilUnsnooze = until.getTime() - Date.now()
-    if (timeUntilUnsnooze > 0) {
-      const timer = setTimeout(() => {
-        timersRef.current.delete(emailId)
-        const currentRecords = getSnoozeRecords().filter(r => r.emailId !== emailId)
-        saveSnoozeRecords(currentRecords)
-        updateKeywords.mutate({ emailId, keywords: { $snoozed: false } })
-        queryClient.invalidateQueries({ queryKey: ['emails'] })
-      }, timeUntilUnsnooze)
-      timersRef.current.set(emailId, timer)
-    }
+    const timer = setTimeout(() => {
+      timersRef.current.delete(emailId)
+      const currentRecords = getSnoozeRecords().filter(r => r.emailId !== emailId)
+      saveSnoozeRecords(currentRecords)
+      updateKeywords.mutate({ emailId, keywords: { $snoozed: false } })
+      queryClient.invalidateQueries({ queryKey: ['emails'] })
+    }, timeUntilUnsnooze)
+    timersRef.current.set(emailId, timer)
   }, [updateKeywords, queryClient])
 
   const unsnoozeEmail = useCallback((emailId: string) => {
@@ -66,6 +72,18 @@ export function useSnooze() {
 
   const isSnoozed = useCallback((emailId: string): boolean => {
     return getSnoozeRecords().some(r => r.emailId === emailId)
+  }, [])
+
+  // Clear all pending unsnooze timers on unmount so they can never fire
+  // updateKeywords.mutate / queryClient.invalidateQueries after teardown.
+  useEffect(() => {
+    const timers = timersRef.current
+    return () => {
+      for (const timer of timers.values()) {
+        clearTimeout(timer)
+      }
+      timers.clear()
+    }
   }, [])
 
   const getSnoozedUntil = useCallback((emailId: string): Date | null => {

@@ -187,57 +187,71 @@ export async function clearDeferredMutations() {
   await Promise.all(records.map(record => removeMutation(record.id)))
 }
 
-// Processing lock to prevent concurrent replays
-let isReplaying = false
+// Shared in-flight replay promise. Concurrent callers AWAIT the same replay
+// instead of silently skipping (the old module-level boolean lock let a
+// second mounted hook instance lose a replay and never sync).
+let replayPromise: Promise<{ syncedCount: number; errors: Array<{ id: string; error: string }> }> | null = null
 
-export async function replayDeferredMutations() {
-  // Prevent concurrent replays which could cause duplicate processing
-  if (isReplaying) {
-    return { syncedCount: 0, errors: [{ id: 'lock', error: 'Replay already in progress' }] }
-  }
-  
-  isReplaying = true
-  
-  try {
-    const queued = await loadMutations()
-    let syncedCount = 0
-    const errors: Array<{ id: string; error: string }> = []
-    
-    // Process mutations one at a time
-    for (const record of queued) {
-      try {
-        const response = await jmapClient.request(record.payload.requests as OfflineJmapRequest[])
-        assertSuccessfulJmapResponse(response)
-        // Sync Email state from replayed Email/set responses
-        if (response && typeof response === 'object' && 'methodResponses' in response) {
-          const methodResponses = (response as JMAPResponse).methodResponses
-          for (const [method, result] of methodResponses) {
-            if (method === 'Email/set' && result && typeof result === 'object' && 'newState' in (result as Record<string, unknown>)) {
-              stateManager.setState('Email', (result as Record<string, string>).newState)
-              break
+export function replayDeferredMutations() {
+  if (replayPromise) return replayPromise
+  replayPromise = doReplayDeferredMutations().finally(() => {
+    replayPromise = null
+  })
+  return replayPromise
+}
+
+async function doReplayDeferredMutations() {
+  const queued = await loadMutations()
+  let syncedCount = 0
+  const errors: Array<{ id: string; error: string }> = []
+
+  // Process mutations one at a time
+  for (const record of queued) {
+    try {
+      // Refresh ifInState from the current Email state: the token captured at
+      // mutation time is stale by the time an offline mutation is replayed,
+      // and a stale ifInState makes the server reject the request with
+      // stateMismatch (RFC 8620 §5.3). Omit it entirely when no state known.
+      const currentEmailState = stateManager.getState('Email')
+      const requests = currentEmailState
+        ? record.payload.requests.map((call) => {
+            const [method, args, callId] = call
+            if (method === 'Email/set' && args && typeof args === 'object') {
+              return [method, { ...args, ifInState: currentEmailState }, callId] as OfflineJmapRequest
             }
+            return call
+          })
+        : record.payload.requests
+
+      const response = await jmapClient.request(requests as OfflineJmapRequest[])
+      assertSuccessfulJmapResponse(response)
+      // Sync Email state from replayed Email/set responses
+      if (response && typeof response === 'object' && 'methodResponses' in response) {
+        const methodResponses = (response as JMAPResponse).methodResponses
+        for (const [method, result] of methodResponses) {
+          if (method === 'Email/set' && result && typeof result === 'object' && 'newState' in (result as Record<string, unknown>)) {
+            stateManager.setState('Email', (result as Record<string, string>).newState)
+            break
           }
         }
-        await removeMutation(record.id)
-        syncedCount += 1
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error)
-        const updated: DeferredMutation = {
-          ...record,
-          attemptCount: record.attemptCount + 1,
-          lastError: message,
-        }
-        await persistMutation(updated)
-        errors.push({ id: record.id, error: message })
-        // Continue processing remaining mutations instead of breaking
-        // This allows independent mutations to succeed even if one fails
       }
+      await removeMutation(record.id)
+      syncedCount += 1
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      const updated: DeferredMutation = {
+        ...record,
+        attemptCount: record.attemptCount + 1,
+        lastError: message,
+      }
+      await persistMutation(updated)
+      errors.push({ id: record.id, error: message })
+      // Continue processing remaining mutations instead of breaking
+      // This allows independent mutations to succeed even if one fails
     }
-
-    return { syncedCount, errors }
-  } finally {
-    isReplaying = false
   }
+
+  return { syncedCount, errors }
 }
 
 export async function runDeferredAwareMutation<T>(args: {
@@ -245,16 +259,18 @@ export async function runDeferredAwareMutation<T>(args: {
   operation: string
   payload: DeferredMutationPayload
   execute: () => Promise<T>
-}) {
+}): Promise<T | DeferredMutationResult> {
   if (typeof navigator !== 'undefined' && !navigator.onLine) {
     if (!args.accountId) {
       throw new Error('No account available for offline mutation queueing')
     }
+    // No cast: the union type T | DeferredMutationResult is inferred directly,
+    // so callers must discriminate with isDeferredMutationResult().
     return enqueueDeferredMutation({
       accountId: args.accountId,
       operation: args.operation,
       payload: args.payload,
-    }) as Promise<T | DeferredMutationResult>
+    })
   }
 
   return args.execute()

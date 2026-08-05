@@ -40,6 +40,9 @@ export function useOfflineSyncQueue() {
 
       if (result.syncedCount > 0) {
         invalidateEmailQueries(queryClient)
+        // Replayed mailbox operations (create/rename/delete/reorder/reparent)
+        // change the sidebar tree — invalidate mailbox queries too.
+        queryClient.invalidateQueries({ queryKey: ['mailboxes'] })
       }
 
       return result

@@ -10,6 +10,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Nothing yet.
 
+## [1.2.0] - 2026-08-05
+
+### Added
+- **Multi-account is now fully active** — `AccountProvider` is mounted and the
+  active account is synced into the JMAP client, so account switching affects
+  all data hooks (previously the provider existed but was never mounted).
+- **Scheduled Send is capability-gated** — the schedule picker now appears only
+  when the server advertises `maxDelayedSend`; previously it was hard-coded
+  off even when the backend supported `EmailSubmission/sendAt`.
+- **BIMI DNS hardening** — `/api/bimi-dns` now validates the domain with a
+  strict regex and rate-limits per IP (anti-DNS-amplification).
+
+### Changed
+- **Security patch set** — upgraded `dompurify` (XSS sanitizer bypass fix),
+  `http-proxy-middleware` (CRLF injection + Host-header routing bypass fix),
+  `postcss`, `undici`, `body-parser`, `esbuild`. `npm audit` is now clean (0
+  vulnerabilities).
+- **CSP hardening** — `img-src` no longer allows insecure `http:` images
+  (mixed-content prevention).
+- **`JMAP_HOST` default derived** — when unset, the proxy Host header now
+  comes from `JMAP_SERVER` instead of a hard-coded example domain. An explicit
+  `JMAP_HOST` env var still overrides.
+- **Reader multipart support** — the reading pane walks all body parts and
+  picks the richest non-empty HTML/text part instead of only `[0]`.
+- **Reader error recovery** — the error state Retry button refetches the detail
+  query instead of reloading the page.
+- **Unread filter note** — `is:unread`/Unread list filter continues to use the
+  client-side fallback (see TODO.md BUG-2026-017 blocker).
+
+### Fixed
+- 51 runtime/semantic bugs from the full code-path audit (see TODO.md
+  Completed — 2026-08-05 Bug Audit Fixes): auth case-insensitivity (RFC 7617),
+  request timeout with external abort signals, offline replay `ifInState`
+  refresh, folder cycle prevention, composer upload limits, draft retention on
+  save failure, snooze past-date rejection, keyboard-shortcut input guards,
+  and more.
+
 ## [1.1.0] - 2026-05-14
 
 ### Added

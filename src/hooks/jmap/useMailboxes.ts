@@ -65,6 +65,14 @@ export function useMailboxActions() {
   const accountId = jmapClient.getPrimaryAccount()
   const queryClient = useQueryClient()
 
+  /** Client-generated mailbox key — unique per call (Date.now() collides). */
+  const createMailboxKey = () => {
+    if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+      return crypto.randomUUID()
+    }
+    return `mailbox-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+  }
+
   const createMailbox = useMutation({
     mutationFn: async ({ name, parentId }: { name: string, parentId?: string }) => {
       const createObj: { name: string; isSubscribed: boolean; parentId?: string } = {
@@ -79,7 +87,7 @@ export function useMailboxActions() {
         jmapMethodCall('Mailbox/set', {
           accountId,
           create: {
-            [`mailbox-${Date.now()}`]: createObj,
+            [createMailboxKey()]: createObj,
           },
         }, '0'),
       ]

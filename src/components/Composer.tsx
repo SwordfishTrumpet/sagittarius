@@ -29,6 +29,21 @@ interface Recipient {
   email: string;
 }
 
+/**
+ * Minimal RFC 5322-ish address validator: local-part@domain.tld.
+ * Rejects bare usernames, missing TLDs (foo@bar), and empty local parts.
+ */
+const RECIPIENT_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+/** Split a comma-separated recipient string and drop invalid addresses. */
+function parseRecipients(str: string): Recipient[] {
+  return str
+    .split(',')
+    .map(s => s.trim())
+    .filter(s => RECIPIENT_EMAIL_RE.test(s))
+    .map(s => ({ email: s }));
+}
+
 interface ComposerProps {
   onClose: () => void;
   replyTo?: ReplyContext;
@@ -164,8 +179,15 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
     return initialContent.includes('data-sagittarius-quote="1"') || initialContent.includes('id="quoted-content"');
   }, [initialContent]);
 
-  // Delayed send disabled — server rejects the sendAt property
-  const maxDelayedSend = 0;
+  // Scheduled send availability comes from the server capability
+  // (maxDelayedSend seconds), never a hard-coded 0 — that silently disabled
+  // the schedule picker even when the backend supports sendAt.
+  const maxDelayedSend = useMemo(() => {
+    const mailCap = jmapClient.getCapabilityConfig('urn:ietf:params:jmap:mail') as { maxDelayedSend?: number } | null;
+    const accountCap = jmapClient.getAccountCapability('urn:ietf:params:jmap:mail') as { maxDelayedSend?: number } | null;
+    const cap = accountCap?.maxDelayedSend ?? mailCap?.maxDelayedSend ?? 0;
+    return typeof cap === 'number' && cap > 0 ? cap : 0;
+  }, []);
 
   const editor = useEditor({
     extensions: [
@@ -322,6 +344,12 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
     let uploadedCount = 0;
     let rejectedCount = 0;
 
+    // Local accumulator: the `attachments` closure is stale until React
+    // re-renders, so multi-file uploads must be checked against the files
+    // accepted so far in THIS batch, not the pre-upload state.
+    const accepted: Attachment[] = [];
+    const runningList = () => [...attachments, ...accepted];
+
     try {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
@@ -334,10 +362,10 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
         }
 
         // Check if adding this file would exceed the total attachment size limit
-        if (!canAddAttachment(attachments, file.size)) {
+        if (!canAddAttachment(runningList(), file.size)) {
           toast.error(
             `Cannot add ${file.name}: Total attachment size would exceed server limit of ${maxAttachmentsSizeMB} MB. ` +
-            `Current: ${((attachments.reduce((sum, a) => sum + a.size, 0)) / 1024 / 1024).toFixed(1)} MB`
+            `Current: ${(runningList().reduce((sum, a) => sum + a.size, 0) / 1024 / 1024).toFixed(1)} MB`
           );
           rejectedCount++;
           continue;
@@ -356,19 +384,21 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
         }
 
         // Warn about files approaching the total attachment limit
-        const currentTotal = attachments.reduce((sum, a) => sum + a.size, 0);
+        const currentTotal = runningList().reduce((sum, a) => sum + a.size, 0);
         const projectedTotal = currentTotal + file.size;
         if (projectedTotal > maxAttachmentsSizeMB * 1024 * 1024 * 0.8) {
           toast.warning(`Attachments are ${(projectedTotal / 1024 / 1024).toFixed(1)} MB of ${maxAttachmentsSizeMB} MB limit`);
         }
 
         const res = await jmapClient.uploadBlob(file);
-        setAttachments(prev => [...prev, {
+        const newAttachment: Attachment = {
           blobId: res.blobId,
           name: file.name,
           type: file.type,
           size: file.size
-        }]);
+        };
+        accepted.push(newAttachment);
+        setAttachments(prev => [...prev, newAttachment]);
         uploadedCount++;
       }
 
@@ -380,8 +410,8 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
         toast.error(`No files attached. ${rejectedCount} file${rejectedCount === 1 ? '' : 's'} rejected due to size limits.`);
       }
 
-      // Validate total size after upload
-      const validation = validateAttachments(attachments);
+      // Validate total size after upload (includes this batch's accepted files)
+      const validation = validateAttachments(runningList());
       if (!validation.isValid) {
         toast.error(validation.error);
       }
@@ -404,11 +434,6 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
 
   const handleSend = (scheduledDate?: Date) => {
     if (!to || !subject || !editor || !selectedIdentity) return;
-
-    const parseRecipients = (str: string): Recipient[] => {
-      return str.split(',').map(s => s.trim()).filter(s => s.includes('@')).map(s => ({ email: s }));
-    };
-
     const htmlContent = (() => {
       // Ensure quoted content is visible before extracting HTML
       const quotedEl = editor?.view?.dom?.querySelector('#quoted-content') as HTMLElement | null;
@@ -513,10 +538,6 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
       saveDraftTimeoutRef.current = null;
     }
 
-    const parseRecipients = (str: string): Recipient[] => {
-      return str.split(',').map(s => s.trim()).filter(s => s.includes('@')).map(s => ({ email: s }));
-    };
-
     try {
       await saveDraftMutation.mutateAsync({
         to: parseRecipients(to),
@@ -528,16 +549,15 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
         fromEmail: selectedIdentity?.email || '',
         draftId: draftEmail?.id,
       });
+      // Only clear localStorage after a confirmed successful server save.
       clearComposerDraft(draftKey);
       toast.success('Draft saved');
+      onClose();
     } catch (err: unknown) {
-      // If server save fails, still clear localStorage and close
-      // The user can still recover from server drafts folder if needed
-      clearComposerDraft(draftKey);
+      // On failure keep the composer open AND the localStorage draft intact so
+      // nothing is lost — surface the error and let the user retry.
       const error = err instanceof Error ? err : new Error('Unknown error');
       toastOperationError('email.saveDraft', error);
-    } finally {
-      onClose();
     }
   }, [draftKey, onClose, hasDraftContent, saveDraftMutation, to, cc, bcc, subject, bodyHtml, attachments, selectedIdentity, draftEmail]);
 

@@ -359,6 +359,32 @@ describe('RFC 8620 — JMAP Core Protocol', () => {
       expect(body.using).toContain('urn:ietf:params:jmap:submission');
     });
 
+    it('keeps the default timeout when a caller passes an external signal (BUG-2026-010)', async () => {
+      const client = await authenticatedClient();
+
+      const mockResponse = { methodResponses: [], sessionState: 's1' };
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse,
+        text: async () => JSON.stringify(mockResponse),
+      });
+
+      const external = new AbortController();
+      await client.request([['Mailbox/get', { accountId: 'account-001', ids: null }, '0']], undefined, external.signal);
+
+      const apiCall = fetchMock.mock.calls[1];
+      const signal = apiCall[1].signal;
+      expect(signal).toBeTruthy();
+
+      // The effective signal must be a COMBINED signal (not the external one
+      // passed straight through), so the internal timeout still applies.
+      expect(signal).not.toBe(external.signal);
+
+      // Aborting the caller's signal must abort the fetch.
+      external.abort();
+      expect(signal.aborted).toBe(true);
+    });
+
     it('should merge extra capabilities without duplicates (§3.3)', async () => {
       const client = await authenticatedClient();
 
@@ -474,6 +500,28 @@ describe('RFC 8620 — JMAP Core Protocol', () => {
       expect(uploadCall[1].method).toBe('POST');
       expect(uploadCall[1].headers['Content-Type']).toBe('image/png');
       expect(uploadCall[1].headers['Authorization']).toMatch(/^Basic /);
+    });
+
+    it('should return an empty URL instead of an invalid one when no account is available (BUG-2026-011)', async () => {
+      const session = makeSession();
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        json: async () => session,
+        text: async () => JSON.stringify(session),
+      });
+
+      const { jmapClient } = await import('../jmap');
+      await jmapClient.authenticate('user@example.com', 'password');
+
+      // Force getPrimaryAccount() to return null (no accounts resolvable)
+      const spy = vi.spyOn(jmapClient, 'getPrimaryAccount').mockReturnValue(null);
+
+      const url = jmapClient.getBlobUrl('blob-123', 'application/pdf', 'report.pdf');
+
+      expect(url).toBe('');
+      // Must NOT produce a URL with an empty {accountId} placeholder
+      expect(url).not.toContain('/download//');
+      spy.mockRestore();
     });
   });
 

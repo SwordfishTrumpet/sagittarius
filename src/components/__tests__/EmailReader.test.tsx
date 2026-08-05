@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { EmailReader, type EmailReaderProps } from '../EmailReader'
 
@@ -63,13 +64,21 @@ const baseProps: EmailReaderProps = {
   updateKeywords: { mutate: vi.fn() },
 }
 
+/** Wrap every render in a QueryClientProvider (EmailReader calls useQueryClient). */
+function renderReader(ui: React.ReactElement) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  })
+  return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>)
+}
+
 describe('EmailReader', () => {
   beforeEach(() => {
     getBlobUrl.mockClear()
   })
 
   it('blocks remote images until approved', () => {
-    render(
+    renderReader(
       <EmailReader
         {...baseProps}
         threadEmails={[
@@ -98,7 +107,7 @@ describe('EmailReader', () => {
   })
 
   it('escapes plain text email bodies', () => {
-    render(
+    renderReader(
       <EmailReader
         {...baseProps}
         threadEmails={[
@@ -119,7 +128,7 @@ describe('EmailReader', () => {
   })
 
   it('resolves CID images before rendering', () => {
-    render(
+    renderReader(
       <EmailReader
         {...baseProps}
         threadEmails={[
@@ -149,7 +158,7 @@ describe('EmailReader', () => {
   })
 
   it('shows a safe fallback for invalid dates', () => {
-    render(
+    renderReader(
       <EmailReader
         {...baseProps}
         threadEmails={[
@@ -166,5 +175,86 @@ describe('EmailReader', () => {
     )
 
     expect(screen.getByText('Unknown date')).toBeInTheDocument()
+  })
+
+  it('picks the richest non-empty HTML body part in multipart emails (BUG-2026-036)', () => {
+    renderReader(
+      <EmailReader
+        {...baseProps}
+        threadEmails={[
+          createTestEmail({
+            subject: 'Multipart',
+            htmlBody: [
+              { partId: 'empty', type: 'text/html' },
+              { partId: 'rich', type: 'text/html' },
+            ],
+            bodyValues: {
+              'empty': { value: '' },
+              'rich': { value: '<p>Real content</p>' },
+            },
+          }),
+        ]}
+      />,
+    )
+
+    const html = screen.getByTestId('email-frame').getAttribute('data-html') || ''
+    expect(html).toContain('Real content')
+  })
+
+  it('falls back to the first non-empty text body when no HTML has content (BUG-2026-036)', () => {
+    renderReader(
+      <EmailReader
+        {...baseProps}
+        threadEmails={[
+          createTestEmail({
+            subject: 'Multi text',
+            htmlBody: [{ partId: 'h1', type: 'text/html' }],
+            textBody: [
+              { partId: 't1', type: 'text/plain' },
+              { partId: 't2', type: 'text/plain' },
+            ],
+            bodyValues: {
+              'h1': { value: '   ' },
+              't1': { value: '' },
+              't2': { value: 'plain fallback' },
+            },
+          }),
+        ]}
+      />,
+    )
+
+    const html = screen.getByTestId('email-frame').getAttribute('data-html') || ''
+    expect(html).toContain('plain fallback')
+  })
+
+  it('retry button refetches the detail query instead of reloading the page (BUG-2026-037)', () => {
+    renderReader(
+      <EmailReader
+        {...baseProps}
+        isEmailDetailError={true}
+        emailDetailError={new Error('network down')}
+        threadEmails={undefined}
+      />,
+    )
+
+    const retry = screen.getByRole('button', { name: 'Retry' })
+    expect(retry).toBeInTheDocument()
+
+    // Clicking Retry must not navigate/reload (window.location.reload spy)
+    const reloadSpy = vi.fn()
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...window.location, reload: reloadSpy },
+    })
+
+    fireEvent.click(retry)
+
+    expect(reloadSpy).not.toHaveBeenCalled()
+    expect(screen.getByText('Failed to load message')).toBeInTheDocument()
+
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: window.location,
+    })
   })
 })

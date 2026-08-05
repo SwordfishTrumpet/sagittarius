@@ -56,9 +56,13 @@ describe('auth', () => {
       expect(isBasicAuth('BasicdXNlcjpwYXNz')).toBe(false);
     });
 
-    it('should be case-sensitive', () => {
-      expect(isBasicAuth('basic dXNlcjpwYXNz')).toBe(false);
-      expect(isBasicAuth('BASIC dXNlcjpwYXNz')).toBe(false);
+    // RFC 7617 §2.1: the auth scheme is case-insensitive, so lowercase/uppercase
+    // "basic" prefixes are valid. (Previously this asserted case-sensitivity,
+    // which BUG-2026-009 identified as incorrect — a server returning
+    // "basic dXNlcjpwYXNz" was mis-handled as a raw token.)
+    it('should accept case-insensitive scheme per RFC 7617', () => {
+      expect(isBasicAuth('basic dXNlcjpwYXNz')).toBe(true);
+      expect(isBasicAuth('BASIC dXNlcjpwYXNz')).toBe(true);
     });
   });
 });

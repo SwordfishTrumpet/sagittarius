@@ -4,7 +4,7 @@ A high-performance, server-agnostic JMAP web client with an interface inspired b
 
 **Standards-compliant. Privacy-first. Built for power users.**
 
-[![Version](https://img.shields.io/badge/version-1.1.0-blue?style=flat-square)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.2.0-blue?style=flat-square)](CHANGELOG.md)
 [![CI](https://img.shields.io/badge/CI-passing-brightgreen?style=flat-square&logo=github-actions&logoColor=white)](.github/workflows/ci.yml)
 [![JMAP RFC 8620/8621](https://img.shields.io/badge/JMAP-RFC%208620%20%2F%208621-4A90D9?style=flat-square)](https://jmap.io/)
 [![TypeScript Strict](https://img.shields.io/badge/TypeScript-Strict-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -185,7 +185,7 @@ See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for complete configuration examples.
 | **Rich Text Composer** | Tiptap-powered editor (ProseMirror) with formatting, links, underline, placeholder text |
 | **Reply / Reply All / Forward** | Smart recipient prefilling with quoted content via `quoteBuilder` |
 | **Message Quoting** | Automatic previous message quoting with summary and header formatting |
-| **Scheduled Send** | Queue emails for future delivery via `EmailSubmission/sendAt` with `ScheduleSendPicker` |
+| **Scheduled Send** | Queue emails for future delivery via `EmailSubmission/sendAt` with `ScheduleSendPicker` — shown only when the server advertises `maxDelayedSend` |
 | **Draft Auto-Save / Recovery** | Automatic server-side persistence with debounced save timing |
 | **Email Templates** | Save, edit, delete, duplicate reusable email formats stored per-account |
 | **Batch Selection** | Multi-select with Shift/Cmd+Click and Select All |
@@ -221,6 +221,7 @@ See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for complete configuration examples.
 | **Filter Dialog** | Advanced filter dialog with checkbox and header filter sections |
 | **Quota Display** | Storage usage indicator in sidebar with progress bar |
 | **Sharing** | Share calendars and address books with other users (RFC 9670) |
+| **Multi-Account** | Account switching with per-account state isolation; all JMAP data hooks target the active account |
 
 ### 📅 Calendar
 

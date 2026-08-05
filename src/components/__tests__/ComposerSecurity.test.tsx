@@ -10,6 +10,7 @@ vi.mock('../../api/jmap', () => ({
     getBlobUrl: vi.fn((blobId: string) => `https://example.com/blob/${blobId}`),
     getPrimaryAccount: () => 'account-1',
     getCapabilityConfig: () => ({ maxSizeUpload: 50_000_000 }),
+    getAccountCapability: () => ({ maxDelayedSend: 0 }),
   },
 }));
 

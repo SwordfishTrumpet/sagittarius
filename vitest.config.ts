@@ -15,7 +15,7 @@ export default defineConfig({
     // Environment setup
     environment: 'jsdom',
     // Setup files
-    setupFiles: ['./src/test/setup.ts'],
+    setupFiles: ['./src/test/setup.ts', './src/test/a11y/setup.ts'],
     // Faster teardown - don't wait for hanging handles
     teardownTimeout: 5000,
     // Hook timeout for long-running operations

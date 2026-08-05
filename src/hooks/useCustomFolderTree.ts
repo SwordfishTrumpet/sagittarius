@@ -27,10 +27,23 @@ export function useCustomFolderTree(mailboxes: Mailbox[] | undefined) {
     return updateExpansionInTree(tree)
   }, [mailboxes, expandedFolders])
 
+  // True when `mailboxId` is (transitively) nested inside `ancestorId`.
+  const isDescendant = useCallback((mailboxId: string, ancestorId: string): boolean => {
+    if (!mailboxes) return false
+    const parentOf = (id: string): string | null =>
+      mailboxes.find((m: Mailbox) => m.id === id)?.parentId ?? null
+    let current = parentOf(mailboxId)
+    while (current) {
+      if (current === ancestorId) return true
+      current = parentOf(current)
+    }
+    return false
+  }, [mailboxes])
+
   // Handle mailbox drag reordering: place dragged before target
   const handleMailboxReorder = useCallback((draggedId: string, targetId: string) => {
     if (!mailboxes) return
-    const { custom } = classifyMailboxes(mailboxes)
+    const { system, custom } = classifyMailboxes(mailboxes)
     const sorted = [...custom].sort((a: Mailbox, b: Mailbox) => (a.sortOrder || 0) - (b.sortOrder || 0))
     const dragIdx = sorted.findIndex((m: Mailbox) => m.id === draggedId)
     const targetIdx = sorted.findIndex((m: Mailbox) => m.id === targetId)
@@ -40,9 +53,13 @@ export function useCustomFolderTree(mailboxes: Mailbox[] | undefined) {
     const newTargetIdx = sorted.findIndex((m: Mailbox) => m.id === targetId)
     sorted.splice(newTargetIdx, 0, dragged)
 
+    // Number custom folders starting AFTER the highest system sortOrder so the
+    // values never collide with server-assigned system folder orders.
+    const maxSystemOrder = system.reduce((max: number, m: Mailbox) => Math.max(max, m.sortOrder || 0), 0)
+    const baseOrder = maxSystemOrder + 1
     const updates = sorted.map((m: Mailbox, i: number) => ({
       mailboxId: m.id,
-      sortOrder: i + 1,
+      sortOrder: baseOrder + i,
     }))
     reorderMailbox.mutate(updates)
     toast.success('Folders reordered')
@@ -50,9 +67,17 @@ export function useCustomFolderTree(mailboxes: Mailbox[] | undefined) {
 
   // Handle mailbox reparenting: drop a folder INTO another folder
   const handleMailboxReparent = useCallback((draggedId: string, newParentId: string | null) => {
+    // Reject dropping a folder into itself or one of its own descendants:
+    // that would create a cyclic hierarchy the server may reject or persist.
+    // isDescendant(X, Y) means "X lives inside Y", so we check whether the
+    // NEW PARENT lives inside the DRAGGED folder.
+    if (newParentId === draggedId || (newParentId && isDescendant(newParentId, draggedId))) {
+      toast.error('Cannot move a folder into itself or its own subfolder')
+      return
+    }
     reparentMailbox.mutate({ mailboxId: draggedId, newParentId })
     toast.success(newParentId ? 'Folder moved into subfolder' : 'Folder moved to top level')
-  }, [reparentMailbox])
+  }, [reparentMailbox, isDescendant])
 
   const handleToggleFolderExpanded = (mailboxId: string) => {
     setExpandedFolders(prev => {

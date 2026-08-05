@@ -35,6 +35,18 @@ export function useEmailNavigation({
       ? emails.findIndex((e: Email) => e.id === currentEmailId)
       : -1
 
+    // No email selected yet: j/ArrowDown should select the first email.
+    // (When currentEmailId is set but not found — a stale selection — keep
+    // the old no-op behavior.)
+    if (currentEmailId === null) {
+      const firstEmail = emails[0]
+      if (firstEmail) {
+        onSelectEmail(firstEmail.id, firstEmail.threadId || null)
+        setScrollToEmailId(firstEmail.id)
+      }
+      return
+    }
+
     // Return early if current email not found in list
     if (currentIndex === -1) return
 

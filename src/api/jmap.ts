@@ -80,6 +80,29 @@ function buildAuthVariants(rawUsername: string): string[] {
 
 const DEFAULT_REQUEST_TIMEOUT_MS = 30_000;
 
+/**
+ * Combine multiple AbortSignals into one. The resulting signal aborts when
+ * ANY of the inputs aborts. Falls back to manual forwarding when the native
+ * AbortSignal.any (baseline 2024) is unavailable (e.g. older jsdom).
+ */
+function combineSignals(...signals: Array<AbortSignal | null | undefined>): AbortSignal | null {
+  const valid = signals.filter((s): s is AbortSignal => Boolean(s));
+  if (valid.length === 0) return null;
+  if (valid.length === 1) return valid[0];
+  if (typeof AbortSignal !== 'undefined' && 'any' in AbortSignal) {
+    return AbortSignal.any(valid);
+  }
+  const controller = new AbortController();
+  for (const s of valid) {
+    if (s.aborted) {
+      controller.abort();
+      break;
+    }
+    s.addEventListener('abort', () => controller.abort(), { once: true });
+  }
+  return controller.signal;
+}
+
 type FilterLike = Record<string, unknown>;
 
 class JMAPClient {
@@ -87,9 +110,20 @@ class JMAPClient {
   private authHeader: string | null = null;
   private _queryClient: QueryClient | null = null;
   private _loggingOut = false;
+  /** Active account selected by AccountProvider; null when not set. */
+  private _activeAccountId: string | null = null;
 
   registerQueryClient(qc: QueryClient): void {
     this._queryClient = qc;
+  }
+
+  /** Set the account that JMAP hooks should target (AccountProvider). */
+  setActiveAccountId(accountId: string | null): void {
+    this._activeAccountId = accountId;
+  }
+
+  getActiveAccountId(): string | null {
+    return this._activeAccountId;
   }
 
   constructor() {
@@ -138,7 +172,7 @@ class JMAPClient {
       const credentials = btoa(unescape(encodeURIComponent(`${variant}:${password}`)));
       const authHeader = `Basic ${credentials}`;
 
-      logger.debug(`[JMAP Auth Request] Trying username: variant`);
+      logger.debug(`[JMAP Auth Request] Trying username: ${variant}`);
       const response = await fetch('/jmap/session', {
         // Prevent browser from showing native auth dialog on 401 (§3.6.1)
         // We handle authentication entirely through our own login UI
@@ -162,10 +196,11 @@ class JMAPClient {
       logger.debug(`[JMAP Auth] primaryAccounts keys:`, Object.keys(session.primaryAccounts || {}));
       logger.debug(`[JMAP Auth] accounts keys:`, Object.keys(session.accounts || {}));
 
-      // TEMP: Production diagnostic logging
-      logger.error(`[JMAP Session Debug] accounts type: ${typeof session.accounts}, isArray: ${Array.isArray(session.accounts)}`);
-      logger.error(`[JMAP Session Debug] accounts value: ${JSON.stringify(session.accounts)}`);
-      logger.error(`[JMAP Session Debug] primaryAccounts value: ${JSON.stringify(session.primaryAccounts)}`);
+      // Diagnostics: account/session shape is sensitive, so these must be
+      // logger.debug (dev-only) and NEVER logger.error (production-visible).
+      logger.debug(`[JMAP Session Debug] accounts type: ${typeof session.accounts}, isArray: ${Array.isArray(session.accounts)}`);
+      logger.debug(`[JMAP Session Debug] accounts keys:`, Object.keys(session.accounts || {}));
+      logger.debug(`[JMAP Session Debug] primaryAccounts keys:`, Object.keys(session.primaryAccounts || {}));
 
       this.session = this.rewriteSessionUrls(session);
       this.authHeader = authHeader;
@@ -223,10 +258,11 @@ class JMAPClient {
     
     logger.debug(`[JMAP Request ${requestId}]`, JSON.stringify(body, null, 2));
 
-    // Create a timeout signal if no signal provided
-    const timeoutController = signal ? null : new AbortController();
-    const timeoutId = timeoutController ? setTimeout(() => timeoutController.abort(), DEFAULT_REQUEST_TIMEOUT_MS) : null;
-    const effectiveSignal = signal || timeoutController?.signal;
+    const timeoutController = new AbortController();
+    const timeoutId = setTimeout(() => timeoutController.abort(), DEFAULT_REQUEST_TIMEOUT_MS);
+    // Always apply the default timeout, even when the caller passed an
+    // external signal: combine them so the request cannot hang forever.
+    const effectiveSignal = combineSignals(signal, timeoutController.signal);
 
     try {
       const response = await fetch(this.session.apiUrl, {
@@ -315,11 +351,16 @@ class JMAPClient {
 
   getBlobUrl(blobId: string, type: string, name: string): string {
     if (!this.session || !this.authHeader) return '';
-    
+
     const accountId = this.getPrimaryAccount();
-    
+    if (!accountId) {
+      // An empty {accountId} would produce an invalid download URL.
+      logger.error('[getBlobUrl] No account ID available; returning empty URL.');
+      return '';
+    }
+
     return this.session.downloadUrl
-      .replace('{accountId}', encodeURIComponent(accountId || ''))
+      .replace('{accountId}', encodeURIComponent(accountId))
       .replace('{blobId}', encodeURIComponent(blobId))
       .replace('{name}', encodeURIComponent(name))
       .replace('{type}', encodeURIComponent(type));
@@ -405,6 +446,12 @@ class JMAPClient {
     if (!this.session) return null;
 
     const cap = capability || 'urn:ietf:params:jmap:mail';
+
+    // The account selected by AccountProvider wins — this makes every
+    // existing jmapClient.getPrimaryAccount() call site account-aware.
+    if (this._activeAccountId && this.session.accounts?.[this._activeAccountId]) {
+      return this._activeAccountId;
+    }
 
     // Try exact capability match in primaryAccounts first
     if (this.session.primaryAccounts?.[cap]) {

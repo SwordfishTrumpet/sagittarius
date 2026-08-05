@@ -94,7 +94,13 @@ export function useEmailSelection({ emails }: UseEmailSelectionOptions): UseEmai
   }, [emails])
 
   const clearSelection = useCallback(() => {
+    // Clear ALL selection state together: leaving selectedEmailId/selectedThreadId
+    // pointing at the previous email let toolbar actions and the reader operate
+    // on a stale selection after the batch selection was cleared.
     setSelectedEmailIdsState(new Set())
+    setSelectedEmailIdState(null)
+    setSelectedThreadIdState(null)
+    anchorEmailIdRef.current = null
   }, [])
 
   const setSelectedEmailId = useCallback((id: string | null) => {

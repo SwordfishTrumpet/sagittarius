@@ -181,7 +181,8 @@ describe('useEmailNavigation', () => {
       result.current.navigateToNext()
     })
 
-    // When currentEmailId is null, findIndex returns -1, so it returns early
-    expect(onSelectEmail).not.toHaveBeenCalled()
+    // BUG-2026-030 fix: with no selection, j/ArrowDown selects the first email.
+    expect(onSelectEmail).toHaveBeenCalledWith('email-1', 'thread-1')
+    expect(result.current.scrollToEmailId).toBe('email-1')
   })
 })

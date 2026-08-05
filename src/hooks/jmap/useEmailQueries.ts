@@ -6,6 +6,8 @@ import { suppressNewMailNotification } from './queryCacheUtils'
 import { updateEmailStateFromResponse } from './useEmailMutations'
 import { parseSearchQuery } from '../../utils/searchParser'
 import { buildJMAPFilter, mergeFiltersAND } from '../../utils/filterBuilder'
+import { chunkForGet } from '../../utils/capabilityUtils'
+import { isExplicitlyMarkedUnread } from './useEmailMutations'
 import type { Email, Thread, SearchSnippet, EmailFilter } from '../../types/jmap'
 import type { SearchFilter } from '../../types/search'
 
@@ -118,13 +120,14 @@ export function useThreads(
           : (Object.keys(builtFilter).length > 0 ? builtFilter : null)
       }
 
-      // Combine mailbox conditions with search/dialog filter
+      // Combine mailbox conditions with search/dialog filter. mergeFiltersAND
+      // flattens plain conditions into one valid EmailFilterCondition (RFC
+      // 8621 §4.4.1 allows e.g. { inMailbox, text } together) but wraps in
+      // { allOf: [...] } (RFC 8620 §5.5) the moment any operand is itself a
+      // FilterOperator — never producing an invalid mix like
+      // { inMailbox: 'id', allOf: [...] }.
       const allConditions = [...mailboxConditions, ...(effectiveSearchFilter ? [effectiveSearchFilter] : [])]
-      const filter: EmailFilter = allConditions.length === 0
-        ? {}
-        : allConditions.length === 1
-          ? allConditions[0]
-          : Object.assign({}, ...allConditions)
+      const filter: EmailFilter = mergeFiltersAND(...allConditions)
 
       const queryResponse = await jmapClient.request([
         ['Email/query', {
@@ -269,19 +272,26 @@ async function fetchEmailDetail(accountId: string, emailId: string, threadId?: s
       }
     }
 
-    const response = await jmapClient.request([
-      ['Email/get', {
-        accountId,
-        ids: idsToFetch,
-        properties: ['id', 'threadId', 'mailboxIds', 'from', 'to', 'cc', 'bcc', 'subject', 'bodyValues', 'textBody', 'htmlBody', 'receivedAt', 'keywords', 'hasAttachment', 'attachments', 'bodyStructure', 'blobId', 'header:Disposition-Notification-To:asText'],
-        fetchAllBodyValues: true,
-      }, '1'],
-    ])
+    // Chunk the ID list so a single Email/get never exceeds the server's
+    // maxObjectsInGet limit when a thread contains thousands of emails.
+    const chunks = chunkForGet(idsToFetch)
+    const allFetched: Email[] = []
+    for (const chunk of chunks) {
+      const response = await jmapClient.request([
+        ['Email/get', {
+          accountId,
+          ids: chunk,
+          properties: ['id', 'threadId', 'mailboxIds', 'from', 'to', 'cc', 'bcc', 'subject', 'bodyValues', 'textBody', 'htmlBody', 'receivedAt', 'keywords', 'hasAttachment', 'attachments', 'bodyStructure', 'blobId', 'header:Disposition-Notification-To:asText'],
+          fetchAllBodyValues: true,
+        }, '1'],
+      ])
 
-    updateEmailStateFromResponse(response)
-    const emailResult = extractMethodResult<EmailGetResult>(response, 0, 'Email/get')
-    const list = emailResult.list
-    if (!list) return []
+      updateEmailStateFromResponse(response)
+      const emailResult = extractMethodResult<EmailGetResult>(response, 0, 'Email/get')
+      if (emailResult.list) allFetched.push(...emailResult.list)
+    }
+    const list = allFetched
+    if (list.length === 0) return []
 
     const emails = list.sort((a: Email, b: Email) =>
       new Date(a.receivedAt).getTime() - new Date(b.receivedAt).getTime(),
@@ -289,12 +299,11 @@ async function fetchEmailDetail(accountId: string, emailId: string, threadId?: s
 
     const selectedEmail = emails.find((email: Email) => email.id === emailId)
     if (selectedEmail && (!selectedEmail.keywords || !selectedEmail.keywords['$seen'])) {
-      // Check if the user explicitly marked this email as unread by looking
-      // at the current cached detail data. If the cache already shows $seen: false,
-      // skip auto-read to avoid racing with the "Mark as Unread" action.
-      const currentCached = queryClient?.getQueryData<Email[]>(['emailDetail', accountId, emailId, threadId ?? null])
-      const hasPendingUnread = currentCached?.some(e => e.id === emailId && !e.keywords?.['$seen'])
-      if (!hasPendingUnread) {
+      // Skip auto-read only when the USER explicitly marked this email as
+      // unread. The $seen cache value is unreliable here: a freshly-fetched
+      // unread email also has $seen: false, which previously made auto-read
+      // silently never fire until some manual action occurred.
+      if (!isExplicitlyMarkedUnread(emailId)) {
         suppressNewMailNotification()
         jmapClient.request([
           ['Email/set', {

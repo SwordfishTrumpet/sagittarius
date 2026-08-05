@@ -188,6 +188,26 @@ describe('useEmailSelection', () => {
     expect(result.current.selectedEmailIds.size).toBe(0)
   })
 
+  it('clearSelection clears ALL selection state (BUG-2026-029)', () => {
+    const { result } = renderHook(() => useEmailSelection({ emails: mockEmails }))
+
+    // Establish a single-selection state
+    act(() => {
+      result.current.toggleEmailSelection('email-2', false, false)
+    })
+    expect(result.current.selectedEmailId).toBe('email-2')
+    expect(result.current.selectedThreadId).toBe('thread-2')
+
+    act(() => {
+      result.current.clearSelection()
+    })
+
+    // selectedEmailId/selectedThreadId must not point at a stale email
+    expect(result.current.selectedEmailId).toBeNull()
+    expect(result.current.selectedThreadId).toBeNull()
+    expect(result.current.selectedEmailIds.size).toBe(0)
+  })
+
   it('should reset selection and clear anchor ref (BUG 12 fix)', () => {
     const { result } = renderHook(() => useEmailSelection({ emails: mockEmails }))
 

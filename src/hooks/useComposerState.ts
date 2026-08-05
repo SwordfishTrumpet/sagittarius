@@ -12,9 +12,9 @@ export interface ReplyContext {
   from: Array<{ name?: string; email: string }>
   to: Array<{ name?: string; email: string }>
   cc?: Array<{ name?: string; email: string }>
-  /** HTML body content (string, not EmailBodyPart) */
+  /** Plain text body content (string, not EmailBodyPart) */
   textBody?: string
-  /** Plain text body content (string) */
+  /** HTML body content (string) */
   htmlBody?: string
   blobId?: string
   threadId?: string

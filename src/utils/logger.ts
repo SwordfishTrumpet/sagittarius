@@ -34,6 +34,8 @@ export function redactUrl(url: string): string {
     }
     return u.toString();
   } catch {
-    return url.replace(/access_token=[^&]+/, 'access_token=[REDACTED]');
+    // Replace EVERY access_token=... occurrence (global flag), not just the
+    // first one, so URLs with duplicate tokens never leak a second token.
+    return url.replace(/access_token=[^&]+/g, 'access_token=[REDACTED]');
   }
 }

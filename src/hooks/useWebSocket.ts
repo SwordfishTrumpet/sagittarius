@@ -32,13 +32,15 @@ function buildWebSocketUrl(rawUrl: string, authToken: string): string {
   // Parse the JMAP WebSocket URL to get the path
   const parsed = new URL(rawUrl);
   
-  // Rewrite to use the same origin (current page's host), but preserve the path
-  // This ensures CSP 'self' allows the connection
+  // Rewrite to use the same origin (current page's host), but preserve the
+  // path AND any query parameters the backend may require (tenant hints,
+  // capability flags, etc.). This ensures CSP 'self' allows the connection.
   const currentProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const sameOriginUrl = `${currentProtocol}//${window.location.host}${parsed.pathname}`;
+  const base = `${currentProtocol}//${window.location.host}${parsed.pathname}`;
+  const withQuery = parsed.search ? `${base}${parsed.search}` : base;
   
-  const separator = sameOriginUrl.includes('?') ? '&' : '?';
-  return `${sameOriginUrl}${separator}access_token=${encodeURIComponent(authToken)}`;
+  const separator = withQuery.includes('?') ? '&' : '?';
+  return `${withQuery}${separator}access_token=${encodeURIComponent(authToken)}`;
 }
 
 export function useWebSocket(enabled: boolean): UseWebSocketResult {
@@ -52,6 +54,17 @@ export function useWebSocket(enabled: boolean): UseWebSocketResult {
   const clearNewMail = useCallback(() => {
     setHasNewMail(false);
   }, []);
+
+  // Reset connection state when push is disabled (enabled flipped false).
+  // Deliberately NOT done inside the effect cleanup: cleanup runs after
+  // unmount too, and setting state there is a side effect on an unmounted
+  // component (React 19 StrictMode double-invokes effects in dev).
+  useEffect(() => {
+    if (!enabled) {
+      isConnectedRef.current = false;
+      setIsConnected(false);
+    }
+  }, [enabled]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -98,7 +111,6 @@ export function useWebSocket(enabled: boolean): UseWebSocketResult {
       unsubscribeNewMail();
       unsubscribeConnectionState();
       webSocketManager.disconnect();
-      setIsConnected(false);
     };
   }, [enabled]);
 
