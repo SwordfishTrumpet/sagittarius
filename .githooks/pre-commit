@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Pre-commit guard: AGENTS.md and TODO.md are gitignored local-only working
+# docs (see .gitignore:48-49). They must NEVER be staged, committed, or pushed.
+# Enable with: git config core.hooksPath .githooks
+set -u
+
+LEAKED=$(git diff --cached --name-only | grep -E '^(AGENTS|TODO)\.md$' || true)
+if [ -n "$LEAKED" ]; then
+  echo "❌ Refusing to commit local-only docs: $LEAKED"
+  echo "   AGENTS.md / TODO.md are gitignored working docs — unstage them (git reset HEAD <file>)."
+  exit 1
+fi
+exit 0
