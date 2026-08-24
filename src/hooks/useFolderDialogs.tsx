@@ -109,7 +109,9 @@ export function useFolderDialogs({ selectedMailboxId, setSelectedMailboxId, mail
       return
     }
     onReparentMailbox?.(selectedFolderId, newParentId)
-    toast.success(newParentId ? `Moved "${selectedFolderName}" into subfolder` : `Moved "${selectedFolderName}" to top level`)
+    // No success toast here: handleMailboxReparent (useCustomFolderTree)
+    // already toasts, and drag-drop reparents route through it too — a
+    // second toast stacked duplicates for one action (BUG-2026-055).
     setContextMenu(null)
   }
 
