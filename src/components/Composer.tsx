@@ -433,7 +433,32 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
   };
 
   const handleSend = (scheduledDate?: Date) => {
-    if (!to || !subject || !editor || !selectedIdentity) return;
+    // Empty subject is allowed (matches iCloud Mail); recipients and identity
+    // are still required. The subject guard was removed in BUG-2026-054:
+    // with an empty subject the Send button stays enabled, so silently
+    // returning here made clicking Send do nothing at all.
+    if (!to || !editor || !selectedIdentity) return;
+
+    // Invalid recipient addresses are dropped by parseRecipients(). Sending
+    // to fewer people than the user typed is a data-loss hazard, so abort
+    // and surface every rejected address instead (BUG-2026-054).
+    const invalidAddresses: string[] = [];
+    const checkRecipients = (label: string, raw: string) => {
+      for (const entry of raw.split(',')) {
+        const addr = entry.trim();
+        if (addr && !RECIPIENT_EMAIL_RE.test(addr)) {
+          invalidAddresses.push(`${addr} (${label})`);
+        }
+      }
+    };
+    checkRecipients('To', to);
+    if (cc) checkRecipients('Cc', cc);
+    if (bcc) checkRecipients('Bcc', bcc);
+    if (invalidAddresses.length > 0) {
+      toast.error(`These addresses look invalid — please fix them before sending: ${invalidAddresses.join(', ')}`);
+      document.getElementById('composer-to')?.focus();
+      return;
+    }
     const htmlContent = (() => {
       // Ensure quoted content is visible before extracting HTML
       const quotedEl = editor?.view?.dom?.querySelector('#quoted-content') as HTMLElement | null;
