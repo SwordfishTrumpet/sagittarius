@@ -56,8 +56,14 @@ export function createStateChangeHandler(
         break;
 
       case 'EmailDelivery':
+        // Some servers emit EmailDelivery (not Email) for new arrivals, so
+        // invalidate the SAME key set as Email (BUG-2026-057) — otherwise
+        // ['emails'] and emailDetail caches stay stale until something else
+        // refetches. Listeners still fire unconditionally: EmailDelivery is
+        // always new inbound mail.
         qc.invalidateQueries({ queryKey: ['threads'] });
-        // EmailDelivery is always new inbound mail — always notify
+        qc.invalidateQueries({ queryKey: ['emails'] });
+        qc.invalidateQueries({ queryKey: ['emailDetail'] });
         newMailListeners.forEach((fn) => fn());
         break;
 
