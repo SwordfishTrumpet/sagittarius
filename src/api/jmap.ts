@@ -438,7 +438,11 @@ class JMAPClient {
     sessionStorage.removeItem('jmap_session');
     // 5. Clear CSRF token (VULN-006)
     clearCsrfToken();
-    // 5. Redirect — use replace() to avoid caching post-logout state in browser history
+    // Cleanup is complete — reset the latch so a failed/blocked navigation
+    // (embedded webview, beforeunload handler, tests) can retry logout
+    // instead of silently no-oping forever (BUG-2026-058).
+    this._loggingOut = false;
+    // 6. Redirect — use replace() to avoid caching post-logout state in browser history
     window.location.replace('/');
   }
 
