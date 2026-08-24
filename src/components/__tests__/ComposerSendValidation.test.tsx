@@ -6,16 +6,17 @@
  * 2. Invalid recipient addresses must ABORT the send with a toast listing
  *    the rejected addresses (parseRecipients used to drop them silently).
  */
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Composer } from '../Composer'
 
-const { composeMutate, toastError, toastSuccess } = vi.hoisted(() => ({
+const { composeMutate, toastError, toastSuccess, uploadBlob } = vi.hoisted(() => ({
   composeMutate: vi.fn(),
   toastError: vi.fn(),
   toastSuccess: vi.fn(),
+  uploadBlob: vi.fn(),
 }))
 
 // Mock sonner toast
@@ -33,6 +34,7 @@ vi.mock('../../api/jmap', () => ({
     getPrimaryAccount: () => 'account-001',
     getAccountCapability: () => ({ maxDelayedSend: 3600 }),
     getCapabilityConfig: () => ({ maxSizeUpload: 50_000_000 }),
+    uploadBlob,
   },
 }))
 
@@ -192,5 +194,34 @@ describe('Composer send validation (BUG-2026-054)', () => {
     expect(toastError).toHaveBeenCalledWith(
       expect.stringContaining('bad@address (Cc)'),
     )
+  })
+
+  it('blocks Send while attachments are mid-upload (BUG-2026-064)', async () => {
+    const user = userEvent.setup()
+    render(<Composer onClose={mockOnClose} />, { wrapper: Wrapper })
+
+    await user.type(screen.getByLabelText(/Recipients \(required\)/i), 'alice@example.com')
+
+    // Start an upload that stays in flight.
+    let resolveUpload: (value: unknown) => void = () => {}
+    uploadBlob.mockImplementationOnce(() => new Promise((resolve) => { resolveUpload = resolve }))
+
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement
+    const file = new File(['hello'], 'notes.txt', { type: 'text/plain' })
+    Object.defineProperty(fileInput, 'files', { value: [file], configurable: true })
+    fireEvent.change(fileInput)
+
+    // Upload in flight — Send button is disabled AND handleSend refuses.
+    await waitFor(() => expect(screen.getByRole('button', { name: /^Uploading…$/i })).toBeDisabled())
+    const sendButton = screen.getByRole('button', { name: /^Uploading…$/i })
+    expect(sendButton).toHaveAttribute('title', 'Uploading attachments…')
+    // The schedule-send trigger is disabled too (it also routes to handleSend).
+    const scheduleTrigger = screen.getByRole('button', { name: 'Show schedule send options' })
+    expect(scheduleTrigger).toBeDisabled()
+    expect(composeMutate).not.toHaveBeenCalled()
+
+    // Finish the upload; Send becomes available again.
+    resolveUpload({ blobId: 'blob-1' })
+    await waitFor(() => expect(screen.getByRole('button', { name: /^Send$/i })).toBeEnabled())
   })
 })

@@ -459,6 +459,14 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
       document.getElementById('composer-to')?.focus();
       return;
     }
+    // Defense-in-depth for BUG-2026-064: the Send button is disabled during
+    // attachment uploads, but the schedule picker and any future callers
+    // reach this handler directly — files still in flight would be missing
+    // from the sent message (orphaned blobs).
+    if (isUploading) {
+      toast.error('Uploading attachments — please wait until the upload finishes before sending.');
+      return;
+    }
     const htmlContent = (() => {
       // Ensure quoted content is visible before extracting HTML
       const quotedEl = editor?.view?.dom?.querySelector('#quoted-content') as HTMLElement | null;
@@ -715,10 +723,16 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
 
             <button 
               onClick={() => handleSend()}
-              disabled={composeMutation.isPending || !to || !selectedIdentity}
+              disabled={composeMutation.isPending || isUploading || !to || !selectedIdentity}
+              title={isUploading ? 'Uploading attachments…' : undefined}
               className="flex items-center gap-1.5 px-4 py-1.5 bg-icloud-accent text-white rounded-full font-semibold text-[13px] hover:bg-icloud-accent-hover hover:bg-icloud-accent-hover transition-colors disabled:opacity-40"
             >
-              {composeMutation.isPending ? (
+              {isUploading ? (
+                <span className="flex items-center gap-1.5">
+                  <Paperclip className="animate-pulse w-3.5 h-3.5" strokeWidth={2} />
+                  Uploading…
+                </span>
+              ) : composeMutation.isPending ? (
                 <span className="flex items-center gap-1.5">
                   <svg className="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -738,7 +752,7 @@ export function Composer({ onClose, replyTo, draftEmail, isMobile = false }: Com
               <div className="relative">
                 <button
                   onClick={() => setShowSchedulePicker(!showSchedulePicker)}
-                  disabled={composeMutation.isPending || !to || !selectedIdentity}
+                  disabled={composeMutation.isPending || isUploading || !to || !selectedIdentity}
                   aria-label={showSchedulePicker ? 'Hide schedule send options' : 'Show schedule send options'}
                   aria-expanded={showSchedulePicker}
                   aria-haspopup="dialog"
