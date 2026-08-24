@@ -149,8 +149,11 @@ export function useKeyboardShortcuts(config: KeyboardShortcutsConfig) {
         e.preventDefault();
         cbs.onToggleSidebar();
       }
-      // CMD/CTRL + Shift + N: new compose
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && (e.key === 'N' || e.key === 'n')) {
+      // CMD/CTRL + Shift + N: new compose — never steal the chord from
+      // inputs/editors/contentEditable (e.g. browser new-folder in some UIs,
+      // typing capital N with Ctrl held) — same hardening as CMD+A / CMD+B
+      // from BUG-2026-028 (BUG-2026-061).
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && (e.key === 'N' || e.key === 'n') && !isInputFocused()) {
         e.preventDefault();
         cbs.onCompose();
         return;
