@@ -187,10 +187,24 @@ export async function clearDeferredMutations() {
   await Promise.all(records.map(record => removeMutation(record.id)))
 }
 
+/** Count of queued mutations that exhausted MAX_ATTEMPTS and will not replay. */
+export async function getFailedMutationCount() {
+  const records = await loadMutations()
+  return records.filter(record => record.failedAt).length
+}
+
 // Shared in-flight replay promise. Concurrent callers AWAIT the same replay
 // instead of silently skipping (the old module-level boolean lock let a
 // second mounted hook instance lose a replay and never sync).
 let replayPromise: Promise<{ syncedCount: number; errors: Array<{ id: string; error: string }> }> | null = null
+
+/**
+ * A queued mutation that can never succeed (destroyed mailbox id, permanent
+ * validation error) must not be retried on every reconnect forever. After
+ * MAX_ATTEMPTS failures the record is marked with failedAt and excluded from
+ * replay while remaining visible via listDeferredMutations() (BUG-2026-059).
+ */
+export const MAX_ATTEMPTS = 5
 
 export function replayDeferredMutations() {
   if (replayPromise) return replayPromise
@@ -205,8 +219,9 @@ async function doReplayDeferredMutations() {
   let syncedCount = 0
   const errors: Array<{ id: string; error: string }> = []
 
-  // Process mutations one at a time
+  // Process mutations one at a time, skipping records already marked failed.
   for (const record of queued) {
+    if (record.failedAt) continue
     try {
       // Refresh ifInState from the current Email state: the token captured at
       // mutation time is stale by the time an offline mutation is replayed,
@@ -239,13 +254,19 @@ async function doReplayDeferredMutations() {
       syncedCount += 1
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
+      const attemptCount = record.attemptCount + 1
+      const exhausted = attemptCount >= MAX_ATTEMPTS
       const updated: DeferredMutation = {
         ...record,
-        attemptCount: record.attemptCount + 1,
+        attemptCount,
         lastError: message,
+        ...(exhausted ? { failedAt: Date.now() } : {}),
       }
       await persistMutation(updated)
-      errors.push({ id: record.id, error: message })
+      errors.push({
+        id: record.id,
+        error: exhausted ? `Gave up after ${MAX_ATTEMPTS} attempts: ${message}` : message,
+      })
       // Continue processing remaining mutations instead of breaking
       // This allows independent mutations to succeed even if one fails
     }
