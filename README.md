@@ -183,6 +183,7 @@ See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for complete configuration examples.
 |---------|-------------|
 | **Threaded Conversations** | Messages grouped by thread with per-message expand/collapse in list and stack view in reader |
 | **Rich Text Composer** | Tiptap-powered editor (ProseMirror) with formatting, links, underline, placeholder text |
+| **Send Validation** | Empty subject allowed (iCloud-style); invalid recipient addresses abort the send with a per-address error; Send is blocked while attachments are uploading |
 | **Reply / Reply All / Forward** | Smart recipient prefilling with quoted content via `quoteBuilder` |
 | **Message Quoting** | Automatic previous message quoting with summary and header formatting |
 | **Scheduled Send** | Queue emails for future delivery via `EmailSubmission/sendAt` with `ScheduleSendPicker` — shown only when the server advertises `maxDelayedSend` |
@@ -335,7 +336,7 @@ See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for complete configuration examples.
 | `Escape` | Close modals, clear selection |
 | `Cmd/Ctrl + A` | Select all |
 | `Cmd/Ctrl + B` | Toggle sidebar |
-| `Cmd/Ctrl + Shift + N` | New message |
+| `Cmd/Ctrl + Shift + N` | New message (never fires while typing in an input/editor) |
 
 ---
 
