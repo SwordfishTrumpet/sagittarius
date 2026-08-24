@@ -47,13 +47,14 @@ describe('dateFormat', () => {
       expect(['Tuesday', 'Jan 9']).toContain(formatMessageDate('2024-01-09T10:00:00'));
     });
 
-    it('should format older dates as MMM d', () => {
+    it('should format older same-year dates as MMM d and previous years as MMM d, yyyy (BUG-2026-056)', () => {
       const now = new Date('2024-01-15T14:30:00');
       vi.setSystemTime(now);
 
-      expect(formatMessageDate('2024-01-08T10:00:00')).toBe('Jan 8');   // 7 days ago
-      expect(formatMessageDate('2023-12-25T10:00:00')).toBe('Dec 25');  // Last year
-      expect(formatMessageDate('2023-06-15T10:00:00')).toBe('Jun 15');  // Older
+      expect(formatMessageDate('2024-01-08T10:00:00')).toBe('Jan 8');          // 7 days ago, same year
+      expect(formatMessageDate('2023-12-25T10:00:00')).toBe('Dec 25, 2023');  // Previous year
+      expect(formatMessageDate('2023-06-15T10:00:00')).toBe('Jun 15, 2023');  // Older, previous year
+      expect(formatMessageDate('2019-01-15T10:00:00')).toBe('Jan 15, 2019');  // Much older
     });
 
     it('should handle different time zones in input', () => {
