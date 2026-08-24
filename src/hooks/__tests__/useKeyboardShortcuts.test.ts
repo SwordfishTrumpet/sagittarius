@@ -104,4 +104,24 @@ describe('useKeyboardShortcuts', () => {
     dispatchKey({ key: 'j' })
     expect(config.onNavigateEmail).toHaveBeenCalledWith('next')
   })
+
+  it('does NOT trigger CMD+Shift+N while typing in an input (BUG-2026-061)', () => {
+    const config = makeConfig()
+    renderHook(() => useKeyboardShortcuts(config))
+
+    const input = document.createElement('input')
+    document.body.appendChild(input)
+    input.focus()
+
+    dispatchKey({ key: 'N', shiftKey: true, metaKey: true })
+    expect(config.onCompose).not.toHaveBeenCalled()
+  })
+
+  it('triggers CMD+Shift+N new compose when NOT typing', () => {
+    const config = makeConfig()
+    renderHook(() => useKeyboardShortcuts(config))
+
+    dispatchKey({ key: 'N', shiftKey: true, metaKey: true })
+    expect(config.onCompose).toHaveBeenCalledTimes(1)
+  })
 })
