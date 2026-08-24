@@ -124,4 +124,20 @@ describe('useKeyboardShortcuts', () => {
     dispatchKey({ key: 'N', shiftKey: true, metaKey: true })
     expect(config.onCompose).toHaveBeenCalledTimes(1)
   })
+
+  it('"/" focuses the search input by stable id, not placeholder text (BUG-2026-062)', () => {
+    const config = makeConfig()
+    renderHook(() => useKeyboardShortcuts(config))
+
+    const search = document.createElement('input')
+    // Placeholder deliberately DIFFERENT from "Search": the shortcut must not
+    // depend on visible English copy.
+    search.setAttribute('placeholder', 'Suchen')
+    search.id = 'search-input'
+    document.body.appendChild(search)
+    const focusSpy = vi.spyOn(search, 'focus')
+
+    dispatchKey({ key: '/' })
+    expect(focusSpy).toHaveBeenCalledTimes(1)
+  })
 })

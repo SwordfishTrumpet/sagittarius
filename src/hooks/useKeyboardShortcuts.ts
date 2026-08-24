@@ -233,7 +233,10 @@ export function useKeyboardShortcuts(config: KeyboardShortcutsConfig) {
             e.preventDefault();
             break;
           case '/':
-            (document.querySelector('input[placeholder="Search"]') as HTMLInputElement)?.focus();
+            // Stable hook via id — do NOT couple keyboard behavior to visible
+            // English placeholder text (i18n/copy changes would silently kill
+            // the shortcut) (BUG-2026-062).
+            (document.getElementById('search-input') as HTMLInputElement | null)?.focus();
             e.preventDefault();
             break;
         }
