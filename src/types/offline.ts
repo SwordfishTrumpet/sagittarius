@@ -13,6 +13,8 @@ export type DeferredMutation = {
   createdAt: number
   attemptCount: number
   lastError?: string | null
+  /** Set once the record exceeded MAX_ATTEMPTS and is excluded from replay. */
+  failedAt?: number | null
 }
 
 export type DeferredMutationResult = {

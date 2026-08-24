@@ -129,4 +129,47 @@ describe('replayDeferredMutations', () => {
     expect(r2.syncedCount).toBe(1)
     expect(jmapClient.request).toHaveBeenCalledTimes(1)
   })
+
+  it('stops retrying a permanently failing mutation after MAX_ATTEMPTS (BUG-2026-059)', async () => {
+    const {
+      enqueueDeferredMutation,
+      replayDeferredMutations,
+      clearDeferredMutations,
+      listDeferredMutations,
+      getFailedMutationCount,
+      MAX_ATTEMPTS,
+      jmapClient,
+    } = await loadQueueModule()
+    await clearDeferredMutations()
+
+    await enqueueDeferredMutation({
+      accountId: 'acc-1',
+      operation: 'updateKeywords',
+      payload: {
+        description: 'Fails forever',
+        requests: [
+          ['Email/set', { accountId: 'acc-1', update: { gone: { mailboxIds: {} } } }, '0'],
+        ],
+      },
+    })
+
+    ;(jmapClient.request as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('serverNotFound'))
+
+    for (let i = 0; i < MAX_ATTEMPTS; i++) {
+      await replayDeferredMutations()
+    }
+
+    // Record is now terminal: failedAt set, still visible via the list
+    const records = await listDeferredMutations()
+    expect(records).toHaveLength(1)
+    expect(records[0].attemptCount).toBe(MAX_ATTEMPTS)
+    expect(records[0].failedAt).toBeTruthy()
+    expect(await getFailedMutationCount()).toBe(1)
+
+    // A further reconnect/bootstrap replay does NOT hit the server again
+    const callsBefore = (jmapClient.request as ReturnType<typeof vi.fn>).mock.calls.length
+    const result = await replayDeferredMutations()
+    expect(result.syncedCount).toBe(0)
+    expect((jmapClient.request as ReturnType<typeof vi.fn>).mock.calls.length).toBe(callsBefore)
+  })
 })
