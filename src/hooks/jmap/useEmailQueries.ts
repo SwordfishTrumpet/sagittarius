@@ -65,6 +65,58 @@ function extractMethodResult<T>(
   return data as T
 }
 
+/**
+ * Compose the mailbox-scoped condition shared by Email/query and
+ * SearchSnippet/get so both requests are filtered identically.
+ */
+function buildMailboxCondition(mailboxId?: string, excludeMailboxIds?: string[]): EmailFilter {
+  const mailboxConditions: EmailFilter[] = []
+  if (mailboxId && mailboxId !== 'all' && mailboxId !== 'flagged') {
+    mailboxConditions.push({ inMailbox: mailboxId })
+  }
+  if (mailboxId === 'all' && excludeMailboxIds && excludeMailboxIds.length > 0) {
+    mailboxConditions.push({ inMailboxOtherThan: excludeMailboxIds })
+  }
+  if (mailboxId === 'flagged') {
+    mailboxConditions.push({ hasKeyword: '$flagged' })
+  }
+  return mergeFiltersAND(...mailboxConditions)
+}
+
+/**
+ * Compose the search-term + dialog-filter condition (including free text)
+ * into a single JMAP filter. Returns null when no constraint is active.
+ * Shared by Email/query and SearchSnippet/get (BUG-2026-053).
+ */
+function buildEffectiveSearchFilter(searchTerm?: string, dialogFilter?: SearchFilter): EmailFilter | null {
+  if (!searchTerm && !dialogFilter) return null
+
+  const parsed = searchTerm
+    ? parseSearchQuery(searchTerm)
+    : { text: '', filters: {} as SearchFilter }
+
+  // Merge dialog filters into parsed search filters at SearchFilter level
+  // dialogFilter takes precedence for overlapping fields
+  const mergedSearch: SearchFilter = {
+    ...parsed.filters,
+    ...dialogFilter,
+  }
+  // Concatenate headerFilters from both sources
+  if (dialogFilter?.headerFilters?.length || parsed.filters.headerFilters?.length) {
+    mergedSearch.headerFilters = [
+      ...(parsed.filters.headerFilters || []),
+      ...(dialogFilter?.headerFilters || []),
+    ]
+  }
+
+  const builtFilter = buildJMAPFilter(mergedSearch)
+  const textFilter: EmailFilter | null = parsed.text ? { text: parsed.text } : null
+
+  return textFilter
+    ? (Object.keys(builtFilter).length > 0 ? mergeFiltersAND(builtFilter, textFilter) : textFilter)
+    : (Object.keys(builtFilter).length > 0 ? builtFilter : null)
+}
+
 export function useThreads(
   mailboxId?: string,
   searchTerm?: string,
@@ -78,47 +130,8 @@ export function useThreads(
     queryFn: async () => fetchWithOfflineCache(['threads', accountId, mailboxId, searchTerm, dialogFilter ? JSON.stringify(dialogFilter) : undefined, excludeMailboxIds], async () => {
       if (!mailboxId && !searchTerm && !dialogFilter) return []
 
-      const mailboxConditions: EmailFilter[] = []
-      if (mailboxId && mailboxId !== 'all' && mailboxId !== 'flagged') {
-        mailboxConditions.push({ inMailbox: mailboxId })
-      }
-      if (mailboxId === 'all') {
-        if (excludeMailboxIds && excludeMailboxIds.length > 0) {
-          mailboxConditions.push({ inMailboxOtherThan: excludeMailboxIds })
-        }
-      }
-      if (mailboxId === 'flagged') {
-        mailboxConditions.push({ hasKeyword: '$flagged' })
-      }
-
-      // Build a single effective search filter from both searchTerm and dialogFilter
-      let effectiveSearchFilter: EmailFilter | null = null
-      if (searchTerm || dialogFilter) {
-        const parsed = searchTerm
-          ? parseSearchQuery(searchTerm)
-          : { text: '', filters: {} as SearchFilter }
-
-        // Merge dialog filters into parsed search filters at SearchFilter level
-        // dialogFilter takes precedence for overlapping fields
-        const mergedSearch: SearchFilter = {
-          ...parsed.filters,
-          ...dialogFilter,
-        }
-        // Concatenate headerFilters from both sources
-        if (dialogFilter?.headerFilters?.length || parsed.filters.headerFilters?.length) {
-          mergedSearch.headerFilters = [
-            ...(parsed.filters.headerFilters || []),
-            ...(dialogFilter?.headerFilters || []),
-          ]
-        }
-
-        const builtFilter = buildJMAPFilter(mergedSearch)
-        const textFilter: EmailFilter | null = parsed.text ? { text: parsed.text } : null
-
-        effectiveSearchFilter = textFilter
-          ? (Object.keys(builtFilter).length > 0 ? mergeFiltersAND(builtFilter, textFilter) : textFilter)
-          : (Object.keys(builtFilter).length > 0 ? builtFilter : null)
-      }
+      const mailboxCondition = buildMailboxCondition(mailboxId, excludeMailboxIds)
+      const effectiveSearchFilter = buildEffectiveSearchFilter(searchTerm, dialogFilter)
 
       // Combine mailbox conditions with search/dialog filter. mergeFiltersAND
       // flattens plain conditions into one valid EmailFilterCondition (RFC
@@ -126,8 +139,7 @@ export function useThreads(
       // { allOf: [...] } (RFC 8620 §5.5) the moment any operand is itself a
       // FilterOperator — never producing an invalid mix like
       // { inMailbox: 'id', allOf: [...] }.
-      const allConditions = [...mailboxConditions, ...(effectiveSearchFilter ? [effectiveSearchFilter] : [])]
-      const filter: EmailFilter = mergeFiltersAND(...allConditions)
+      const filter: EmailFilter = mergeFiltersAND(mailboxCondition, ...(effectiveSearchFilter ? [effectiveSearchFilter] : []))
 
       const queryResponse = await jmapClient.request([
         ['Email/query', {
@@ -175,48 +187,18 @@ export function useThreads(
 
       if (searchTerm && ids.length > 0) {
         try {
-          const parsed = parseSearchQuery(searchTerm)
-          
-          // Merge parsed filters with dialog filters for consistent filtering
-          const mergedSnippet: SearchFilter = {
-            ...parsed.filters,
-            ...dialogFilter,
-          }
-          if (dialogFilter?.headerFilters?.length || parsed.filters.headerFilters?.length) {
-            mergedSnippet.headerFilters = [
-              ...(parsed.filters.headerFilters || []),
-              ...(dialogFilter?.headerFilters || []),
-            ]
-          }
-          const combinedFilter = buildJMAPFilter(mergedSnippet)
-          
-          const snippetFilter: Record<string, unknown> = {}
-          if (mailboxId && mailboxId !== 'all' && mailboxId !== 'flagged') {
-            snippetFilter.inMailbox = mailboxId
-          }
-          if (mailboxId === 'all') {
-            if (excludeMailboxIds && excludeMailboxIds.length > 0) {
-              snippetFilter.inMailboxOtherThan = excludeMailboxIds
-            }
-          }
-          if (mailboxId === 'flagged') {
-            snippetFilter.hasKeyword = '$flagged'
-          }
-          
-          // Copy condition fields into snippet filter (handle allOf wrapping)
-          if ('allOf' in combinedFilter && Array.isArray(combinedFilter.allOf)) {
-            for (const cond of combinedFilter.allOf) {
-              if (cond && typeof cond === 'object') Object.assign(snippetFilter, cond)
-            }
-          } else if (Object.keys(combinedFilter).length > 0) {
-            Object.assign(snippetFilter, combinedFilter)
-          }
-          
-          // Add free text search if present
-          if (parsed.text) {
-            snippetFilter.text = parsed.text
-          } else if (Object.keys(snippetFilter).length === 0) {
-            snippetFilter.text = searchTerm
+          // Reuse the exact same structural composition as the Email/query
+          // above. Hand-flattening conditions with Object.assign previously
+          // clobbered duplicate singular keys (two `header:` or two keyword
+          // filters), desynchronizing snippet highlighting from the result
+          // set (BUG-2026-053).
+          const snippetSearchFilter = buildEffectiveSearchFilter(searchTerm, dialogFilter)
+          let snippetFilter: EmailFilter = mergeFiltersAND(
+            buildMailboxCondition(mailboxId, excludeMailboxIds),
+            ...(snippetSearchFilter ? [snippetSearchFilter] : []),
+          )
+          if (Object.keys(snippetFilter).length === 0) {
+            snippetFilter = { text: searchTerm }
           }
 
           const snippetResponse = await jmapClient.request([
