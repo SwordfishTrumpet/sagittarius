@@ -146,15 +146,23 @@ describe('filterBuilder — RFC 8621 §4.4.1 Compliance', () => {
       });
     });
 
-    it('should merge multiple header filters into a flat object (last wins)', () => {
+    it('should wrap colliding multiple header filters in allOf (BUG-2026-053)', () => {
       const filter = buildJMAPFilter({
         headerFilters: [
           { headerName: 'List-Id', value: 'newsletter' },
           { headerName: 'X-Custom', value: 'value' },
         ],
       });
-      // Multiple header filters merge into a single object; last header wins
-      expect(filter).toEqual({ header: ['X-Custom', 'value'] });
+      // RFC 8621 §4.4.1: `header` is singular per FilterCondition, so two
+      // header filters cannot coexist in one flat object. A flat merge would
+      // silently drop the first condition — they must be combined via the
+      // RFC 8620 §5.5 allOf operator instead.
+      expect(filter).toEqual({
+        allOf: [
+          { header: ['List-Id', 'newsletter'] },
+          { header: ['X-Custom', 'value'] },
+        ],
+      });
     });
 
     it('should merge header filters with keyword filters into a flat object', () => {
@@ -168,13 +176,18 @@ describe('filterBuilder — RFC 8621 §4.4.1 Compliance', () => {
       });
     });
 
-    it('should merge multiple keyword filters into a flat object (last wins)', () => {
+    it('should wrap colliding multiple keyword filters in allOf (BUG-2026-053)', () => {
       // RFC 8621 §4.4.1: hasKeyword is a single String, so multiple keyword
-      // conditions merge into a flat object; last keyword wins
+      // conditions cannot share one flat object (the previous "last wins"
+      // flat merge silently dropped $flagged) — combine via allOf instead.
       const filter = buildJMAPFilter({ isFlagged: true, isDraft: true });
 
-      // Flat merge: only the last hasKeyword remains
-      expect(filter).toEqual({ hasKeyword: '$draft' });
+      expect(filter).toEqual({
+        allOf: [
+          { hasKeyword: '$flagged' },
+          { hasKeyword: '$draft' },
+        ],
+      });
     });
   });
 

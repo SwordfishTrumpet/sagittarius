@@ -91,6 +91,32 @@ export function buildJMAPFilter(
   }
 
   if (extraConditions.length === 0) return jmapFilter;
+
+  // Every RFC 8621 §4.4.1 FilterCondition property is singular, so two
+  // conditions carrying the same key (e.g. two `header` filters or two
+  // `hasKeyword` keywords) cannot coexist in one flat condition object —
+  // a flat merge would silently drop every colliding condition but the last.
+  // When any key collides we must combine via the allOf operator instead
+  // (RFC 8620 §5.5). Non-colliding conditions stay flattened because some
+  // servers don't support FilterOperator (see AGENTS.md filter rule).
+  const seenKeys = new Set<string>(Object.keys(jmapFilter));
+  const hasCollision = extraConditions.some((cond) =>
+    Object.keys(cond).some((key) => {
+      if (seenKeys.has(key)) return true;
+      seenKeys.add(key);
+      return false;
+    }),
+  );
+
+  if (hasCollision) {
+    return {
+      allOf: [
+        ...(Object.keys(jmapFilter).length > 0 ? [jmapFilter] : []),
+        ...extraConditions,
+      ],
+    };
+  }
+
   if (Object.keys(jmapFilter).length === 0) {
     return extraConditions.length === 1 ? extraConditions[0] : Object.assign({}, ...extraConditions);
   }

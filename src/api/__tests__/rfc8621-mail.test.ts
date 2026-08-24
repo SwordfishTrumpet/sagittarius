@@ -674,18 +674,27 @@ describe('RFC 8621 — JMAP Mail Protocol', () => {
         isAnswered: true,
       });
 
-      // All conditions merge into a single flat object (last hasKeyword wins)
-      const condition = filter as EmailFilterCondition;
-      expect(condition.from).toBe('alice@example.com');
-      expect(condition.to).toBe('bob@example.com');
-      expect(condition.cc).toBe('carol@example.com');
-      expect(condition.subject).toBe('meeting');
-      expect(condition.text).toBe('agenda');
-      expect(condition.hasAttachment).toBe(true);
       // notHasKeyword filter skipped (not supported by all servers)
-      expect(condition).not.toHaveProperty('notHasKeyword');
-      // Multiple hasKeyword conditions merge flat; last one wins
-      expect(condition.hasKeyword).toBe('$answered');
+      expect(filter).not.toHaveProperty('notHasKeyword');
+      // hasKeyword is singular per §4.4.1, so the three keyword conditions
+      // collide: the non-colliding base conditions stay in one flat object
+      // and everything is combined via the RFC 8620 §5.5 allOf operator
+      // (BUG-2026-053).
+      expect(filter).toEqual({
+        allOf: [
+          {
+            from: 'alice@example.com',
+            to: 'bob@example.com',
+            cc: 'carol@example.com',
+            subject: 'meeting',
+            text: 'agenda',
+            hasAttachment: true,
+          },
+          { hasKeyword: '$flagged' },
+          { hasKeyword: '$draft' },
+          { hasKeyword: '$answered' },
+        ],
+      });
     });
 
     it('should map "from: me" to the user email address', async () => {
@@ -710,14 +719,20 @@ describe('RFC 8621 — JMAP Mail Protocol', () => {
       expect(new Date(asCondition(filter).before!).toISOString()).toBe(asCondition(filter).before);
     });
 
-    it('should merge multiple hasKeyword conditions into a flat object (last wins)', async () => {
+    it('should combine multiple hasKeyword conditions via allOf (BUG-2026-053)', async () => {
       const { buildJMAPFilter } = await import('../../utils/filterBuilder');
 
       // RFC 8621 §4.4.1: hasKeyword is a single String, so multiple keyword
-      // conditions merge flat; last keyword wins
+      // conditions cannot share one flat object (the previous "last wins"
+      // flat merge silently dropped $flagged) — combine via allOf instead.
       const filter = buildJMAPFilter({ isFlagged: true, isDraft: true });
 
-      expect(filter).toEqual({ hasKeyword: '$draft' });
+      expect(filter).toEqual({
+        allOf: [
+          { hasKeyword: '$flagged' },
+          { hasKeyword: '$draft' },
+        ],
+      });
     });
 
     it('should return empty object for empty filter', async () => {
