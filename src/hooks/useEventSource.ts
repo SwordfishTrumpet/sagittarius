@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { eventSourceManager } from '../api/eventSource';
 import { jmapClient } from '../api/jmap';
-import { queryClient } from '../main';
+import { queryClient } from '../api/queryClient';
 import { playNotificationSound } from '../utils/notificationSound';
 import { logger } from '../utils/logger';
 import { extractAuthToken } from '../utils/auth';

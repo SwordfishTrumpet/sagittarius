@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { webSocketManager } from '../api/websocket';
 import { jmapClient } from '../api/jmap';
-import { queryClient } from '../main';
+import { queryClient } from '../api/queryClient';
 import { playNotificationSound } from '../utils/notificationSound';
 import { logger, redactUrl } from '../utils/logger';
 import { extractAuthToken } from '../utils/auth';

@@ -1,25 +1,15 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClientProvider } from '@tanstack/react-query'
 import App from './App.tsx'
 import { ErrorBoundary } from './components/ErrorBoundary.tsx'
 import { ThemeProvider } from './context/ThemeProvider.tsx'
 import { AccountProvider } from './hooks/useAccountManager.tsx'
-import { jmapClient } from './api/jmap.ts'
 import { logger } from './utils/logger'
 import './index.css'
 
-export const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      networkMode: 'offlineFirst',
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      retry: 1,
-    },
-  },
-})
-
-jmapClient.registerQueryClient(queryClient);
+export { queryClient } from './api/queryClient'
+import { queryClient } from './api/queryClient'
 
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
