@@ -86,3 +86,30 @@ export function classifyJMAPError(err: unknown, status?: number): JMAPErrorKind 
   }
   return 'protocol';
 }
+
+/**
+ * User-facing message for a JMAP failure, keyed by the error class (issue
+ * #8). UI components must render THIS instead of raw error messages like
+ * `JMAP request failed: 502` — users need to know whether their session
+ * expired, the mail server is gone, or the server misbehaved, and never
+ * see internal status strings.
+ */
+export function getUserFacingJMAPErrorMessage(err: unknown): string {
+  const kind = getKind(err);
+  if (kind === 'auth') {
+    return 'Your session has expired. Please sign in again.';
+  }
+  if (kind === 'server-unreachable') {
+    return 'Mail server unreachable. Please check that the mail server is running and try again.';
+  }
+  if (kind === 'protocol') {
+    const status = err && typeof err === 'object' && 'status' in err
+      ? (err as { status?: unknown }).status
+      : undefined;
+    if (typeof status === 'number') {
+      return `The mail server returned an error (HTTP ${status}). Please try again.`;
+    }
+    return 'The mail server returned an error. Please try again.';
+  }
+  return 'An unexpected error occurred. Please try again.';
+}

@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { EmailReader, type EmailReaderProps } from '../EmailReader'
+import { JMAPProtocolError, ServerUnreachableError } from '../../utils/jmapErrors'
 
 const { getBlobUrl, getAuthHeader, getSession } = vi.hoisted(() => ({
   getBlobUrl: vi.fn(() => 'https://mail.test/download/blob-1/image.png'),
@@ -256,5 +257,33 @@ describe('EmailReader', () => {
       configurable: true,
       value: window.location,
     })
+  })
+
+  it('renders the classified message, not the raw status string (issue #8)', () => {
+    renderReader(
+      <EmailReader
+        {...baseProps}
+        isEmailDetailError={true}
+        emailDetailError={new JMAPProtocolError('JMAP request failed: 500', 500)}
+        threadEmails={undefined}
+      />,
+    )
+
+    expect(screen.getByText('The mail server returned an error (HTTP 500). Please try again.')).toBeInTheDocument()
+    expect(screen.queryByText(/JMAP request failed/)).not.toBeInTheDocument()
+  })
+
+  it('renders the server-unreachable message for dead-backend errors (issue #8)', () => {
+    renderReader(
+      <EmailReader
+        {...baseProps}
+        isEmailDetailError={true}
+        emailDetailError={new ServerUnreachableError('JMAP request failed: 502')}
+        threadEmails={undefined}
+      />,
+    )
+
+    expect(screen.getByText('Mail server unreachable. Please check that the mail server is running and try again.')).toBeInTheDocument()
+    expect(screen.queryByText(/JMAP request failed/)).not.toBeInTheDocument()
   })
 })

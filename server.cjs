@@ -11,7 +11,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const httpProxy = require('http-proxy');
-const { computeServerFingerprint, parseTrustedFingerprints } = require('./scripts/serverUtils.cjs');
+const { computeServerFingerprint, parseTrustedFingerprints, writeBadGatewayResponse } = require('./scripts/serverUtils.cjs');
 
 const PORT = process.env.PORT || 3000;
 const JMAP_SERVER = process.env.JMAP_SERVER || 'http://localhost:8080';
@@ -116,10 +116,7 @@ proxy.on('proxyRes', (proxyRes) => {
 
 proxy.on('error', (err, _req, res) => {
   logError(`[proxy] ${err.message}`);
-  if (res && typeof res.writeHead === 'function') {
-    res.writeHead(502, { 'Content-Type': 'text/plain' });
-    res.end('Bad Gateway');
-  }
+  writeBadGatewayResponse(res);
 });
 
 // ── Static file serving ─────────────────────────────────────────────
