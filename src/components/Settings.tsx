@@ -12,6 +12,7 @@ import { useHasSieveCapability } from '../hooks/useSieve';
 import { useHasIdentityCapability } from '../hooks/jmap/useIdentities';
 import { useHasWebPushCapability, usePushSubscription } from '../hooks/usePushSubscription';
 import { useBIMIPreference } from '../hooks/useBIMIPreference';
+import { fetchServerFingerprint } from '../utils/serverFingerprint';
 import {
   isNotificationSoundEnabled,
   getNotificationVolume,
@@ -44,11 +45,27 @@ function GeneralSettings() {
   const [volume, setVolume] = useState(getNotificationVolume);
   const [permission, setPermission] = useState<NotificationPermission | 'unsupported'>(getNotificationPermission);
   const [isRequesting, setIsRequesting] = useState(false);
+  const [serverHost, setServerHost] = useState<string | null>(null);
   const hasWebPush = useHasWebPushCapability();
   const { existingSubs, subscribe, permission: webPushPermission } = usePushSubscription();
   const hasActiveSub = existingSubs && existingSubs.list && existingSubs.list.length > 0;
   const isWebPushGranted = webPushPermission === 'granted';
   const { showSenderIcons, setShowSenderIcons } = useBIMIPreference();
+
+  // Show the configured mail server (read-only, issue #6): the fingerprint
+  // endpoint reports the actual backend host — available even during an
+  // outage. Falls back to the build-time login domain when unavailable.
+  useEffect(() => {
+    let cancelled = false;
+    void fetchServerFingerprint().then((fingerprint) => {
+      if (!cancelled && fingerprint?.host) setServerHost(fingerprint.host);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const configuredHost = serverHost
+    ?? (import.meta.env.VITE_LOGIN_EMAIL_DOMAIN ? String(import.meta.env.VITE_LOGIN_EMAIL_DOMAIN).replace(/^@+/, '') : null);
 
   // Refresh permission state when component mounts
   useEffect(() => {
@@ -103,6 +120,12 @@ function GeneralSettings() {
           <span className="text-[15px] text-icloud-text-primary">Protocol</span>
           <span className="text-[13px]  text-icloud-text-secondary">JMAP (RFC 8620 / 8621)</span>
         </div>
+        {configuredHost && (
+          <div className="px-4 py-3 flex items-center justify-between">
+            <span className="text-[15px] text-icloud-text-primary">Mail Server</span>
+            <span className="text-[13px] font-mono text-icloud-text-secondary">{configuredHost}</span>
+          </div>
+        )}
       </div>
 
       <h3 className="text-[15px] font-semibold text-icloud-text-primary mt-6 mb-3">Appearance</h3>

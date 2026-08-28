@@ -5,6 +5,7 @@ import { HTML5Backend } from 'react-dnd-html5-backend'
 import { AnimatePresence } from 'framer-motion'
 import { useQueryClient } from '@tanstack/react-query'
 import { Login } from './components/Login'
+import { ServerUnreachableScreen } from './components/ServerUnreachableScreen'
 import { Composer } from './components/Composer'
 import { VirtualMessageList } from './components/VirtualMessageList'
 import { jmapClient } from './api/jmap'
@@ -62,9 +63,17 @@ function App() {
   // changed (potentially attacker-controlled) backend identity. Sessions
   // without a stored fingerprint (legacy) render immediately, exactly as
   // before — there is nothing to compare against.
+  //
+  // Boot reachability (issue #6): when the check reports 'unreachable' the
+  // configured backend host no longer resolves — we render a full-screen
+  // "Mail server unreachable" state with Retry and Sign Out instead of a
+  // misleadingly healthy cached UI. 'endpoint-unavailable' (old server
+  // without the fingerprint endpoint) fails OPEN: there is nothing to
+  // compare, so the session renders as before (AGENTS.md policy).
   const [bootStatus, setBootStatus] = useState<'checking' | 'verified' | 'identity-changed' | 'unreachable'>(
     () => (jmapClient.getStoredSession() && getStoredFingerprint() ? 'checking' : 'verified'),
   )
+  const [isBootChecking, setIsBootChecking] = useState(false)
   const [selectedMailboxId, setSelectedMailboxId] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const debouncedSearchTerm = useDebouncedValue(searchTerm, DEBOUNCE.search)
@@ -81,24 +90,40 @@ function App() {
 
   // Server-identity boot check (issue #1): if the fingerprint changed, the
   // client invalidated the stored session; drop to the login screen with an
-  // explanatory notice. On 'unreachable' the check could not complete — the
-  // proxy cannot forward credentials to an unreachable host, so proceeding
-  // with the cached session is safe and requests surface ServerUnreachable.
-  useEffect(() => {
+  // explanatory notice. On 'unreachable' the backend hostname no longer
+  // resolves — the full-screen unreachable state (issue #6) replaces the
+  // misleadingly healthy cached UI. 'endpoint-unavailable' (fingerprint
+  // endpoint missing on an old server) fails open: no comparison is
+  // possible and the endpoint ships with every supported server config.
+  const runBootCheck = useCallback(() => {
     if (!jmapClient.getStoredSession() || !getStoredFingerprint()) {
       setBootStatus('verified')
       return
     }
-    let cancelled = false
-    void jmapClient.verifyServerIdentity().then((status) => {
-      if (cancelled) return
-      if (status === 'identity-changed') setSession(null)
-      setBootStatus(status)
-    })
-    return () => {
-      cancelled = true
-    }
+    setIsBootChecking(true)
+    setBootStatus('checking')
+    void jmapClient.verifyServerIdentity()
+      .then((status) => {
+        if (status === 'endpoint-unavailable') {
+          // Fail open (AGENTS.md): an old server without the fingerprint
+          // endpoint must not block the session.
+          setBootStatus('verified')
+          return
+        }
+        if (status === 'identity-changed') setSession(null)
+        setBootStatus(status)
+      })
+      .catch(() => {
+        // verifyServerIdentity never rejects in practice, but never strand
+        // the user on a failed check — render the cached session.
+        setBootStatus('verified')
+      })
+      .finally(() => setIsBootChecking(false))
   }, [])
+
+  useEffect(() => {
+    runBootCheck()
+  }, [runBootCheck])
 
   // Mobile detection and navigation
   const isMobile = useIsMobile()
@@ -138,7 +163,7 @@ function App() {
   }, [mailboxes])
 
   // Email threads
-  const { data: emails, isLoading: emailsLoading, isRefetching: emailsRefetching, refetch: refetchEmails } = useThreads(
+  const { data: emails, isLoading: emailsLoading, isRefetching: emailsRefetching, refetch: refetchEmails, error: threadsError } = useThreads(
     selectedMailboxId || undefined,
     debouncedSearchTerm,
     dialogSearchFilter,
@@ -599,6 +624,24 @@ function App() {
     )
   }
 
+  // Boot reachability (issue #6): the configured backend host no longer
+  // resolves — show the unreachable state with Retry and Sign Out instead of
+  // a misleadingly healthy-looking cached mail UI.
+  if (bootStatus === 'unreachable') {
+    return (
+      <ServerUnreachableScreen
+        host={getStoredFingerprint()?.host ?? null}
+        isChecking={isBootChecking}
+        onRetry={runBootCheck}
+        onSignOut={() => {
+          jmapClient.clearSessionLocally()
+          setBootStatus('verified')
+          setSession(null)
+        }}
+      />
+    )
+  }
+
   if (bootStatus === 'checking') {
     return (
       <div className="flex h-full w-full items-center justify-center bg-icloud-bg-layer1">
@@ -749,6 +792,7 @@ function App() {
             emails={emails || []}
             isLoading={emailsLoading}
             isRefetching={emailsRefetching}
+            error={threadsError as Error | null}
             selectedEmailId={selectedEmailId}
             selectedEmailIds={selectedEmailIds}
             mailboxes={mailboxes || []}

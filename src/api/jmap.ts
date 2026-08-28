@@ -340,15 +340,21 @@ class JMAPClient {
    *
    * Returns:
    *  - `'verified'`         — fingerprint matches (or no stored fingerprint /
-   *                           endpoint unavailable: nothing to compare, so
-   *                           proceed — the fingerprint is (re)established at
-   *                           the next successful login).
+   *                           nothing to compare, so proceed — the
+   *                           fingerprint is (re)established at the next
+   *                           successful login).
    *  - `'identity-changed'` — the fingerprint differs; the session was
    *                           cleared and no further requests may carry
    *                           credentials until the user confirms.
-   *  - `'unreachable'`      — the backend hostname no longer resolves.
+   *  - `'unreachable'`      — the backend hostname no longer resolves: the
+   *                           configured mail server is genuinely gone.
+   *  - `'endpoint-unavailable'` — the fingerprint endpoint itself is
+   *                           unavailable or malformed (old server paired
+   *                           with a new client). Fail open: there is
+   *                           nothing to compare, and the endpoint ships
+   *                           with every supported server configuration.
    */
-  async verifyServerIdentity(): Promise<'verified' | 'identity-changed' | 'unreachable'> {
+  async verifyServerIdentity(): Promise<'verified' | 'identity-changed' | 'unreachable' | 'endpoint-unavailable'> {
     if (!this.session || !this.authHeader) {
       // Nothing to protect — no credentials exist.
       this._identityVerified = true;
@@ -369,9 +375,11 @@ class JMAPClient {
       // Endpoint unavailable or malformed (e.g. an older server paired with
       // this client). Degrade without the pinning guarantee: credentials are
       // only forwarded to a host the proxy can reach, and the endpoint ships
-      // with every supported server configuration.
+      // with every supported server configuration. Distinct from
+      // 'unreachable' so the UI can fail open here (issue #6) instead of
+      // blocking on a server that simply lacks the endpoint.
       this._identityVerified = true;
-      return 'unreachable';
+      return 'endpoint-unavailable';
     }
 
     if (!current.resolved) {
@@ -641,6 +649,19 @@ class JMAPClient {
     if (this._loggingOut) return;
     this._loggingOut = true;
 
+    this.clearSessionLocally();
+
+    // 6. Redirect — use replace() to avoid caching post-logout state in browser history
+    window.location.replace('/');
+  }
+
+  /**
+   * Clear the authenticated session without navigating (issue #6). Used by
+   * the "Mail server unreachable" full-screen state's Sign Out action, where
+   * a page reload is neither needed nor safe (the backend is down; the app
+   * should just drop to the login screen). Safe to call repeatedly.
+   */
+  clearSessionLocally() {
     // 1. Close push connections
     webSocketManager.disconnect();
     eventSourceManager.disconnect();
@@ -660,8 +681,6 @@ class JMAPClient {
     // (embedded webview, beforeunload handler, tests) can retry logout
     // instead of silently no-oping forever (BUG-2026-058).
     this._loggingOut = false;
-    // 6. Redirect — use replace() to avoid caching post-logout state in browser history
-    window.location.replace('/');
   }
 
   getPrimaryAccount(capability?: string): string | null {

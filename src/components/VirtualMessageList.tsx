@@ -1,6 +1,6 @@
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { useMemo, useRef, useCallback, useEffect, useState } from 'react';
-import { Inbox } from 'lucide-react';
+import { Inbox, AlertCircle, RefreshCw } from 'lucide-react';
 import { SFReply, SFReplyAll, SFForward, SFStar, SFArchive, SFTrash } from './SFIcon';
 import { MessageListItem } from './MessageListItem';
 import { SwipeableRow } from './SwipeableRow';
@@ -8,12 +8,15 @@ import { ContextMenu, ContextMenuItemConfig } from './ContextMenu';
 import { AnimatePresence } from 'framer-motion';
 import { PullToRefresh } from './PullToRefresh';
 import { ErrorBoundary } from './ErrorBoundary';
+import { getUserFacingJMAPErrorMessage } from '../utils/jmapErrors';
 import type { Email, Mailbox } from '../types/jmap';
 
 interface VirtualMessageListProps {
   emails: Email[];
   isLoading: boolean;
   isRefetching: boolean;
+  /** Query error surfaced as a banner when the list is empty (issue #6). */
+  error?: Error | null;
   selectedEmailId: string | null;
   selectedEmailIds: Set<string>;
   mailboxes: Mailbox[];
@@ -43,6 +46,7 @@ export function VirtualMessageList({
   emails,
   isLoading,
   isRefetching,
+  error,
   selectedEmailId,
   selectedEmailIds,
   mailboxes,
@@ -198,6 +202,29 @@ export function VirtualMessageList({
       <div className="flex items-center justify-center py-20 opacity-30 flex-1" role="status" aria-live="polite">
         <div className="w-6 h-6 border-2 border-icloud-accent dark:border-icloud-accent border-t-transparent rounded-full animate-spin" />
         <span className="sr-only">Loading messages</span>
+      </div>
+    );
+  }
+
+  // Issue #6: a failed threads query with no cached data must not render as
+  // a silent "No messages" empty state. Show an error banner with a retry
+  // action so "mail server gone" is distinguishable from "no mail".
+  if (error && (!emails || emails.length === 0)) {
+    return (
+      <div role="alert" className="flex flex-col items-center justify-center h-full text-center px-8 bg-icloud-bg-layer1">
+        <AlertCircle className="w-10 h-10 mb-3 text-icloud-orange stroke-1" />
+        <p className="text-sm font-medium text-icloud-text-primary">Couldn't load messages</p>
+        <p className="text-[13px] text-icloud-text-secondary mt-1.5 max-w-sm">
+          {getUserFacingJMAPErrorMessage(error)}
+        </p>
+        <button
+          type="button"
+          onClick={() => { if (onRefresh) void onRefresh() }}
+          className="mt-5 inline-flex items-center gap-1.5 px-4 py-2 bg-icloud-accent text-white rounded-lg text-[13px] font-medium hover:bg-icloud-accent-hover transition-colors"
+        >
+          <RefreshCw className="w-3.5 h-3.5" strokeWidth={2} />
+          Retry
+        </button>
       </div>
     );
   }

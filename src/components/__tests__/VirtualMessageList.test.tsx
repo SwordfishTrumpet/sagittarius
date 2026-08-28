@@ -4,6 +4,7 @@ import { forwardRef } from 'react'
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import { VirtualMessageList } from '../VirtualMessageList'
 import { createTestEmail, createTestMailbox } from '../../test/testUtils'
+import { ServerUnreachableError } from '../../utils/jmapErrors'
 
 vi.mock('framer-motion', () => ({
   AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -248,5 +249,73 @@ describe('VirtualMessageList context menu', () => {
     await waitFor(() => {
       expect(screen.queryByRole('menu')).not.toBeInTheDocument()
     })
+  })
+})
+
+describe('VirtualMessageList error banner (issue #6)', () => {
+  const errorProps = {
+    emails: [
+      createTestEmail({
+        id: 'email-1',
+        threadId: 'thread-1',
+        subject: 'Test Subject',
+        preview: 'Test preview',
+        receivedAt: '2026-04-01T10:00:00.000Z',
+        keywords: {},
+      }),
+    ],
+    isLoading: false,
+    isRefetching: false,
+    selectedEmailId: null,
+    selectedEmailIds: new Set<string>(),
+    mailboxes: [],
+    onToggleSelection: vi.fn(),
+    onToggleStar: vi.fn(),
+    formatMessageDate: () => 'Apr 1',
+  }
+
+  it('shows a classified error banner instead of a silent empty state', () => {
+    render(
+      <VirtualMessageList
+        {...errorProps}
+        emails={[]}
+        error={new ServerUnreachableError('JMAP request failed: 502')}
+      />,
+    )
+
+    expect(screen.getByRole('alert')).toBeInTheDocument()
+    expect(screen.getByText("Couldn't load messages")).toBeInTheDocument()
+    expect(screen.getByText(/Mail server unreachable/)).toBeInTheDocument()
+    // The raw internal message must never surface.
+    expect(screen.queryByText(/JMAP request failed/)).not.toBeInTheDocument()
+    expect(screen.queryByText('No messages')).not.toBeInTheDocument()
+  })
+
+  it('renders cached emails when data exists even with an error', () => {
+    render(
+      <VirtualMessageList
+        {...errorProps}
+        error={new ServerUnreachableError('JMAP request failed: 502')}
+      />,
+    )
+
+    expect(screen.getByLabelText(/Test Subject/)).toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  it('retry button triggers the refresh handler', async () => {
+    const user = userEvent.setup()
+    const onRefresh = vi.fn(async () => {})
+    render(
+      <VirtualMessageList
+        {...errorProps}
+        emails={[]}
+        error={new ServerUnreachableError('Server unreachable')}
+        onRefresh={onRefresh}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Retry' }))
+    expect(onRefresh).toHaveBeenCalledTimes(1)
   })
 })
