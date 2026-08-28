@@ -7,6 +7,7 @@ import {
   replayDeferredMutations,
   subscribeOfflineQueueChanges,
 } from '../utils/offlineSyncQueue'
+import { subscribeServerReachability } from '../utils/serverReachability'
 
 export function useOfflineSyncQueue() {
   const queryClient = useQueryClient()
@@ -80,6 +81,15 @@ export function useOfflineSyncQueue() {
 
   useEffect(() => subscribeOfflineQueueChanges(() => {
     void refreshPendingCountRef.current()
+  }), [])
+
+  // Auto-replay when the backend becomes reachable again (issue #5): a
+  // successful request flips the shared reachability signal, and queued
+  // mutations (sends, moves, deletes) replay without user action.
+  useEffect(() => subscribeServerReachability((reachability) => {
+    if (reachability === 'reachable' && pendingCountRef.current > 0) {
+      void replayQueueRef.current()
+    }
   }), [])
 
   useEffect(() => {

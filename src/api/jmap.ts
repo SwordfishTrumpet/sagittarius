@@ -4,6 +4,7 @@ import { webSocketManager } from './websocket';
 import { stateManager } from './stateManager';
 import { getCsrfToken, getCsrfHeaderName, clearCsrfToken, regenerateCsrfToken } from '../utils/csrf';
 import { AuthError, ServerUnreachableError, JMAPProtocolError } from '../utils/jmapErrors';
+import { markServerReachable, markServerUnreachable } from '../utils/serverReachability';
 import {
   fetchServerFingerprint,
   getStoredFingerprint,
@@ -480,6 +481,7 @@ class JMAPClient {
       } catch (err) {
         // fetch-level failure: proxy unreachable, DNS dead, browser offline.
         logger.error(`[JMAP Error ${requestId}] Network failure:`, err instanceof Error ? err.message : String(err));
+        markServerUnreachable();
         throw new ServerUnreachableError('Server unreachable');
       }
 
@@ -501,6 +503,7 @@ class JMAPClient {
         logger.error(`[JMAP Error ${requestId}] Request body:`, JSON.stringify(body, null, 2));
         logger.error(`[JMAP Error ${requestId}] Response:`, errorText.substring(0, 1000));
         if (response.status >= 502 && response.status <= 504) {
+          markServerUnreachable();
           throw new ServerUnreachableError(`Server unreachable (HTTP ${response.status})`);
         }
         throw new JMAPProtocolError(`JMAP request failed: ${response.status}`, response.status);
@@ -508,6 +511,7 @@ class JMAPClient {
 
       const data = await response.json();
       logger.debug(`[JMAP Response ${requestId}]`, JSON.stringify(data, null, 2));
+      markServerReachable();
       return data;
     } finally {
       if (timeoutId) clearTimeout(timeoutId);

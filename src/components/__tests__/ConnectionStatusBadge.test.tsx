@@ -64,6 +64,21 @@ describe('ConnectionStatusBadge', () => {
     expect(screen.getByText('Manual sync')).toBeInTheDocument()
   })
 
+  it('shows Pending sync with a count for queued sends while the backend is down', () => {
+    render(
+      <ConnectionStatusBadge
+        isOffline={false}
+        isPushEnabled
+        isPushConnected={false}
+        pendingCount={2}
+        isReplaying={false}
+      />,
+    )
+
+    expect(screen.getByText('Pending sync')).toBeInTheDocument()
+    expect(screen.getByText('2')).toBeInTheDocument()
+  })
+
   it('shows a terminal Server unreachable state distinct from Reconnecting', () => {
     render(
       <ConnectionStatusBadge
