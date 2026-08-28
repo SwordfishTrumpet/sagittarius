@@ -45,5 +45,8 @@ jobs:
       - name: Run test suite
         run: npm test
 
+      - name: Run test suite again (stress pass — catches integration flakes)
+        run: npm test
+
       - name: Build production bundle
         run: npm run build

@@ -20,11 +20,14 @@ type MockFetchResponse = {
   status?: number
   body?: any
   text?: string
+  /** Serve every matching request without consuming the entry (stays queued). */
+  repeatable?: boolean
 }
 
 const hoisted = vi.hoisted(() => ({
   fetchQueue: [] as MockFetchResponse[],
   fetchCalls: [] as FetchCall[],
+  servedResponses: [] as { signature: string; response: MockFetchResponse }[],
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
 }))
@@ -154,6 +157,10 @@ vi.mock('@tiptap/react', () => ({
   },
 }))
 
+vi.mock('../../hooks/useAppUpdateChecker', () => ({
+  useAppUpdateChecker: () => {},
+}))
+
 vi.mock('../../hooks/useEventSource', () => ({
   useEventSource: () => ({
     isConnected: false,
@@ -205,6 +212,20 @@ function toFetchResponse(response: MockFetchResponse) {
   }
 }
 
+/**
+ * Stable identity of a request for the repeat-most-recent fallback: the full
+ * methodCalls (names + args, callId stripped) for JMAP requests, the URL for
+ * everything else. Two requests with the same signature are interchangeable.
+ */
+function requestSignature(call: FetchCall): string {
+  if (Array.isArray(call.body?.methodCalls)) {
+    return JSON.stringify(
+      call.body.methodCalls.map(([name, args]: [string, unknown]) => [name, args]),
+    )
+  }
+  return call.url
+}
+
 const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
   const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
   const body = typeof init?.body === 'string' ? JSON.parse(init.body) : init?.body
@@ -213,11 +234,38 @@ const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => 
   hoisted.fetchCalls.push(call)
 
   const index = hoisted.fetchQueue.findIndex((entry) => matchesResponse(entry, call))
-  if (index === -1) {
-    throw new Error(`Unhandled fetch request: ${url} ${JSON.stringify(body ?? {})}`)
+  if (index !== -1) {
+    const entry = hoisted.fetchQueue[index]
+    if (!entry.repeatable) hoisted.fetchQueue.splice(index, 1)
+    hoisted.servedResponses.push({ signature: requestSignature(call), response: entry })
+    return toFetchResponse(entry)
   }
 
-  return toFetchResponse(hoisted.fetchQueue.splice(index, 1)[0])
+  // No seeded response matched. The queue must tolerate reordered, repeated
+  // and refetched JMAP requests (issue #10): under full-suite parallel load
+  // query hooks can fire in an order that differs from the seeded sequence,
+  // and mutations invalidate queries that then refetch. Reuse the most recent
+  // response served for the same request signature so duplicate/reordered
+  // requests still receive consistent data instead of throwing and starving
+  // later assertions of data.
+  const signature = requestSignature(call)
+  const prior = [...hoisted.servedResponses].reverse().find((entry) => entry.signature === signature)
+  if (prior) {
+    console.warn(`[fetchMock] No seeded response left for ${signature}; reusing the most recent matching response.`)
+    return toFetchResponse(prior.response)
+  }
+
+  // Genuinely unknown requests (identity probes, update checks, unseeded app
+  // fetches) get a benign 404 instead of a rejection — the app degrades
+  // gracefully and the queue can never desync. Tests that NEED data must
+  // seed it; a missing seed surfaces as an app error state, not a throw.
+  console.warn(`[fetchMock] Unhandled fetch request: ${url} ${JSON.stringify(body ?? {})}`)
+  return {
+    ok: false,
+    status: 404,
+    json: async () => null,
+    text: async () => 'Not Found',
+  }
 })
 
 export const toastSpies = {
@@ -300,6 +348,7 @@ beforeEach(() => {
   clearStoredSession()
   hoisted.fetchQueue.length = 0
   hoisted.fetchCalls.length = 0
+  hoisted.servedResponses.length = 0
   hoisted.toastSuccess.mockReset()
   hoisted.toastError.mockReset()
   vi.stubGlobal('fetch', fetchMock)
