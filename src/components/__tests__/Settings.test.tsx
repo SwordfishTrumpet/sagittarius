@@ -32,6 +32,20 @@ vi.mock('../../utils/notificationSound', () => ({
   canShowNotifications: () => false,
 }))
 
+// Server-identity endpoint: controlled per-test; default null (row hidden).
+const { fetchServerFingerprintMock } = vi.hoisted(() => ({
+  fetchServerFingerprintMock: vi.fn<() => Promise<unknown>>(async () => null),
+}))
+vi.mock('../../utils/serverFingerprint', () => ({
+  fetchServerFingerprint: fetchServerFingerprintMock,
+  getStoredFingerprint: vi.fn(() => null),
+  storeFingerprint: vi.fn(),
+  clearFingerprint: vi.fn(),
+  fingerprintKey: vi.fn(() => null),
+  ServerIdentityChangedError: class ServerIdentityChangedError extends Error {},
+  isServerIdentityChangedError: () => false,
+}))
+
 // Mock the vacation hook
 vi.mock('../../hooks/useVacation', () => ({
   useVacation: () => ({
@@ -162,5 +176,31 @@ describe('Settings', () => {
     render(<Settings {...defaultProps} />, { wrapper: Wrapper })
 
     expect(screen.getByText('Desktop notifications')).toBeInTheDocument()
+  })
+
+  it('shows the configured mail server read-only in General settings (issue #6)', async () => {
+    fetchServerFingerprintMock.mockResolvedValueOnce({
+      host: 'mail.example.com',
+      scheme: 'https',
+      resolved: true,
+      addresses: ['1.2.3.4'],
+      certFingerprint: 'sha256:abc',
+      trusted: false,
+      error: null,
+    })
+
+    render(<Settings {...defaultProps} />, { wrapper: Wrapper })
+
+    expect(await screen.findByText('mail.example.com')).toBeInTheDocument()
+    expect(screen.getByText('Mail Server')).toBeInTheDocument()
+  })
+
+  it('hides the mail server row when the host is unknown', async () => {
+    fetchServerFingerprintMock.mockResolvedValueOnce(null)
+
+    render(<Settings {...defaultProps} />, { wrapper: Wrapper })
+
+    await screen.findByRole('tab', { name: 'General' })
+    expect(screen.queryByText('Mail Server')).not.toBeInTheDocument()
   })
 })

@@ -365,4 +365,43 @@ describe('jmapClient server-identity gate (issue #1)', () => {
       expect((err as JMAPProtocolError).status).toBe(500);
     });
   });
+
+  describe('verifyServerIdentity() boot states (issue #6)', () => {
+    it("returns 'endpoint-unavailable' when the fingerprint endpoint is missing (fail open)", async () => {
+      storeFingerprint(FINGERPRINT_A);
+      seedSession();
+      installFetch(async () => jsonResponse({ error: 'not found' }, 404));
+
+      const status = await jmapClient.verifyServerIdentity();
+      expect(status).toBe('endpoint-unavailable');
+    });
+
+    it("returns 'unreachable' when the backend host no longer resolves", async () => {
+      storeFingerprint(FINGERPRINT_A);
+      seedSession();
+      installFetch(async () => jsonResponse(UNRESOLVED_FINGERPRINT));
+
+      const status = await jmapClient.verifyServerIdentity();
+      expect(status).toBe('unreachable');
+    });
+
+    it("returns 'verified' when the fingerprint matches", async () => {
+      storeFingerprint(FINGERPRINT_A);
+      seedSession();
+      installFetch(async () => jsonResponse(FINGERPRINT_A));
+
+      const status = await jmapClient.verifyServerIdentity();
+      expect(status).toBe('verified');
+    });
+
+    it("returns 'identity-changed' and clears the session when the fingerprint differs", async () => {
+      storeFingerprint(FINGERPRINT_A);
+      seedSession();
+      installFetch(async () => jsonResponse(FINGERPRINT_B));
+
+      const status = await jmapClient.verifyServerIdentity();
+      expect(status).toBe('identity-changed');
+      expect((jmapClient as unknown as PrivateClient).session).toBeNull();
+    });
+  });
 });
