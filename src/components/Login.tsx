@@ -3,8 +3,9 @@ import { jmapClient } from '../api/jmap';
 import { Shield, Mail, Key, Lock, AlertTriangle } from 'lucide-react';
 import { logger } from '../utils/logger';
 import { checkRateLimit, recordFailedAttempt, resetRateLimit, getRateLimitStatus } from '../utils/rateLimit';
-import { isServerUnreachableError } from '../utils/jmapErrors';
+import { isServerUnreachableError, isAuthError } from '../utils/jmapErrors';
 import {
+  fetchServerFingerprint,
   isServerIdentityChangedError,
   type ServerIdentityChangedError,
 } from '../utils/serverFingerprint';
@@ -20,6 +21,20 @@ export function Login({ onLoginSuccess, identityChangedNotice = false }: {
   const [loading, setLoading] = useState(false);
   const [lockoutSeconds, setLockoutSeconds] = useState<number | null>(null);
   const [pendingIdentityChange, setPendingIdentityChange] = useState<ServerIdentityChangedError | null>(null);
+  const [configuredHost, setConfiguredHost] = useState<string | null>(null);
+
+  // Show the configured backend host so users can verify they are signing
+  // into the intended server (issue #4). Available even during an outage:
+  // the fingerprint endpoint reports the host with resolved:false.
+  useEffect(() => {
+    let cancelled = false;
+    void fetchServerFingerprint().then((fingerprint) => {
+      if (!cancelled && fingerprint?.host) setConfiguredHost(fingerprint.host);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Check rate limit on mount and periodically
   useEffect(() => {
@@ -37,18 +52,28 @@ export function Login({ onLoginSuccess, identityChangedNotice = false }: {
   }, []);
 
   // Shared error handler: identity-change requires confirmation; server
-  // unreachable is NOT a credential problem (never counts against the auth
-  // rate limiter); only real auth/protocol failures do.
+  // unreachable and protocol errors are NOT credential problems (never count
+  // against the auth rate limiter); only genuine 401/403 auth failures do
+  // (issue #4).
   const handleAuthError = (err: unknown) => {
     if (isServerIdentityChangedError(err)) {
       setPendingIdentityChange(err);
       return;
     }
     if (isServerUnreachableError(err)) {
-      setError('Mail server unreachable. Please check the connection and try again.');
+      setError(configuredHost
+        ? `Mail server unreachable (${configuredHost}). Check that the server is running and try again.`
+        : 'Mail server unreachable. Please check the connection and try again.');
       return;
     }
-    // Record failed attempt
+    if (!isAuthError(err)) {
+      // Protocol/other failures are not credential rejections: surface a
+      // message but do NOT count them against the auth rate limiter.
+      setError('Login failed. Please try again.');
+      logger.error(err);
+      return;
+    }
+    // Genuine authentication failure (401/403)
     const remaining = recordFailedAttempt();
     const status = getRateLimitStatus();
 
@@ -117,6 +142,11 @@ export function Login({ onLoginSuccess, identityChangedNotice = false }: {
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-icloud-text-primary">Sagittarius</h1>
           <p className="text-icloud-text-secondary  mt-2 text-center text-sm">Sign in to your mail account</p>
+          {configuredHost && (
+            <p className="mt-1.5 text-center text-xs text-icloud-text-tertiary">
+              Signing in to <span className="font-mono">{configuredHost}</span>
+            </p>
+          )}
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
