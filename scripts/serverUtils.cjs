@@ -16,6 +16,7 @@
 
 const dns = require('dns');
 const tls = require('tls');
+const net = require('net');
 const crypto = require('crypto');
 
 const FINGERPRINT_TIMEOUT_MS = 5000;
@@ -244,6 +245,139 @@ function fingerprintKey(fingerprint) {
   return null;
 }
 
+/**
+ * Decide what a startup reachability probe means for boot (issue #9).
+ * Pure function so the boot policy is deterministic and unit-testable:
+ *  - DNS unresolvable → loud warning; with fail-fast opted in, abort boot.
+ *  - resolved but connection probe failed → warning (backend may be down).
+ *  - fully reachable → info.
+ * Returns { level: 'info'|'warn'|'error', message, shouldExit }.
+ */
+function startupProbeDecision(probe, options = {}) {
+  const failFast = options.failFastOnUnresolved === true;
+  if (!probe || probe.resolved === false) {
+    const host = probe && probe.host ? probe.host : '(unknown)';
+    const message = `WARNING: JMAP backend host ${host} did not resolve (DNS). Check JMAP_SERVER configuration and the backend's DNS records.`;
+    return { level: failFast ? 'error' : 'warn', message, shouldExit: failFast };
+  }
+  if (probe.reachable === false) {
+    return {
+      level: 'warn',
+      message: `WARNING: JMAP backend host ${probe.host} resolves but did not answer a connection probe — the backend may be down.`,
+      shouldExit: false,
+    };
+  }
+  return { level: 'info', message: `JMAP backend ${probe.host} is reachable.`, shouldExit: false };
+}
+
+/**
+ * Probe the reachability of the configured JMAP backend (issues #7/#9):
+ * DNS resolution plus a connection probe — TLS handshake for https, TCP
+ * connect for http. Used by the startup validation (issue #9) and the
+ * /health endpoint (issue #7). Injectable dnsImpl/tlsImpl/netImpl keep
+ * the tests deterministic (no network).
+ *
+ * Always resolves to a shaped result, never throws:
+ *   { host, scheme, resolved, reachable, addresses, latencyMs, error }
+ */
+async function probeBackendReachability(serverUrl, options = {}) {
+  const { timeoutMs = 3000, dnsImpl, tlsImpl, netImpl } = options;
+  const url = parseJmapServer(serverUrl);
+  if (!url) {
+    return {
+      host: null,
+      scheme: null,
+      resolved: false,
+      reachable: false,
+      addresses: [],
+      latencyMs: 0,
+      error: 'Invalid JMAP_SERVER URL',
+    };
+  }
+  const host = normalizeHost(url.hostname);
+  const scheme = String(url.protocol).replace(':', '');
+  const base = { host, scheme };
+
+  const work = (async () => {
+    const start = Date.now();
+    let addresses = [];
+    try {
+      addresses = await resolveAddresses(host, dnsImpl);
+    } catch {
+      addresses = [];
+    }
+    if (addresses.length === 0) {
+      return {
+        ...base,
+        resolved: false,
+        reachable: false,
+        addresses: [],
+        latencyMs: Date.now() - start,
+        error: 'DNS resolution failed',
+      };
+    }
+
+    const port = url.port ? Number(url.port) : (scheme === 'https' ? 443 : 80);
+    let reachable = false;
+    let connectError = null;
+    if (scheme === 'https') {
+      const tlsResult = await fetchTlsFingerprint(url, tlsImpl, timeoutMs);
+      reachable = !!tlsResult.fingerprint;
+      connectError = tlsResult.error;
+    } else {
+      const netLib = netImpl || net;
+      reachable = await new Promise((resolve) => {
+        let socket;
+        try {
+          socket = netLib.connect({ host, port });
+        } catch (err) {
+          resolve(false);
+          return;
+        }
+        const timer = setTimeout(() => {
+          socket.destroy();
+          resolve(false);
+        }, timeoutMs);
+        socket.once('connect', () => {
+          clearTimeout(timer);
+          socket.destroy();
+          resolve(true);
+        });
+        socket.once('error', () => {
+          clearTimeout(timer);
+          socket.destroy();
+          resolve(false);
+        });
+      });
+      if (!reachable) connectError = 'TCP connect failed';
+    }
+    return {
+      ...base,
+      resolved: true,
+      reachable,
+      addresses,
+      latencyMs: Date.now() - start,
+      error: connectError,
+    };
+  })();
+
+  // Overall deadline: a hanging DNS resolver must not stall boot or health.
+  const overall = new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({
+        ...base,
+        resolved: false,
+        reachable: false,
+        addresses: [],
+        latencyMs: 0,
+        error: 'Probe timed out',
+      });
+    }, timeoutMs + 1000);
+  });
+
+  return Promise.race([work, overall]);
+}
+
 function parseTrustedFingerprints(raw) {
   if (!raw) return [];
   return String(raw).split(',').map((entry) => entry.trim()).filter(Boolean);
@@ -271,5 +405,7 @@ module.exports = {
   normalizeFingerprintValue,
   redactUrl,
   writeBadGatewayResponse,
+  probeBackendReachability,
+  startupProbeDecision,
   FINGERPRINT_TIMEOUT_MS,
 };

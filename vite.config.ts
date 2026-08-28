@@ -51,6 +51,20 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   const jmapServer = env.VITE_JMAP_SERVER || 'http://localhost:8080';
 
+  // Issue #9: validate the build-time login domain so a typo surfaces at
+  // build/dev time instead of silently corrupting the login username
+  // suggestions in production. Warning-only — the app still builds.
+  const loginDomain = String(env.VITE_LOGIN_EMAIL_DOMAIN || '').trim().replace(/^@+/, '');
+  if (loginDomain) {
+    // RFC 1035-ish: dot-separated labels, no leading/trailing dots.
+    const DOMAIN_RE = /^(?=.{1,253}\.?$)(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,63}$/;
+    if (!DOMAIN_RE.test(loginDomain)) {
+      logError(`Invalid VITE_LOGIN_EMAIL_DOMAIN "${env.VITE_LOGIN_EMAIL_DOMAIN}" — login username suggestions will be broken. Expected a domain like mail.example.com.`)
+    } else {
+      logDebug(`VITE_LOGIN_EMAIL_DOMAIN validated: ${loginDomain}`)
+    }
+  }
+
   return {
     plugins: [react()],
     build: {
