@@ -452,11 +452,19 @@ sudo nginx -t && sudo systemctl reload nginx
 
 ## Health Checks & Monitoring
 
-The built-in server exposes a health endpoint at `/health`:
+The built-in server exposes a health endpoint at `/health`. It probes the
+configured JMAP backend (DNS resolution + connection probe, cached up to
+10s) and reports the result as a distinct `backend` field. The overall
+check fails — HTTP **503** with `status: "degraded"` — as soon as the
+backend probe fails, so monitoring, Docker healthchecks and `deploy.sh`
+all fail exactly when mail is broken (issue #7):
 
 ```bash
 curl http://localhost:8081/health
-# → {"status":"ok","uptime":12345}
+# {"status":"ok","backend":{"host":"mail.example.com","scheme":"https","resolved":true,"reachable":true,"addresses":["…"],"latencyMs":12,"error":null,"consecutiveFailures":0},"uptime":12345,…}
+
+# With the backend down → HTTP 503:
+# {"status":"degraded","backend":{"host":"mail.example.com","scheme":"https","resolved":true,"reachable":false,"addresses":["…"],"latencyMs":4,"error":"TCP connect failed","consecutiveFailures":1},…}
 ```
 
 ### Docker Health Check
@@ -467,6 +475,10 @@ Add to your `Dockerfile`:
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:8081/health || exit 1
 ```
+
+`wget --spider` exits non-zero on the 503 the server returns when the
+backend is unreachable, so the container turns unhealthy exactly when the
+mail backend is down.
 
 ### Prometheus / Grafana
 

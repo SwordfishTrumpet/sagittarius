@@ -53,9 +53,11 @@ EXPOSE 8081
 ENV NODE_ENV=production
 ENV PORT=8081
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:8081/', (r) => r.statusCode === 200 ? process.exit(0) : process.exit(1))"
+# Health check (issue #7): probe /health and require status ok + HTTP 200.
+# /health returns 503 + status "degraded" when the JMAP backend is down,
+# so the container turns unhealthy exactly when mail is broken.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD node -e "require('http').get('http://localhost:8081/health', (r) => { let d=''; r.on('data', (c) => d += c); r.on('end', () => { if (r.statusCode === 200) process.exit(0); console.error('health:', r.statusCode, d); process.exit(1); }); }).on('error', () => process.exit(1))"
 
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
