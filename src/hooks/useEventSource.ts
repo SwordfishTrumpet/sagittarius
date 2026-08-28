@@ -10,16 +10,24 @@ export interface UseEventSourceResult {
   isConnected: boolean;
   hasNewMail: boolean;
   clearNewMail: () => void;
+  /** True when the circuit breaker tripped (server unreachable). */
+  isTerminal: boolean;
+  /** Reset the circuit breaker and reconnect now. */
+  retry: () => void;
 }
 
 export function useEventSource(enabled: boolean): UseEventSourceResult {
   const [isConnected, setIsConnected] = useState<boolean>(
     () => eventSourceManager.isConnected(),
   );
+  const [isTerminal, setIsTerminal] = useState<boolean>(
+    () => eventSourceManager.isTerminal(),
+  );
   const [hasNewMail, setHasNewMail] = useState(false);
 
   // Keep refs to avoid stale closures and ensure we always have fresh values
   const isConnectedRef = useRef(isConnected);
+  const isTerminalRef = useRef(isTerminal);
   const enabledRef = useRef(enabled);
   
   // Update refs when props change
@@ -29,6 +37,11 @@ export function useEventSource(enabled: boolean): UseEventSourceResult {
     setHasNewMail(false);
   }, []);
 
+  const retry = useCallback(() => {
+    if (!enabled) return;
+    eventSourceManager.retry();
+  }, [enabled]);
+
   // Reset connection state when push is disabled (enabled flipped false).
   // Deliberately NOT done inside the effect cleanup: cleanup runs after
   // unmount too, and setting state there is a side effect on an unmounted
@@ -37,6 +50,7 @@ export function useEventSource(enabled: boolean): UseEventSourceResult {
     if (!enabled) {
       isConnectedRef.current = false;
       setIsConnected(false);
+      setIsTerminal(false);
     }
   }, [enabled]);
 
@@ -71,6 +85,12 @@ export function useEventSource(enabled: boolean): UseEventSourceResult {
       setIsConnected(connected);
     });
 
+    // Subscribe to circuit-breaker changes (issue #3)
+    const unsubscribeTerminalState = eventSourceManager.onTerminalStateChange((terminal) => {
+      logger.debug('[useEventSource] Terminal state changed:', terminal);
+      setIsTerminal(terminal);
+    });
+
     // Poll the connection state as a fallback in case callbacks are missed.
     // EventSource doesn't expose a "connected" event on its own.
     const pollInterval = setInterval(() => {
@@ -80,15 +100,21 @@ export function useEventSource(enabled: boolean): UseEventSourceResult {
         isConnectedRef.current = connected;
         setIsConnected(connected);
       }
+      const terminal = eventSourceManager.isTerminal();
+      if (terminal !== isTerminalRef.current) {
+        isTerminalRef.current = terminal;
+        setIsTerminal(terminal);
+      }
     }, 2000);
 
     return () => {
       clearInterval(pollInterval);
       unsubscribeNewMail();
       unsubscribeConnectionState();
+      unsubscribeTerminalState();
       eventSourceManager.disconnect();
     };
   }, [enabled]);
 
-  return { isConnected, hasNewMail, clearNewMail };
+  return { isConnected, hasNewMail, clearNewMail, isTerminal, retry };
 }

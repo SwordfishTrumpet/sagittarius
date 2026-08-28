@@ -224,7 +224,7 @@ function App() {
   // Push connection — gated on boot verification so push transports (which
   // embed credentials in their URLs) never start before the backend identity
   // has been confirmed (issue #1).
-  const { pushEnabled, pushConnected, hasNewMail, clearNewMail } = usePushConnection(!!session && bootStatus === 'verified')
+  const { pushEnabled, pushConnected, pushTerminal, retryPush, hasNewMail, clearNewMail } = usePushConnection(!!session && bootStatus === 'verified')
 
   // Quota and MDN
   const { data: quota } = useQuota()
@@ -797,6 +797,8 @@ function App() {
                   isOffline={isOffline}
                   isPushEnabled={pushEnabled}
                   isPushConnected={pushConnected}
+                  isPushTerminal={pushTerminal}
+                  onRetry={retryPush}
                   pendingCount={pendingCount}
                   isReplaying={isReplaying}
                 />

@@ -91,6 +91,67 @@ describe('reconnectionStrategy', () => {
     });
   });
 
+  describe('circuit breaker (maxInitialFailures, issue #3)', () => {
+    it('never goes terminal by default (maxInitialFailures Infinity)', () => {
+      const strategy = createReconnectionStrategy();
+      for (let i = 0; i < 100; i++) {
+        expect(strategy.recordInitialFailure()).toBe(false);
+      }
+      expect(strategy.isTerminal()).toBe(false);
+    });
+
+    it('goes terminal after N consecutive never-connected failures', () => {
+      const strategy = createReconnectionStrategy({ maxInitialFailures: 3 });
+      expect(strategy.recordInitialFailure()).toBe(false);
+      expect(strategy.isTerminal()).toBe(false);
+      expect(strategy.recordInitialFailure()).toBe(false);
+      expect(strategy.recordInitialFailure()).toBe(true);
+      expect(strategy.isTerminal()).toBe(true);
+      // Subsequent failures stay terminal
+      expect(strategy.recordInitialFailure()).toBe(false);
+      expect(strategy.isTerminal()).toBe(true);
+    });
+
+    it('recordSuccess clears terminal and disarms the breaker for good', () => {
+      const strategy = createReconnectionStrategy({ maxInitialFailures: 3 });
+      strategy.recordInitialFailure();
+      strategy.recordInitialFailure();
+      strategy.recordSuccess();
+      expect(strategy.isTerminal()).toBe(false);
+
+      // A successful connection happened: failures are now transient and
+      // never trip the breaker.
+      for (let i = 0; i < 100; i++) {
+        expect(strategy.recordInitialFailure()).toBe(false);
+      }
+      expect(strategy.isTerminal()).toBe(false);
+    });
+
+    it('recordSuccess also resets the exponential backoff', () => {
+      const strategy = createReconnectionStrategy({ baseDelayMs: 1000, maxInitialFailures: 3 });
+      strategy.nextDelay();
+      strategy.nextDelay();
+      expect(strategy.currentDelay).toBe(4000);
+      strategy.recordSuccess();
+      expect(strategy.attempts).toBe(0);
+      expect(strategy.currentDelay).toBe(1000);
+    });
+
+    it('reset clears terminal state (used by retry())', () => {
+      const strategy = createReconnectionStrategy({ maxInitialFailures: 2 });
+      strategy.recordInitialFailure();
+      strategy.recordInitialFailure();
+      expect(strategy.isTerminal()).toBe(true);
+      strategy.reset();
+      expect(strategy.isTerminal()).toBe(false);
+      expect(strategy.recordInitialFailure()).toBe(false);
+    });
+
+    it('exposes RECONNECTION_DEFAULTS.MAX_INITIAL_FAILURES', () => {
+      expect(RECONNECTION_DEFAULTS.MAX_INITIAL_FAILURES).toBe(3);
+    });
+  });
+
   describe('RECONNECTION_DEFAULTS', () => {
     it('should export default constants', () => {
       expect(RECONNECTION_DEFAULTS.BASE_BACKOFF_MS).toBe(1000);
