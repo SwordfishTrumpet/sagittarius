@@ -1,6 +1,8 @@
 import Dexie, { type Table } from 'dexie'
 import { jmapClient } from '../api/jmap'
 import { stateManager } from '../api/stateManager'
+import { isServerUnreachableError } from './jmapErrors'
+import { shouldDeferMutation, markServerReachable } from './serverReachability'
 import type {
   DeferredMutation,
   DeferredMutationPayload,
@@ -294,7 +296,29 @@ export async function runDeferredAwareMutation<T>(args: {
     })
   }
 
-  return args.execute()
+  try {
+    const result = await args.execute()
+    markServerReachable()
+    return result
+  } catch (err) {
+    // Backend-unreachable failures (proxy 502/504, DNS failure, connection
+    // refused) defer even though the machine is online — the offline
+    // pipeline must protect exactly this case (issue #5). Deferral is
+    // bounded: past the window the error surfaces so the user is not
+    // queueing silently during a long outage.
+    if (isServerUnreachableError(err) && shouldDeferMutation()) {
+      if (!args.accountId) {
+        // Cannot queue without an account: surface the original error.
+        throw err
+      }
+      return enqueueDeferredMutation({
+        accountId: args.accountId,
+        operation: args.operation,
+        payload: args.payload,
+      })
+    }
+    throw err
+  }
 }
 
 export function subscribeOfflineQueueChanges(listener: () => void) {
