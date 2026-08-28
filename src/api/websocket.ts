@@ -26,10 +26,12 @@ class WebSocketManager {
   private _connected = false;
   private newMailListeners: Set<NewMailListener> = new Set();
   private connectionStateListeners: Set<(connected: boolean) => void> = new Set();
+  private terminalStateListeners: Set<(terminal: boolean) => void> = new Set();
 
   private reconnectionStrategy = createReconnectionStrategy({
     baseDelayMs: RECONNECTION_DEFAULTS.BASE_BACKOFF_MS,
     maxDelayMs: RECONNECTION_DEFAULTS.MAX_BACKOFF_MS,
+    maxInitialFailures: RECONNECTION_DEFAULTS.MAX_INITIAL_FAILURES,
   });
 
   private stateChangeHandler = createStateChangeHandler(null, { logPrefix: '[JMAP WebSocket]' });
@@ -50,6 +52,7 @@ class WebSocketManager {
     this.url = url;
     this.queryClient = queryClient;
     this.reconnectionStrategy.reset();
+    this.notifyTerminalStateChange(false);
     // Update state change handler with the new queryClient
     this.stateChangeHandler = createStateChangeHandler(queryClient, { logPrefix: '[JMAP WebSocket]' });
     this._openConnection();
@@ -180,14 +183,18 @@ class WebSocketManager {
     } catch (err) {
       // WebSocket constructor can throw synchronously for bad URLs.
       logger.error('[JMAP WebSocket] Failed to construct WebSocket:', err);
-      this._scheduleReconnect();
+      this.recordUnreachableClassFailure();
+      if (!this.reconnectionStrategy.isTerminal()) {
+        this._scheduleReconnect();
+      }
       return;
     }
 
     this.ws.onopen = () => {
       this._connected = true;
-      this.reconnectionStrategy.reset(); // reset exponential back-off
+      this.reconnectionStrategy.recordSuccess(); // reset backoff + clear terminal
       logger.debug('[JMAP WebSocket] Connected');
+      this.notifyTerminalStateChange(false);
       this.notifyConnectionStateChange(true);
     };
 
@@ -208,7 +215,12 @@ class WebSocketManager {
       const closeReason = `code=${event.code}, reason=${event.reason || '—'}, clean=${event.wasClean}`;
       if (!this._destroyed && event.code !== 1000) {
         logger.warn(`[JMAP WebSocket] Closed (${closeReason}). Will reconnect...`);
-        this._scheduleReconnect();
+        // Classify the failure: an endpoint that has NEVER connected and now
+        // fails N times in a row is unreachable — stop retrying (issue #3).
+        this.recordUnreachableClassFailure();
+        if (!this.reconnectionStrategy.isTerminal()) {
+          this._scheduleReconnect();
+        }
       } else {
         logger.debug(`[JMAP WebSocket] Closed (${closeReason})`);
       }
@@ -282,8 +294,27 @@ class WebSocketManager {
     this.stateChangeHandler.handleStateChange(data.changed, this.newMailListeners);
   }
 
+  /**
+   * Record a failure of an unreachable-class connection (never-connected
+   * endpoint). On the Nth consecutive failure the strategy goes terminal:
+   * no further attempts are scheduled until the user retries.
+   */
+  private recordUnreachableClassFailure(): void {
+    const terminalNow = this.reconnectionStrategy.recordInitialFailure();
+    if (terminalNow) {
+      logger.warn('[JMAP WebSocket] Giving up reconnecting — the mail server appears unreachable. Retry manually.');
+      this.notifyTerminalStateChange(true);
+    }
+  }
+
   private _scheduleReconnect(): void {
     if (this._destroyed) return;
+
+    if (this.reconnectionStrategy.isTerminal()) {
+      // Circuit breaker open: no further connection attempts until retry().
+      this.notifyTerminalStateChange(true);
+      return;
+    }
 
     const delay = this.reconnectionStrategy.nextDelay();
     logger.debug(
@@ -294,6 +325,45 @@ class WebSocketManager {
       this.reconnectTimer = null;
       this._openConnection();
     }, delay);
+  }
+
+  /**
+   * Register a callback that fires when the circuit breaker trips open
+   * (terminal server-unreachable state) or is reset by retry()/connect().
+   * Returns an unsubscribe function.
+   */
+  onTerminalStateChange(listener: (terminal: boolean) => void): () => void {
+    this.terminalStateListeners.add(listener);
+    return () => this.terminalStateListeners.delete(listener);
+  }
+
+  /** True when the circuit breaker is open (server appears unreachable). */
+  isTerminal(): boolean {
+    return this.reconnectionStrategy.isTerminal();
+  }
+
+  /**
+   * Manual retry affordance: reset the circuit breaker and reconnect now.
+   */
+  retry(): void {
+    if (this.reconnectTimer !== null) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+    this._destroyed = false;
+    this.reconnectionStrategy.reset();
+    this.notifyTerminalStateChange(false);
+    this._openConnection();
+  }
+
+  private notifyTerminalStateChange(terminal: boolean): void {
+    for (const listener of this.terminalStateListeners) {
+      try {
+        listener(terminal);
+      } catch (err) {
+        logger.error('[JMAP WebSocket] Error in terminal state listener:', err);
+      }
+    }
   }
 }
 

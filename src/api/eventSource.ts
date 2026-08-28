@@ -22,12 +22,14 @@ class EventSourceManager {
   private authToken: string | null = null;
   private newMailListeners: Set<NewMailListener> = new Set();
   private connectionStateListeners: Set<(connected: boolean) => void> = new Set();
+  private terminalStateListeners: Set<(terminal: boolean) => void> = new Set();
   private _destroyed = false;
   private _isConnected = false;
 
   private reconnectionStrategy = createReconnectionStrategy({
     baseDelayMs: RECONNECTION_DEFAULTS.BASE_BACKOFF_MS,
     maxDelayMs: RECONNECTION_DEFAULTS.MAX_BACKOFF_MS,
+    maxInitialFailures: RECONNECTION_DEFAULTS.MAX_INITIAL_FAILURES,
   });
 
   private stateChangeHandler = createStateChangeHandler(null, { logPrefix: '[EventSource]' });
@@ -67,6 +69,7 @@ class EventSourceManager {
     this.authToken = authToken;
     this.queryClient = queryClient;
     this.reconnectionStrategy.reset();
+    this.notifyTerminalStateChange(false);
     // Update state change handler with the new queryClient
     this.stateChangeHandler = createStateChangeHandler(queryClient, { logPrefix: '[EventSource]' });
     this.openConnection();
@@ -102,7 +105,10 @@ class EventSourceManager {
       logger.error('[EventSource] Failed to construct EventSource:', err);
       this._isConnected = false;
       this.notifyConnectionStateChange(false);
-      this.scheduleReconnect();
+      this.recordUnreachableClassFailure();
+      if (!this.reconnectionStrategy.isTerminal()) {
+        this.scheduleReconnect();
+      }
       return;
     }
     this.es = es;
@@ -118,7 +124,10 @@ class EventSourceManager {
         this.connectionTimeout = null;
         this._isConnected = false;
         this.notifyConnectionStateChange(false);
-        this.scheduleReconnect();
+        this.recordUnreachableClassFailure();
+        if (!this.reconnectionStrategy.isTerminal()) {
+          this.scheduleReconnect();
+        }
       }
     }, 10_000);
 
@@ -129,7 +138,8 @@ class EventSourceManager {
       }
       logger.debug('[EventSource] Connected');
       this._isConnected = true;
-      this.reconnectionStrategy.reset();
+      this.reconnectionStrategy.recordSuccess();
+      this.notifyTerminalStateChange(false);
       this.notifyConnectionStateChange(true);
     };
 
@@ -163,8 +173,13 @@ class EventSourceManager {
       es.close();
       this.es = null;
       
-      // Schedule reconnect - the reconnection strategy will handle backoff
-      this.scheduleReconnect();
+      // Classify the failure: an endpoint that has NEVER connected and now
+      // fails N times in a row is unreachable — stop retrying (issue #3).
+      this.recordUnreachableClassFailure();
+      if (!this.reconnectionStrategy.isTerminal()) {
+        // Schedule reconnect - the reconnection strategy will handle backoff
+        this.scheduleReconnect();
+      }
     };
   }
 
@@ -183,8 +198,27 @@ class EventSourceManager {
     this.stateChangeHandler.handleStateChange(payload.changed, this.newMailListeners);
   }
 
+  /**
+   * Record a failure of an unreachable-class connection (never-connected
+   * endpoint). On the Nth consecutive failure the strategy goes terminal:
+   * no further attempts are scheduled until the user retries.
+   */
+  private recordUnreachableClassFailure(): void {
+    const terminalNow = this.reconnectionStrategy.recordInitialFailure();
+    if (terminalNow) {
+      logger.warn('[EventSource] Giving up reconnecting — the mail server appears unreachable. Retry manually.');
+      this.notifyTerminalStateChange(true);
+    }
+  }
+
   private scheduleReconnect(): void {
     if (this._destroyed) return;
+
+    if (this.reconnectionStrategy.isTerminal()) {
+      // Circuit breaker open: no further connection attempts until retry().
+      this.notifyTerminalStateChange(true);
+      return;
+    }
 
     const delay = this.reconnectionStrategy.nextDelay();
     logger.warn(`[EventSource] Connection lost. Reconnecting in ${delay}ms... (attempt ${this.reconnectionStrategy.attempts})`);
@@ -241,12 +275,55 @@ class EventSourceManager {
     return () => this.connectionStateListeners.delete(listener);
   }
 
+  /**
+   * Register a callback that fires when the circuit breaker trips open
+   * (terminal server-unreachable state) or is reset by retry()/connect().
+   * Returns an unsubscribe function.
+   */
+  onTerminalStateChange(listener: (terminal: boolean) => void): () => void {
+    this.terminalStateListeners.add(listener);
+    return () => this.terminalStateListeners.delete(listener);
+  }
+
+  /** True when the circuit breaker is open (server appears unreachable). */
+  isTerminal(): boolean {
+    return this.reconnectionStrategy.isTerminal();
+  }
+
+  /**
+   * Manual retry affordance: reset the circuit breaker and reconnect now.
+   */
+  retry(): void {
+    if (this.reconnectTimer !== null) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+    if (this.connectionTimeout !== null) {
+      clearTimeout(this.connectionTimeout);
+      this.connectionTimeout = null;
+    }
+    this._destroyed = false;
+    this.reconnectionStrategy.reset();
+    this.notifyTerminalStateChange(false);
+    this.openConnection();
+  }
+
   private notifyConnectionStateChange(connected: boolean): void {
     for (const listener of this.connectionStateListeners) {
       try {
         listener(connected);
       } catch (err) {
         logger.error('[EventSource] Error in connection state listener:', err);
+      }
+    }
+  }
+
+  private notifyTerminalStateChange(terminal: boolean): void {
+    for (const listener of this.terminalStateListeners) {
+      try {
+        listener(terminal);
+      } catch (err) {
+        logger.error('[EventSource] Error in terminal state listener:', err);
       }
     }
   }

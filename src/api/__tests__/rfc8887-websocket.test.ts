@@ -22,6 +22,13 @@ class MockWebSocket {
   static CLOSING = 2;
   static CLOSED = 3;
 
+  /**
+   * When false, constructed sockets never open (dead-backend simulation)
+   * so reconnection/circuit-breaker tests can drive unreachable-class
+   * failures without a successful connection.
+   */
+  static autoOpen = true;
+
   readyState: number;
   url: string;
   protocol: string;
@@ -40,10 +47,12 @@ class MockWebSocket {
     this.protocol = this._protocols[0] || '';
 
     // Auto-open after a microtask (simulates real WebSocket behavior)
-    queueMicrotask(() => {
-      this.readyState = MockWebSocket.OPEN;
-      this.onopen?.({} as Event);
-    });
+    if (MockWebSocket.autoOpen) {
+      queueMicrotask(() => {
+        this.readyState = MockWebSocket.OPEN;
+        this.onopen?.({} as Event);
+      });
+    }
   }
 
   send(data: string) {
@@ -94,6 +103,7 @@ describe('RFC 8887 — JMAP over WebSocket', () => {
   });
 
   afterEach(() => {
+    MockWebSocket.autoOpen = true;
     vi.restoreAllMocks();
   });
 
@@ -549,6 +559,100 @@ describe('RFC 8887 — JMAP over WebSocket', () => {
       expect(strategy.nextDelay()).toBe(1000);
       expect(strategy.attempts).toBe(1);
 
+      vi.useRealTimers();
+    });
+
+    // ── Circuit breaker (issue #3) ───────────────────────────────────
+    it('stops reconnecting after N consecutive never-connected failures (circuit breaker)', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      MockWebSocket.autoOpen = false; // dead backend: sockets never open
+      const { webSocketManager } = await import('../websocket');
+      const terminalListener = vi.fn();
+      webSocketManager.onTerminalStateChange(terminalListener);
+
+      webSocketManager.connect('wss://mail.example.com/jmap/ws', 'jmap', mockQueryClient);
+      const firstWs = capturedWs;
+      expect(firstWs).not.toBeNull();
+
+      // Failure 1 → reconnect (1s backoff)
+      firstWs!.onclose?.({ code: 1006, reason: 'abnormal', wasClean: false } as CloseEvent);
+      await vi.advanceTimersByTimeAsync(1000);
+      const secondWs = capturedWs;
+      expect(secondWs).not.toBe(firstWs);
+      expect(webSocketManager.isTerminal()).toBe(false);
+
+      // Failure 2 → reconnect (2s backoff)
+      secondWs!.onclose?.({ code: 1006, reason: 'abnormal', wasClean: false } as CloseEvent);
+      await vi.advanceTimersByTimeAsync(2000);
+      const thirdWs = capturedWs;
+      expect(thirdWs).not.toBe(secondWs);
+
+      // Failure 3 → circuit breaker trips open: no further attempts
+      thirdWs!.onclose?.({ code: 1006, reason: 'abnormal', wasClean: false } as CloseEvent);
+      expect(terminalListener).toHaveBeenCalledWith(true);
+      expect(webSocketManager.isTerminal()).toBe(true);
+
+      // Advance far beyond the max backoff: no new socket may be created
+      const lastSocket = capturedWs;
+      await vi.advanceTimersByTimeAsync(120_000);
+      expect(capturedWs).toBe(lastSocket);
+
+      webSocketManager.disconnect();
+      vi.useRealTimers();
+    });
+
+    it('retry() resets the circuit breaker and reconnects', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      MockWebSocket.autoOpen = false;
+      const { webSocketManager } = await import('../websocket');
+      const terminalListener = vi.fn();
+      webSocketManager.onTerminalStateChange(terminalListener);
+
+      webSocketManager.connect('wss://mail.example.com/jmap/ws', 'jmap', mockQueryClient);
+      let ws = capturedWs!;
+      for (let i = 0; i < 3; i++) {
+        ws.onclose?.({ code: 1006, reason: 'abnormal', wasClean: false } as CloseEvent);
+        await vi.advanceTimersByTimeAsync(60_000);
+        ws = capturedWs!;
+      }
+      expect(webSocketManager.isTerminal()).toBe(true);
+
+      // Backend recovers: manual retry must reset the breaker and reconnect.
+      MockWebSocket.autoOpen = true;
+      webSocketManager.retry();
+      expect(webSocketManager.isTerminal()).toBe(false);
+      expect(terminalListener).toHaveBeenCalledWith(false);
+
+      await vi.waitFor(() => expect(capturedWs?.readyState).toBe(MockWebSocket.OPEN));
+      expect(webSocketManager.isConnected()).toBe(true);
+
+      webSocketManager.disconnect();
+      vi.useRealTimers();
+    });
+
+    it('keeps retrying after failures following a successful connection (transient class)', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      MockWebSocket.autoOpen = true;
+      const { webSocketManager } = await import('../websocket');
+      const terminalListener = vi.fn();
+      webSocketManager.onTerminalStateChange(terminalListener);
+
+      webSocketManager.connect('wss://mail.example.com/jmap/ws', 'jmap', mockQueryClient);
+      await vi.waitFor(() => expect(capturedWs?.readyState).toBe(MockWebSocket.OPEN));
+
+      // 10 consecutive failures AFTER a successful connection: transient
+      // class — the breaker must never trip and reconnects must continue.
+      for (let i = 0; i < 10; i++) {
+        const ws = capturedWs!;
+        ws.onclose?.({ code: 1006, reason: 'abnormal', wasClean: false } as CloseEvent);
+        await vi.advanceTimersByTimeAsync(60_000);
+        await vi.waitFor(() => expect(capturedWs?.readyState).toBe(MockWebSocket.OPEN));
+      }
+
+      expect(webSocketManager.isTerminal()).toBe(false);
+      expect(terminalListener).not.toHaveBeenCalledWith(true);
+
+      webSocketManager.disconnect();
       vi.useRealTimers();
     });
   });

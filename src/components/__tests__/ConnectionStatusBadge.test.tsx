@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { render, screen, fireEvent } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
 import { ConnectionStatusBadge } from '../ConnectionStatusBadge'
 
 describe('ConnectionStatusBadge', () => {
@@ -62,5 +62,59 @@ describe('ConnectionStatusBadge', () => {
     )
 
     expect(screen.getByText('Manual sync')).toBeInTheDocument()
+  })
+
+  it('shows a terminal Server unreachable state distinct from Reconnecting', () => {
+    render(
+      <ConnectionStatusBadge
+        isOffline={false}
+        isPushEnabled
+        isPushConnected={false}
+        isPushTerminal
+        pendingCount={0}
+        isReplaying={false}
+      />,
+    )
+
+    expect(screen.getByText('Server unreachable')).toBeInTheDocument()
+    expect(screen.queryByText('Reconnecting')).not.toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveAttribute(
+      'title',
+      'Sync status: Server unreachable. The mail server cannot be reached. Use Retry to try again.',
+    )
+  })
+
+  it('shows a Retry affordance in the terminal state and fires it on click', () => {
+    const onRetry = vi.fn()
+    render(
+      <ConnectionStatusBadge
+        isOffline={false}
+        isPushEnabled
+        isPushConnected={false}
+        isPushTerminal
+        onRetry={onRetry}
+        pendingCount={0}
+        isReplaying={false}
+      />,
+    )
+
+    const retryButton = screen.getByRole('button', { name: /retry mail server connection/i })
+    fireEvent.click(retryButton)
+    expect(onRetry).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not show a Retry affordance without an onRetry handler', () => {
+    render(
+      <ConnectionStatusBadge
+        isOffline={false}
+        isPushEnabled
+        isPushConnected={false}
+        isPushTerminal
+        pendingCount={0}
+        isReplaying={false}
+      />,
+    )
+
+    expect(screen.queryByRole('button', { name: /retry mail server connection/i })).not.toBeInTheDocument()
   })
 })

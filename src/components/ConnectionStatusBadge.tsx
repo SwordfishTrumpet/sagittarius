@@ -7,6 +7,10 @@ interface ConnectionStatusBadgeProps {
   isPushConnected: boolean
   pendingCount: number
   isReplaying: boolean
+  /** Circuit breaker tripped: the mail server appears unreachable (issue #3). */
+  isPushTerminal?: boolean
+  /** Manual retry affordance shown in the terminal state. */
+  onRetry?: () => void
 }
 
 interface BadgeConfig {
@@ -23,6 +27,7 @@ function getBadgeConfig({
   isPushConnected,
   pendingCount,
   isReplaying,
+  isPushTerminal,
 }: ConnectionStatusBadgeProps): BadgeConfig {
   if (isOffline) {
     return {
@@ -58,6 +63,15 @@ function getBadgeConfig({
     }
   }
 
+  if (isPushEnabled && isPushTerminal) {
+    return {
+      label: 'Server unreachable',
+      detail: 'The mail server cannot be reached. Use Retry to try again.',
+      icon: <WifiOff className="h-3.5 w-3.5" strokeWidth={1.75} />,
+      className: 'bg-icloud-red/10 text-icloud-red border-icloud-red/15',
+    }
+  }
+
   if (isPushEnabled && !isPushConnected) {
     return {
       label: 'Reconnecting',
@@ -86,21 +100,35 @@ function getBadgeConfig({
 
 export function ConnectionStatusBadge(props: ConnectionStatusBadgeProps) {
   const { label, detail, icon, className, count } = getBadgeConfig(props)
+  const { isPushTerminal, onRetry } = props
 
   return (
-    <span
-      role="status"
-      aria-live="polite"
-      aria-label={`Sync status: ${label}. ${detail}`}
-      title={`Sync status: ${label}. ${detail}`}
-      className={`inline-flex select-none items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${className}`}
-    >
-      {icon}
-      <span>{label}</span>
-      {count ? (
-        <span className="min-w-[16px] rounded-full bg-white/70 dark:bg-white/20 px-1.5 py-px text-center text-[10px] font-bold leading-none text-current">
-          {count}
-        </span>
+    <span className="inline-flex items-center gap-1.5">
+      <span
+        role="status"
+        aria-live="polite"
+        aria-label={`Sync status: ${label}. ${detail}`}
+        title={`Sync status: ${label}. ${detail}`}
+        className={`inline-flex select-none items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${className}`}
+      >
+        {icon}
+        <span>{label}</span>
+        {count ? (
+          <span className="min-w-[16px] rounded-full bg-white/70 dark:bg-white/20 px-1.5 py-px text-center text-[10px] font-bold leading-none text-current">
+            {count}
+          </span>
+        ) : null}
+      </span>
+      {isPushTerminal && onRetry ? (
+        <button
+          type="button"
+          onClick={onRetry}
+          aria-label="Retry mail server connection"
+          className="inline-flex items-center gap-1 rounded-full border border-icloud-red/15 bg-icloud-red/10 px-2.5 py-1 text-[11px] font-semibold text-icloud-red transition-colors hover:bg-icloud-red/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-icloud-red/40"
+        >
+          <RotateCw className="h-3 w-3" strokeWidth={1.75} />
+          Retry
+        </button>
       ) : null}
     </span>
   )

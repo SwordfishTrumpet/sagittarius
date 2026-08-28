@@ -10,6 +10,10 @@ export interface UseWebSocketResult {
   isConnected: boolean;
   hasNewMail: boolean;
   clearNewMail: () => void;
+  /** True when the circuit breaker tripped (server unreachable). */
+  isTerminal: boolean;
+  /** Reset the circuit breaker and reconnect now. */
+  retry: () => void;
 }
 
 function buildWebSocketUrl(rawUrl: string, authToken: string): string {
@@ -47,13 +51,22 @@ export function useWebSocket(enabled: boolean): UseWebSocketResult {
   const [isConnected, setIsConnected] = useState<boolean>(
     () => webSocketManager.isConnected(),
   );
+  const [isTerminal, setIsTerminal] = useState<boolean>(
+    () => webSocketManager.isTerminal(),
+  );
   const [hasNewMail, setHasNewMail] = useState(false);
 
   const isConnectedRef = useRef(isConnected);
+  const isTerminalRef = useRef(isTerminal);
 
   const clearNewMail = useCallback(() => {
     setHasNewMail(false);
   }, []);
+
+  const retry = useCallback(() => {
+    if (!enabled) return;
+    webSocketManager.retry();
+  }, [enabled]);
 
   // Reset connection state when push is disabled (enabled flipped false).
   // Deliberately NOT done inside the effect cleanup: cleanup runs after
@@ -63,6 +76,7 @@ export function useWebSocket(enabled: boolean): UseWebSocketResult {
     if (!enabled) {
       isConnectedRef.current = false;
       setIsConnected(false);
+      setIsTerminal(false);
     }
   }, [enabled]);
 
@@ -96,6 +110,12 @@ export function useWebSocket(enabled: boolean): UseWebSocketResult {
       setIsConnected(connected);
     });
 
+    // Subscribe to circuit-breaker changes (issue #3)
+    const unsubscribeTerminalState = webSocketManager.onTerminalStateChange((terminal) => {
+      logger.debug('[useWebSocket] Terminal state changed:', terminal);
+      setIsTerminal(terminal);
+    });
+
     // Also poll periodically as a fallback in case callbacks are missed
     const pollInterval = setInterval(() => {
       const connected = webSocketManager.isConnected();
@@ -104,15 +124,21 @@ export function useWebSocket(enabled: boolean): UseWebSocketResult {
         isConnectedRef.current = connected;
         setIsConnected(connected);
       }
+      const terminal = webSocketManager.isTerminal();
+      if (terminal !== isTerminalRef.current) {
+        isTerminalRef.current = terminal;
+        setIsTerminal(terminal);
+      }
     }, 2000);
 
     return () => {
       clearInterval(pollInterval);
       unsubscribeNewMail();
       unsubscribeConnectionState();
+      unsubscribeTerminalState();
       webSocketManager.disconnect();
     };
   }, [enabled]);
 
-  return { isConnected, hasNewMail, clearNewMail };
+  return { isConnected, hasNewMail, clearNewMail, isTerminal, retry };
 }
