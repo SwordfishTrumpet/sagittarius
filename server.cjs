@@ -194,10 +194,59 @@ function handleServerFingerprint(req, res) {
     });
 }
 
+// ── Health check (issue #7) ──────────────────────────────────────────
+// Same semantics as server.js /health: the backend probe (DNS + connection)
+// runs at most once per cache window and the overall check fails (503 +
+// status 'degraded') on the FIRST failed probe so deploy gates fail when
+// the backend is down.
+const BACKEND_PROBE_CACHE_MS = 10_000;
+const BACKEND_PROBE_TIMEOUT_MS = 2000;
+let backendHealth = {
+  consecutiveFailures: 0,
+  lastProbeAt: 0,
+  lastProbe: null,
+};
+
+async function handleHealth(req, res) {
+  let probe = backendHealth.lastProbe;
+  if (!probe || Date.now() - backendHealth.lastProbeAt >= BACKEND_PROBE_CACHE_MS) {
+    probe = await probeBackendReachability(JMAP_SERVER, { timeoutMs: BACKEND_PROBE_TIMEOUT_MS });
+    backendHealth.lastProbe = probe;
+    backendHealth.lastProbeAt = Date.now();
+    const backendUp = probe.resolved === true && probe.reachable === true;
+    backendHealth.consecutiveFailures = backendUp ? 0 : backendHealth.consecutiveFailures + 1;
+  }
+
+  const backendUp = probe.resolved === true && probe.reachable === true;
+  const body = {
+    status: backendUp ? 'ok' : 'degraded',
+    backend: {
+      host: probe.host,
+      scheme: probe.scheme,
+      resolved: probe.resolved,
+      reachable: probe.reachable,
+      addresses: probe.addresses,
+      latencyMs: probe.latencyMs,
+      error: probe.error,
+      consecutiveFailures: backendHealth.consecutiveFailures,
+    },
+    uptime: Math.floor(process.uptime()),
+    pid: process.pid,
+  };
+  res.writeHead(backendUp ? 200 : 503, { 'Content-Type': 'application/json; charset=utf-8' });
+  res.end(JSON.stringify(body));
+}
+
 // ── HTTP Server ─────────────────────────────────────────────────────
 const server = http.createServer((req, res) => {
   if (req.url && req.url.startsWith('/api/server-fingerprint')) {
     handleServerFingerprint(req, res);
+  } else if (req.url && req.url.startsWith('/health')) {
+    handleHealth(req, res).catch((err) => {
+      logError(`[health] probe failed: ${err.message}`);
+      res.writeHead(503, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ status: 'degraded', error: 'Health probe failed' }));
+    });
   } else if (req.url && req.url.startsWith('/jmap')) {
     proxy.web(req, res);
   } else {

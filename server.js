@@ -160,10 +160,24 @@ function recordMemory() {
 setInterval(recordMemory, 30000);
 
 // ── Health check (useful for monitoring / load balancers) ────────────
-app.get('/health', (_req, res) => {
+// Issue #7: /health must not report a dead JMAP backend as healthy. The
+// backend probe (DNS + connection) runs at most once per cache window;
+// consecutive failures are tracked for observability. The overall check
+// fails (503 + status 'degraded') on the FIRST failed probe so deploy
+// gates (Docker healthcheck, deploy.sh) fail immediately when the backend
+// is down instead of after a monitoring delay.
+const BACKEND_PROBE_CACHE_MS = 10_000;
+const BACKEND_PROBE_TIMEOUT_MS = 2000;
+let backendHealth = {
+  consecutiveFailures: 0,
+  lastProbeAt: 0,
+  lastProbe: null,
+};
+
+app.get('/health', async (_req, res) => {
   const current = recordMemory();
   const uptime = process.uptime();
-  
+
   // Calculate trend if we have enough history
   let trend = 'stable';
   if (memoryHistory.length >= 2) {
@@ -172,9 +186,29 @@ app.get('/health', (_req, res) => {
     if (diff > 50) trend = 'increasing';
     else if (diff < -50) trend = 'decreasing';
   }
-  
-  res.json({
-    status: 'ok',
+
+  let probe = backendHealth.lastProbe;
+  if (!probe || Date.now() - backendHealth.lastProbeAt >= BACKEND_PROBE_CACHE_MS) {
+    probe = await probeBackendReachability(JMAP_SERVER, { timeoutMs: BACKEND_PROBE_TIMEOUT_MS });
+    backendHealth.lastProbe = probe;
+    backendHealth.lastProbeAt = Date.now();
+    const backendUp = probe.resolved === true && probe.reachable === true;
+    backendHealth.consecutiveFailures = backendUp ? 0 : backendHealth.consecutiveFailures + 1;
+  }
+
+  const backendUp = probe.resolved === true && probe.reachable === true;
+  res.status(backendUp ? 200 : 503).json({
+    status: backendUp ? 'ok' : 'degraded',
+    backend: {
+      host: probe.host,
+      scheme: probe.scheme,
+      resolved: probe.resolved,
+      reachable: probe.reachable,
+      addresses: probe.addresses,
+      latencyMs: probe.latencyMs,
+      error: probe.error,
+      consecutiveFailures: backendHealth.consecutiveFailures,
+    },
     uptime: Math.floor(uptime),
     uptimeHuman: `${Math.floor(uptime / 86400)}d ${Math.floor((uptime % 86400) / 3600)}h ${Math.floor((uptime % 3600) / 60)}m`,
     memory: current,
