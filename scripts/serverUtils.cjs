@@ -34,6 +34,27 @@ function normalizeHost(host) {
 }
 
 /**
+ * Redact sensitive query parameters (access_token) from URLs before logging.
+ * Must stay in sync with src/utils/logger.ts `redactUrl()` (client) and
+ * vite.config.ts `redactProxyUrl()` (dev proxy) — issue #2: production
+ * servers must never persist live Basic-auth credentials in logs.
+ */
+function redactUrl(url) {
+  if (typeof url !== 'string' || !url) return url;
+  try {
+    const parsed = new URL(url, 'http://localhost');
+    if (parsed.searchParams.has('access_token')) {
+      parsed.searchParams.set('access_token', '[REDACTED]');
+    }
+    return parsed.toString();
+  } catch {
+    // Replace EVERY access_token=... occurrence (global flag) so URLs with
+    // duplicate tokens never leak a second token.
+    return url.replace(/access_token=[^&]+/g, 'access_token=[REDACTED]');
+  }
+}
+
+/**
  * Resolve A + AAAA records for a host, falling back to the system resolver.
  * Returns a sorted, de-duplicated address list (stable for comparison).
  * `dnsImpl` is injectable for tests (defaults to Node's dns.promises).
@@ -235,5 +256,6 @@ module.exports = {
   fingerprintKey,
   parseTrustedFingerprints,
   normalizeFingerprintValue,
+  redactUrl,
   FINGERPRINT_TIMEOUT_MS,
 };

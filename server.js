@@ -16,7 +16,7 @@ import { createProxyMiddleware } from 'http-proxy-middleware';
 import httpProxy from 'http-proxy';
 import { fileURLToPath } from 'url';
 import path from 'path';
-import { computeServerFingerprint, parseTrustedFingerprints } from './scripts/serverUtils.cjs';
+import { computeServerFingerprint, parseTrustedFingerprints, redactUrl } from './scripts/serverUtils.cjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = parseInt(process.env.PORT || '8081', 10);
@@ -319,20 +319,20 @@ const jmapProxy = createProxyMiddleware({
       // that into a proper Authorization header for the JMAP backend.
       attachBasicAuthFromAccessToken(proxyReq, req.url);
 
-      // Debug: Log upload requests
+      // Debug: Log upload requests (URL redacted — issue #2)
       if (req.url?.includes('/upload')) {
-        logInfo('[proxy] Upload request:', req.url, 'Auth header present:', !!proxyReq.getHeader('authorization'));
+        logInfo('[proxy] Upload request:', redactUrl(req.url), 'Auth header present:', !!proxyReq.getHeader('authorization'));
       }
 
       if (req.url?.includes('/eventsource')) {
-        logInfo('[proxy] EventSource request:', req.url);
+        logInfo('[proxy] EventSource request:', redactUrl(req.url));
       }
     },
 
     proxyReqWs: (proxyReq, req) => {
       // Change target to WebSocket URL for WebSocket connections
       proxyReq.setHeader('Host', new URL(JMAP_WS_SERVER).host);
-      logInfo('[proxy] WebSocket upgrade:', req.url, '→', JMAP_WS_SERVER);
+      logInfo('[proxy] WebSocket upgrade:', redactUrl(req.url), '→', JMAP_WS_SERVER);
       attachBasicAuthFromAccessToken(proxyReq, req.url);
     },
 
@@ -343,7 +343,7 @@ const jmapProxy = createProxyMiddleware({
         delete proxyRes.headers['www-authenticate'];
       }
       if (req.url?.includes('/ws')) {
-        logInfo('[proxy] WebSocket response:', proxyRes.statusCode, req.url);
+        logInfo('[proxy] WebSocket response:', proxyRes.statusCode, redactUrl(req.url));
       }
       if (req.url?.includes('/eventsource')) {
         logInfo('[proxy] EventSource connected:', proxyRes.statusCode, 'content-type:', proxyRes.headers['content-type']);
@@ -402,7 +402,7 @@ import { createServer } from 'http';
 const server = createServer((req, res) => {
   // Handle EventSource directly, bypassing Express entirely
   if (req.url?.startsWith('/jmap/eventsource')) {
-    logInfo('[sse-direct] EventSource request:', req.url);
+    logInfo('[sse-direct] EventSource request:', redactUrl(req.url));
 
     // Extract access_token from query and add Authorization header
     try {
@@ -445,7 +445,7 @@ server.listen(PORT, '0.0.0.0', () => {
 
 // Handle WebSocket upgrade for JMAP proxy
 server.on('upgrade', (req, socket, head) => {
-  logInfo('[ws-upgrade] Port', PORT, '- URL:', req.url, '- Headers:', JSON.stringify({
+  logInfo('[ws-upgrade] Port', PORT, '- URL:', redactUrl(req.url), '- Headers:', JSON.stringify({
     upgrade: req.headers.upgrade,
     connection: req.headers.connection,
     host: req.headers.host,
@@ -461,7 +461,7 @@ server.on('upgrade', (req, socket, head) => {
 const proxyServer = createServer((req, res) => {
   // Handle EventSource directly, bypassing Express entirely
   if (req.url?.startsWith('/jmap/eventsource')) {
-    logInfo('[sse-direct] EventSource request (proxy port):', req.url);
+    logInfo('[sse-direct] EventSource request (proxy port):', redactUrl(req.url));
 
     // Extract access_token from query and add Authorization header
     try {
@@ -488,7 +488,7 @@ proxyServer.on('error', (err) => handleServerError(err, PROXY_PORT));
 // Register the WebSocket upgrade handler BEFORE listen() so no upgrade
 // request arriving right after the port binds is rejected or dropped.
 proxyServer.on('upgrade', (req, socket, head) => {
-  logInfo('[ws-upgrade] Port', PROXY_PORT, '- URL:', req.url, '- Headers:', JSON.stringify({
+  logInfo('[ws-upgrade] Port', PROXY_PORT, '- URL:', redactUrl(req.url), '- Headers:', JSON.stringify({
     upgrade: req.headers.upgrade,
     connection: req.headers.connection,
     host: req.headers.host,

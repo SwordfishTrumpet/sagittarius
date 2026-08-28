@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - at login (a changed identity requires explicit user confirmation before credentials are transmitted).
   Operators can allowlist trusted certificates with the `JMAP_TRUSTED_FINGERPRINTS` env var (comma-separated SHA-256 hashes, with or without the `sha256:` prefix).
 - **JMAP error taxonomy** — new `ServerUnreachableError` / `AuthError` / `JMAPProtocolError` classes (`src/utils/jmapErrors.ts`) classify 401/403 (auth), 502/503/504 + network failures (server unreachable), and protocol errors across `authenticate()` and `request()`.
+- **Server log credential redaction (issue #2)** — every `req.url` log site in `server.js` (EventSource, WebSocket upgrade, upload, proxy response lines) now passes through a shared `redactUrl()` (`scripts/serverUtils.cjs`), so live `access_token=` Basic-auth credentials never reach `server.log`. The shipped `nginx-webmail.conf` disables access logging on `/jmap` and `/jmap/ws` (where the query string carries credentials) and documents a no-query `log_format` for operators who want request logs.
 
 ### Changed
 - `server.js` logs the actual bound listen port (`server.address().port`) instead of the configured env value, enabling ephemeral-port boot (needed by the new boot test).
