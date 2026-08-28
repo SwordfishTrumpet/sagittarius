@@ -1,15 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { jmapClient } from '../api/jmap';
-import { Shield, Mail, Key, Lock } from 'lucide-react';
+import { Shield, Mail, Key, Lock, AlertTriangle } from 'lucide-react';
 import { logger } from '../utils/logger';
 import { checkRateLimit, recordFailedAttempt, resetRateLimit, getRateLimitStatus } from '../utils/rateLimit';
+import { isServerUnreachableError } from '../utils/jmapErrors';
+import {
+  isServerIdentityChangedError,
+  type ServerIdentityChangedError,
+} from '../utils/serverFingerprint';
 
-export function Login({ onLoginSuccess }: { onLoginSuccess: () => void }) {
+export function Login({ onLoginSuccess, identityChangedNotice = false }: {
+  onLoginSuccess: () => void;
+  /** Shown when the boot check invalidated a stored session because the backend identity changed. */
+  identityChangedNotice?: boolean;
+}) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [lockoutSeconds, setLockoutSeconds] = useState<number | null>(null);
+  const [pendingIdentityChange, setPendingIdentityChange] = useState<ServerIdentityChangedError | null>(null);
 
   // Check rate limit on mount and periodically
   useEffect(() => {
@@ -26,10 +36,36 @@ export function Login({ onLoginSuccess }: { onLoginSuccess: () => void }) {
     return () => clearInterval(interval);
   }, []);
 
+  // Shared error handler: identity-change requires confirmation; server
+  // unreachable is NOT a credential problem (never counts against the auth
+  // rate limiter); only real auth/protocol failures do.
+  const handleAuthError = (err: unknown) => {
+    if (isServerIdentityChangedError(err)) {
+      setPendingIdentityChange(err);
+      return;
+    }
+    if (isServerUnreachableError(err)) {
+      setError('Mail server unreachable. Please check the connection and try again.');
+      return;
+    }
+    // Record failed attempt
+    const remaining = recordFailedAttempt();
+    const status = getRateLimitStatus();
+
+    if (status.isLocked) {
+      setError(`Too many failed attempts. Please try again in ${Math.ceil(status.lockoutSeconds! / 60)} minutes.`);
+      setLockoutSeconds(status.lockoutSeconds);
+    } else {
+      setError(`Failed to authenticate. Please check your credentials. ${remaining} attempt${remaining !== 1 ? 's' : ''} remaining.`);
+    }
+    logger.error(err);
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setPendingIdentityChange(null);
 
     // Check rate limit before attempting
     const rateLimitSeconds = checkRateLimit();
@@ -46,19 +82,26 @@ export function Login({ onLoginSuccess }: { onLoginSuccess: () => void }) {
       resetRateLimit();
       onLoginSuccess();
     } catch (err) {
-      // Record failed attempt
-      const remaining = recordFailedAttempt();
-      const status = getRateLimitStatus();
-
-      if (status.isLocked) {
-        setError(`Too many failed attempts. Please try again in ${Math.ceil(status.lockoutSeconds! / 60)} minutes.`);
-        setLockoutSeconds(status.lockoutSeconds);
-      } else {
-        setError(`Failed to authenticate. Please check your credentials. ${remaining} attempt${remaining !== 1 ? 's' : ''} remaining.`);
-      }
-      logger.error(err);
+      handleAuthError(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Explicit user confirmation that the mail server identity really changed
+  // (issue #1): credentials are ONLY sent after this explicit step.
+  const confirmIdentityChange = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      await jmapClient.authenticate(username, password, { confirmIdentityChange: true });
+      resetRateLimit();
+      onLoginSuccess();
+    } catch (err) {
+      handleAuthError(err);
+    } finally {
+      setLoading(false);
+      setPendingIdentityChange(null);
     }
   };
 
@@ -77,6 +120,44 @@ export function Login({ onLoginSuccess }: { onLoginSuccess: () => void }) {
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
+          {identityChangedNotice && (
+            <div role="alert" className="bg-icloud-orange/10 text-icloud-orange text-sm py-3 px-4 rounded-xl border border-icloud-orange/20 flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+              <span>The mail server's identity changed since your last sign-in. Sign in again to continue — you'll be asked to confirm the new server before any credentials are sent.</span>
+            </div>
+          )}
+
+          {pendingIdentityChange && (
+            <div role="alert" className="bg-icloud-orange/10 text-icloud-orange text-sm py-3 px-4 rounded-xl border border-icloud-orange/20 space-y-2">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+                <span>
+                  <strong className="font-semibold">The mail server identity has changed.</strong>{' '}
+                  The mail server you previously signed into was <span className="font-mono">{pendingIdentityChange.previousFingerprint?.host ?? 'unknown'}</span>{' '}
+                  and now answers as <span className="font-mono">{pendingIdentityChange.currentFingerprint.host ?? 'unknown'}</span>.
+                  Signing in will send your credentials to the new server.
+                </span>
+              </div>
+              <div className="flex gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setPendingIdentityChange(null)}
+                  className="rounded-lg bg-white/10 px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-white/20"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void confirmIdentityChange()}
+                  disabled={loading}
+                  className="rounded-lg bg-icloud-orange px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-icloud-orange/90 disabled:opacity-50"
+                >
+                  Continue sign-in
+                </button>
+              </div>
+            </div>
+          )}
+
           {lockoutSeconds && (
             <div className="bg-icloud-orange/10 text-icloud-orange text-sm py-3 px-4 rounded-xl border border-icloud-orange/20 flex items-center gap-2">
               <Lock className="w-4 h-4" />

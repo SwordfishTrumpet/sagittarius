@@ -11,9 +11,13 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const httpProxy = require('http-proxy');
+const { computeServerFingerprint, parseTrustedFingerprints } = require('./scripts/serverUtils.cjs');
 
 const PORT = process.env.PORT || 3000;
 const JMAP_SERVER = process.env.JMAP_SERVER || 'http://localhost:8080';
+// Operator allowlist: comma-separated sha256 cert fingerprints that are
+// always accepted for this deployment (issue #1).
+const TRUSTED_FINGERPRINTS = parseTrustedFingerprints(process.env.JMAP_TRUSTED_FINGERPRINTS);
 // Derive the default Host header from JMAP_SERVER itself (host portion only),
 // so servers that validate Host never receive a hard-coded example domain.
 function defaultJmapHost(serverUrl) {
@@ -170,9 +174,34 @@ function serveStatic(req, res) {
   });
 }
 
+// ── Server identity fingerprint (issue #1) ───────────────────────────
+// The client pins the JMAP backend identity (DNS + TLS cert) so a
+// lapsed-and-re-registered domain cannot harvest Basic-auth credentials.
+function handleServerFingerprint(req, res) {
+  computeServerFingerprint(JMAP_SERVER, { trustedFingerprints: TRUSTED_FINGERPRINTS })
+    .then((fingerprint) => {
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify(fingerprint));
+    })
+    .catch((err) => {
+      res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({
+        host: null,
+        scheme: null,
+        resolved: false,
+        addresses: [],
+        certFingerprint: null,
+        trusted: false,
+        error: err instanceof Error ? err.message : 'Fingerprint computation failed',
+      }));
+    });
+}
+
 // ── HTTP Server ─────────────────────────────────────────────────────
 const server = http.createServer((req, res) => {
-  if (req.url && req.url.startsWith('/jmap')) {
+  if (req.url && req.url.startsWith('/api/server-fingerprint')) {
+    handleServerFingerprint(req, res);
+  } else if (req.url && req.url.startsWith('/jmap')) {
     proxy.web(req, res);
   } else {
     serveStatic(req, res);

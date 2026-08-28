@@ -8,7 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Nothing yet.
+- **Server-identity pinning (issue #1)** — the client now pins the identity of the configured JMAP backend (TLS certificate SHA-256 for https backends, resolved DNS addresses for http) via a new same-origin `GET /api/server-fingerprint` endpoint on `server.js`, `server.cjs`, and the Vite dev proxy. The fingerprint is stored with the session at first authentication and verified:
+  - before any credential-bearing request is sent (a changed identity invalidates the stored session immediately);
+  - at login (a changed identity requires explicit user confirmation before credentials are transmitted).
+  Operators can allowlist trusted certificates with the `JMAP_TRUSTED_FINGERPRINTS` env var (comma-separated SHA-256 hashes, with or without the `sha256:` prefix).
+- **JMAP error taxonomy** — new `ServerUnreachableError` / `AuthError` / `JMAPProtocolError` classes (`src/utils/jmapErrors.ts`) classify 401/403 (auth), 502/503/504 + network failures (server unreachable), and protocol errors across `authenticate()` and `request()`.
+
+### Changed
+- `server.js` logs the actual bound listen port (`server.address().port`) instead of the configured env value, enabling ephemeral-port boot (needed by the new boot test).
 
 ## [1.2.0] - 2026-08-05
 

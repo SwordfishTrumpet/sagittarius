@@ -16,10 +16,14 @@ import { createProxyMiddleware } from 'http-proxy-middleware';
 import httpProxy from 'http-proxy';
 import { fileURLToPath } from 'url';
 import path from 'path';
+import { computeServerFingerprint, parseTrustedFingerprints } from './scripts/serverUtils.cjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = parseInt(process.env.PORT || '8081', 10);
 const JMAP_SERVER = process.env.JMAP_SERVER || 'http://localhost:8080';
+// Operator allowlist: comma-separated sha256 cert fingerprints (with or
+// without the `sha256:` prefix) that are always accepted for this deployment.
+const TRUSTED_FINGERPRINTS = parseTrustedFingerprints(process.env.JMAP_TRUSTED_FINGERPRINTS);
 const AUTH_TOKEN_RE = /^[A-Za-z0-9+/=]+$/;
 
 // Compute WebSocket target from JMAP_SERVER
@@ -179,6 +183,28 @@ app.get('/health', (_req, res) => {
     nodeVersion: process.version,
     pid: process.pid,
   });
+});
+
+// ── Server identity fingerprint (issue #1) ───────────────────────────
+// The client pins the JMAP backend identity (DNS + TLS cert) so a
+// lapsed-and-re-registered domain cannot harvest Basic-auth credentials.
+app.get('/api/server-fingerprint', async (_req, res) => {
+  try {
+    const fingerprint = await computeServerFingerprint(JMAP_SERVER, {
+      trustedFingerprints: TRUSTED_FINGERPRINTS,
+    });
+    res.json(fingerprint);
+  } catch (err) {
+    res.status(500).json({
+      host: null,
+      scheme: null,
+      resolved: false,
+      addresses: [],
+      certFingerprint: null,
+      trusted: false,
+      error: err instanceof Error ? err.message : 'Fingerprint computation failed',
+    });
+  }
 });
 
 // ── EventSource (SSE) proxy ─────────────────────────────────────────
@@ -412,7 +438,7 @@ function handleServerError(err, port) {
 
 server.on('error', (err) => handleServerError(err, PORT));
 server.listen(PORT, '0.0.0.0', () => {
-  logInfo(`listening on 0.0.0.0:${PORT}`);
+  logInfo(`listening on 0.0.0.0:${server.address().port}`);
   logInfo(`JMAP backend: ${JMAP_SERVER}`);
   logInfo(`serving: ${distDir}`);
 });
@@ -476,7 +502,7 @@ proxyServer.on('upgrade', (req, socket, head) => {
 });
 
 proxyServer.listen(PROXY_PORT, '0.0.0.0', () => {
-  logInfo(`listening on 0.0.0.0:${PROXY_PORT} (reverse proxy upstream)`);
+  logInfo(`listening on 0.0.0.0:${proxyServer.address().port} (reverse proxy upstream)`);
 });
 
 // Graceful shutdown
