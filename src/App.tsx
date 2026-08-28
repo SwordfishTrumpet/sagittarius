@@ -41,6 +41,7 @@ import { useNetworkStatus } from './hooks/useNetworkStatus'
 import { useOfflineSyncQueue } from './hooks/useOfflineSyncQueue'
 import { usePushConnection } from './hooks/usePushConnection'
 import { useAppUpdateChecker } from './hooks/useAppUpdateChecker'
+import { getStoredFingerprint } from './utils/serverFingerprint'
 import type { Mailbox, Email } from './types/jmap'
 
 // Extracted state hooks
@@ -55,6 +56,15 @@ import { useTheme } from './hooks/useTheme'
 function App() {
   const queryClient = useQueryClient()
   const [session, setSession] = useState(jmapClient.getStoredSession())
+  // Boot server-identity verification (issue #1): with a stored session AND a
+  // stored fingerprint we verify the backend identity BEFORE mounting the
+  // mail UI so no credential-bearing request or push connection can reach a
+  // changed (potentially attacker-controlled) backend identity. Sessions
+  // without a stored fingerprint (legacy) render immediately, exactly as
+  // before — there is nothing to compare against.
+  const [bootStatus, setBootStatus] = useState<'checking' | 'verified' | 'identity-changed' | 'unreachable'>(
+    () => (jmapClient.getStoredSession() && getStoredFingerprint() ? 'checking' : 'verified'),
+  )
   const [selectedMailboxId, setSelectedMailboxId] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const debouncedSearchTerm = useDebouncedValue(searchTerm, DEBOUNCE.search)
@@ -68,6 +78,27 @@ function App() {
 
   // Check for app updates periodically
   useAppUpdateChecker()
+
+  // Server-identity boot check (issue #1): if the fingerprint changed, the
+  // client invalidated the stored session; drop to the login screen with an
+  // explanatory notice. On 'unreachable' the check could not complete — the
+  // proxy cannot forward credentials to an unreachable host, so proceeding
+  // with the cached session is safe and requests surface ServerUnreachable.
+  useEffect(() => {
+    if (!jmapClient.getStoredSession() || !getStoredFingerprint()) {
+      setBootStatus('verified')
+      return
+    }
+    let cancelled = false
+    void jmapClient.verifyServerIdentity().then((status) => {
+      if (cancelled) return
+      if (status === 'identity-changed') setSession(null)
+      setBootStatus(status)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   // Mobile detection and navigation
   const isMobile = useIsMobile()
@@ -190,8 +221,10 @@ function App() {
     FolderDialogsUI,
   } = useFolderDialogs({ selectedMailboxId, setSelectedMailboxId, mailboxes, onReparentMailbox: handleMailboxReparent })
 
-  // Push connection
-  const { pushEnabled, pushConnected, hasNewMail, clearNewMail } = usePushConnection(!!session)
+  // Push connection — gated on boot verification so push transports (which
+  // embed credentials in their URLs) never start before the backend identity
+  // has been confirmed (issue #1).
+  const { pushEnabled, pushConnected, hasNewMail, clearNewMail } = usePushConnection(!!session && bootStatus === 'verified')
 
   // Quota and MDN
   const { data: quota } = useQuota()
@@ -554,8 +587,27 @@ function App() {
     }
   }, [selectedEmailId, selectedEmailDetail, updateKeywords])
 
-  if (!session) {
-    return <Login onLoginSuccess={() => setSession(jmapClient.getStoredSession())} />
+  if (!session || bootStatus === 'identity-changed') {
+    return (
+      <Login
+        onLoginSuccess={() => {
+          setBootStatus('verified')
+          setSession(jmapClient.getStoredSession())
+        }}
+        identityChangedNotice={bootStatus === 'identity-changed'}
+      />
+    )
+  }
+
+  if (bootStatus === 'checking') {
+    return (
+      <div className="flex h-full w-full items-center justify-center bg-icloud-bg-layer1">
+        <div className="flex items-center gap-2 text-sm text-icloud-text-secondary">
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-icloud-accent/30 border-t-icloud-accent" />
+          Checking mail server…
+        </div>
+      </div>
+    )
   }
 
   return (

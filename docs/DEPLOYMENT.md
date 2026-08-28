@@ -279,6 +279,24 @@ CMD ["node", "server.js"]
 | `JMAP_SERVER` | JMAP backend URL | `http://localhost:8080` |
 | `PORT` | Server port | `8081` |
 | `NODE_ENV` | Environment mode | `production` |
+| `JMAP_TRUSTED_FINGERPRINTS` | Comma-separated SHA-256 certificate fingerprints (with or without the `sha256:` prefix) of trusted JMAP backends. When the current backend fingerprint matches an entry, the client skips the server-identity confirmation on login. Useful when migrating between known-good backends. | *(unset — no allowlist)* |
+
+## Server Identity Pinning
+
+Sagittarius pins the identity of the configured JMAP backend to prevent a lapsed-and-re-registered backend domain from harvesting user credentials (the domain-lapse credential-theft scenario).
+
+At first authentication the client records a **server fingerprint** — the SHA-256 hash of the backend's TLS leaf certificate (https backends) or its resolved DNS addresses (http backends) — computed server-side by `GET /api/server-fingerprint` and stored with the session. Before any credential-bearing request, and again at login, the client compares the current fingerprint against the stored one:
+
+- **Identity changed** → the stored session is invalidated immediately (no credentials are transmitted) and re-login requires an explicit user confirmation dialog showing the previous and current hostnames.
+- **Backend unreachable** (DNS/TLS probe fails) → the client treats the backend as unreachable and never blocks on the probe; requests surface `ServerUnreachableError` instead.
+- **Endpoint unavailable** (older server paired with a newer client) → the client degrades gracefully without pinning and logs a warning.
+
+The `JMAP_TRUSTED_FINGERPRINTS` env var allows operators to skip the confirmation for known-good certificate hashes (e.g. after a planned backend migration). Obtain the current fingerprint with:
+
+```bash
+curl http://localhost:8081/api/server-fingerprint
+# {"host":"mail.example.com","scheme":"https","resolved":true,"addresses":["…"],"certFingerprint":"sha256:…","trusted":false,"error":null}
+```
 
 ---
 

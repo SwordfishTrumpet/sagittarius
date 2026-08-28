@@ -1,6 +1,7 @@
 /// <reference types="vitest" />
 import { createLogger, defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
+import serverUtils from './scripts/serverUtils.cjs'
 
 const AUTH_TOKEN_RE = /^[A-Za-z0-9+/=]+$/
 const proxyLogger = createLogger()
@@ -77,6 +78,31 @@ export default defineConfig(({ mode }) => {
     server: {
       host: '0.0.0.0',
       port: 8081,
+      configureServer(server) {
+        // Server identity fingerprint (issue #1) — mirrors the production
+        // /api/server-fingerprint endpoint so dev and prod behave identically.
+        server.middlewares.use('/api/server-fingerprint', async (_req, res) => {
+          try {
+            const fingerprint = await serverUtils.computeServerFingerprint(jmapServer, {
+              trustedFingerprints: serverUtils.parseTrustedFingerprints(process.env.JMAP_TRUSTED_FINGERPRINTS),
+            })
+            res.setHeader('Content-Type', 'application/json')
+            res.end(JSON.stringify(fingerprint))
+          } catch (err) {
+            res.statusCode = 500
+            res.setHeader('Content-Type', 'application/json')
+            res.end(JSON.stringify({
+              host: null,
+              scheme: null,
+              resolved: false,
+              addresses: [],
+              certFingerprint: null,
+              trusted: false,
+              error: err instanceof Error ? err.message : 'Fingerprint computation failed',
+            }))
+          }
+        })
+      },
       proxy: {
         '/jmap': {
           target: jmapServer,

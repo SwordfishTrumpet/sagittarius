@@ -3,6 +3,15 @@ import { eventSourceManager } from './eventSource';
 import { webSocketManager } from './websocket';
 import { stateManager } from './stateManager';
 import { getCsrfToken, getCsrfHeaderName, clearCsrfToken, regenerateCsrfToken } from '../utils/csrf';
+import { AuthError, ServerUnreachableError, JMAPProtocolError } from '../utils/jmapErrors';
+import {
+  fetchServerFingerprint,
+  getStoredFingerprint,
+  storeFingerprint,
+  fingerprintKey,
+  ServerIdentityChangedError,
+  type ServerFingerprint,
+} from '../utils/serverFingerprint';
 import type { QueryClient } from '@tanstack/react-query';
 import type { JMAPMethodCall, JMAPAccount, JMAPSession } from '../types/jmap';
 import type {
@@ -105,6 +114,14 @@ function combineSignals(...signals: Array<AbortSignal | null | undefined>): Abor
 
 type FilterLike = Record<string, unknown>;
 
+export interface AuthenticateOptions {
+  /**
+   * Allow signing in even though the stored server fingerprint differs from
+   * the current one (issue #1). Only set after explicit user confirmation.
+   */
+  confirmIdentityChange?: boolean;
+}
+
 class JMAPClient {
   private session: JMAPSession | null = null;
   private authHeader: string | null = null;
@@ -112,6 +129,15 @@ class JMAPClient {
   private _loggingOut = false;
   /** Active account selected by AccountProvider; null when not set. */
   private _activeAccountId: string | null = null;
+  /**
+   * Server-identity gate (issue #1): true once the backend fingerprint has
+   * been verified for this page load. Credential-bearing requests block on
+   * `ensureIdentityVerified()` until the check completes so a changed backend
+   * identity can never receive credentials.
+   */
+  private _identityVerified = false;
+  /** Shared in-flight identity check (replay-lock pattern). */
+  private _identityCheckPromise: Promise<unknown> | null = null;
 
   registerQueryClient(qc: QueryClient): void {
     this._queryClient = qc;
@@ -161,10 +187,44 @@ class JMAPClient {
     };
   }
 
-  async authenticate(username: string, password: string): Promise<JMAPSession> {
+  async authenticate(username: string, password: string, options: AuthenticateOptions = {}): Promise<JMAPSession> {
+    // ── Server identity gate (issue #1) ──────────────────────────────
+    // Fetch the backend fingerprint BEFORE sending credentials so that a
+    // changed backend identity never receives the Basic-auth header until
+    // the user explicitly confirms the change. The fetched fingerprint is
+    // reused to pin the identity on success (first-login TOFU pinning).
+    const currentFingerprint = await fetchServerFingerprint();
+    if (currentFingerprint) {
+      if (!currentFingerprint.resolved) {
+        throw new ServerUnreachableError(
+          'Mail server unreachable — the configured backend host cannot be resolved.',
+        );
+      }
+
+      const stored = getStoredFingerprint();
+      const storedKey = fingerprintKey(stored);
+      const currentKey = fingerprintKey(currentFingerprint);
+      if (currentKey === null) {
+        // Cannot compute a comparable identity (e.g. https backend whose TLS
+        // handshake failed). Fail closed: never send credentials to a server
+        // whose identity cannot be verified.
+        throw new ServerUnreachableError(
+          'Mail server unreachable — the server identity could not be verified.',
+        );
+      }
+      if (!options.confirmIdentityChange && !currentFingerprint.trusted && storedKey && storedKey !== currentKey) {
+        throw new ServerIdentityChangedError(stored, currentFingerprint);
+      }
+    } else {
+      // Endpoint unavailable (old server / blocked path): degrade without
+      // the pinning guarantee. fetchServerFingerprint() logged a warning.
+      logger.warn('[JMAP Auth] Server-identity endpoint unavailable — proceeding WITHOUT identity pinning.');
+    }
+
     const variants = buildAuthVariants(username);
 
     let lastError: Error | null = null;
+    let unreachableSeen = false;
     const startTime = Date.now();
 
     for (const variant of variants) {
@@ -173,21 +233,37 @@ class JMAPClient {
       const authHeader = `Basic ${credentials}`;
 
       logger.debug(`[JMAP Auth Request] Trying username: ${variant}`);
-      const response = await fetch('/jmap/session', {
-        // Prevent browser from showing native auth dialog on 401 (§3.6.1)
-        // We handle authentication entirely through our own login UI
-        credentials: 'omit',
-        headers: {
-          'Authorization': authHeader,
-          'Accept': 'application/json',
-        },
-      });
+      let response: Response;
+      try {
+        response = await fetch('/jmap/session', {
+          // Prevent browser from showing native auth dialog on 401 (§3.6.1)
+          // We handle authentication entirely through our own login UI
+          credentials: 'omit',
+          headers: {
+            'Authorization': authHeader,
+            'Accept': 'application/json',
+          },
+        });
+      } catch (err) {
+        // fetch-level failure: browser offline, proxy unreachable, DNS dead.
+        logger.error('[JMAP Auth Error] Network failure:', err instanceof Error ? err.message : String(err));
+        lastError = new ServerUnreachableError('Server unreachable');
+        unreachableSeen = true;
+        continue; // try next variant (harmless — same endpoint)
+      }
 
       if (!response.ok) {
         const errorText = await response.text();
         logger.error(`[JMAP Auth Error] HTTP ${response.status}`);
         logger.debug('[JMAP Auth Error] Response:', errorText);
-        lastError = new Error('Authentication failed');
+        if (response.status === 401 || response.status === 403) {
+          lastError = new AuthError('Authentication failed');
+        } else if (response.status >= 502 && response.status <= 504) {
+          lastError = new ServerUnreachableError(`Server unreachable (HTTP ${response.status})`);
+          unreachableSeen = true;
+        } else {
+          lastError = new JMAPProtocolError(`JMAP request failed: ${response.status}`, response.status);
+        }
         continue; // try next variant
       }
 
@@ -208,6 +284,12 @@ class JMAPClient {
       sessionStorage.setItem('jmap_auth', authHeader);
       sessionStorage.setItem('jmap_session', JSON.stringify(session));
 
+      // Pin the verified identity to the session (issue #1).
+      if (currentFingerprint) {
+        storeFingerprint(currentFingerprint);
+      }
+      this._identityVerified = true;
+
       // Regenerate CSRF token on successful authentication (VULN-006)
       regenerateCsrfToken();
 
@@ -222,7 +304,115 @@ class JMAPClient {
       await new Promise(resolve => setTimeout(resolve, minDelay - elapsed));
     }
 
-    throw lastError ?? new Error('Authentication failed');
+    // A dead backend is more informative than a wrong password: surface
+    // server-unreachable even when an auth failure was also seen.
+    if (unreachableSeen && lastError) {
+      throw lastError;
+    }
+    throw lastError ?? new AuthError('Authentication failed');
+  }
+
+  /**
+   * Invalidate the stored session because the backend identity changed.
+   * Clears auth/session/csrf state, stops push connections and cancels
+   * in-flight queries. Does NOT redirect (App decides the UI) and does NOT
+   * clear the stored fingerprint — the next login must confirm the change
+   * before credentials are transmitted again.
+   */
+  clearSessionForIdentityChange(): void {
+    // Stop push connections: their URLs/headers also carry credentials and
+    // would be forwarded to the changed (potentially attacker-controlled)
+    // endpoint on reconnect.
+    webSocketManager.disconnect();
+    eventSourceManager.disconnect();
+    this._queryClient?.cancelQueries();
+    this._queryClient?.clear();
+    this.session = null;
+    this.authHeader = null;
+    sessionStorage.removeItem('jmap_auth');
+    sessionStorage.removeItem('jmap_session');
+    clearCsrfToken();
+  }
+
+  /**
+   * Verify the backend identity against the stored fingerprint.
+   *
+   * Returns:
+   *  - `'verified'`         — fingerprint matches (or no stored fingerprint /
+   *                           endpoint unavailable: nothing to compare, so
+   *                           proceed — the fingerprint is (re)established at
+   *                           the next successful login).
+   *  - `'identity-changed'` — the fingerprint differs; the session was
+   *                           cleared and no further requests may carry
+   *                           credentials until the user confirms.
+   *  - `'unreachable'`      — the backend hostname no longer resolves.
+   */
+  async verifyServerIdentity(): Promise<'verified' | 'identity-changed' | 'unreachable'> {
+    if (!this.session || !this.authHeader) {
+      // Nothing to protect — no credentials exist.
+      this._identityVerified = true;
+      return 'verified';
+    }
+
+    const stored = getStoredFingerprint();
+    if (!stored) {
+      // No prior identity to compare against (legacy session or storage was
+      // cleared): cannot detect a change, and there is nothing to protect
+      // against — the pin is (re)established at the next successful login.
+      this._identityVerified = true;
+      return 'verified';
+    }
+
+    const current = await fetchServerFingerprint();
+    if (!current) {
+      // Endpoint unavailable or malformed (e.g. an older server paired with
+      // this client). Degrade without the pinning guarantee: credentials are
+      // only forwarded to a host the proxy can reach, and the endpoint ships
+      // with every supported server configuration.
+      this._identityVerified = true;
+      return 'unreachable';
+    }
+
+    if (!current.resolved) {
+      // Backend hostname no longer resolves: cannot verify, but also cannot
+      // forward credentials anywhere. Fail open; requests will fail with
+      // ServerUnreachableError rather than leak credentials.
+      this._identityVerified = true;
+      return 'unreachable';
+    }
+
+    if (current.trusted) {
+      // Operator allowlist match — always acceptable.
+      this._identityVerified = true;
+      return 'verified';
+    }
+
+    const storedKey = fingerprintKey(stored);
+    const currentKey = fingerprintKey(current);
+    if (storedKey && currentKey && storedKey !== currentKey) {
+      // Identity changed: refuse to transmit credentials to the new endpoint.
+      this.clearSessionForIdentityChange();
+      this._identityVerified = false;
+      return 'identity-changed';
+    }
+
+    this._identityVerified = true;
+    return 'verified';
+  }
+
+  /**
+   * Wait until the server identity has been verified (or it is safe to
+   * proceed). Called by `request()` before any credential-bearing fetch so
+   * a changed backend identity cannot receive credentials.
+   */
+  private ensureIdentityVerified(): Promise<unknown> {
+    if (this._identityVerified) return Promise.resolve();
+    if (!this._identityCheckPromise) {
+      this._identityCheckPromise = this.verifyServerIdentity().then(() => undefined).finally(() => {
+        this._identityCheckPromise = null;
+      });
+    }
+    return this._identityCheckPromise;
   }
 
   getStoredSession(): JMAPSession | null {
@@ -230,6 +420,14 @@ class JMAPClient {
   }
 
   async request(methodCalls: JMAPMethodCall[], extraCapabilities?: string[], signal?: AbortSignal): Promise<JMAPResponse> {
+    if (!this.session || !this.authHeader) {
+      throw new Error('Not authenticated');
+    }
+
+    // Server-identity gate (issue #1): never transmit credentials until the
+    // backend identity has been verified for this page load. If the check
+    // cleared the session (identity changed), refuse the request.
+    await this.ensureIdentityVerified();
     if (!this.session || !this.authHeader) {
       throw new Error('Not authenticated');
     }
@@ -265,23 +463,36 @@ class JMAPClient {
     const effectiveSignal = combineSignals(signal, timeoutController.signal);
 
     try {
-      const response = await fetch(this.session.apiUrl, {
-        method: 'POST',
-        // Prevent browser from showing native auth dialog on 401
-        credentials: 'omit',
-        headers: {
-          'Authorization': this.authHeader,
-          'Content-Type': 'application/json',
-          [getCsrfHeaderName()]: getCsrfToken(), // CSRF protection (VULN-006)
-        },
-        body: JSON.stringify(body),
-        signal: effectiveSignal,
-      });
+      let response: Response;
+      try {
+        response = await fetch(this.session.apiUrl, {
+          method: 'POST',
+          // Prevent browser from showing native auth dialog on 401
+          credentials: 'omit',
+          headers: {
+            'Authorization': this.authHeader,
+            'Content-Type': 'application/json',
+            [getCsrfHeaderName()]: getCsrfToken(), // CSRF protection (VULN-006)
+          },
+          body: JSON.stringify(body),
+          signal: effectiveSignal,
+        });
+      } catch (err) {
+        // fetch-level failure: proxy unreachable, DNS dead, browser offline.
+        logger.error(`[JMAP Error ${requestId}] Network failure:`, err instanceof Error ? err.message : String(err));
+        throw new ServerUnreachableError('Server unreachable');
+      }
 
       if (response.status === 401) {
         logger.error(`[JMAP Error ${requestId}] 401 Unauthorized`);
         this.logout();
-        throw new Error('Session expired');
+        throw new AuthError('Session expired');
+      }
+
+      if (response.status === 403) {
+        logger.error(`[JMAP Error ${requestId}] 403 Forbidden`);
+        this.logout();
+        throw new AuthError('Access denied');
       }
 
       if (!response.ok) {
@@ -289,7 +500,10 @@ class JMAPClient {
         logger.error(`[JMAP Error ${requestId}] HTTP ${response.status}`);
         logger.error(`[JMAP Error ${requestId}] Request body:`, JSON.stringify(body, null, 2));
         logger.error(`[JMAP Error ${requestId}] Response:`, errorText.substring(0, 1000));
-        throw new Error(`JMAP request failed: ${response.status}`);
+        if (response.status >= 502 && response.status <= 504) {
+          throw new ServerUnreachableError(`Server unreachable (HTTP ${response.status})`);
+        }
+        throw new JMAPProtocolError(`JMAP request failed: ${response.status}`, response.status);
       }
 
       const data = await response.json();

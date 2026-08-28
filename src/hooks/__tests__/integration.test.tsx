@@ -16,6 +16,19 @@ import { useSendMDN } from '../useMDN';
 import { useSieve, useSieveActions } from '../useSieve';
 import { jmapClient } from '../../api/jmap';
 
+// The server-identity subsystem (issue #1) is exercised end-to-end in
+// jmap-identity.test.ts / serverFingerprint.test.ts with the real modules;
+// here it is isolated so these workflow tests keep a single queued fetch
+// per request (the endpoint returns null → fail-open, no pinning gate).
+vi.mock('../../utils/serverFingerprint', () => ({
+  fetchServerFingerprint: vi.fn(async () => null),
+  getStoredFingerprint: vi.fn(() => null),
+  storeFingerprint: vi.fn(),
+  fingerprintKey: vi.fn(() => null),
+  ServerIdentityChangedError: class ServerIdentityChangedError extends Error {},
+  isServerIdentityChangedError: () => false,
+}));
+
 // Mock sonner toast
 vi.mock('sonner', () => ({
   toast: {

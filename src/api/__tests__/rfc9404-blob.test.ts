@@ -13,6 +13,17 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
+// Server-identity subsystem (issue #1) isolated — exercised end-to-end in
+// jmap-identity.test.ts / serverFingerprint.test.ts with the real modules.
+vi.mock('../../utils/serverFingerprint', () => ({
+  fetchServerFingerprint: vi.fn(async () => null),
+  getStoredFingerprint: vi.fn(() => null),
+  storeFingerprint: vi.fn(),
+  fingerprintKey: vi.fn(() => null),
+  ServerIdentityChangedError: class ServerIdentityChangedError extends Error {},
+  isServerIdentityChangedError: () => false,
+}));
+
 // Mock sessionStorage
 const mockSessionStorage: Record<string, string> = {};
 const sessionStorageMock = {
