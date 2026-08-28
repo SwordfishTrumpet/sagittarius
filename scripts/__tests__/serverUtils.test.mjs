@@ -15,6 +15,7 @@ const {
   fingerprintKey,
   parseTrustedFingerprints,
   normalizeFingerprintValue,
+  redactUrl,
 } = serverUtils;
 
 function makeFakeDns({ resolve4, resolve6, lookup } = {}) {
@@ -184,6 +185,37 @@ describe('serverUtils (server-identity fingerprint)', () => {
     it('strips sha256: prefix and lowercases', () => {
       expect(normalizeFingerprintValue('sha256:ABC123')).toBe('abc123');
       expect(normalizeFingerprintValue('ABC123')).toBe('abc123');
+    });
+  });
+
+  describe('redactUrl (issue #2)', () => {
+    it('redacts a single access_token parameter', () => {
+      expect(redactUrl('/jmap/eventsource?access_token=c2VjcmV0')).toBe('http://localhost/jmap/eventsource?access_token=%5BREDACTED%5D');
+    });
+
+    it('keeps other query parameters intact', () => {
+      expect(redactUrl('/jmap/ws?types=*&access_token=c2VjcmV0&closeafter=no'))
+        .toBe('http://localhost/jmap/ws?types=*&access_token=%5BREDACTED%5D&closeafter=no');
+    });
+
+    it('collapses duplicate token params in parseable URLs (still no leak)', () => {
+      // URLSearchParams keeps one value per key; the values are replaced,
+      // so no token survives regardless of how many were present.
+      expect(redactUrl('not-a-url?access_token=one&access_token=two'))
+        .toBe('http://localhost/not-a-url?access_token=%5BREDACTED%5D');
+    });
+
+    it('redacts every token occurrence in unparseable URLs (global regex fallback)', () => {
+      // Invalid port → new URL() throws → the regex fallback must replace
+      // EVERY access_token=… occurrence, not just the first.
+      expect(redactUrl('http://x:99999/evil?access_token=one&access_token=two'))
+        .toBe('http://x:99999/evil?access_token=[REDACTED]&access_token=[REDACTED]');
+    });
+
+    it('leaves URLs without a token untouched', () => {
+      expect(redactUrl('/jmap/session')).toBe('http://localhost/jmap/session');
+      expect(redactUrl(null)).toBeNull();
+      expect(redactUrl(undefined)).toBeUndefined();
     });
   });
 });
