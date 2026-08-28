@@ -249,6 +249,19 @@ function parseTrustedFingerprints(raw) {
   return String(raw).split(',').map((entry) => entry.trim()).filter(Boolean);
 }
 
+/**
+ * Unified proxy failure response (issue #8): every production server and the
+ * Vite dev proxy must answer backend-outage 502s with the same JSON shape so
+ * clients can classify the failure class without parsing divergent bodies.
+ * No-ops when headers were already sent (e.g. a partial streamed response).
+ */
+function writeBadGatewayResponse(res) {
+  if (res && typeof res.writeHead === 'function' && !res.headersSent) {
+    res.writeHead(502, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'JMAP backend unavailable' }));
+  }
+}
+
 module.exports = {
   parseJmapServer,
   resolveAddresses,
@@ -257,5 +270,6 @@ module.exports = {
   parseTrustedFingerprints,
   normalizeFingerprintValue,
   redactUrl,
+  writeBadGatewayResponse,
   FINGERPRINT_TIMEOUT_MS,
 };

@@ -16,6 +16,7 @@ const {
   parseTrustedFingerprints,
   normalizeFingerprintValue,
   redactUrl,
+  writeBadGatewayResponse,
 } = serverUtils;
 
 function makeFakeDns({ resolve4, resolve6, lookup } = {}) {
@@ -185,6 +186,47 @@ describe('serverUtils (server-identity fingerprint)', () => {
     it('strips sha256: prefix and lowercases', () => {
       expect(normalizeFingerprintValue('sha256:ABC123')).toBe('abc123');
       expect(normalizeFingerprintValue('ABC123')).toBe('abc123');
+    });
+  });
+
+  describe('writeBadGatewayResponse (issue #8)', () => {
+    function makeFakeRes(overrides = {}) {
+      const res = {
+        headersSent: false,
+        statusCode: null,
+        headers: null,
+        body: '',
+        writeHead(status, headers) {
+          this.statusCode = status;
+          this.headers = headers;
+        },
+        end(body) {
+          this.body = String(body);
+        },
+        ...overrides,
+      };
+      return res;
+    }
+
+    it('writes the unified 502 JSON shape used by every server', () => {
+      const res = makeFakeRes();
+      writeBadGatewayResponse(res);
+      expect(res.statusCode).toBe(502);
+      expect(res.headers['Content-Type']).toBe('application/json');
+      expect(JSON.parse(res.body)).toEqual({ error: 'JMAP backend unavailable' });
+    });
+
+    it('is a no-op when headers were already sent (partial stream)', () => {
+      const res = makeFakeRes({ headersSent: true });
+      writeBadGatewayResponse(res);
+      expect(res.statusCode).toBeNull();
+      expect(res.body).toBe('');
+    });
+
+    it('tolerates a socket (WebSocket upgrade error) or null', () => {
+      const socket = { destroy: vi.fn() };
+      expect(() => writeBadGatewayResponse(socket)).not.toThrow();
+      expect(() => writeBadGatewayResponse(null)).not.toThrow();
     });
   });
 

@@ -126,8 +126,12 @@ export default defineConfig(({ mode }) => {
               }
             })
 
-            proxy.on('error', (err, _req, _res) => {
+            proxy.on('error', (err, _req, res) => {
+              // Issue #8: a dead backend must answer with a 502-shaped JSON
+              // response (same shape as server.js / server.cjs) instead of
+              // leaving the client hanging until the request timeout.
               logError(err.message)
+              serverUtils.writeBadGatewayResponse(res)
             })
           }
         }

@@ -7,6 +7,7 @@ import {
   isServerUnreachableError,
   isJMAPProtocolError,
   classifyJMAPError,
+  getUserFacingJMAPErrorMessage,
 } from '../jmapErrors';
 
 describe('jmapErrors taxonomy', () => {
@@ -64,6 +65,35 @@ describe('jmapErrors taxonomy', () => {
     it('defaults unknown errors to protocol', () => {
       expect(classifyJMAPError(new Error('boom'))).toBe('protocol');
       expect(classifyJMAPError('boom')).toBe('protocol');
+    });
+  });
+
+  describe('getUserFacingJMAPErrorMessage (issue #8)', () => {
+    it('renders a distinct message per error class, never raw internals', () => {
+      expect(getUserFacingJMAPErrorMessage(new AuthError('JMAP request failed: 401')))
+        .toBe('Your session has expired. Please sign in again.');
+      expect(getUserFacingJMAPErrorMessage(new ServerUnreachableError('JMAP request failed: 502')))
+        .toBe('Mail server unreachable. Please check that the mail server is running and try again.');
+    });
+
+    it('includes the HTTP status for protocol errors', () => {
+      expect(getUserFacingJMAPErrorMessage(new JMAPProtocolError('JMAP request failed: 500', 500)))
+        .toBe('The mail server returned an error (HTTP 500). Please try again.');
+      expect(getUserFacingJMAPErrorMessage(new JMAPProtocolError('boom')))
+        .toBe('The mail server returned an error. Please try again.');
+    });
+
+    it('never leaks the raw message string to the user', () => {
+      const raw = 'JMAP request failed: 502';
+      const message = getUserFacingJMAPErrorMessage(new Error(raw));
+      expect(message).not.toContain(raw);
+    });
+
+    it('falls back for unknown errors', () => {
+      expect(getUserFacingJMAPErrorMessage(new Error('weird')))
+        .toBe('An unexpected error occurred. Please try again.');
+      expect(getUserFacingJMAPErrorMessage(null))
+        .toBe('An unexpected error occurred. Please try again.');
     });
   });
 });

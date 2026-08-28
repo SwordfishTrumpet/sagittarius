@@ -16,7 +16,7 @@ import { createProxyMiddleware } from 'http-proxy-middleware';
 import httpProxy from 'http-proxy';
 import { fileURLToPath } from 'url';
 import path from 'path';
-import { computeServerFingerprint, parseTrustedFingerprints, redactUrl } from './scripts/serverUtils.cjs';
+import { computeServerFingerprint, parseTrustedFingerprints, redactUrl, writeBadGatewayResponse } from './scripts/serverUtils.cjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = parseInt(process.env.PORT || '8081', 10);
@@ -214,10 +214,7 @@ app.get('/api/server-fingerprint', async (_req, res) => {
 // Handle SSE proxy errors
 sseProxy.on('error', (err, req, res) => {
   logError('[sse-proxy] Proxy error:', err.message);
-  if (res.writeHead && !res.headersSent) {
-    res.writeHead(502, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'SSE backend unavailable' }));
-  }
+  writeBadGatewayResponse(res);
 });
 
 // Force headers to be sent immediately when proxy response starts
@@ -352,10 +349,7 @@ const jmapProxy = createProxyMiddleware({
 
     error: (err, _req, res) => {
       logError(`[proxy] ${err.message}`);
-      if (res.writeHead) {
-        res.writeHead(502, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'JMAP backend unavailable' }));
-      }
+      writeBadGatewayResponse(res);
     },
   },
 });
