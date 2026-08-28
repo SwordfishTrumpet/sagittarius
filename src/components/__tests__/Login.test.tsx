@@ -1,10 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Login } from '../Login';
 import { jmapClient } from '../../api/jmap';
 import { ServerIdentityChangedError } from '../../utils/serverFingerprint';
-import { ServerUnreachableError } from '../../utils/jmapErrors';
-import { recordFailedAttempt } from '../../utils/rateLimit';
+import { ServerUnreachableError, AuthError } from '../../utils/jmapErrors';
+import { recordFailedAttempt, getRateLimitStatus } from '../../utils/rateLimit';
 
 // Mock dependencies
 vi.mock('../../api/jmap', () => ({
@@ -32,6 +32,13 @@ describe('Login', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // The fingerprint endpoint answers fast (404) so the host probe never
+    // hangs; individual tests override this for host-display coverage.
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('{}', { status: 404 })));
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it('should render login form', () => {
@@ -210,7 +217,7 @@ describe('Login', () => {
   });
 
   it('still counts genuine auth failures against the rate limiter', async () => {
-    vi.mocked(jmapClient.authenticate).mockRejectedValueOnce(new Error('Authentication failed'));
+    vi.mocked(jmapClient.authenticate).mockRejectedValueOnce(new AuthError('Authentication failed'));
     render(<Login onLoginSuccess={mockOnLoginSuccess} />);
 
     fireEvent.change(screen.getByLabelText('Email or username'), { target: { value: 'test@example.com' } });
@@ -221,5 +228,90 @@ describe('Login', () => {
       expect(screen.getByText(/Failed to authenticate/i)).toBeInTheDocument();
     });
     expect(recordFailedAttempt).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not count protocol errors against the rate limiter', async () => {
+    vi.mocked(jmapClient.authenticate).mockRejectedValueOnce(new Error('JMAP request failed: 500'));
+    render(<Login onLoginSuccess={mockOnLoginSuccess} />);
+
+    fireEvent.change(screen.getByLabelText('Email or username'), { target: { value: 'test@example.com' } });
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'password123' } });
+    fireEvent.click(screen.getByRole('button', { name: /sign in/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Login failed. Please try again.')).toBeInTheDocument();
+    });
+    expect(recordFailedAttempt).not.toHaveBeenCalled();
+  });
+
+  it('never triggers lockout after repeated server-unreachable failures', async () => {
+    vi.mocked(jmapClient.authenticate).mockRejectedValue(new ServerUnreachableError('Server unreachable'));
+    render(<Login onLoginSuccess={mockOnLoginSuccess} />);
+
+    for (let i = 0; i < 5; i++) {
+      fireEvent.change(screen.getByLabelText('Email or username'), { target: { value: 'test@example.com' } });
+      fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'password123' } });
+      fireEvent.click(screen.getByRole('button', { name: /sign in/i }));
+      await waitFor(() => {
+        expect(screen.getByText(/Mail server unreachable/i)).toBeInTheDocument();
+      });
+    }
+
+    expect(recordFailedAttempt).not.toHaveBeenCalled();
+    expect(getRateLimitStatus().isLocked).toBe(false);
+    expect(screen.queryByText(/Account temporarily locked/i)).not.toBeInTheDocument();
+  });
+
+  it('displays the configured backend hostname on the login card', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      if (String(input) === '/api/server-fingerprint') {
+        return new Response(JSON.stringify({
+          host: 'mail.example.com',
+          scheme: 'https',
+          resolved: true,
+          addresses: [],
+          certFingerprint: 'sha256:abc',
+          trusted: false,
+          error: null,
+        }), { status: 200 });
+      }
+      return new Response('{}', { status: 404 });
+    }));
+    render(<Login onLoginSuccess={mockOnLoginSuccess} />);
+
+    expect(await screen.findByText('mail.example.com')).toBeInTheDocument();
+    expect(screen.getByText(/Signing in to/i)).toBeInTheDocument();
+  });
+
+  it('includes the configured host in the server-unreachable message', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      if (String(input) === '/api/server-fingerprint') {
+        return new Response(JSON.stringify({
+          host: 'dead.example.com',
+          scheme: 'https',
+          resolved: false,
+          addresses: [],
+          certFingerprint: null,
+          trusted: false,
+          error: 'DNS resolution failed',
+        }), { status: 200 });
+      }
+      return new Response('{}', { status: 404 });
+    }));
+    vi.mocked(jmapClient.authenticate).mockRejectedValueOnce(new ServerUnreachableError('Server unreachable'));
+    render(<Login onLoginSuccess={mockOnLoginSuccess} />);
+
+    // Wait for the host probe to resolve before submitting so the message
+    // includes the configured host.
+    await screen.findByText('dead.example.com')
+    fireEvent.change(screen.getByLabelText('Email or username'), { target: { value: 'test@example.com' } });
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'password123' } });
+    fireEvent.click(screen.getByRole('button', { name: /sign in/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Mail server unreachable \(dead\.example\.com\)/i)).toBeInTheDocument();
+    });
+    expect(screen.queryByText(/check your credentials/i)).not.toBeInTheDocument();
+    expect(recordFailedAttempt).not.toHaveBeenCalled();
   });
 });
