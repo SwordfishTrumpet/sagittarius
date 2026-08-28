@@ -16,7 +16,7 @@ import { createProxyMiddleware } from 'http-proxy-middleware';
 import httpProxy from 'http-proxy';
 import { fileURLToPath } from 'url';
 import path from 'path';
-import { computeServerFingerprint, parseTrustedFingerprints, redactUrl, writeBadGatewayResponse } from './scripts/serverUtils.cjs';
+import { computeServerFingerprint, parseTrustedFingerprints, redactUrl, writeBadGatewayResponse, probeBackendReachability, startupProbeDecision } from './scripts/serverUtils.cjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = parseInt(process.env.PORT || '8081', 10);
@@ -431,11 +431,39 @@ function handleServerError(err, port) {
 }
 
 server.on('error', (err) => handleServerError(err, PORT));
-server.listen(PORT, '0.0.0.0', () => {
-  logInfo(`listening on 0.0.0.0:${server.address().port}`);
-  logInfo(`JMAP backend: ${JMAP_SERVER}`);
-  logInfo(`serving: ${distDir}`);
-});
+
+// ── Startup backend validation (issue #9) ───────────────────────────
+// Resolve JMAP_SERVER at boot so a dead backend is diagnosed at deploy
+// time instead of by the first end user. Warning-only by default; set
+// JMAP_FAIL_FAST_ON_UNRESOLVED=1 to abort boot when DNS cannot resolve
+// the configured host.
+const FAIL_FAST_ON_UNRESOLVED =
+  process.env.JMAP_FAIL_FAST_ON_UNRESOLVED === '1'
+  || process.env.JMAP_FAIL_FAST_ON_UNRESOLVED === 'true';
+
+async function startBackendProbeAndListen() {
+  const probe = await probeBackendReachability(JMAP_SERVER, { timeoutMs: 3000 });
+  const decision = startupProbeDecision(probe, { failFastOnUnresolved: FAIL_FAST_ON_UNRESOLVED });
+  logInfo(
+    `JMAP backend: ${JMAP_SERVER} `
+    + `(host: ${probe.host}, resolved: ${probe.resolved}, reachable: ${probe.reachable}, `
+    + `addresses: ${(probe.addresses || []).join(', ') || 'none'})`,
+  );
+  if (decision.shouldExit) {
+    logError(decision.message);
+    process.exit(1);
+  }
+  if (decision.level === 'warn') {
+    logError(decision.message);
+  } else {
+    logInfo(decision.message);
+  }
+
+  server.listen(PORT, '0.0.0.0', () => {
+    logInfo(`listening on 0.0.0.0:${server.address().port}`);
+    logInfo(`serving: ${distDir}`);
+  });
+}
 
 // Handle WebSocket upgrade for JMAP proxy
 server.on('upgrade', (req, socket, head) => {
@@ -497,6 +525,11 @@ proxyServer.on('upgrade', (req, socket, head) => {
 
 proxyServer.listen(PROXY_PORT, '0.0.0.0', () => {
   logInfo(`listening on 0.0.0.0:${proxyServer.address().port} (reverse proxy upstream)`);
+});
+
+startBackendProbeAndListen().catch((err) => {
+  logError('Startup backend validation failed:', err instanceof Error ? err.message : String(err));
+  process.exit(1);
 });
 
 // Graceful shutdown

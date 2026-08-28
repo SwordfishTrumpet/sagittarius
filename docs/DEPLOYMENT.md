@@ -277,6 +277,7 @@ CMD ["node", "server.js"]
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `JMAP_SERVER` | JMAP backend URL | `http://localhost:8080` |
+| `JMAP_FAIL_FAST_ON_UNRESOLVED` | When `1`, the server aborts boot (exit 1) if the configured `JMAP_SERVER` hostname cannot be resolved by DNS at startup. Default is warning-only — the server boots and logs a loud `WARNING:` line instead. | *(unset — warn only)* |
 | `PORT` | Server port | `8081` |
 | `NODE_ENV` | Environment mode | `production` |
 | `JMAP_TRUSTED_FINGERPRINTS` | Comma-separated SHA-256 certificate fingerprints (with or without the `sha256:` prefix) of trusted JMAP backends. When the current backend fingerprint matches an entry, the client skips the server-identity confirmation on login. Useful when migrating between known-good backends. | *(unset — no allowlist)* |

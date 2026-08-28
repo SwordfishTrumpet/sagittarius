@@ -17,6 +17,8 @@ const {
   normalizeFingerprintValue,
   redactUrl,
   writeBadGatewayResponse,
+  probeBackendReachability,
+  startupProbeDecision,
 } = serverUtils;
 
 function makeFakeDns({ resolve4, resolve6, lookup } = {}) {
@@ -55,6 +57,128 @@ function makeFakeTls({ certRaw = null, error = null } = {}) {
 function certHash(raw) {
   return `sha256:${crypto.createHash('sha256').update(raw).digest('hex')}`;
 }
+
+function makeFakeNet({ connectError = null } = {}) {
+  const connect = vi.fn(() => {
+    const handlers = {};
+    const socket = {
+      once(event, cb) {
+        handlers[event] = cb;
+        return socket;
+      },
+      destroy: vi.fn(),
+    };
+    setImmediate(() => {
+      if (connectError) {
+        if (handlers.error) handlers.error(new Error(connectError));
+      } else if (handlers.connect) {
+        handlers.connect();
+      }
+    });
+    return socket;
+  });
+  return { connect };
+}
+
+describe('probeBackendReachability (issues #7/#9)', () => {
+  it('reports unresolved for an invalid JMAP_SERVER URL', async () => {
+    const probe = await probeBackendReachability('not a url');
+    expect(probe.resolved).toBe(false);
+    expect(probe.reachable).toBe(false);
+    expect(probe.error).toContain('Invalid');
+  });
+
+  it('reports unresolved when the hostname does not resolve (domain lapse)', async () => {
+    const probe = await probeBackendReachability('https://lapsed.example.com', {
+      dnsImpl: makeFakeDns(),
+    });
+    expect(probe.resolved).toBe(false);
+    expect(probe.reachable).toBe(false);
+    expect(probe.addresses).toEqual([]);
+    expect(probe.error).toContain('DNS');
+  });
+
+  it('reports reachable for an http backend that answers TCP', async () => {
+    const probe = await probeBackendReachability('http://mail.example.com:8080', {
+      dnsImpl: makeFakeDns({ resolve4: async () => ['1.2.3.4'] }),
+      netImpl: makeFakeNet(),
+    });
+    expect(probe.resolved).toBe(true);
+    expect(probe.reachable).toBe(true);
+    expect(probe.addresses).toEqual(['1.2.3.4']);
+    expect(probe.error).toBeNull();
+  });
+
+  it('reports unreachable for an http backend whose TCP connect fails', async () => {
+    const probe = await probeBackendReachability('http://mail.example.com:1', {
+      dnsImpl: makeFakeDns({ resolve4: async () => ['1.2.3.4'] }),
+      netImpl: makeFakeNet({ connectError: 'ECONNREFUSED' }),
+    });
+    expect(probe.resolved).toBe(true);
+    expect(probe.reachable).toBe(false);
+    expect(probe.error).toContain('TCP');
+  });
+
+  it('reports reachable for an https backend whose TLS handshake succeeds', async () => {
+    const raw = Buffer.from('fake-der-certificate-bytes');
+    const probe = await probeBackendReachability('https://mail.example.com', {
+      dnsImpl: makeFakeDns({ resolve4: async () => ['1.2.3.4'] }),
+      tlsImpl: makeFakeTls({ certRaw: raw }),
+    });
+    expect(probe.resolved).toBe(true);
+    expect(probe.reachable).toBe(true);
+  });
+
+  it('reports unreachable for an https backend whose TLS handshake fails', async () => {
+    const probe = await probeBackendReachability('https://mail.example.com', {
+      dnsImpl: makeFakeDns({ resolve4: async () => ['1.2.3.4'] }),
+      tlsImpl: makeFakeTls({ error: 'socket hang up' }),
+    });
+    expect(probe.resolved).toBe(true);
+    expect(probe.reachable).toBe(false);
+    expect(probe.error).toContain('socket hang up');
+  });
+});
+
+describe('startupProbeDecision (issue #9)', () => {
+  const unresolved = { host: 'lapsed.example.com', resolved: false, reachable: false, error: 'DNS resolution failed' };
+  const unreachable = { host: 'mail.example.com', resolved: true, reachable: false, error: 'TCP connect failed' };
+  const reachable = { host: 'mail.example.com', resolved: true, reachable: true, error: null };
+
+  it('warns (but boots) when the backend host does not resolve', () => {
+    const decision = startupProbeDecision(unresolved);
+    expect(decision.level).toBe('warn');
+    expect(decision.shouldExit).toBe(false);
+    expect(decision.message).toContain('lapsed.example.com');
+    expect(decision.message).toMatch(/WARNING/i);
+  });
+
+  it('fails fast when the operator opted in', () => {
+    const decision = startupProbeDecision(unresolved, { failFastOnUnresolved: true });
+    expect(decision.level).toBe('error');
+    expect(decision.shouldExit).toBe(true);
+  });
+
+  it('warns when DNS resolves but the connection probe fails', () => {
+    const decision = startupProbeDecision(unreachable);
+    expect(decision.level).toBe('warn');
+    expect(decision.shouldExit).toBe(false);
+    expect(decision.message).toContain('mail.example.com');
+  });
+
+  it('logs info when the backend is fully reachable', () => {
+    const decision = startupProbeDecision(reachable);
+    expect(decision.level).toBe('info');
+    expect(decision.shouldExit).toBe(false);
+    expect(decision.message).toContain('reachable');
+  });
+
+  it('warns on a null probe (never exits)', () => {
+    const decision = startupProbeDecision(null);
+    expect(decision.level).toBe('warn');
+    expect(decision.shouldExit).toBe(false);
+  });
+});
 
 describe('serverUtils (server-identity fingerprint)', () => {
   describe('computeServerFingerprint', () => {
